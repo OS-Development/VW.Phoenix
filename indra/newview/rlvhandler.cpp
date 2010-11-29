@@ -1213,20 +1213,6 @@ ERlvCmdRet RlvHandler::processAddRemCommand(const RlvCommand& rlvCmd)
 				}
 			}
 			break;
-#ifdef RLV_EXTENSION_CMD_TOUCHXXX
-		case RLV_BHVR_TOUCH:				// @touch:<uuid>=n					- Checked: 2010-01-01 (RLVa-1.1.0l) | Added: RLVa-1.1.0l
-			{
-				// There should be an option and it should specify a valid UUID
-				LLUUID idException(strOption);
-				VERIFY_OPTION_REF(idException.notNull());
-
-				if (RLV_TYPE_ADD == eType)
-					addException(rlvCmd.getObjectID(), eBhvr, idException);
-				else
-					removeException(rlvCmd.getObjectID(), eBhvr, idException);
-			}
-			break;
-#endif // RLV_EXTENSION_CMD_TOUCHXXX
 		case RLV_BHVR_FLY:					// @fly=n|y							- Checked: 2009-12-05 (RLVa-1.1.0h) | Modified: RLVa-1.1.0h
 			{
 				VERIFY_OPTION_REF(strOption.empty());
@@ -1288,6 +1274,27 @@ ERlvCmdRet RlvHandler::processAddRemCommand(const RlvCommand& rlvCmd)
 				VERIFY_OPTION_REF(strOption.empty());
 			}
 			break;
+		//
+		// The following block is only valid if there an option that specifies a valid UUID (reference-counted per option) 
+		//
+		case RLV_BHVR_EDITOBJ:				// @editobj:<uuid>=n|y				- Checked: 2010-11-29 (RLVa-1.3.0c) | Added: RLVa-1.3.0c
+#ifdef RLV_EXTENSION_CMD_TOUCHXXX
+		case RLV_BHVR_TOUCH:				// @touch:<uuid>=n|y				- Checked: 2010-01-01 (RLVa-1.1.0l) | Added: RLVa-1.1.0l
+#endif // RLV_EXTENSION_CMD_TOUCHXXX
+			{
+				// There should be an option and it should specify a valid UUID
+				LLUUID idException(strOption);
+				VERIFY_OPTION_REF(idException.notNull());
+
+				if (RLV_TYPE_ADD == eType)
+					addException(rlvCmd.getObjectID(), eBhvr, idException);
+				else
+					removeException(rlvCmd.getObjectID(), eBhvr, idException);
+			}
+			break;
+		//
+		// Unknown or invalid
+		//
 		case RLV_BHVR_UNKNOWN:
 			// Pass unknown commands on to registered command handlers
 			return (notifyCommandHandlers(&RlvCommandHandler::onAddRemCommand, rlvCmd, eRet, false)) ? eRet : RLV_RET_FAILED_UNKNOWN;
