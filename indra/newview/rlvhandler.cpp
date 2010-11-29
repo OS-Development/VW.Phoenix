@@ -1190,8 +1190,17 @@ ERlvCmdRet RlvHandler::processAddRemCommand(const RlvCommand& rlvCmd)
 					pObj->mText->setStringUTF8( (RLV_TYPE_ADD == eType) ? "" : pObj->mText->getObjectText());
 			}
 			break;
-		case RLV_BHVR_EDIT:					// @edit=n|y						- Checked: 2009-12-05 (RLVa-1.1.0h) | Modified: RLVa-1.1.0h
+		case RLV_BHVR_EDIT:					// @edit[:<uuid>=n|y				- Checked: 2011-09-16 (RLVa-1.4.0b) | Modified: RLVa-1.4.0b
 			{
+				LLUUID idException(strOption);
+				if (idException.notNull())		// If there's an option then it should specify a valid UUID
+				{
+					if (RLV_TYPE_ADD == eType)
+						addException(rlvCmd.getObjectID(), eBhvr, idException);
+					else
+						removeException(rlvCmd.getObjectID(), eBhvr, idException);
+					break;
+				}
 				VERIFY_OPTION_REF(strOption.empty());
 
 				if (RLV_TYPE_ADD == eType)
