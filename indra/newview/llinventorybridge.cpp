@@ -1322,7 +1322,11 @@ BOOL LLFolderBridge::isItemMovable()
 		//return 
 		//	(LLAssetType::AT_NONE == ((LLInventoryCategory*)obj)->getPreferredType()) || 
 		//	(LLAssetType::AT_OUTFIT == ((LLInventoryCategory*)obj)->getPreferredType());
-		return !LLFolderType::lookupIsProtectedType(((LLInventoryCategory*)obj)->getPreferredType());
+//		return !LLFolderType::lookupIsProtectedType(((LLInventoryCategory*)obj)->getPreferredType());
+// [RLVa:KB] - Checked: 2010-11-30 (RLVa-1.3.0b) | Added: RLVa-1.3.0b
+		return (!LLFolderType::lookupIsProtectedType(((LLInventoryCategory*)obj)->getPreferredType())) &&
+			((!rlv_handler_t::isEnabled()) || (!gRlvFolderLocks.isLockedFolder(obj->getUUID(), RLV_LOCK_ANY)));
+// [/RLVa:KB]
 	}
 	return FALSE;
 }
@@ -1341,6 +1345,13 @@ BOOL LLFolderBridge::isItemRemovable()
 	{
 		return FALSE;
 	}
+
+// [RLVa:KB] - Checked: 2010-11-30 (RLVa-1.3.0b) | Added: RLVa-1.3.0b
+	if ( (rlv_handler_t::isEnabled()) && (gRlvFolderLocks.isLockedFolder(id, RLV_LOCK_ANY)) )
+	{
+		return FALSE;
+	}
+// [/RLVa:KB]
 
 	LLVOAvatar* avatar = gAgent.getAvatarObject();
 	LLInventoryCategory* category = model->getCategory(mUUID);
@@ -1985,6 +1996,13 @@ BOOL LLFolderBridge::isItemRenameable() const
 //	if(cat && ((cat->getPreferredType() == LLAssetType::AT_NONE) || (cat->getPreferredType() == LLAssetType::AT_OUTFIT))
 //	   && (cat->getOwnerID() == gAgent.getID()))
 	if (cat && !LLFolderType::lookupIsProtectedType(cat->getPreferredType()) &&
+// [RLVa:KB] - Checked: 2010-11-30 (RLVa-1.3.0b) | Added: RLVa-1.3.0b
+		if ( (rlv_handler_t::isEnabled()) && (gRlvFolderLocks.isLockedFolder(id, RLV_LOCK_ANY)) && 
+			 (model->isObjectDescendentOf(id, gInventory.getRootFolderID())) )
+		{
+			return FALSE;
+		}
+// [/RLVa:KB]
 	    cat->getOwnerID() == gAgent.getID())
 	{
 		return TRUE;
