@@ -1292,7 +1292,7 @@ ERlvCmdRet RlvHandler::processAddRemCommand(const RlvCommand& rlvCmd)
 		case RLV_BHVR_RECVIMFROM:			// @recvimfrom:<uuid>=n|y			- Checked: 2010-11-30 (RLVa-1.3.0c) | Added: RLVa-1.3.0c
 		case RLV_BHVR_EDITOBJ:				// @editobj:<uuid>=n|y				- Checked: 2010-11-29 (RLVa-1.3.0c) | Added: RLVa-1.3.0c
 #ifdef RLV_EXTENSION_CMD_TOUCHXXX
-		case RLV_BHVR_TOUCH:				// @touch:<uuid>=n|y				- Checked: 2010-01-01 (RLVa-1.1.0l) | Added: RLVa-1.1.0l
+		case RLV_BHVR_TOUCHOBJ:				// @touchobj:<uuid>=n				- Checked: 2011-01-18 (RLVa-1.3.0e) | Modified: RLVa-1.3.0e
 #endif // RLV_EXTENSION_CMD_TOUCHXXX
 			{
 				// There should be an option and it should specify a valid UUID
