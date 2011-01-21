@@ -158,14 +158,15 @@ void RlvCommand::initLookupTable()
 				"detach", "attach", "addattach", "remattach", "addoutfit", "remoutfit", "sharedwear", "sharedunwear", "unsharedwear",
 				"unsharedunwear", "emote", "sendchat", "recvchat", "recvchatfrom", "recvemote", "recvemotefrom", "redirchat", "rediremote",
 				"chatwhisper", "chatnormal", "chatshout", "sendchannel", "sendim", "sendimto", "recvim", "recvimfrom", "permissive",
-				"notify", "showinv", "showminimap", "showworldmap", "showloc", "shownames", "showhovertext", "showhovertexthud", 
-				"showhovertextworld", "showhovertextall", "tplm", "tploc", "tplure", "viewnote", "viewscript", "viewtexture", 
-				"acceptpermission", "accepttp",	"allowidle", "edit", "editobj", "rez", "fartouch", "interact", "touchobj", "touchattach", 
-				"touchhud", "touchworld", "fly", "unsit", "sit", "sittp", "standtp", "setdebug", "setenv", "detachme", "attachover",
-				"attachthis", "attachthisover", "attachthisexcept", "detachthis", "detachthisexcept", "attachall", "attachallover", 
+				"notify", "showinv", "showminimap", "showworldmap", "showloc", "shownames", "showhovertext", "showhovertexthud",
+				"showhovertextworld", "showhovertextall", "tplm", "tploc", "tplure", "viewnote", "viewscript", "viewtexture",
+				"acceptpermission", "accepttp", "allowidle", "edit", "editobj", "rez", "fartouch", "interact",
+				"touchobj", "touchattach", "touchattachself", "touchattachother", "touchhud", "touchworld", "touchall",
+				"fly", "unsit", "sit", "sittp", "standtp", "setdebug", "setenv", "detachme", "attachover",
+				"attachthis", "attachthisover", "attachthisexcept", "detachthis", "detachthisexcept", "attachall", "attachallover",
 				"detachall", "attachallthis", "attachallthisexcept", "attachallthisover", "detachallthis", "detachallthisexcept", "tpto",
-				"version", "versionnew", "versionnum", "getattach", "getattachnames", "getaddattachnames", "getremattachnames", 
-				"getoutfit", "getoutfitnames", "getaddoutfitnames", "getremoutfitnames", "findfolder", "findfolders", "getpath", 
+				"version", "versionnew", "versionnum", "getattach", "getattachnames", "getaddattachnames", "getremattachnames",
+				"getoutfit", "getoutfitnames", "getaddoutfitnames", "getremoutfitnames", "findfolder", "findfolders", "getpath",
 				"getpathnew", "getinv", "getinvworn", "getsitid", "getcommand", "getstatus", "getstatusall"
 			};
 
