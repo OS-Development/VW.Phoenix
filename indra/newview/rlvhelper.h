@@ -190,6 +190,14 @@ struct RlvCommandOptionAdjustHeight
 	F32		m_nPelvisToFootOffset;
 };
 
+struct RlvCommandOptionTpTo
+{
+	RlvCommandOptionTpTo(const RlvCommand& rlvCmd);
+
+	bool		m_fValid;
+	LLVector3d	m_posGlobal;
+};
+
 // ============================================================================
 // RlvObject
 //
