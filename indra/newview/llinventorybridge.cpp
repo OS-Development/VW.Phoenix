@@ -1995,15 +1995,12 @@ BOOL LLFolderBridge::isItemRenameable() const
 // Ansariel: Old check
 //	if(cat && ((cat->getPreferredType() == LLAssetType::AT_NONE) || (cat->getPreferredType() == LLAssetType::AT_OUTFIT))
 //	   && (cat->getOwnerID() == gAgent.getID()))
-	if (cat && !LLFolderType::lookupIsProtectedType(cat->getPreferredType()) &&
-// [RLVa:KB] - Checked: 2010-11-30 (RLVa-1.3.0b) | Added: RLVa-1.3.0b
-		if ( (rlv_handler_t::isEnabled()) && (gRlvFolderLocks.isLockedFolder(id, RLV_LOCK_ANY)) && 
-			 (model->isObjectDescendentOf(id, gInventory.getRootFolderID())) )
-		{
-			return FALSE;
-		}
+//	if (cat && !LLFolderType::lookupIsProtectedType(cat->getPreferredType()) &&
+//	    cat->getOwnerID() == gAgent.getID())
+// [RLVa:KB] - Checked: 2011-03-29 (RLVa-1.3.0g) | Modified: RLVa-1.3.0g
+	if ( (cat && !LLFolderType::lookupIsProtectedType(cat->getPreferredType()) && cat->getOwnerID() == gAgent.getID()) &&
+		 ((!rlv_handler_t::isEnabled()) || (gRlvFolderLocks.canRename(id))) )
 // [/RLVa:KB]
-	    cat->getOwnerID() == gAgent.getID())
 	{
 		return TRUE;
 	}
