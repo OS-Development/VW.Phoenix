@@ -1322,11 +1322,7 @@ BOOL LLFolderBridge::isItemMovable()
 		//return 
 		//	(LLAssetType::AT_NONE == ((LLInventoryCategory*)obj)->getPreferredType()) || 
 		//	(LLAssetType::AT_OUTFIT == ((LLInventoryCategory*)obj)->getPreferredType());
-//		return !LLFolderType::lookupIsProtectedType(((LLInventoryCategory*)obj)->getPreferredType());
-// [RLVa:KB] - Checked: 2010-11-30 (RLVa-1.3.0b) | Added: RLVa-1.3.0b
-		return (!LLFolderType::lookupIsProtectedType(((LLInventoryCategory*)obj)->getPreferredType())) &&
-			((!rlv_handler_t::isEnabled()) || (!gRlvFolderLocks.isLockedFolder(obj->getUUID(), RLV_LOCK_ANY)));
-// [/RLVa:KB]
+		return !LLFolderType::lookupIsProtectedType(((LLInventoryCategory*)obj)->getPreferredType());
 	}
 	return FALSE;
 }
@@ -1341,17 +1337,14 @@ BOOL LLFolderBridge::isItemRemovable()
 {
 	LLInventoryModel* model = mInventoryPanel->getModel();
 
-	if (!model || !model->isObjectDescendentOf(mUUID, gAgent.getInventoryRootID()))
-	{
-		return FALSE;
-	}
-
-// [RLVa:KB] - Checked: 2010-11-30 (RLVa-1.3.0b) | Added: RLVa-1.3.0b
-	if ( (rlv_handler_t::isEnabled()) && (gRlvFolderLocks.isLockedFolder(id, RLV_LOCK_ANY)) )
-	{
-		return FALSE;
-	}
+//	if (!model || !model->isObjectDescendentOf(mUUID, gAgent.getInventoryRootID()))
+// [RLVa:KB] - Checked: 2011-03-29 (RLVa-1.3.0g) | Modified: RLVa-1.3.0g
+	if ( (!model || !model->isObjectDescendentOf(mUUID, gAgent.getInventoryRootID())) || 
+		 ((rlv_handler_t::isEnabled()) && (!gRlvFolderLocks.canRemove(mUUID))) )
 // [/RLVa:KB]
+	{
+		return FALSE;
+	}
 
 	LLVOAvatar* avatar = gAgent.getAvatarObject();
 	LLInventoryCategory* category = model->getCategory(mUUID);
@@ -1572,7 +1565,13 @@ BOOL LLFolderBridge::dragCategoryIntoFolder(LLInventoryCategory* inv_cat,
 			}
 		}
 
-		
+// [RLVa:KB] - Checked: 2011-03-29 (RLVa-1.3.0g) | Added: RLVa-1.3.0g
+		if ( (is_movable) && (rlv_handler_t::isEnabled()) )
+		{
+			is_movable = gRlvFolderLocks.canMove(cat_id, mUUID);
+		}
+// [/RLVa:KB]
+
 		accept =	is_movable
 					&& mUUID != cat_id								// Can't move a folder into itself
 					&& mUUID != inv_cat->getParentUUID()			// Avoid moves that would change nothing
