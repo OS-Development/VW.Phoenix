@@ -1064,6 +1064,8 @@ bool RlvFolderLocks::hasLockedFolderDescendent(const LLUUID& idFolder, ELockSour
 {
 	if (!hasLockedFolder(eLockTypeMask))
 		return false;
+	if (m_fLookupDirty)
+		refreshLockedLookups();
 	if ( (fCheckSelf) && (isLockedFolderEntry(idFolder, eSourceType, ePerm, RLV_LOCK_ANY)) )
 		return true;
 
