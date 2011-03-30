@@ -188,6 +188,12 @@ BOOL LLInvFVBridge::isItemRemovable()
 	{
 		return FALSE;
 	}
+// [RLVa:KB] - Checked: 2011-03-29 (RLVa-1.3.0g) | Modified: RLVa-1.3.0g
+	if ( (rlv_handler_t::isEnabled()) && (gRlvFolderLocks.hasLockedFolder(RLV_LOCK_ANY)) && (!gRlvFolderLocks.canRemoveItem(mUUID)) )
+	{
+		return FALSE;
+	}
+// [/RLVa:KB]
 	const LLInventoryObject *obj = model->getItem(mUUID);
 	if (obj && obj->getIsLinkType())
 	{
@@ -1202,6 +1208,10 @@ BOOL LLItemBridge::isItemRenameable() const
 	LLViewerInventoryItem* item = getItem();
 	if(item)
 	{
+// [RLVa:KB] - Checked: 2011-03-29 (RLVa-1.3.0g) | Modified: RLVa-1.3.0g
+		if ( (rlv_handler_t::isEnabled()) && (!gRlvFolderLocks.canRenameItem(mUUID)) )
+			return FALSE;
+// [/RLVa:KB]
 		return (item->getPermissions().allowModifyBy(gAgent.getID()));
 	}
 	return FALSE;
@@ -1337,14 +1347,17 @@ BOOL LLFolderBridge::isItemRemovable()
 {
 	LLInventoryModel* model = mInventoryPanel->getModel();
 
-//	if (!model || !model->isObjectDescendentOf(mUUID, gAgent.getInventoryRootID()))
-// [RLVa:KB] - Checked: 2011-03-29 (RLVa-1.3.0g) | Modified: RLVa-1.3.0g
-	if ( (!model || !model->isObjectDescendentOf(mUUID, gAgent.getInventoryRootID())) || 
-		 ((rlv_handler_t::isEnabled()) && (!gRlvFolderLocks.canRemove(mUUID))) )
-// [/RLVa:KB]
+	if(!model->isObjectDescendentOf(mUUID, gAgent.getInventoryRootID()))
 	{
 		return FALSE;
 	}
+
+// [RLVa:KB] - Checked: 2011-03-29 (RLVa-1.3.0g) | Modified: RLVa-1.3.0g
+	if ( ((rlv_handler_t::isEnabled()) && (gRlvFolderLocks.hasLockedFolder(RLV_LOCK_ANY)) && (!gRlvFolderLocks.canRemoveFolder(mUUID))) )
+	{
+		return FALSE;
+	}
+// [/RLVa:KB]
 
 	LLVOAvatar* avatar = gAgent.getAvatarObject();
 	LLInventoryCategory* category = model->getCategory(mUUID);
@@ -1566,9 +1579,9 @@ BOOL LLFolderBridge::dragCategoryIntoFolder(LLInventoryCategory* inv_cat,
 		}
 
 // [RLVa:KB] - Checked: 2011-03-29 (RLVa-1.3.0g) | Added: RLVa-1.3.0g
-		if ( (is_movable) && (rlv_handler_t::isEnabled()) )
+		if ( (is_movable) && (rlv_handler_t::isEnabled()) && (gRlvFolderLocks.hasLockedFolder(RLV_LOCK_ANY)) )
 		{
-			is_movable = gRlvFolderLocks.canMove(cat_id, mUUID);
+			is_movable = gRlvFolderLocks.canMoveFolder(cat_id, mUUID);
 		}
 // [/RLVa:KB]
 
@@ -1998,7 +2011,7 @@ BOOL LLFolderBridge::isItemRenameable() const
 //	    cat->getOwnerID() == gAgent.getID())
 // [RLVa:KB] - Checked: 2011-03-29 (RLVa-1.3.0g) | Modified: RLVa-1.3.0g
 	if ( (cat && !LLFolderType::lookupIsProtectedType(cat->getPreferredType()) && cat->getOwnerID() == gAgent.getID()) &&
-		 ((!rlv_handler_t::isEnabled()) || (gRlvFolderLocks.canRename(id))) )
+		 ((!rlv_handler_t::isEnabled()) || (gRlvFolderLocks.canRenameFolder(id))) )
 // [/RLVa:KB]
 	{
 		return TRUE;
@@ -2673,6 +2686,22 @@ BOOL LLFolderBridge::dragItemIntoFolder(LLInventoryItem* inv_item,
 			}
 		}
  
+// [RLVa:KB] - Checked: 2011-03-29 (RLVa-1.3.0g) | Modified: RLVa-1.3.0g
+		if ( (rlv_handler_t::isEnabled()) && (is_movable) )
+ 		{
+			if (move_is_into_current_outfit)
+			{
+				// RELEASE-RLVa: [RLVa-1.3.0] Keep sync'ed with code below => LLAppearanceMgr::wearItemOnAvatar() with "replace == true"
+				const LLViewerInventoryItem* pItem = dynamic_cast<const LLViewerInventoryItem*>(inv_item);
+				is_movable = rlvPredCanWearItem(pItem, RLV_WEAR_REPLACE);
+			}
+			if (is_movable)
+			{
+				is_movable = (gRlvFolderLocks.hasLockedFolder(RLV_LOCK_ANY)) && (gRlvFolderLocks.canMoveItem(inv_item->getUUID(), mUUID));
+			}
+ 		}
+ // [/RLVa:KB]
+
 		accept = is_movable && (mUUID != inv_item->getParentUUID());
 		if (accept && drop)
 		{
@@ -2703,7 +2732,7 @@ BOOL LLFolderBridge::dragItemIntoFolder(LLInventoryItem* inv_item,
 						wear_inventory_item_on_avatar(inv_item);
 						break;
 					case LLAssetType::AT_OBJECT:
-						rez_attachment((LLViewerInventoryItem*)inv_item, NULL, false);
+						rez_attachment((LLViewerInventoryItem*)inv_item, NULL, true);
 						break;
 					/*
 					case LLAssetType::AT_GESTURE:
@@ -3804,6 +3833,12 @@ BOOL LLObjectBridge::isItemRemovable()
 	{
 		return FALSE;
 	}
+// [RLVa:KB] - Checked: 2011-03-29 (RLVa-1.3.0g) | Modified: RLVa-1.3.0g
+	if ( (rlv_handler_t::isEnabled()) && (gRlvFolderLocks.hasLockedFolder(RLV_LOCK_ANY)) && (!gRlvFolderLocks.canRemoveItem(mUUID)) )
+	{
+		return FALSE;
+	}
+// [/RLVa:KB]
 	const LLInventoryObject *obj = model->getItem(mUUID);
 	if (obj && obj->getIsLinkType())
 	{
@@ -5023,6 +5058,12 @@ BOOL LLWearableBridge::isItemRemovable()
 	{
 		return FALSE;
 	}
+// [RLVa:KB] - Checked: 2011-03-29 (RLVa-1.3.0g) | Modified: RLVa-1.3.0g
+	if ( (rlv_handler_t::isEnabled()) && (gRlvFolderLocks.hasLockedFolder(RLV_LOCK_ANY)) && (!gRlvFolderLocks.canRemoveItem(mUUID)) )
+	{
+		return FALSE;
+	}
+// [/RLVa:KB]
 	const LLInventoryObject *obj = model->getItem(mUUID);
 	if (obj && obj->getIsLinkType())
 	{
