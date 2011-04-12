@@ -193,6 +193,8 @@ public:
 	bool        hasBehaviour(ERlvBehaviour eBehaviour, bool fStrictOnly) const;
 	bool        hasBehaviour(ERlvBehaviour eBehaviour, const std::string& strOption, bool fStrictOnly) const;
 
+	const LLUUID&		getRootID() const	{ return m_idRoot; }
+
 	const rlv_command_list_t* getCommandList() const { return &m_Commands; }
 
 	/*
