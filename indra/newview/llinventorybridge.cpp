@@ -189,7 +189,7 @@ BOOL LLInvFVBridge::isItemRemovable()
 		return FALSE;
 	}
 // [RLVa:KB] - Checked: 2011-03-29 (RLVa-1.3.0g) | Modified: RLVa-1.3.0g
-	if ( (rlv_handler_t::isEnabled()) && (gRlvFolderLocks.hasLockedFolder(RLV_LOCK_ANY)) && (!gRlvFolderLocks.canRemoveItem(mUUID)) )
+	if ( (rlv_handler_t::isEnabled()) && (RlvFolderLocks::instance().hasLockedFolder(RLV_LOCK_ANY)) && (!RlvFolderLocks::instance().canRemoveItem(mUUID)) )
 	{
 		return FALSE;
 	}
@@ -1209,7 +1209,7 @@ BOOL LLItemBridge::isItemRenameable() const
 	if(item)
 	{
 // [RLVa:KB] - Checked: 2011-03-29 (RLVa-1.3.0g) | Modified: RLVa-1.3.0g
-		if ( (rlv_handler_t::isEnabled()) && (!gRlvFolderLocks.canRenameItem(mUUID)) )
+		if ( (rlv_handler_t::isEnabled()) && (!RlvFolderLocks::instance().canRenameItem(mUUID)) )
 			return FALSE;
 // [/RLVa:KB]
 		return (item->getPermissions().allowModifyBy(gAgent.getID()));
@@ -1353,7 +1353,7 @@ BOOL LLFolderBridge::isItemRemovable()
 	}
 
 // [RLVa:KB] - Checked: 2011-03-29 (RLVa-1.3.0g) | Modified: RLVa-1.3.0g
-	if ( ((rlv_handler_t::isEnabled()) && (gRlvFolderLocks.hasLockedFolder(RLV_LOCK_ANY)) && (!gRlvFolderLocks.canRemoveFolder(mUUID))) )
+	if ( ((rlv_handler_t::isEnabled()) && (RlvFolderLocks::instance().hasLockedFolder(RLV_LOCK_ANY)) && (!RlvFolderLocks::instance().canRemoveFolder(mUUID))) )
 	{
 		return FALSE;
 	}
@@ -1579,9 +1579,9 @@ BOOL LLFolderBridge::dragCategoryIntoFolder(LLInventoryCategory* inv_cat,
 		}
 
 // [RLVa:KB] - Checked: 2011-03-29 (RLVa-1.3.0g) | Added: RLVa-1.3.0g
-		if ( (is_movable) && (rlv_handler_t::isEnabled()) && (gRlvFolderLocks.hasLockedFolder(RLV_LOCK_ANY)) )
+		if ( (is_movable) && (rlv_handler_t::isEnabled()) && (RlvFolderLocks::instance().hasLockedFolder(RLV_LOCK_ANY)) )
 		{
-			is_movable = gRlvFolderLocks.canMoveFolder(cat_id, mUUID);
+			is_movable = RlvFolderLocks::instance().canMoveFolder(cat_id, mUUID);
 		}
 // [/RLVa:KB]
 
@@ -2011,7 +2011,7 @@ BOOL LLFolderBridge::isItemRenameable() const
 //	    cat->getOwnerID() == gAgent.getID())
 // [RLVa:KB] - Checked: 2011-03-29 (RLVa-1.3.0g) | Modified: RLVa-1.3.0g
 	if ( (cat && !LLFolderType::lookupIsProtectedType(cat->getPreferredType()) && cat->getOwnerID() == gAgent.getID()) &&
-		 ((!rlv_handler_t::isEnabled()) || (gRlvFolderLocks.canRenameFolder(mUUID))) )
+		 ((!rlv_handler_t::isEnabled()) || (RlvFolderLocks::instance().canRenameFolder(mUUID))) )
 // [/RLVa:KB]
 	{
 		return TRUE;
@@ -2697,7 +2697,7 @@ BOOL LLFolderBridge::dragItemIntoFolder(LLInventoryItem* inv_item,
 			}
 			if (is_movable)
 			{
-				is_movable = (gRlvFolderLocks.hasLockedFolder(RLV_LOCK_ANY)) && (gRlvFolderLocks.canMoveItem(inv_item->getUUID(), mUUID));
+				is_movable = (RlvFolderLocks::instance().hasLockedFolder(RLV_LOCK_ANY)) && (RlvFolderLocks::instance().canMoveItem(inv_item->getUUID(), mUUID));
 			}
  		}
  // [/RLVa:KB]
@@ -3834,7 +3834,7 @@ BOOL LLObjectBridge::isItemRemovable()
 		return FALSE;
 	}
 // [RLVa:KB] - Checked: 2011-03-29 (RLVa-1.3.0g) | Modified: RLVa-1.3.0g
-	if ( (rlv_handler_t::isEnabled()) && (gRlvFolderLocks.hasLockedFolder(RLV_LOCK_ANY)) && (!gRlvFolderLocks.canRemoveItem(mUUID)) )
+	if ( (rlv_handler_t::isEnabled()) && (RlvFolderLocks::instance().hasLockedFolder(RLV_LOCK_ANY)) && (!RlvFolderLocks::instance().canRemoveItem(mUUID)) )
 	{
 		return FALSE;
 	}
@@ -5059,7 +5059,7 @@ BOOL LLWearableBridge::isItemRemovable()
 		return FALSE;
 	}
 // [RLVa:KB] - Checked: 2011-03-29 (RLVa-1.3.0g) | Modified: RLVa-1.3.0g
-	if ( (rlv_handler_t::isEnabled()) && (gRlvFolderLocks.hasLockedFolder(RLV_LOCK_ANY)) && (!gRlvFolderLocks.canRemoveItem(mUUID)) )
+	if ( (rlv_handler_t::isEnabled()) && (RlvFolderLocks::instance().hasLockedFolder(RLV_LOCK_ANY)) && (!RlvFolderLocks::instance().canRemoveItem(mUUID)) )
 	{
 		return FALSE;
 	}

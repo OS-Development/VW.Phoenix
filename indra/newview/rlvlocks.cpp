@@ -928,7 +928,7 @@ public:
 	/*virtual*/ ~RlvLockedDescendentsCollector() {}
 	/*virtual*/ bool operator()(LLInventoryCategory* pFolder, LLInventoryItem* pItem)
 	{
-		return (pFolder) && (gRlvFolderLocks.isLockedFolderEntry(pFolder->getUUID(), m_eSourceTypeMask, m_ePermMask, m_eLockTypeMask));
+		return (pFolder) && (RlvFolderLocks::instance().isLockedFolderEntry(pFolder->getUUID(), m_eSourceTypeMask, m_ePermMask, m_eLockTypeMask));
 	}
 protected:
 	RlvFolderLocks::ELockPermission m_ePermMask;

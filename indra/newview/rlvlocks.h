@@ -289,7 +289,7 @@ extern RlvWearableLocks gRlvWearableLocks;
 // RlvFolderLocks class declaration
 //
 
-class RlvFolderLocks
+class RlvFolderLocks : public LLSingleton<RlvFolderLocks>
 {
 	friend class RlvLockedDescendentsCollector;
 public:
@@ -383,9 +383,9 @@ protected:
 	mutable uuid_vec_t			m_LockedAttachmentRem;
 	mutable folderlock_map_t	m_LockedFolderMap;
 	mutable uuid_vec_t			m_LockedWearableRem;
+private:
+	friend class LLSingleton<RlvFolderLocks>;
 };
-
-extern RlvFolderLocks gRlvFolderLocks;
 
 // ============================================================================
 // RlvAttachPtLookup inlined member functions
@@ -437,7 +437,7 @@ inline ERlvWearMask RlvAttachmentLocks::canAttach(const LLInventoryItem* pItem, 
 	LLViewerJointAttachment* pAttachPt = RlvAttachPtLookup::getAttachPoint(pItem);
 	if (ppAttachPtOut)
 		*ppAttachPtOut = pAttachPt;
-	return ((pItem) && (!gRlvFolderLocks.isLockedFolder(pItem->getParentUUID(), RLV_LOCK_ADD)))
+	return ((pItem) && (!RlvFolderLocks::instance().isLockedFolder(pItem->getParentUUID(), RLV_LOCK_ADD)))
 		? ((!pAttachPt) ? RLV_WEAR : canAttach(pAttachPt)) : RLV_WEAR_LOCKED;
 }
 
@@ -468,7 +468,7 @@ inline bool RlvAttachmentLocks::hasLockedAttachmentPoint(ERlvLockMask eLock) con
 {
 	// Remove locks are more common so check those first
 	return
-		((eLock & RLV_LOCK_REMOVE) && ((!m_AttachPtRem.empty()) || (!m_AttachObjRem.empty()) || (gRlvFolderLocks.hasLockedAttachment()))) || 
+		((eLock & RLV_LOCK_REMOVE) && ((!m_AttachPtRem.empty()) || (!m_AttachObjRem.empty()) || (RlvFolderLocks::instance().hasLockedAttachment()))) || 
 		((eLock & RLV_LOCK_ADD) && (!m_AttachPtAdd.empty()) );
 }
 
@@ -486,7 +486,7 @@ inline bool RlvAttachmentLocks::isLockedAttachment(const LLViewerObject* pAttach
 		(pAttachObj) && (pAttachObj->isAttachment()) &&
 		( (m_AttachObjRem.find(pAttachObj->getID()) != m_AttachObjRem.end()) || 
 		  (isLockedAttachmentPoint(RlvAttachPtLookup::getAttachPointIndex(pAttachObj), RLV_LOCK_REMOVE)) ||
-		  (gRlvFolderLocks.isLockedAttachment(pAttachObj->getAttachmentItemID())) );
+		  (RlvFolderLocks::instance().isLockedAttachment(pAttachObj->getAttachmentItemID())) );
 }
 
 // Checked: 2010-02-28 (RLVa-1.2.0a) | Added: RLVa-1.0.5a
@@ -531,7 +531,7 @@ inline ERlvWearMask RlvWearableLocks::canWear(const LLViewerInventoryItem* pItem
 {
 	// The specified item can be worn if the wearable type it specifies can be worn on
 	RLV_ASSERT( (pItem) && (LLInventoryType::IT_WEARABLE == pItem->getInventoryType()) );
-	return ((pItem) && (!gRlvFolderLocks.isLockedFolder(pItem->getParentUUID(), RLV_LOCK_ADD))) 
+	return ((pItem) && (!RlvFolderLocks::instance().isLockedFolder(pItem->getParentUUID(), RLV_LOCK_ADD))) 
 		? canWear(pItem->getWearableType()) : RLV_WEAR_LOCKED;
 }
 
@@ -567,7 +567,7 @@ inline bool RlvWearableLocks::isLockedWearable(const LLWearable* pWearable) cons
 	RLV_ASSERT(pWearable);
 	return 
 		(pWearable) &&
-		( (isLockedWearableType(pWearable->getType(), RLV_LOCK_REMOVE)) || (gRlvFolderLocks.isLockedWearable(gAgent.getWearableItem(pWearable->getType()))) );
+		( (isLockedWearableType(pWearable->getType(), RLV_LOCK_REMOVE)) || (RlvFolderLocks::instance().isLockedWearable(gAgent.getWearableItem(pWearable->getType()))) );
 }
 
 // Checked: 2010-03-19 (RLVa-1.2.0c) | Added: RLVa-1.2.0a
