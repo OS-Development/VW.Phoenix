@@ -5,6 +5,20 @@
 # VisualStudio. 
 
 include(CMakeCopyIfDifferent)
+# Provide compiler version awareness
+   if (MSVC71)
+        set(MSVC_DIR 7.1)
+        set(MSVC_SUFFIX 71)
+    elseif (MSVC80)
+        set(MSVC_DIR 8.0)
+        set(MSVC_SUFFIX 80)
+    elseif (MSVC90)
+        set(MSVC_DIR 9.0)
+        set(MSVC_SUFFIX 90)
+    elseif (MSVC10)
+        set(MSVC_DIR 10.0)
+        set(MSVC_SUFFIX 100)
+    endif (MSVC71)
 
 set(vivox_src_dir "${CMAKE_SOURCE_DIR}/newview/vivox-runtime/i686-win32")
 set(vivox_files
@@ -331,26 +345,26 @@ endif (EXISTS ${internal_llkdu_path})
 
 # Copy MS C runtime dlls, required for packaging.
 # *TODO - Adapt this to support VC9
-if (MSVC80)
-    FIND_PATH(debug_msvc8_redist_path msvcr80d.dll
+    FIND_PATH(debug_msvc_redist_path msvcr${MSVC_SUFFIX}d.dll
         PATHS
-         [HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\8.0\\Setup\\VC;ProductDir]/redist/Debug_NonRedist/x86/Microsoft.VC80.DebugCRT
+        ${MSVC_DEBUG_REDIST_PATH}
+         [HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\${MSCV_DIR}\\Setup\\VC;ProductDir]/redist/Debug_NonRedist/x86/Microsoft.VC80.DebugCRT
         NO_DEFAULT_PATH
         NO_DEFAULT_PATH
         )
 
-    if(EXISTS ${debug_msvc8_redist_path})
-        set(debug_msvc8_files
-            msvcr80d.dll
-            msvcp80d.dll
-            Microsoft.VC80.DebugCRT.manifest
+    if(EXISTS ${debug_msvc_redist_path})
+        set(debug_msvc${MSVC_SUFFIX}_files
+            msvcr${MSVC_SUFFIX}d.dll
+            msvcp${MSVC_SUFFIX}d.dll
+            Microsoft.VC${MSVC_SUFFIX}.DebugCRT.manifest
             )
 
         copy_if_different(
-            ${debug_msvc8_redist_path} 
+            ${debug_msvc_redist_path} 
             "${CMAKE_CURRENT_BINARY_DIR}/Debug"
             out_targets 
-            ${debug_msvc8_files}
+            ${debug_msvc_files}
             )
         set(all_targets ${all_targets} ${out_targets})
 
@@ -360,42 +374,43 @@ if (MSVC80)
             COMMAND ${PYTHON_EXECUTABLE}
             ARGS
               ${CMAKE_CURRENT_SOURCE_DIR}/build_win32_appConfig.py
-              ${CMAKE_CURRENT_BINARY_DIR}/Debug/Microsoft.VC80.DebugCRT.manifest
+              ${CMAKE_CURRENT_BINARY_DIR}/Debug/Microsoft.VC${MSVC_SUFFIX}.DebugCRT.manifest
               ${CMAKE_CURRENT_SOURCE_DIR}/SecondLifeDebug.exe.config
               ${debug_appconfig_file}
-            DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/Debug/Microsoft.VC80.DebugCRT.manifest
+            DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/Debug/Microsoft.VC${MSVC_SUFFIX}.DebugCRT.manifest
             COMMENT "Creating debug app config file"
             )
 
-    endif (EXISTS ${debug_msvc8_redist_path})
+    endif (EXISTS ${debug_msvc_redist_path})
 
-    FIND_PATH(release_msvc8_redist_path msvcr80.dll
+    FIND_PATH(release_msvc_redist_path msvcr${MSVC_SUFFIX}.dll
         PATHS
-         [HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\8.0\\Setup\\VC;ProductDir]/redist/x86/Microsoft.VC80.CRT
+        ${MSVC_REDIST_PATH}
+         [HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\${MSVC_DIR}\\Setup\\VC;ProductDir]/redist/x86/Microsoft.VC${MSVC_SUFFIX}.CRT
         NO_DEFAULT_PATH
         NO_DEFAULT_PATH
         )
 
-    if(EXISTS ${release_msvc8_redist_path})
+    if(EXISTS ${release_msvc_redist_path})
         set(release_msvc8_files
-            msvcr80.dll
-            msvcp80.dll
-            Microsoft.VC80.CRT.manifest
+            msvcr${MSVC_SUFFIX}.dll
+            msvcp${MSVC_SUFFIX}.dll
+            Microsoft.VC${MSVC_SUFFIX}.CRT.manifest
             )
 
         copy_if_different(
-            ${release_msvc8_redist_path} 
+            ${release_msvc_redist_path} 
             "${CMAKE_CURRENT_BINARY_DIR}/Release"
             out_targets 
-            ${release_msvc8_files}
+            ${release_msvc_files}
             )
         set(all_targets ${all_targets} ${out_targets})
 
         copy_if_different(
-            ${release_msvc8_redist_path} 
+            ${release_msvc_redist_path} 
             "${CMAKE_CURRENT_BINARY_DIR}/RelWithDebInfo"
             out_targets 
-            ${release_msvc8_files}
+            ${release_msvc_files}
             )
         set(all_targets ${all_targets} ${out_targets})
 
@@ -405,10 +420,10 @@ if (MSVC80)
             COMMAND ${PYTHON_EXECUTABLE}
             ARGS
               ${CMAKE_CURRENT_SOURCE_DIR}/build_win32_appConfig.py
-              ${CMAKE_CURRENT_BINARY_DIR}/Release/Microsoft.VC80.CRT.manifest
+              ${CMAKE_CURRENT_BINARY_DIR}/Release/Microsoft.VC${MSVC_SUFFIX}.CRT.manifest
               ${CMAKE_CURRENT_SOURCE_DIR}/SecondLife.exe.config
               ${release_appconfig_file}
-            DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/Release/Microsoft.VC80.CRT.manifest
+            DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/Release/Microsoft.VC${MSVC_SUFFIX}.CRT.manifest
             COMMENT "Creating release app config file"
             )
 
@@ -418,15 +433,14 @@ if (MSVC80)
             COMMAND ${PYTHON_EXECUTABLE}
             ARGS
               ${CMAKE_CURRENT_SOURCE_DIR}/build_win32_appConfig.py
-              ${CMAKE_CURRENT_BINARY_DIR}/RelWithDebInfo/Microsoft.VC80.CRT.manifest
+              ${CMAKE_CURRENT_BINARY_DIR}/RelWithDebInfo/Microsoft.VC${MSVC_SUFFIX}.CRT.manifest
               ${CMAKE_CURRENT_SOURCE_DIR}/SecondLife.exe.config
               ${relwithdebinfo_appconfig_file}
-            DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/RelWithDebInfo/Microsoft.VC80.CRT.manifest
+            DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/RelWithDebInfo/Microsoft.VC${MSVC_SUFFIX}.CRT.manifest
             COMMENT "Creating relwithdebinfo app config file"
             )
           
-    endif (EXISTS ${release_msvc8_redist_path})
-endif (MSVC80)
+    endif (EXISTS ${release_msvc_redist_path})
 
 add_custom_target(copy_win_libs ALL
   DEPENDS 
