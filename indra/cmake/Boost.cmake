@@ -25,7 +25,7 @@ else (STANDALONE)
       set(Boost_WAVE_LIBRARY 
           optimized libboost_wave-vc80-mt-${BOOST_VERSION}
           debug libboost_wave-vc80-mt-gd-${BOOST_VERSION})
-    else (MSVC90)
+    elseif (MSVC90)
       set(Boost_PROGRAM_OPTIONS_LIBRARY 
           optimized libboost_program_options-vc90-mt-${BOOST_VERSION}
           debug libboost_program_options-vc90-mt-gd-${BOOST_VERSION})
@@ -38,7 +38,7 @@ else (STANDALONE)
       set(Boost_WAVE_LIBRARY 
           optimized libboost_wave-vc90-mt-${BOOST_VERSION}
           debug libboost_wave-vc90-mt-gd-${BOOST_VERSION})
-    else (MSVC90)
+    elseif (MSVC10)
       set(Boost_PROGRAM_OPTIONS_LIBRARY 
           optimized libboost_program_options-vc100-mt-${BOOST_VERSION}
           debug libboost_program_options-vc100-mt-gd-${BOOST_VERSION})
