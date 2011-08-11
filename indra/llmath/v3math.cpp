@@ -134,11 +134,25 @@ BOOL LLVector3::clampLength( F32 length_limit )
 			mV[0] *= length_limit;
 			mV[1] *= length_limit;
 			mV[2] *= length_limit;
-			changed = TRUE;
 		}
 	}
 
 	return changed;
+}
+
+BOOL LLVector3::clamp(const LLVector3 &min_vec, const LLVector3 &max_vec)
+{
+	BOOL ret = FALSE;
+
+	if (mV[0] < min_vec[0]) { mV[0] = min_vec[0]; ret = TRUE; }
+	if (mV[1] < min_vec[1]) { mV[1] = min_vec[1]; ret = TRUE; }
+	if (mV[2] < min_vec[2]) { mV[2] = min_vec[2]; ret = TRUE; }
+
+	if (mV[0] > max_vec[0]) { mV[0] = max_vec[0]; ret = TRUE; }
+	if (mV[1] > max_vec[1]) { mV[1] = max_vec[1]; ret = TRUE; }
+	if (mV[2] > max_vec[2]) { mV[2] = max_vec[2]; ret = TRUE; }
+
+	return ret;
 }
 
 
@@ -185,14 +199,6 @@ void 	LLVector3::snap(S32 sig_digits)
 	mV[VY] = snap_to_sig_figs(mV[VY], sig_digits);
 	mV[VZ] = snap_to_sig_figs(mV[VZ], sig_digits);
 }
-
-
-std::ostream& operator<<(std::ostream& s, const LLVector3 &a) 
-{
-	s << "{ " << a.mV[VX] << ", " << a.mV[VY] << ", " << a.mV[VZ] << " }";
-	return s;
-}
-
 
 const LLVector3&	LLVector3::rotVec(const LLMatrix3 &mat)
 {

@@ -37,8 +37,8 @@
 #include <cstdlib>
 #include <complex>
 #include "lldefs.h"
-#include "llstl.h" // *TODO: Remove when LLString is gone
-#include "llstring.h" // *TODO: Remove when LLString is gone
+//#include "llstl.h" // *TODO: Remove when LLString is gone
+//#include "llstring.h" // *TODO: Remove when LLString is gone
 // lltut.h uses is_approx_equal_fraction(). This was moved to its own header
 // file in llcommon so we can use lltut.h for llcommon tests without making
 // llcommon depend on llmath.
@@ -209,7 +209,7 @@ inline S32 llfloor( F32 f )
 		}
 		return result;
 #else
-		return (S32)floor(f);
+		return (S32)floorf(f);
 #endif
 }
 

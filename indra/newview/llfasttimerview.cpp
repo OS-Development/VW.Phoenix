@@ -99,6 +99,7 @@ static struct ft_display_info ft_display_table[] =
 	{ LLFastTimer::FTM_OBJECTLIST_UPDATE,	"  Object Update",	&LLColor4::purple1, 1 },
 	{ LLFastTimer::FTM_AVATAR_UPDATE,		"   Avatars",		&LLColor4::purple2, 0 },
 	{ LLFastTimer::FTM_JOINT_UPDATE,		"    Joints",		&LLColor4::purple3, 0 },
+	{ LLFastTimer::FTM_PHYSICS_UPDATE,		"    Physics",		&LLColor4::red1, 0 },
 	{ LLFastTimer::FTM_ATTACHMENT_UPDATE,	"    Attachments",	&LLColor4::purple4, 0 },
 	{ LLFastTimer::FTM_UPDATE_ANIMATION,	"     Animation",	&LLColor4::purple5, 0 },
 	{ LLFastTimer::FTM_FLEXIBLE_UPDATE,		"   Flex Update",	&LLColor4::pink2, 0 },

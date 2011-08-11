@@ -70,6 +70,8 @@ class LLVector2
 		void	setVec(const LLVector2 &vec);	// deprecated
 		void	setVec(const F32 *vec);			// deprecated
 
+		inline bool isFinite() const; // checks to see if all values of LLVector2 are finite
+
 		F32		length() const;				// Returns magnitude of LLVector2
 		F32		lengthSquared() const;		// Returns magnitude squared of LLVector2
 		F32		normalize();					// Normalizes and returns the magnitude of LLVector2

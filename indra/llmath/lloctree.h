@@ -65,7 +65,7 @@ public:
 };
 
 template <class T>
-class LLOctreeTraveler : public LLTreeTraveler<T>
+class LLOctreeTraveler
 {
 public:
 	virtual void traverse(const LLOctreeNode<T>* node);
@@ -183,7 +183,6 @@ public:
 		{
 			mMax.mdV[i] = mCenter.mdV[i] + mSize.mdV[i];
 			mMin.mdV[i] = mCenter.mdV[i] - mSize.mdV[i];
-			mCenter.mdV[i] = mCenter.mdV[i];
 		}
 	}
 
@@ -699,7 +698,6 @@ public:
 	}
 };
 
-
 //========================
 //		LLOctreeTraveler
 //========================
@@ -712,5 +710,4 @@ void LLOctreeTraveler<T>::traverse(const LLOctreeNode<T>* node)
 		traverse(node->getChild(i));
 	}
 }
-
 #endif

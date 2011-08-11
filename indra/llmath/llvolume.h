@@ -802,6 +802,8 @@ public:
 	BOOL create(LLVolume* volume, BOOL partial_build = FALSE);
 	void createBinormals();
 
+	void makeTriStrip();
+
 	class VertexData
 	{
 	public:
@@ -839,9 +841,11 @@ public:
 	S32 mNumT;
 
 	LLVector3 mExtents[2]; //minimum and maximum point of face
+	LLVector2 mTexCoordExtents[2]; //minimum and maximum of texture coordinates of the face.
 
 	std::vector<VertexData> mVertices;
 	std::vector<U16>	mIndices;
+	std::vector<U16>	mTriStrip;
 	std::vector<S32>	mEdge;
 
 private:
