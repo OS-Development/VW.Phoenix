@@ -634,18 +634,25 @@
 					</map>
 				</map>
 			</map>
-			<key>google</key>
+			<key>tcmalloc</key>
 			<map>
 				<key>license</key>
-				<string>mit</string>
+				<string>bsd</string>
 				<key>packages</key>
 				<map>
 					<key>linux</key>
 					<map>
 						<key>md5sum</key>
-						<string>40db900872612615e849f17cbdfd2c27</string>
+						<string>9a2e99d79d9188f4d1d636c06bc3ba43</string>
 						<key>url</key>
-						<uri>http://s3.amazonaws.com/viewer-source-downloads/install_pkgs/google-linux-20080812.tar.bz2</uri>
+						<uri>http://sldev.free.fr/libraries/google-perftools-1.7-linux-20110412.tar.bz2</uri>
+					</map>
+					<key>windows</key>
+					<map>
+						<key>md5sum</key>
+						<string>da0fd83ce5f0ec857f1ff64f40027699</string>
+						<key>url</key>
+						<uri>http://sldev.free.fr/libraries/google-perftools-1.7-windows-20110617.tar.bz2</uri>
 					</map>
 				</map>
 			</map>

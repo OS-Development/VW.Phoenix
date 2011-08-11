@@ -107,7 +107,7 @@ public:
 // methods to acquire finalized result
   void				raw_digest(unsigned char *array);	// provide 16-byte array for binary data
   void				hex_digest(char *string);			// provide 33-byte array for ascii-hex string
-  friend std::ostream&   operator<< (std::ostream&, LLMD5 context);
+  friend LL_COMMON_API std::ostream& operator<< (std::ostream&, LLMD5 context);
 
 
 

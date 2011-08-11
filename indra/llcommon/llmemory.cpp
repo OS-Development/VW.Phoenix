@@ -227,29 +227,6 @@ void ll_release (void *pin)
 	LLMemType::sTotalMem -= size;
 	free(p);
 }
-
-#else
-
-void* ll_allocate (size_t size)
-{
-	if (size == 0)
-	{
-		llwarns << "Null allocation" << llendl;
-	}
-	void *p = malloc(size);
-	if (p == NULL)
-	{
-		LLMemory::freeReserve();
-		llerrs << "Out of memory Error" << llendl;
-	}
-	return p;
-}
-
-void ll_release (void *p)
-{
-	free(p);
-}
-
 #endif
 
 #if MEM_TRACK_MEM

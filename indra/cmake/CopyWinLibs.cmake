@@ -32,6 +32,7 @@ set(debug_files
     libhunspell.dll
     lgggrowl++.dll
     lgggrowl.dll
+    libtcmalloc_minimal-debug.dll
     )
 
 copy_if_different(
@@ -234,6 +235,7 @@ set(release_files
     libhunspell.dll
     lgggrowl++.dll
     lgggrowl.dll
+    libtcmalloc_minimal.dll
     )
     
 copy_if_different(

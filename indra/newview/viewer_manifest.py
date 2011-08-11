@@ -290,15 +290,16 @@ class WindowsManifest(ViewerManifest):
                 print "WARNING: not copying VC runtimes to staging area, this will fail if you make an installer from this staging"
 
             # For google-perftools tcmalloc allocator.
-            try:
-                if self.args['configuration'].lower() == 'debug':
-                    self.path('libtcmalloc_minimal-debug.dll')
-                else:
-                    self.path('libtcmalloc_minimal.dll')
-            except:
-                print "Skipping libtcmalloc_minimal.dll"
+			if self.prefix(src="../../libraries/i686-win32/lib/release", dst=""):
+				try:
+					if self.args['configuration'].lower() == 'debug':
+						self.path('libtcmalloc_minimal-debug.dll')
+					else:
+						self.path('libtcmalloc_minimal.dll')
+				except:
+					print "Skipping libtcmalloc_minimal.dll"
 
-            self.end_prefix()
+				self.end_prefix()
 
         self.path(src="licenses-win32.txt", dst="licenses.txt")
         self.path("featuretable.txt")
@@ -937,6 +938,9 @@ class Linux_i686Manifest(LinuxManifest):
             self.path("libalut.so")
             self.path("libopenal.so", "libopenal.so.1")
 #            self.path("libopenal.so", "libvivoxoal.so.1") # vivox's sdk expects this soname
+            self.path("libtcmalloc.so", "libtcmalloc.so") #formerly called google perf tools
+            self.path("libtcmalloc.so.0", "libtcmalloc.so.0") #formerly called google perf tools
+            self.path("libtcmalloc.so.0.1.0", "libtcmalloc.so.0.1.0") #formerly called google perf tools
             
             # Phoenix-specific addons
             self.path("libotr.so.2.2.0", "libotr.so.2")
