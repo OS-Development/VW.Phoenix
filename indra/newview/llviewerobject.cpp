@@ -209,7 +209,9 @@ LLViewerObject::LLViewerObject(const LLUUID &id, const LLPCode pcode, LLViewerRe
 	mMedia(NULL),
 	mClickAction(0),
 	mAttachmentItemID(LLUUID::null),
-	mSculptSurfaceArea(0.0)
+	mSculptSurfaceArea(0.0),
+	mLastUpdateType(OUT_UNKNOWN),
+	mLastUpdateCached(FALSE)
 {
 	if(!is_global)
 	{

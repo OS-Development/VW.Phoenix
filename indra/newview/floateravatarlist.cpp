@@ -746,9 +746,9 @@ static void send_freeze(const LLUUID& avatar_id, bool freeze)
 	}
 
 	LLMessageSystem* msg = gMessageSystem;
-	LLViewerObject* avatar = gObjectList.findObject(avatar_id);
+	LLVOAvatar* avatar = gObjectList.findAvatar(avatar_id);
 
-	if (avatar)
+	if (avatar && avatar->getRegion())
 	{
 		msg->newMessage("FreezeUser");
 		msg->nextBlock("AgentData");
@@ -757,7 +757,7 @@ static void send_freeze(const LLUUID& avatar_id, bool freeze)
 		msg->nextBlock("Data");
 		msg->addUUID("TargetID", avatar_id );
 		msg->addU32("Flags", flags );
-		msg->sendReliable( avatar->getRegion()->getHost() );
+		msg->sendReliable(avatar->getRegion()->getHost());
 	}
 }
 
@@ -791,9 +791,9 @@ bool LLFloaterAvatarList::LLAgentUnfreeze::handleEvent(LLPointer<LLEvent> event,
 static void send_eject(const LLUUID& avatar_id, bool ban)
 {	
 	LLMessageSystem* msg = gMessageSystem;
-	LLViewerObject* avatar = gObjectList.findObject(avatar_id);
+	LLVOAvatar* avatar = gObjectList.findAvatar(avatar_id);
 
-	if (avatar)
+	if (avatar && avatar->getRegion())
 	{
 		U32 flags = 0x0;
 		if ( ban )
@@ -809,7 +809,7 @@ static void send_eject(const LLUUID& avatar_id, bool ban)
 		msg->nextBlock("Data");
 		msg->addUUID("TargetID", avatar_id );
 		msg->addU32("Flags", flags );
-		msg->sendReliable( avatar->getRegion()->getHost() );
+		msg->sendReliable(avatar->getRegion()->getHost());
 	}
 }
 
@@ -1134,12 +1134,10 @@ void LLFloaterAvatarList::updateAvatarList()
 		const LLUUID &avid = avatar_ids[i];
 
 		LLVector3d position;
-		LLViewerObject *obj = gObjectList.findObject(avid);
+		LLVOAvatar* avatarp = gObjectList.findAvatar(avid);
 
-		if(obj)
+		if(avatarp)
 		{
-			LLVOAvatar* avatarp = dynamic_cast<LLVOAvatar*>(obj);
-			if (avatarp == NULL) continue;
 			if (avatarp->isDead() || avatarp->isSelf() || avatarp->mIsDummy) continue;
 
 			// Get avatar data
@@ -1370,7 +1368,7 @@ void LLFloaterAvatarList::refreshAvatarList()
 		if ( av_id.isNull() ) continue;
 
 		BOOL av_isvoice = ent->getIsVoice();
-		LLVOAvatar *av = (LLVOAvatar*)gObjectList.findObject(av_id);
+		LLVOAvatar* av = gObjectList.findAvatar(av_id);
 		BOOL flagForFedUpDistance = false;
 		LLVector3d position = LLVector3d::zero;
 		F32 distance = 0.0f;
@@ -2227,8 +2225,8 @@ void LLFloaterAvatarList::onDoubleClick(void *userdata)
 
 void LLFloaterAvatarList::lookAtAvatar(LLUUID &uuid)
 { // twisted laws
-    LLViewerObject* voavatar = gObjectList.findObject(uuid);
-    if(voavatar && voavatar->isAvatar())
+    LLVOAvatar* voavatar = gObjectList.findAvatar(uuid);
+    if (voavatar)
     {
         gAgent.setFocusOnAvatar(FALSE, FALSE);
         gAgent.changeCameraToThirdPerson();

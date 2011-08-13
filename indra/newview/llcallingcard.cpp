@@ -199,16 +199,16 @@ bool LLAvatarTracker::haveTrackingInfo()
 
 LLVector3d LLAvatarTracker::getGlobalPos()
 {
-	if(!mTrackedAgentValid || !mTrackingData) return LLVector3d();
+	if (!mTrackedAgentValid || !mTrackingData) return LLVector3d();
 	LLVector3d global_pos;
 	
-	LLViewerObject* object = gObjectList.findObject(mTrackingData->mAvatarID);
-	if(object && !object->isDead())
+	LLVOAvatar* avatarp = gObjectList.findAvatar(mTrackingData->mAvatarID);
+	if (avatarp && !avatarp->isDead())
 	{
-		global_pos = object->getPositionGlobal();
+		global_pos = avatarp->getPositionGlobal();
 		// HACK - for making the tracker point above the avatar's head
 		// rather than its groin
-		global_pos.mdV[VZ] += 0.7f * ((LLVOAvatar *)object)->mBodySize.mV[VZ];
+		global_pos.mdV[VZ] += 0.7f * avatarp->mBodySize.mV[VZ];
 
 		mTrackingData->mGlobalPositionEstimate = global_pos;
 	}
@@ -228,10 +228,10 @@ void LLAvatarTracker::getDegreesAndDist(F32& rot,
 
 	LLVector3d global_pos;
 
-	LLViewerObject* object = gObjectList.findObject(mTrackingData->mAvatarID);
-	if(object && !object->isDead())
+	LLVOAvatar* avatarp = gObjectList.findAvatar(mTrackingData->mAvatarID);
+	if (avatarp && !avatarp->isDead())
 	{
-		global_pos = object->getPositionGlobal();
+		global_pos = avatarp->getPositionGlobal();
 		mTrackingData->mGlobalPositionEstimate = global_pos;
 	}
 	else
@@ -809,8 +809,8 @@ void LLTrackingData::agentFound(const LLUUID& prey,
 
 bool LLTrackingData::haveTrackingInfo()
 {
-	LLViewerObject* object = gObjectList.findObject(mAvatarID);
-	if(object && !object->isDead())
+	LLVOAvatar* avatarp = gObjectList.findAvatar(mAvatarID);
+	if (avatarp && !avatarp->isDead())
 	{
 		mCoarseLocationTimer.checkExpirationAndReset(COARSE_FREQUENCY);
 		mUpdateTimer.setTimerExpirySec(FIND_FREQUENCY);
@@ -818,20 +818,20 @@ bool LLTrackingData::haveTrackingInfo()
 		mHaveInfo = true;
 		return true;
 	}
-	if(mHaveCoarseInfo &&
-	   !mCoarseLocationTimer.checkExpirationAndReset(COARSE_FREQUENCY))
+	if (mHaveCoarseInfo &&
+	    !mCoarseLocationTimer.checkExpirationAndReset(COARSE_FREQUENCY))
 	{
 		// if we reach here, then we have a 'recent' coarse update
 		mUpdateTimer.setTimerExpirySec(FIND_FREQUENCY);
 		mAgentGone.setTimerExpirySec(OFFLINE_SECONDS);
 		return true;
 	}
-	if(mUpdateTimer.checkExpirationAndReset(FIND_FREQUENCY))
+	if (mUpdateTimer.checkExpirationAndReset(FIND_FREQUENCY))
 	{
 		LLAvatarTracker::instance().findAgent();
 		mHaveCoarseInfo = false;
 	}
-	if(mAgentGone.checkExpirationAndReset(OFFLINE_SECONDS))
+	if (mAgentGone.checkExpirationAndReset(OFFLINE_SECONDS))
 	{
 		mHaveInfo = false;
 		mHaveCoarseInfo = false;

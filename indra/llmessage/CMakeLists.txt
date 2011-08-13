@@ -90,6 +90,7 @@ set(llmessage_SOURCE_FILES
     llxfer_mem.cpp
     llxfer_vfile.cpp
     llxorcipher.cpp
+    machine.cpp
     message.cpp
     message_prehash.cpp
     message_string_table.cpp
@@ -99,6 +100,7 @@ set(llmessage_SOURCE_FILES
     patch_dct.cpp
     patch_idct.cpp
     llsocks5.cpp
+    sound_ids.cpp
     )
 
 set(llmessage_HEADER_FILES

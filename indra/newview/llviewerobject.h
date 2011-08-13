@@ -81,6 +81,7 @@ typedef enum e_object_update_type
 	OUT_TERSE_IMPROVED,
 	OUT_FULL_COMPRESSED,
 	OUT_FULL_CACHED,
+	OUT_UNKNOWN,
 } EObjectUpdateType;
 
 
@@ -670,8 +671,16 @@ public:
 	const LLUUID &getAttachmentItemID() const { return mAttachmentItemID; }
 	void setAttachmentItemID(const LLUUID &id) { mAttachmentItemID = id; }
 	const LLUUID &extractAttachmentItemID(); // find&set the inventory item ID of the attached object
+
+	EObjectUpdateType getLastUpdateType() const { return mLastUpdateType; }
+	void setLastUpdateType(EObjectUpdateType last_update_type) { mLastUpdateType = last_update_type; }
+	BOOL getLastUpdateCached() const { return mLastUpdateCached; }
+	void setLastUpdateCached(BOOL last_update_cached) { mLastUpdateCached = last_update_cached; }
 private:
 	LLUUID mAttachmentItemID; // ItemID when item is in user inventory.
+
+	EObjectUpdateType	mLastUpdateType;
+	BOOL				mLastUpdateCached;
 };
 typedef std::vector<LLViewerObject*> llvo_vec_t;
 

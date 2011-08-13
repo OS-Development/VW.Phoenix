@@ -182,6 +182,9 @@ public:
 	static bool lookupCanLink(EType asset_type);
 	static bool lookupIsLinkType(EType asset_type);
 
+	static bool lookupIsAssetFetchByIDAllowed(EType asset_type); // the asset allows direct download
+	static bool lookupIsAssetIDKnowable(EType asset_type); // asset data can be known by the viewer
+
 private:
 	// don't instantiate or derive one of these objects
 	LLAssetType( void ) {}

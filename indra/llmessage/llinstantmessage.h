@@ -74,6 +74,7 @@ enum EInstantMessage
 	// Group vote
 	// Name is name of person who called vote.
 	// ID is vote ID used for internal tracking
+	// TODO: _DEPRECATED suffix as part of vote removal - DEV-24856
 	IM_GROUP_VOTE = 7,
 
 	// Group message
@@ -228,6 +229,7 @@ extern const S32 EMPTY_BINARY_BUCKET_SIZE;
 
 extern const U32 NO_TIMESTAMP;
 extern const std::string SYSTEM_FROM;
+extern const std::string INTERACTIVE_SYSTEM_FROM;
 
 // Number of retry attempts on sending the im.
 extern const S32 IM_TTL;

@@ -2714,18 +2714,17 @@ bool callback_freeze(const LLSD& notification, const LLSD& response)
 		}
 
 		LLMessageSystem* msg = gMessageSystem;
-		LLViewerObject* avatar = gObjectList.findObject(avatar_id);
-
-		if (avatar)
+		LLVOAvatar* avatarp = gObjectList.findAvatar(avatar_id);
+		if (avatarp && avatarp->getRegion())
 		{
 			msg->newMessage("FreezeUser");
 			msg->nextBlock("AgentData");
 			msg->addUUID("AgentID", gAgent.getID());
 			msg->addUUID("SessionID", gAgent.getSessionID());
 			msg->nextBlock("Data");
-			msg->addUUID("TargetID", avatar_id );
-			msg->addU32("Flags", flags );
-			msg->sendReliable( avatar->getRegion()->getHost() );
+			msg->addUUID("TargetID", avatar_id);
+			msg->addU32("Flags", flags);
+			msg->sendReliable(avatarp->getRegion()->getHost());
 		}
 	}
 	return false;
@@ -2825,40 +2824,38 @@ bool callback_eject(const LLSD& notification, const LLSD& response)
 	{
 		// Eject button
 		LLMessageSystem* msg = gMessageSystem;
-		LLViewerObject* avatar = gObjectList.findObject(avatar_id);
-
-		if (avatar)
+		LLVOAvatar* avatarp = gObjectList.findAvatar(avatar_id);
+		if (avatarp && avatarp->getRegion())
 		{
 			U32 flags = 0x0;
 			msg->newMessage("EjectUser");
 			msg->nextBlock("AgentData");
-			msg->addUUID("AgentID", gAgent.getID() );
-			msg->addUUID("SessionID", gAgent.getSessionID() );
+			msg->addUUID("AgentID", gAgent.getID());
+			msg->addUUID("SessionID", gAgent.getSessionID());
 			msg->nextBlock("Data");
-			msg->addUUID("TargetID", avatar_id );
-			msg->addU32("Flags", flags );
-			msg->sendReliable( avatar->getRegion()->getHost() );
+			msg->addUUID("TargetID", avatar_id);
+			msg->addU32("Flags", flags);
+			msg->sendReliable(avatarp->getRegion()->getHost());
 		}
 	}
 	else if (ban_enabled)
 	{
 		// This is tricky. It is similar to say if it is not an 'Eject' button,
-		// and it is also not an 'Cancle' button, and ban_enabled==ture, 
+		// and it is also not an 'Cancel' button, and ban_enabled==true, 
 		// it should be the 'Eject and Ban' button.
 		LLMessageSystem* msg = gMessageSystem;
-		LLViewerObject* avatar = gObjectList.findObject(avatar_id);
-
-		if (avatar)
+		LLVOAvatar* avatarp = gObjectList.findAvatar(avatar_id);
+		if (avatarp && avatarp->getRegion())
 		{
 			U32 flags = 0x1;
 			msg->newMessage("EjectUser");
 			msg->nextBlock("AgentData");
-			msg->addUUID("AgentID", gAgent.getID() );
-			msg->addUUID("SessionID", gAgent.getSessionID() );
+			msg->addUUID("AgentID", gAgent.getID());
+			msg->addUUID("SessionID", gAgent.getSessionID());
 			msg->nextBlock("Data");
-			msg->addUUID("TargetID", avatar_id );
+			msg->addUUID("TargetID", avatar_id);
 			msg->addU32("Flags", flags );
-			msg->sendReliable( avatar->getRegion()->getHost() );
+			msg->sendReliable(avatarp->getRegion()->getHost());
 		}
 	}
 	return false;

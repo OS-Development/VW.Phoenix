@@ -53,7 +53,7 @@ void LLRegionPresenceVerifier::RegionResponder::result(const LLSD& content)
 	llinfos << "Verifying " << destination.getString() << " is region " << id << llendl;
 
 	std::stringstream uri;
-	uri << "http://" << destination.getString() << "/state/basic";
+	uri << "http://" << destination.getString() << "/state/basic/";
 	mSharedData->getHttpClient().get(uri.str(), new VerifiedDestinationResponder(mSharedData, content));
 }
 

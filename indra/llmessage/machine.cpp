@@ -1,6 +1,6 @@
 /** 
- * @file llpacketbuffer.cpp
- * @brief implementation of LLPacketBuffer class for a packet.
+ * @file machine.h
+ * @brief LLMachine class
  *
  * $LicenseInfo:firstyear=2001&license=viewergpl$
  * 
@@ -32,51 +32,32 @@
 
 #include "linden_common.h"
 
-#include "llpacketbuffer.h"
+#include "machine.h"
 
-#include "net.h"
-#include "timing.h"
-#include "llhost.h"
+#include "llerror.h"
 
-///////////////////////////////////////////////////////////
-
-LLPacketBuffer::LLPacketBuffer(const LLHost &host, const char *datap, const S32 size) : mHost(host)
-{
-	mSize = 0;
-	mData[0] = '!';
-
-	if (size > NET_BUFFER_SIZE)
+void LLMachine::setMachinePort(S32 port)
+{ 
+	if (port < 0) 
 	{
-		llerrs << "Sending packet > " << NET_BUFFER_SIZE << " of size " << size << llendl;
+		llinfos << "Can't assign a negative number to LLMachine::mPort" << llendl;
+		mHost.setPort(0);
 	}
-	else
+	else 
 	{
-		if (datap != NULL)
-		{
-			memcpy(mData, datap, size);
-			mSize = size;
-		}
+		mHost.setPort(port); 
 	}
-	
 }
 
-LLPacketBuffer::LLPacketBuffer (S32 hSocket)
+void LLMachine::setControlPort( S32 port ) 
 {
-	init(hSocket);
+	if (port < 0) 
+	{
+		llinfos << "Can't assign a negative number to LLMachine::mControlPort" << llendl;
+		mControlPort = 0;
+	}
+	else 
+	{
+		mControlPort = port; 
+	}
 }
-
-///////////////////////////////////////////////////////////
-
-LLPacketBuffer::~LLPacketBuffer ()
-{
-}
-
-///////////////////////////////////////////////////////////
-
-void LLPacketBuffer::init (S32 hSocket)
-{
-	mSize = receive_packet(hSocket, mData);
-	mHost = ::get_sender();
-	mReceivingIF = ::get_receiving_interface();
-}
-

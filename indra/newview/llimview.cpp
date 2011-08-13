@@ -575,17 +575,22 @@ void LLIMMgr::addMessage(
 
 	BOOL is_linden = LLMuteList::getInstance()->isLinden(other_participant_id);
 
+	// replace interactive system message marker with correct from string value
+	std::string from_name = from;
+	if (from == INTERACTIVE_SYSTEM_FROM)
+	{
+		from_name = SYSTEM_FROM;
+	}
+
 	// don't process muted IMs
-	if (LLMuteList::getInstance()->isMuted(
-			other_participant_id,
+	if (LLMuteList::getInstance()->isMuted(other_participant_id,
 			LLMute::flagTextChat) && !is_linden)
 	{
 		return;
 	}
 
-	//not sure why...but if it is from ourselves we set the target_id
-	//to be NULL
-	if( other_participant_id == gAgent.getID() )
+	//not sure why...but if it is from ourselves we set the target_id to be NULL
+	if (other_participant_id == gAgent.getID())
 	{
 		other_participant_id = LLUUID::null;
 	}
@@ -609,33 +614,26 @@ void LLIMMgr::addMessage(
 	}
 	
 	// create IM window as necessary
-	if(!floater)
+	if (!floater)
 	{
-		std::string name = from;
+		std::string name = from_name;
 		if(!session_name.empty() && session_name.size()>1)
 		{
 			name = session_name;
 		}
-
 		
-		floater = createFloater(
-			new_session_id,
-			other_participant_id,
-			name,
-			dialog,
-			FALSE);
+		floater = createFloater(new_session_id, other_participant_id, name, dialog, FALSE);
 
 		// When we get a new IM, and if you are a god, display a bit
 		// of information about the source. This is to help liaisons
 		// when answering questions.
-		if(gAgent.isGodlike())
+		if (gAgent.isGodlike())
 		{
 			// *TODO:translate (low priority, god ability)
 			std::ostringstream bonus_info;
-			bonus_info << "*** parent estate: "
-				<< parent_estate_id
-				<< ((parent_estate_id == 1) ? ", mainland" : "")
-				<< ((parent_estate_id == 5) ? ", teen" : "");
+			bonus_info << "*** parent estate: " << parent_estate_id
+					   << (parent_estate_id == 1 ? ", mainland" : "")
+					   << (parent_estate_id == 5 ? ", teen" : "");
 
 			// once we have web-services (or something) which returns
 			// information about a region id, we can print this out
@@ -650,7 +648,7 @@ void LLIMMgr::addMessage(
 	}
 
 	// now add message to floater
-	bool is_from_system = target_id.isNull() || (from == SYSTEM_FROM);
+	bool is_from_system = (target_id.isNull() || from == SYSTEM_FROM);
 	bool is_encrypted = (msg.substr(0, 3) == "\xe2\x80\xa7");
 	LLColor4 color;
 	//Phoenix:KC - color chat from friends. taking care not to color when RLV hide names is in effect, lol
@@ -688,18 +686,18 @@ void LLIMMgr::addMessage(
 		color = gSavedSettings.getColor4("IMChatColor");
 	}
 	
-	if ( !link_name )
+	if (!link_name)
 	{
-		floater->addHistoryLine(msg,color); // No name to prepend, so just add the message normally
+		floater->addHistoryLine(msg, color); // No name to prepend, so just add the message normally
 	}
 	else
 	{
-		floater->addHistoryLine(msg, color, true, other_participant_id, from); // Insert linked name to front of message
+		floater->addHistoryLine(msg, color, true, other_participant_id, from_name); // Insert linked name to front of message
 	}
 
 	LLFloaterChatterBox* chat_floater = LLFloaterChatterBox::getInstance(LLSD());
 
-	if( !chat_floater->getVisible() && !floater->getVisible())
+	if (!chat_floater->getVisible() && !floater->getVisible())
 	{
 		//if the IM window is not open and the floater is not visible (i.e. not torn off)
 		LLFloater* previouslyActiveFloater = chat_floater->getActiveFloater();
@@ -710,7 +708,7 @@ void LLIMMgr::addMessage(
 
 		//there was a previously unseen IM, make that old tab flashing
 		//it is assumed that the most recently unseen IM tab is the one current selected/active
-		if ( previouslyActiveFloater && getIMReceived() )
+		if (previouslyActiveFloater && getIMReceived())
 		{
 			chat_floater->setFloaterFlashing(previouslyActiveFloater, TRUE);
 		}

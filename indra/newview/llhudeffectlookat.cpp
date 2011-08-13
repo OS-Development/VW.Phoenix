@@ -340,10 +340,10 @@ void LLHUDEffectLookAt::unpackData(LLMessageSystem *mesgsys, S32 blocknum)
 	
 	htonmemcpy(source_id.mData, &(packed_data[SOURCE_AVATAR]), MVT_LLUUID, 16);
 
-	LLViewerObject *objp = gObjectList.findObject(source_id);
-	if (objp && objp->isAvatar())
+	LLVOAvatar* avatarp = gObjectList.findAvatar(source_id);
+	if (avatarp)
 	{
-		setSourceObject(objp);
+		setSourceObject(avatarp);
 	}
 	else
 	{
@@ -353,7 +353,7 @@ void LLHUDEffectLookAt::unpackData(LLMessageSystem *mesgsys, S32 blocknum)
 
 	htonmemcpy(target_id.mData, &(packed_data[TARGET_OBJECT]), MVT_LLUUID, 16);
 
-	objp = gObjectList.findObject(target_id);
+	LLViewerObject* objp = gObjectList.findObject(target_id);
 
 	htonmemcpy(new_target.mdV, &(packed_data[TARGET_POS]), MVT_LLVector3d, 24);
 

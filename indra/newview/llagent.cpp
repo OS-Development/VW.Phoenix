@@ -2870,8 +2870,8 @@ void LLAgent::startTyping()
 
 	if (mChatTimer.getElapsedTimeF32() < 2.f)
 	{
-		LLViewerObject* chatter = gObjectList.findObject(mLastChatterID);
-		if (chatter && chatter->isAvatar())
+		LLVOAvatar* chatter = gObjectList.findAvatar(mLastChatterID);
+		if (chatter)
 		{
 			gAgent.setLookAt(LOOKAT_TARGET_RESPOND, chatter, LLVector3::zero);
 		}
@@ -5009,107 +5009,90 @@ void LLAgent::lookAtObject(LLUUID object_id, ECameraPosition camera_pos)
 
 const F32 SIT_POINT_EXTENTS = 0.2f;
 
-void LLAgent::setStartPosition( U32 location_id )
+LLSD ll_sdmap_from_vector3(const LLVector3& vec)
 {
-  LLViewerObject          *object;
+	LLSD ret;
+	ret["X"] = vec.mV[VX];
+	ret["Y"] = vec.mV[VY];
+	ret["Z"] = vec.mV[VZ];
+	return ret;
+}
 
-  if ( !(gAgentID == LLUUID::null) )
-  {
-    // we've got an ID for an agent viewerobject
-    object = gObjectList.findObject(gAgentID);
-    if (object)
-    {
-      // we've got the viewer object
-      // Sometimes the agent can be velocity interpolated off of
-      // this simulator.  Clamp it to the region the agent is
-      // in, a little bit in on each side.
-      const F32 INSET = 0.5f; //meters
-      const F32 REGION_WIDTH = LLWorld::getInstance()->getRegionWidthInMeters();
+void LLAgent::setStartPosition(U32 location_id)
+{
+	if (gAgentID == LLUUID::null || gObjectList.findAvatar(gAgentID) == NULL)
+	{
+        llwarns << "Can't find agent viewer object id " << gAgentID
+				<< ". Operation aborted." << llendl;
+        return;
+    }
 
-      LLVector3 agent_pos = getPositionAgent();
-      LLVector3 agent_look_at = mFrameAgent.getAtAxis();
+	// we've got the viewer object
+	// Sometimes the agent can be velocity interpolated off of
+	// this simulator.  Clamp it to the region the agent is
+	// in, a little bit in on each side.
+	const F32 INSET = 0.5f; //meters
+	const F32 REGION_WIDTH = LLWorld::getInstance()->getRegionWidthInMeters();
 
-      if (mAvatarObject.notNull())
-      {
-	// the z height is at the agent's feet
-	agent_pos.mV[VZ] -= 0.5f * mAvatarObject->mBodySize.mV[VZ];
-      }
+	LLVector3 agent_pos = getPositionAgent();
 
-      agent_pos.mV[VX] = llclamp( agent_pos.mV[VX], INSET, REGION_WIDTH - INSET );
-      agent_pos.mV[VY] = llclamp( agent_pos.mV[VY], INSET, REGION_WIDTH - INSET );
+	if (mAvatarObject.notNull())
+	{
+		// the z height is at the agent's feet
+		agent_pos.mV[VZ] -= 0.5f * mAvatarObject->mBodySize.mV[VZ];
+	}
 
-      // Don't let them go below ground, or too high.
-      agent_pos.mV[VZ] = llclamp( agent_pos.mV[VZ],
-				  mRegionp->getLandHeightRegion( agent_pos ),
-				  LLWorld::getInstance()->getRegionMaxHeight() );
-      // Send the CapReq
+	agent_pos.mV[VX] = llclamp( agent_pos.mV[VX], INSET, REGION_WIDTH - INSET );
+	agent_pos.mV[VY] = llclamp( agent_pos.mV[VY], INSET, REGION_WIDTH - INSET );
 
-      LLSD body;
+	// Don't let them go below ground, or too high.
+	agent_pos.mV[VZ] = llclamp(agent_pos.mV[VZ],
+							   mRegionp->getLandHeightRegion(agent_pos),
+							   LLWorld::getInstance()->getRegionMaxHeight());
 
-      std::string url = gAgent.getRegion()->getCapability("HomeLocation");
-      std::ostringstream strBuffer;
-      if( url.empty() )
-      {
-	LLMessageSystem* msg = gMessageSystem;
-	msg->newMessageFast(_PREHASH_SetStartLocationRequest);
-	msg->nextBlockFast( _PREHASH_AgentData);
-	msg->addUUIDFast(_PREHASH_AgentID, getID());
-	msg->addUUIDFast(_PREHASH_SessionID, getSessionID());
-	msg->nextBlockFast( _PREHASH_StartLocationData);
-	// corrected by sim
-	msg->addStringFast(_PREHASH_SimName, "");
-	msg->addU32Fast(_PREHASH_LocationID, location_id);
-	msg->addVector3Fast(_PREHASH_LocationPos, agent_pos);
-	msg->addVector3Fast(_PREHASH_LocationLookAt,mFrameAgent.getAtAxis());
-	
-	// Reliable only helps when setting home location.  Last
-	// location is sent on quit, and we don't have time to ack
-	// the packets.
-	msg->sendReliable(mRegionp->getHost());
+	std::string url = gAgent.getRegion()->getCapability("HomeLocation");
+	if (!url.empty())
+	{
+		// Send the CapReq
+
+		LLSD request;
+		LLSD body;
+		LLSD homeLocation;
+
+		homeLocation["LocationId"] = LLSD::Integer(location_id);
+		homeLocation["LocationPos"] = ll_sdmap_from_vector3(agent_pos);
+		homeLocation["LocationLookAt"] = ll_sdmap_from_vector3(mFrameAgent.getAtAxis());
+
+		body["HomeLocation"] = homeLocation;
+
+		LLHTTPClient::post(url, body, new LLHomeLocationResponder());
+	}
+	else
+	{
+		// Old message based method
+
+		LLMessageSystem* msg = gMessageSystem;
+		msg->newMessageFast(_PREHASH_SetStartLocationRequest);
+		msg->nextBlockFast( _PREHASH_AgentData);
+		msg->addUUIDFast(_PREHASH_AgentID, getID());
+		msg->addUUIDFast(_PREHASH_SessionID, getSessionID());
+		msg->nextBlockFast( _PREHASH_StartLocationData);
+		// corrected by sim
+		msg->addStringFast(_PREHASH_SimName, "");
+		msg->addU32Fast(_PREHASH_LocationID, location_id);
+		msg->addVector3Fast(_PREHASH_LocationPos, agent_pos);
+		msg->addVector3Fast(_PREHASH_LocationLookAt, mFrameAgent.getAtAxis());
+
+		// Reliable only helps when setting home location. Last location is
+		// sent on quit, and we don't have time to ack the packets.
+		msg->sendReliable(mRegionp->getHost());
+	}
 
 	const U32 HOME_INDEX = 1;
-	if( HOME_INDEX == location_id )
-	  {
-	    setHomePosRegion( mRegionp->getHandle(), getPositionAgent() );
-	  }
-      }
-      else
-      {
-	strBuffer << location_id;
-	body["HomeLocation"]["LocationId"] = strBuffer.str();
-
-	strBuffer.str("");
-	strBuffer << agent_pos.mV[VX];
-	body["HomeLocation"]["LocationPos"]["X"] = strBuffer.str();
-
-	strBuffer.str("");
-	strBuffer << agent_pos.mV[VY];
-	body["HomeLocation"]["LocationPos"]["Y"] = strBuffer.str();
-
-	strBuffer.str("");
-	strBuffer << agent_pos.mV[VZ];
-	body["HomeLocation"]["LocationPos"]["Z"] = strBuffer.str();
-
-	strBuffer.str("");
-	strBuffer << agent_look_at.mV[VX];
-	body["HomeLocation"]["LocationLookAt"]["X"] = strBuffer.str();
-
-	strBuffer.str("");
-	strBuffer << agent_look_at.mV[VY];
-	body["HomeLocation"]["LocationLookAt"]["Y"] = strBuffer.str();
-
-	strBuffer.str("");
-	strBuffer << agent_look_at.mV[VZ];
-	body["HomeLocation"]["LocationLookAt"]["Z"] = strBuffer.str();
-
-	LLHTTPClient::post( url, body, new LLHomeLocationResponder() );
-      }
-    }
-    else
-    {
-      llinfos << "setStartPosition - Can't find agent viewerobject id " << gAgentID << llendl;
-    }
-  }
+	if (HOME_INDEX == location_id)
+	{
+		setHomePosRegion(mRegionp->getHandle(), getPositionAgent());
+	}
 }
 
 void LLAgent::requestStopMotion( LLMotion* motion )

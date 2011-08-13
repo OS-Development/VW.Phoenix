@@ -7398,7 +7398,7 @@ void LLVOAvatar::onLocalTextureLoaded( BOOL success, LLViewerImage *src_vi, LLIm
 	LLAvatarTexData *data = (LLAvatarTexData *)userdata;
 	if (success)
 	{
-		LLVOAvatar *self = (LLVOAvatar *)gObjectList.findObject(data->mAvatarID);
+		LLVOAvatar *self = gObjectList.findAvatar(data->mAvatarID);
 		if (self)
 		{
 			ETextureIndex index = data->mIndex;
@@ -7424,7 +7424,7 @@ void LLVOAvatar::onLocalTextureLoaded( BOOL success, LLViewerImage *src_vi, LLIm
 	}
 	else if (final)
 	{
-		LLVOAvatar *self = (LLVOAvatar *)gObjectList.findObject(data->mAvatarID);
+		LLVOAvatar *self = gObjectList.findAvatar(data->mAvatarID);
 		if (self)
 		{
 			ETextureIndex index = data->mIndex;
@@ -9266,13 +9266,13 @@ void LLVOAvatar::onBakedTextureMasksLoaded( BOOL success, LLViewerImage *src_vi,
 	const LLUUID id = src_vi->getID();
 
 	LLTextureMaskData* maskData = (LLTextureMaskData*) userdata;
-	LLVOAvatar* self = (LLVOAvatar*) gObjectList.findObject( maskData->mAvatarID );
+	LLVOAvatar* self = gObjectList.findAvatar(maskData->mAvatarID);
 
 	// if discard level is 2 less than last discard level we processed, or we hit 0,
 	// then generate morph masks
-	if(self && success && (discard_level < maskData->mLastDiscardLevel - 2 || discard_level == 0))
+	if (self && success && (discard_level < maskData->mLastDiscardLevel - 2 || discard_level == 0))
 	{
-		if(aux_src && aux_src->getComponents() == 1)
+		if (aux_src && aux_src->getComponents() == 1)
 		{
 			if (!aux_src->getData())
 			{
@@ -9358,13 +9358,13 @@ void LLVOAvatar::onBakedTextureMasksLoaded( BOOL success, LLViewerImage *src_vi,
 void LLVOAvatar::onInitialBakedTextureLoaded( BOOL success, LLViewerImage *src_vi, LLImageRaw* src, LLImageRaw* aux_src, S32 discard_level, BOOL final, void* userdata )
 {
 	LLUUID *avatar_idp = (LLUUID *)userdata;
-	LLVOAvatar *selfp = (LLVOAvatar *)gObjectList.findObject(*avatar_idp);
+	LLVOAvatar *selfp = gObjectList.findAvatar(*avatar_idp);
 
 	if (!success && selfp)
 	{
 		selfp->removeMissingBakedTextures();
 	}
-	if (final || !success )
+	if (final || !success)
 	{
 		delete avatar_idp;
 	}
@@ -9376,19 +9376,19 @@ void LLVOAvatar::onBakedTextureLoaded(BOOL success, LLViewerImage *src_vi, LLIma
 
 	LLUUID id = src_vi->getID();
 	LLUUID *avatar_idp = (LLUUID *)userdata;
-	LLVOAvatar *selfp = (LLVOAvatar *)gObjectList.findObject(*avatar_idp);
+	LLVOAvatar *selfp = gObjectList.findAvatar(*avatar_idp);
 
 	if (selfp && !success)
 	{
 		selfp->removeMissingBakedTextures();
 	}
 
-	if( final || !success )
+	if (final || !success)
 	{
 		delete avatar_idp;
 	}
 
-	if( selfp && success && final )
+	if (selfp && success && final)
 	{
 		selfp->useBakedTexture( id );
 	}

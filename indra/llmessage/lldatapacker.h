@@ -45,8 +45,9 @@ class LLDataPacker
 public:
 	virtual ~LLDataPacker() {}
 	
-	virtual void		reset()		{ llerrs << "Using unimplemented datapacker reset!" << llendl; };
-	virtual void dumpBufferToLog()	{ llerrs << "dumpBufferToLog not implemented for this type!" << llendl; }
+	// Not required to override, but error to call?
+	virtual void		reset();
+	virtual void		dumpBufferToLog();
 
 	virtual BOOL		hasNext() const = 0;
 
@@ -173,10 +174,15 @@ public:
 
 				S32			getCurrentSize() const	{ return (S32)(mCurBufferp - mBufferp); }
 				S32			getBufferSize() const	{ return mBufferSize; }
+				const U8*   getBuffer() const   { return mBufferp; }
 				void		reset()				{ mCurBufferp = mBufferp; mWriteEnabled = (mCurBufferp != NULL); }
 				void		freeBuffer()		{ delete [] mBufferp; mBufferp = mCurBufferp = NULL; mBufferSize = 0; mWriteEnabled = FALSE; }
 				void		assignBuffer(U8 *bufferp, S32 size)
 				{
+					if (mBufferp && mBufferp != bufferp)
+					{
+						freeBuffer();
+					}
 					mBufferp = bufferp;
 					mCurBufferp = bufferp;
 					mBufferSize = size;

@@ -343,3 +343,21 @@ bool LLAssetType::lookupIsLinkType(EType asset_type)
 {
 	return (asset_type == AT_LINK || asset_type == AT_LINK_FOLDER);
 }
+
+// static
+bool LLAssetType::lookupIsAssetFetchByIDAllowed(EType asset_type)
+{
+	return (asset_type == AT_SOUND || asset_type == AT_LANDMARK ||
+			asset_type == AT_CLOTHING || asset_type == AT_BODYPART ||
+			asset_type == AT_ANIMATION ||asset_type == AT_GESTURE);
+}
+
+// static
+bool LLAssetType::lookupIsAssetIDKnowable(LLAssetType::EType asset_type)
+{
+	return (asset_type == AT_TEXTURE || asset_type == AT_SOUND ||
+			asset_type == AT_LANDMARK || asset_type == AT_CLOTHING ||
+			asset_type == AT_NOTECARD ||asset_type == AT_BODYPART ||
+			asset_type == AT_ANIMATION || asset_type == AT_GESTURE ||
+			asset_type == AT_LINK || asset_type == AT_LINK_FOLDER);
+}

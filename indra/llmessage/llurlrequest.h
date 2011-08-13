@@ -44,6 +44,13 @@
 #include "lliopipe.h"
 #include "llchainio.h"
 #include "llerror.h"
+#include <openssl/x509_vfy.h>
+#include "llcurl.h"
+
+extern const std::string CONTEXT_REQUEST;
+extern const std::string CONTEXT_DEST_URI_SD_LABEL;
+extern const std::string CONTEXT_RESPONSE;
+extern const std::string CONTEXT_TRANSFERED_BYTES;
 
 class LLURLRequestDetail;
 
@@ -66,6 +73,9 @@ class LLURLRequest : public LLIOPipe
 {
 	LOG_CLASS(LLURLRequest);
 public:
+
+	typedef int (* SSLCertVerifyCallback)(X509_STORE_CTX *ctx, void *param);
+
 	/** 
 	 * @brief This enumeration is for specifying the type of request.
 	 */
@@ -80,6 +90,11 @@ public:
 		HTTP_MOVE, // Caller will need to set 'Destination' header
 		REQUEST_ACTION_COUNT
 	};
+
+	/**
+	 * @brief Turn the request action into an http verb.
+	 */
+	static std::string actionAsVerb(ERequestAction action);
 
 	/** 
 	 * @brief Constructor.
@@ -114,6 +129,7 @@ public:
 	 * 
 	 */
 	void setURL(const std::string& url);
+	std::string getURL() const;
 
 	/** 
 	 * @brief Add a header to the http post.
@@ -132,7 +148,7 @@ public:
 	 * Set whether request will check that remote server
 	 * certificates are signed by a known root CA when using HTTPS.
 	 */
-	void checkRootCertificate(bool check);
+	void setSSLVerifyCallback(SSLCertVerifyCallback callback, void * param);
 
 	/**
 	 * @brief Return at most size bytes of body.
@@ -208,6 +224,10 @@ protected:
 	ERequestAction mAction;
 	LLURLRequestDetail* mDetail;
 	LLIOPipe::ptr_t mCompletionCallback;
+	S32 mRequestTransferedBytes;
+	S32 mResponseTransferedBytes;
+
+	static CURLcode _sslCtxCallback(CURL * curl, void *sslctx, void *param);
 
 private:
 	/** 
@@ -355,63 +375,6 @@ protected:
 	EStatus mRequestStatus;
 };
 
-
-/** 
- * @class LLURLRequestClientFactory
- * @brief Template class to build url request based client chains 
- *
- * This class eases construction of a basic sd rpc client. Here is an
- * example of it's use:
- * <code>
- *  class LLUsefulService : public LLService { ... }<br>
- *  LLService::registerCreator(<br>
- *    "useful",<br>
- *    LLService::creator_t(new LLURLRequestClientFactory<LLUsefulService>))<br>
- * </code>
- *
- * This class should work, but I never got around to using/testing it.
- *
- */
-#if 0
-template<class Client>
-class LLURLRequestClientFactory : public LLChainIOFactory
-{
-public:
-	LLURLRequestClientFactory(LLURLRequest::ERequestAction action) {}
-	LLURLRequestClientFactory(
-		LLURLRequest::ERequestAction action,
-		const std::string& fixed_url) :
-		mAction(action),
-		mURL(fixed_url)
-	{
-	}
-	virtual bool build(LLPumpIO::chain_t& chain, LLSD context) const
-	{
-		lldebugs << "LLURLRequestClientFactory::build" << llendl;
-		LLIOPipe::ptr_t service(new Client);
-		chain.push_back(service);
-		LLURLRequest* http(new LLURLRequest(mAction));
-		LLIOPipe::ptr_t http_pipe(http);
-		// *FIX: how do we know the content type?
-		//http->addHeader("Content-Type: text/llsd");
-		if(mURL.empty())
-		{
-			chain.push_back(LLIOPipe::ptr_t(new LLContextURLExtractor(http)));
-		}
-		else
-		{
-			http->setURL(mURL);
-		}
-		chain.push_back(http_pipe);
-		chain.push_back(service);
-		return true;
-	}
-
-protected:
-	LLURLRequest::ERequestAction mAction;
-	std::string mURL;
-};
-#endif
 
 /**
  * External constants
