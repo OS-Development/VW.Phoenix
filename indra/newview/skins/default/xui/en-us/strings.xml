@@ -1727,5 +1727,13 @@ Requests name of an avatar.  When data is available the dataserver event will be
     integer llGetLinkNumberOfSides(integer link)
     Returns an integer that is the number of faces (or sides) of the prim link.
   </string>
+  <string name="LSLTipText_llGetEnv" translate="false">
+	string llGetEnv(string name)
+	Returns a string with the requested data about the region.
+  </string>
+   <string name="LSLTipText_llRegionSayTo" translate="false">
+	llRegionSayTo(key target, integer channel, string message)
+	Sends message on channel (not DEBUG_CHANNEL) directly to prim or avatar target anywhere within the region.
+   </string>
 </strings>
 
