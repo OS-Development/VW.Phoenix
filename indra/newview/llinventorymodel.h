@@ -34,6 +34,7 @@
 #define LL_LLINVENTORYMODEL_H
 
 #include "llassettype.h"
+#include "llfoldertype.h"
 #include "lldarray.h"
 #include "lluuid.h"
 #include "llpermissionsflags.h"
@@ -173,7 +174,10 @@ public:
 	// erased before adding objects to it. Do not store a copy of the
 	// pointers collected - use them, and collect them again later if
 	// you need to reference the same objects.
-	enum { EXCLUDE_TRASH = FALSE, INCLUDE_TRASH = TRUE };
+	enum {
+		EXCLUDE_TRASH = FALSE,
+		INCLUDE_TRASH = TRUE
+	};
 	void collectDescendents(const LLUUID& id,
 							cat_array_t& categories,
 							item_array_t& items,
@@ -274,7 +278,7 @@ public:
 
 	// SDK: Added flag to specify whether the folder should be created if not found.  This fixes the horrible
 	// multiple trash can bug.
-	LLUUID findCategoryUUIDForType(LLAssetType::EType preferred_type, bool create_folder = true);
+	LLUUID findCategoryUUIDForType(LLFolderType::EType preferred_type, bool create_folder = true);
 
 	// Get whatever special folder this object is a child of, if any.
 	const LLViewerInventoryCategory *getFirstNondefaultParent(const LLUUID& obj_id) const;
@@ -325,7 +329,7 @@ public:
 	// category. If you want to use the default name based on type,
 	// pass in a NULL to the 'name parameter.
 	LLUUID createNewCategory(const LLUUID& parent_id,
-							 LLAssetType::EType preferred_type,
+							 LLFolderType::EType preferred_type,
 							 const std::string& name);
 
 	LLUUID findCategoryByName(std::string name);
@@ -340,7 +344,6 @@ public:
 	//... the skeleton in querying the wearables needs to be examined as well.
 	bool loadSkeleton(const options_t& options, const LLUUID& owner_id);
 	bool loadSkeleton(const LLSD& options, const LLUUID& owner_id); 
-	bool loadMeat(const options_t& options, const LLUUID& owner_id);
 
 	// This is a brute force method to rebuild the entire parent-child
 	// relations.
@@ -408,16 +411,10 @@ protected:
 
 	// Internal method which looks for a category with the specified
 	// preferred type. Returns LLUUID::null if not found
- 	LLUUID findCatUUID(LLAssetType::EType preferred_type);
+ 	LLUUID findCatUUID(LLFolderType::EType preferred_type);
 
 	// Empty the entire contents
 	void empty();
-
-	// Given the current state of the inventory items, figure out the
-	// clone information. *FIX: This is sub-optimal, since we can
-	// insert this information snurgically, but this makes sure the
-	// implementation works before we worry about optimization.
-	//void recalculateCloneInformation();
 
 	// file import/export.
 	static bool loadFromFile(const std::string& filename,
@@ -498,6 +495,9 @@ protected:
 
 private:
 	const static S32 sCurrentInvCacheVersion; // expected inventory cache version
+	// Flag set when notifyObservers is being called, to look for bugs
+	// where it's called recursively.
+	BOOL mIsNotifyObservers;
 
 public:
 	// *NOTE: DEBUG functionality

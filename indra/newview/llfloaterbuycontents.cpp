@@ -46,7 +46,8 @@
 #include "llalertdialog.h"
 #include "llcheckboxctrl.h"
 #include "llinventorymodel.h"	// for gInventory
-#include "llinventoryview.h"	// for get_item_icon
+#include "llinventoryicon.h"	// for getIconName
+#include "llinventoryview.h"
 #include "llselectmgr.h"
 #include "llscrolllistctrl.h"
 #include "llviewercontrol.h"
@@ -188,10 +189,6 @@ void LLFloaterBuyContents::inventoryChanged(LLViewerObject* obj,
 		if (asset_type == LLAssetType::AT_CATEGORY)
 			continue;
 
-		// Skip root folders, so we know we have inventory items only
-		if (asset_type == LLAssetType::AT_ROOT_CATEGORY) 
-			continue;
-
 		LLInventoryItem* inv_item = (LLInventoryItem*)((LLInventoryObject*)(*it));
 		inv_type = inv_item->getInventoryType();
 
@@ -225,10 +222,10 @@ void LLFloaterBuyContents::inventoryChanged(LLViewerObject* obj,
 			item_is_multi = TRUE;
 		}
 
-		std::string icon_name = get_item_icon_name(inv_item->getType(), 
-								 inv_item->getInventoryType(),
-								 inv_item->getFlags(),
-								 item_is_multi);
+		std::string icon_name = LLInventoryIcon::getIconName(inv_item->getType(), 
+															 inv_item->getInventoryType(),
+															 inv_item->getFlags(),
+															 item_is_multi);
 		row["columns"][0]["column"] = "icon";
 		row["columns"][0]["type"] = "icon";
 		row["columns"][0]["value"] = icon_name;
@@ -288,7 +285,7 @@ void LLFloaterBuyContents::onClickBuy(void*)
 
 	// Put the items where we put new folders.
 	LLUUID category_id;
-	category_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_CATEGORY);
+	category_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_ROOT_INVENTORY);
 
 	// *NOTE: doesn't work for multiple object buy, which UI does not
 	// currently support sale info is used for verification only, if

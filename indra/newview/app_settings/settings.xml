@@ -5411,7 +5411,23 @@
 			<key>Value</key>
 			<string>89556747-24cb-43ed-920b-47caed15465f</string>
 		</map>
-		<key>DisableCameraConstraints</key>
+    <key>DirectChatColor</key>
+    <map>
+      <key>Comment</key>
+      <string>Color for llInstantMessage() and llRegionSayTo() messages from objects</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Color4</string>
+      <key>Value</key>
+      <array>
+        <real>0.8</real>
+        <real>1.0</real>
+        <real>0.8</real>
+        <real>1</real>
+      </array>
+    </map>
+    <key>DisableCameraConstraints</key>
 		<map>
 			<key>Comment</key>
 			<string>Disable the normal bounds put on the camera by avatar position</string>

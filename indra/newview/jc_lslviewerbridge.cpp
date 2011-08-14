@@ -361,7 +361,7 @@ LLUUID JCLSLBridge::findCategoryByNameOrCreate(std::string name)
 	phoenix_category = gInventory.findCategoryByName(phoenix_category_name);
 	if(phoenix_category.isNull())
 	{
-		phoenix_category = gInventory.createNewCategory(gAgent.getInventoryRootID(), LLAssetType::AT_NONE, phoenix_category_name);
+		phoenix_category = gInventory.createNewCategory(gAgent.getInventoryRootID(), LLFolderType::FT_NONE, phoenix_category_name);
 	}
 	return phoenix_category;
 }
@@ -582,7 +582,7 @@ void callbackBridgeCleanup(const LLSD &notification, const LLSD &response, LLVie
 		{
 			//cmdline_printchat("--Moving out-of-date bridge objects to your trash folder.");
 			//delete
-			LLUUID trash_cat = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+			LLUUID trash_cat = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 			for(LLDynamicArray<LLPointer<LLViewerInventoryItem> >::iterator itr = items.begin(); itr != items.end(); ++itr)
 			{
 				LLViewerInventoryItem* item = *itr;
@@ -605,7 +605,7 @@ class BridgeCleanupMatches : public LLInventoryCollectFunctor
 public:
 	BridgeCleanupMatches()
 	{
-		trash_cat = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+		trash_cat = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 	}
 	virtual ~BridgeCleanupMatches() {}
 	virtual bool operator()(LLInventoryCategory* cat,

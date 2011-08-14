@@ -1,10 +1,12 @@
-/** 
- * @file llindraconfigfile.h
- * @brief manages  configuration file for indra.xml
- *
- * $LicenseInfo:firstyear=2007&license=viewergpl$
+/**
+ * @file   lleventapi.cpp
+ * @author Nat Goodspeed
+ * @date   2009-11-10
+ * @brief  Implementation for lleventapi.
  * 
- * Copyright (c) 2007-2009, Linden Research, Inc.
+ * $LicenseInfo:firstyear=2009&license=viewergpl$
+ * 
+ * Copyright (c) 2010, Linden Research, Inc.
  * 
  * Second Life Viewer Source Code
  * The source code in this file ("Source Code") is provided by Linden Lab
@@ -30,32 +32,22 @@
  * $/LicenseInfo$
  */
 
-#ifndef LL_LLINDRACONFIGFILE_H
-#define LL_LLINDRACONFIGFILE_H
-
-#include <string>
+// Precompiled header
 #include "linden_common.h"
+// associated header
+#include "lleventapi.h"
+// STL headers
+// std headers
+// external library headers
+// other Linden headers
 
-#include "lllivefile.h"
-#include "llsd.h"
-
-
-// To use, call LLIndraConfigFile::initClass(config_dir);
-// Then whenever getConfig is called, it will check and reload automatically
-
-class LLIndraConfigFile : public LLLiveFile
+LLEventAPI::LLEventAPI(const std::string& name, const std::string& desc, const std::string& field):
+    lbase(name, field),
+    ibase(name),
+    mDesc(desc)
 {
-public:
-	LLIndraConfigFile();
-	static void initClass(const std::string& config_dir);
-    static LLSD getConfig(const std::string& config_name);
+}
 
-private:
-    static std::string filename();
-
-protected:
-	/* virtual */ void loadFile();
-	LLSD mConfig;
-};
-
-#endif //LL_LLINDRACONFIGFILE_H
+LLEventAPI::~LLEventAPI()
+{
+}

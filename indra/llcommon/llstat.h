@@ -96,10 +96,17 @@ public:
 	
 	struct Bucket
 	{
+		Bucket() :
+			accum(0.0),
+			endTime(0),
+			lastValid(false),
+			lastAccum(0.0)
+		{}
+
 		F64		accum;
 		U64		endTime;
 
-		BOOL	lastValid;
+		bool	lastValid;
 		F64		lastAccum;
 	};
 

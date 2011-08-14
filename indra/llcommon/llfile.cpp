@@ -98,6 +98,16 @@ LLFILE*	LLFile::_fsopen(const std::string& filename, const char* mode, int shari
 #endif
 }
 
+int	LLFile::close(LLFILE * file)
+{
+	int ret_value = 0;
+	if (file)
+	{
+		ret_value = fclose(file);
+	}
+	return ret_value;
+}
+
 int	LLFile::remove(const std::string& filename)
 {
 #if	LL_WINDOWS
@@ -321,10 +331,15 @@ void llofstream::open(const std::string& _Filename,	/* Flawfinder: ignore */
 
 void llofstream::close()
 {	// close the C stream
-	if(is_open())
+	if (is_open())
 	{
 		if (_Filebuffer->close() == 0)
+		{
 			_Myios::setstate(ios_base::failbit);	/*Flawfinder: ignore*/
+		}
+		delete _Filebuffer;
+		_Filebuffer = NULL;
+		_ShouldClose = false;
 	}
 }
 

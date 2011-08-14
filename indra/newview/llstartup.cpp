@@ -75,6 +75,7 @@
 #include "llsd.h"
 #include "llsdserialize.h"
 #include "llsdutil.h"
+#include "llsdutil_math.h"
 #include "llsecondlifeurls.h"
 #include "llstring.h"
 #include "lluserrelations.h"

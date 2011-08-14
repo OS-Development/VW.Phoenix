@@ -294,7 +294,7 @@ namespace
 	public:
 		static LogControlFile& fromDirectory(const std::string& dir);
 		
-		virtual void loadFile();
+		virtual bool loadFile();
 		
 	private:
 		LogControlFile(const std::string &filename)
@@ -322,7 +322,7 @@ namespace
 			// NB: This instance is never freed
 	}
 	
-	void LogControlFile::loadFile()
+	bool LogControlFile::loadFile()
 	{
 		LLSD configuration;
 
@@ -338,12 +338,13 @@ namespace
 				llwarns << filename() << " missing, ill-formed,"
 							" or simply undefined; not changing configuration"
 						<< llendl;
-				return;
+				return false;
 			}
 		}
 		
 		LLError::configure(configuration);
 		llinfos << "logging reconfigured from " << filename() << llendl;
+		return true;
 	}
 
 

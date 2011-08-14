@@ -6,6 +6,9 @@ include(00-Common)
 include(LLCommon)
 include(Utils)
 include(Linking)
+include(Boost)
+include(GooglePerfTools)
+include(ZLIB)
 
 include_directories(
     ${EXPAT_INCLUDE_DIRS}
@@ -28,17 +31,23 @@ set(llcommon_SOURCE_FILES
     llcriticaldamp.cpp
     llcursortypes.cpp
     lldate.cpp
+	lldependencies.cpp
+	lldictionary.cpp
     llerror.cpp
     llerrorthread.cpp
     llevent.cpp
+    lleventapi.cpp
+    lleventdispatcher.cpp
+    llevents.cpp
     llfasttimer.cpp
     llfile.cpp
     llfindlocale.cpp
     llfixedbuffer.cpp
+	llfoldertype.cpp
     llformat.cpp
     llframetimer.cpp
     llheartbeat.cpp
-    llindraconfigfile.cpp
+	llinstancetracker.cpp
     llliveappconfig.cpp
     lllivefile.cpp
     lllog.cpp
@@ -107,6 +116,8 @@ set(llcommon_HEADER_FILES
     lldate.h
     lldefs.h
     lldepthstack.h
+	lldependencies.h
+	lldictionary.h
     lldlinked.h
     lldqueueptr.h
     llendianswizzle.h
@@ -116,19 +127,23 @@ set(llcommon_HEADER_FILES
     llerrorlegacy.h
     llerrorthread.h
     llevent.h
+    lleventapi.h
+    lleventdispatcher.h
     lleventemitter.h
+	llevents.h
     llextendedstatus.h
     llfasttimer.h
     llfile.h
     llfindlocale.h
     llfixedbuffer.h
+	llfoldertype.h
     llformat.h
     llframetimer.h
     llhash.h
     llheartbeat.h
     llhttpstatuscodes.h
     llindexedqueue.h
-    llindraconfigfile.h
+    llinstancetracker.h
     llkeythrottle.h
     lllinkedqueue.h
     llliveappconfig.h
@@ -160,6 +175,7 @@ set(llcommon_HEADER_FILES
     llsdutil.h
     llsecondlifeurls.h
     llsimplehash.h
+	llsingleton.h
     llskiplist.h
     llskipmap.h
     llstack.h
@@ -179,6 +195,7 @@ set(llcommon_HEADER_FILES
 #    llversionserver.h
 #    llversionviewer.h
     llworkerthread.h
+	ll_template_cast.h
     metaclass.h
     metaclasst.h
     metaproperty.h
@@ -190,6 +207,7 @@ set(llcommon_HEADER_FILES
     stdenums.h
     stdtypes.h
     string_table.h
+	stringize.h
     timer.h
     timing.h
     u64.h
@@ -218,6 +236,9 @@ target_link_libraries(
     ${EXPAT_LIBRARIES}
     ${ZLIB_LIBRARIES}
 	${WINDOWS_LIBRARIES}
+    ${BOOST_PROGRAM_OPTIONS_LIBRARY}
+    ${BOOST_REGEX_LIBRARY}
+    ${GOOGLE_PERFTOOLS_LIBRARIES}
     )
 
 if (DARWIN)

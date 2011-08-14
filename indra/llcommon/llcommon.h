@@ -32,12 +32,6 @@
 #ifndef LL_COMMON_H
 #define LL_COMMON_H
 
-#include "llmemory.h"
-#include "llapr.h"
-// #include "llframecallbackmanager.h"
-#include "lltimer.h"
-#include "llfile.h"
-
 class LL_COMMON_API LLCommon
 {
 public:

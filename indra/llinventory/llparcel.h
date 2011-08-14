@@ -38,9 +38,8 @@
 #include "lluuid.h"
 #include "llparcelflags.h"
 #include "llpermissions.h"
-#include "v3math.h"
 #include "lltimer.h"
-
+#include "v3math.h"
 
 // Grid out of which parcels taken is stepped every 4 meters.
 const F32 PARCEL_GRID_STEP_METERS	= 4.f;
@@ -136,9 +135,9 @@ class LLSD;
 class LLAccessEntry
 {
 public:
-	LLUUID		mID;
-	S32			mTime;
-	U32			mFlags;
+	LLUUID		mID;		// Agent ID
+	S32			mTime;		// Time (unix seconds) when entry expires
+	U32			mFlags;		// Not used - currently should always be zero
 };
 
 typedef std::map<LLUUID,LLAccessEntry>::iterator access_map_iterator;
@@ -171,6 +170,7 @@ public:
 		C_SHOPPING,
 		C_STAGE,
 		C_OTHER,
+		C_RENTAL,
 		C_COUNT,
 		C_ANY = -1		// only useful in queries
 	};
@@ -308,9 +308,7 @@ public:
 	void	setPassPrice(S32 price)				{ mPassPrice = price; }
 	void	setPassHours(F32 hours)				{ mPassHours = hours; }
 
-//	BOOL	importStream(std::istream& input_stream);
 	BOOL	importAccessEntry(std::istream& input_stream, LLAccessEntry* entry);
-//	BOOL	exportStream(std::ostream& output_stream);
 	BOOL    importMediaURLFilter(std::istream& input_stream, std::string& url);
 
 	void	packMessage(LLMessageSystem* msg);
@@ -432,11 +430,6 @@ public:
 	void completeSale(U32& type, U8& flags, LLUUID& to_id);
 	void clearSale();
 
-	// this function returns TRUE if the parcel needs conversion to a
-	// lease from a non-owned-status state.
-	BOOL getRecordTransaction() const { return mRecordTransaction; }
-	void setRecordTransaction(BOOL record) { mRecordTransaction = record; }
-
 	BOOL isMediaResetTimerExpired(const U64& time);
 
 	// more accessors
@@ -472,6 +465,8 @@ public:
 	BOOL	getAllowFly() const
 					{ return (mParcelFlags & PF_ALLOW_FLY) ? TRUE : FALSE; }
 
+	// For now kept, just in case of OpenSim compatibility issues.
+	// We should eventually remove this flag completely.
 	BOOL	getAllowLandmark() const
 					{ return (mParcelFlags & PF_ALLOW_LANDMARK) ? TRUE : FALSE; }
 
@@ -623,8 +618,6 @@ protected:
 	LLTimer mMediaResetTimer;
 
 	S32 mGraceExtension;
-	BOOL mRecordTransaction;
-	
 
 	// This value is non-zero if there is an auction associated with
 	// the parcel.

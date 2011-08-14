@@ -97,6 +97,9 @@
 // we want to minimize external dependencies, but this one is important
 #include "llsd.h"
 
+// we need the instance tracker
+#include "llinstancetracker.h"
+
 // and we need this to manage the notification callbacks
 #include "llfunctorregistry.h"
 #include "llui.h"

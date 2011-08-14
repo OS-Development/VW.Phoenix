@@ -39,6 +39,7 @@
 #include "llviewercontrol.h"
 #include "lldbstrings.h"
 #include "llfocusmgr.h"
+#include "llfoldertype.h"
 #include "llfontgl.h"
 #include "llgl.h" 
 #include "llrender.h"
@@ -1852,7 +1853,7 @@ bool LLFolderViewFolder::isTrash() const
 {
 	if (mAmTrash == LLFolderViewFolder::UNKNOWN)
 	{
-		mAmTrash = mListener->getUUID() == gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH, false) ? LLFolderViewFolder::TRASH : LLFolderViewFolder::NOT_TRASH;
+		mAmTrash = mListener->getUUID() == gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH, false) ? LLFolderViewFolder::TRASH : LLFolderViewFolder::NOT_TRASH;
 	}
 	return mAmTrash == LLFolderViewFolder::TRASH;
 }

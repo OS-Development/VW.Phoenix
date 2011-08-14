@@ -51,7 +51,7 @@
 #include "lltabcontainervertical.h"
 #include "llviewerwindow.h"
 #include "llinventorymodel.h"
-#include "llinventoryview.h"
+#include "llinventoryicon.h"	// for getIconName
 #include "lltextbox.h"
 #include "lllineeditor.h"
 #include "llviewerimagelist.h"
@@ -510,7 +510,9 @@ LLPanelEditWearable::LLPanelEditWearable( EWearableType type )
 BOOL LLPanelEditWearable::postBuild()
 {
 	LLAssetType::EType asset_type = LLWearable::typeToAssetType( mType );
-	std::string icon_name = get_item_icon_name(asset_type,LLInventoryType::IT_WEARABLE,mType,FALSE);
+	std::string icon_name = LLInventoryIcon::getIconName(asset_type,
+														 LLInventoryType::IT_WEARABLE,
+														 mType, FALSE);
 
 	childSetValue("icon", icon_name);
 
@@ -706,7 +708,7 @@ bool LLPanelEditWearable::onSelectAutoWearOption(const LLSD& notification, const
 
 		LLUUID folder_id;
 		// regular UI, items get created in normal folder
-		folder_id = gInventory.findCategoryUUIDForType(asset_type);
+		folder_id = gInventory.findCategoryUUIDForType(LLFolderType::assetTypeToFolderType(asset_type));
 
 		// Only auto wear the new item if the AutoWearNewClothing checkbox is selected.
 		LLPointer<LLInventoryCallback> cb = option == 0 ? 

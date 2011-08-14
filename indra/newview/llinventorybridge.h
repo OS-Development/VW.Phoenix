@@ -41,50 +41,6 @@
 #include "llviewercontrol.h"
 #include "llcallingcard.h"
 
-enum EInventoryIcon
-{
-	TEXTURE_ICON_NAME,
-	SOUND_ICON_NAME,
-	CALLINGCARD_ONLINE_ICON_NAME,
-	CALLINGCARD_OFFLINE_ICON_NAME,
-	LANDMARK_ICON_NAME,
-	LANDMARK_VISITED_ICON_NAME,
-	SCRIPT_ICON_NAME,
-	CLOTHING_ICON_NAME,
-	OBJECT_ICON_NAME,
-	OBJECT_MULTI_ICON_NAME,
-	NOTECARD_ICON_NAME,
-	BODYPART_ICON_NAME,
-	SNAPSHOT_ICON_NAME,
-
-	BODYPART_SHAPE_ICON_NAME,
-	BODYPART_SKIN_ICON_NAME,
-	BODYPART_HAIR_ICON_NAME,
-	BODYPART_EYES_ICON_NAME,
-	CLOTHING_SHIRT_ICON_NAME,
-	CLOTHING_PANTS_ICON_NAME,
-	CLOTHING_SHOES_ICON_NAME,
-	CLOTHING_SOCKS_ICON_NAME,
-	CLOTHING_JACKET_ICON_NAME,
-	CLOTHING_GLOVES_ICON_NAME,
-	CLOTHING_UNDERSHIRT_ICON_NAME,
-	CLOTHING_UNDERPANTS_ICON_NAME,
-	CLOTHING_SKIRT_ICON_NAME,
-	CLOTHING_ALPHA_ICON_NAME,
-	CLOTHING_TATTOO_ICON_NAME,
-	CLOTHING_PHYSICS_ICON_NAME,
-	
-	ANIMATION_ICON_NAME,
-	GESTURE_ICON_NAME,
-
-	LINKITEM_ICON_NAME,
-	LINKFOLDER_ICON_NAME,
-
-	ICON_NAME_COUNT
-};
-
-extern std::string ICON_NAME[ICON_NAME_COUNT];
-
 typedef std::pair<LLUUID, LLUUID> two_uuids_t;
 typedef std::list<two_uuids_t> two_uuids_list_t;
 typedef std::pair<LLUUID, two_uuids_list_t> uuid_move_list_t;
@@ -214,6 +170,7 @@ public:
 	virtual const std::string& getName() const;
 	virtual const std::string& getDisplayName() const;
 	virtual PermissionMask getPermissionMask() const;
+	virtual LLFolderType::EType getPreferredType() const;
 	virtual time_t getCreationDate() const;
 	virtual LLFontGL::StyleFlags getLabelStyle() const
 	{

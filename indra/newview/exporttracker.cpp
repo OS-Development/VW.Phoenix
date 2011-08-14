@@ -36,7 +36,7 @@
 #include "exporttracker.h"
 #include "llviewerobjectlist.h"
 #include "llvoavatar.h"
-#include "llsdutil.h"
+#include "llsdutil_math.h"
 #include "llsdserialize.h"
 #include "lldirpicker.h"
 #include "llfilepicker.h"

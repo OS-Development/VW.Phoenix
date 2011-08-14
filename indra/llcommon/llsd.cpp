@@ -771,6 +771,11 @@ LLSD& LLSD::insert(const String& k, const LLSD& v)
 											makeMap(impl).insert(k, v); 
 											return *dynamic_cast<LLSD*>(this);
 										}
+LLSD& LLSD::with(const String& k, const LLSD& v)
+										{ 
+											makeMap(impl).insert(k, v); 
+											return *this;
+										}
 void LLSD::erase(const String& k)		{ makeMap(impl).erase(k); }
 
 LLSD&		LLSD::operator[](const String& k)
@@ -792,6 +797,11 @@ LLSD LLSD::get(Integer i) const			{ return safe(impl).get(i); }
 void LLSD::set(Integer i, const LLSD& v){ makeArray(impl).set(i, v); }
 
 LLSD& LLSD::insert(Integer i, const LLSD& v)
+										{ 
+											makeArray(impl).insert(i, v); 
+											return *this;
+										}
+LLSD& LLSD::with(Integer i, const LLSD& v)
 										{ 
 											makeArray(impl).insert(i, v); 
 											return *this;

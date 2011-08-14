@@ -566,12 +566,13 @@ LLColor4 get_text_color(const LLChat& chat)
 		switch(chat.mSourceType)
 		{
 		case CHAT_SOURCE_SYSTEM:
+		case CHAT_SOURCE_UNKNOWN:
 			text_color = gSavedSettings.getColor4("SystemChatColor");
 			break;
 		case CHAT_SOURCE_AGENT:
-		    if (chat.mFromID.isNull())
+		    if (gAgent.getID() == chat.mFromID)
 			{
-				text_color = gSavedSettings.getColor4("SystemChatColor");
+				text_color = gSavedSettings.getColor4("UserChatColor");
 			}
 			else
 			{
@@ -611,12 +612,22 @@ LLColor4 get_text_color(const LLChat& chat)
 			{
 				text_color = gSavedSettings.getColor4("ScriptErrorColor");
 			}
-			else if ( chat.mChatType == CHAT_TYPE_OWNER )
+			else if (chat.mChatType == CHAT_TYPE_OWNER)
 			{
+				// Message from one of our own objects
 				text_color = gSavedSettings.getColor4("llOwnerSayChatColor");
+			}
+			else if (chat.mChatType == CHAT_TYPE_DIRECT)
+			{
+				// Used both for llRegionSayTo() and llInstantMesssage()
+				// since there is no real reason to distinguish one from
+				// another (both are seen only by us and the object may
+				// pertain to anyone, us included).
+				text_color = gSavedSettings.getColor4("DirectChatColor");
 			}
 			else
 			{
+				// Public object chat
 				text_color = gSavedSettings.getColor4("ObjectChatColor");
 			}
 			break;

@@ -43,7 +43,7 @@
 #include "llvolumemgr.h"
 #include "llstring.h"
 #include "lldatapacker.h"
-#include "llsdutil.h"
+#include "llsdutil_math.h"
 
 /**
  * exported constants
@@ -1155,9 +1155,9 @@ BOOL LLPrimitive::packTEMessage(LLMessageSystem *mesgsys, bool shield) const
 	const U32 MAX_TE_BUFFER = 4096;
 	U8 packed_buffer[MAX_TE_BUFFER];
 	U8 *cur_ptr = packed_buffer;
-	
-	S32 last_face_index = getNumTEs() - 1;
-	
+
+	S32 last_face_index = llmin((U32) getNumTEs(), MAX_TES) - 1;
+
 	if (last_face_index > -1)
 	{
 		// ...if we hit the front, send one image id
@@ -1368,7 +1368,7 @@ S32 LLPrimitive::unpackTEMessage(LLMessageSystem *mesgsys, char const* block_nam
 		mesgsys->getBinaryDataFast(block_name, _PREHASH_TextureEntry, packed_buffer, 0, block_num, MAX_TE_BUFFER);
 	}
 
-	face_count = getNumTEs();
+	face_count = llmin((U32) getNumTEs(), MAX_TES);
 
 	cur_ptr += unpackTEField(cur_ptr, packed_buffer+size, (U8 *)image_data, 16, face_count, MVT_LLUUID);
 	cur_ptr++;
@@ -1456,7 +1456,7 @@ S32 LLPrimitive::unpackTEMessage(LLDataPacker &dp)
 		return retval;
 	}
 
-	face_count = getNumTEs();
+	face_count = llmin((U32) getNumTEs(), MAX_TES);
 	U32 i;
 
 	cur_ptr += unpackTEField(cur_ptr, packed_buffer+size, (U8 *)image_data, 16, face_count, MVT_LLUUID);

@@ -36,6 +36,7 @@
 #include "llaudioengine.h"
 #include "llagent.h"
 #include "llinventory.h"
+#include "llinventoryicon.h"
 #include "llinventorymodel.h"
 #include "llinventoryview.h"
 #include "llinventorybridge.h"	// for landmark prefix string
@@ -51,6 +52,7 @@
 #include "llpreviewlandmark.h"
 #include "llscrollbar.h"
 #include "lltooldraganddrop.h"
+#include "llviewerassettype.h"
 #include "llviewercontrol.h"
 #include "llviewerimagelist.h"
 #include "llviewerwindow.h"
@@ -401,7 +403,7 @@ void LLEmbeddedItems::bindEmbeddedChars( const LLFontGL* font ) const
 		{
 			continue;
 		}
-		LLUIImagePtr image = get_item_icon(item->getType(),
+		LLUIImagePtr image = LLInventoryIcon::getIcon(item->getType(),
 					item->getInventoryType(),
 					0, 
 					item->getFlags() & LLInventoryItem::II_FLAGS_OBJECT_HAS_MULTIPLE_ITEMS);//LLUI::getUIImage(img_name);
@@ -793,7 +795,7 @@ BOOL LLViewerTextEditor::handleHover(S32 x, S32 y, MASK mask)
 			if( LLToolDragAndDrop::getInstance()->isOverThreshold( screen_x, screen_y ) )
 			{
 				LLToolDragAndDrop::getInstance()->beginDrag(
-					LLAssetType::lookupDragAndDropType( mDragItem->getType() ),
+					LLViewerAssetType::lookupDragAndDropType(mDragItem->getType()),
 					mDragItem->getUUID(),
 					LLToolDragAndDrop::SOURCE_NOTECARD,
 					getSourceID(), mObjectID);

@@ -244,7 +244,7 @@ void LLPanelAvatarSecondLife::updatePartnerName()
 //-----------------------------------------------------------------------------
 void LLPanelAvatarSecondLife::clearControls()
 {
-	LLTextureCtrl*	image_ctrl = getChild<LLTextureCtrl>("img");
+	LLTextureCtrl* image_ctrl = getChild<LLTextureCtrl>("img");
 	if(image_ctrl)
 	{
 		image_ctrl->setImageAssetID(LLUUID::null);
@@ -290,7 +290,7 @@ void LLPanelAvatarFirstLife::onClickImage(void* data)
 {
 	LLPanelAvatarFirstLife* self = (LLPanelAvatarFirstLife*)data;
 	
-	LLTextureCtrl*	image_ctrl = self->getChild<LLTextureCtrl>("img");
+	LLTextureCtrl* image_ctrl = self->getChild<LLTextureCtrl>("img");
 	if(image_ctrl)
 	{ 
 		LLUUID mUUID = image_ctrl->getImageAssetID();
@@ -326,7 +326,7 @@ void LLPanelAvatarSecondLife::onClickImage(void* data)
 	{
 		std::string name_text = name_ctrl->getText();	
 	
-		LLTextureCtrl*	image_ctrl = self->getChild<LLTextureCtrl>("img");
+		LLTextureCtrl* image_ctrl = self->getChild<LLTextureCtrl>("img");
 		if(image_ctrl)
 		{ 
 			LLUUID mUUID = image_ctrl->getImageAssetID();
@@ -2158,7 +2158,7 @@ void LLPanelAvatar::processAvatarPropertiesReply(LLMessageSystem *msg, void**)
 
 		self->mPanelWeb->setWebURL(profile_url);
 
-		LLTextureCtrl*	image_ctrl = self->mPanelSecondLife->getChild<LLTextureCtrl>("img");
+		LLTextureCtrl* image_ctrl = self->mPanelSecondLife->getChild<LLTextureCtrl>("img");
 		if(image_ctrl)
 		{
 			image_ctrl->setImageAssetID(image_id);
@@ -2183,7 +2183,7 @@ void LLPanelAvatar::processAvatarPropertiesReply(LLMessageSystem *msg, void**)
 				aboutfl_txtctrl->setText(fl_about_text);
 			else //Cause url parsing is weird like this -KC
 				aboutfl_txtctrl->appendColoredText(fl_about_text, false, false, aboutfl_txtctrl->getReadOnlyFgColor());
-			LLTextureCtrl*	image_ctrl = self->mPanelFirstLife->getChild<LLTextureCtrl>("img");
+			LLTextureCtrl* image_ctrl = self->mPanelFirstLife->getChild<LLTextureCtrl>("img");
 			if(image_ctrl)
 			{
 				image_ctrl->setImageAssetID(fl_image_id);
@@ -2372,7 +2372,7 @@ void LLPanelAvatar::sendAvatarPropertiesUpdate()
 	if (mPanelFirstLife)
 	{
 		first_life_about_text = mPanelFirstLife->childGetValue("about").asString();
-		LLTextureCtrl*	image_ctrl = mPanelFirstLife->getChild<LLTextureCtrl>("img");
+		LLTextureCtrl* image_ctrl = mPanelFirstLife->getChild<LLTextureCtrl>("img");
 		if(image_ctrl)
 		{
 			first_life_image_id = image_ctrl->getImageAssetID();
@@ -2389,7 +2389,7 @@ void LLPanelAvatar::sendAvatarPropertiesUpdate()
 	msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID() );
 	msg->nextBlockFast(_PREHASH_PropertiesData);
 	
-	LLTextureCtrl*	image_ctrl = mPanelSecondLife->getChild<LLTextureCtrl>("img");
+	LLTextureCtrl* image_ctrl = mPanelSecondLife->getChild<LLTextureCtrl>("img");
 	if(image_ctrl)
 	{
 		msg->addUUIDFast(	_PREHASH_ImageID,	image_ctrl->getImageAssetID());

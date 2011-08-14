@@ -390,10 +390,10 @@ public:
 	{
 		LLPointer<LLInventoryCallback> cb = new JCImportTransferCallback(data);
 		LLPermissions perm;
-		LLUUID parent_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+		LLUUID parent_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 
 		create_inventory_item(gAgent.getID(), gAgent.getSessionID(),
-			gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH), data->tid, data->name,
+			gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH), data->tid, data->name,
 			data->description, data->type, LLInventoryType::defaultForAssetType(data->type), data->wear_type,
 			LLFloaterPerms::getNextOwnerPerms(),
 			cb);
@@ -531,10 +531,10 @@ void JCImportInventorycallback(const LLUUID& uuid, void* user_data, S32 result, 
 
 		LLPointer<LLInventoryCallback> cb = new JCImportTransferCallback(data);
 		LLPermissions perm;
-		LLUUID parent_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+		LLUUID parent_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 
 		create_inventory_item(gAgent.getID(), gAgent.getSessionID(),
-			gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH), data->tid, data->name,
+			gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH), data->tid, data->name,
 			data->description, data->type, LLInventoryType::defaultForAssetType(data->type), data->wear_type,
 			LLFloaterPerms::getNextOwnerPerms(),
 			cb);
@@ -619,7 +619,7 @@ void ImportTracker::send_inventory(LLSD& prim)
 								file.write(copy_buf, file_size);
 							}
 							LLSD body;
-							body["folder_id"] = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+							body["folder_id"] = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 							body["asset_type"] = LLAssetType::lookup(data->type);
 							body["inventory_type"] = LLInventoryType::lookup(data->inv_type);
 							body["name"] = data->name;
@@ -680,9 +680,9 @@ void ImportTracker::send_inventory(LLSD& prim)
 						//std::string agent_url = gAgent.getRegion()->getCapability("UpdateNotecardAgentInventory");
 						LLPointer<LLInventoryCallback> cb = new JCPostInvCallback(data);
 						LLPermissions perm;
-						LLUUID parent_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+						LLUUID parent_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 						create_inventory_item(gAgent.getID(), gAgent.getSessionID(),
-							gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH), data->tid, data->name,
+							gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH), data->tid, data->name,
 							data->description, data->type, LLInventoryType::defaultForAssetType(data->type), data->wear_type,
 							LLFloaterPerms::getNextOwnerPerms(),
 							cb);
@@ -692,9 +692,9 @@ void ImportTracker::send_inventory(LLSD& prim)
 					{
 						LLPointer<LLInventoryCallback> cb = new JCPostInvCallback(data);
 						LLPermissions perm;
-						LLUUID parent_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+						LLUUID parent_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 						create_inventory_item(gAgent.getID(), gAgent.getSessionID(),
-							gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH), data->tid, data->name,
+							gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH), data->tid, data->name,
 							data->description, data->type, LLInventoryType::defaultForAssetType(data->type), data->wear_type,
 							LLFloaterPerms::getNextOwnerPerms(),
 							cb);

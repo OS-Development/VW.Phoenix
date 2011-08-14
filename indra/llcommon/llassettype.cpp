@@ -33,331 +33,222 @@
 #include "linden_common.h"
 
 #include "llassettype.h"
+#include "lldictionary.h"
+#include "llsingleton.h"
 
-#include "llstring.h"
-#include "lltimer.h"
-
-// I added lookups for exact text of asset type enums in addition to the ones below, so shoot me. -Steve
-
-struct asset_info_t
+///----------------------------------------------------------------------------
+/// Class LLAssetType
+///----------------------------------------------------------------------------
+struct AssetEntry : public LLDictionaryEntry
 {
-	LLAssetType::EType type;
-	const char* desc;
+	AssetEntry(const char *desc_name,
+			   const char *type_name, 	// 8 character limit!
+			   const char *human_name, 	// for decoding to human readable form; put any and as many printable characters you want in each one
+			   bool can_link, 			// can you create a link to this type?
+			   bool can_fetch, 			// can you fetch this asset by ID?
+			   bool can_know) 			// can you see this asset's ID?
+		:
+		LLDictionaryEntry(desc_name),
+		mTypeName(type_name),
+		mHumanName(human_name),
+		mCanLink(can_link),
+		mCanFetch(can_fetch),
+		mCanKnow(can_know)
+	{
+		llassert(strlen(mTypeName) <= 8);
+	}
+
+	const char *mTypeName;
+	const char *mHumanName;
+	bool mCanLink;
+	bool mCanFetch;
+	bool mCanKnow;
 };
 
-asset_info_t asset_types[] =
+class LLAssetDictionary : public LLSingleton<LLAssetDictionary>,
+						  public LLDictionary<LLAssetType::EType, AssetEntry>
 {
-	{ LLAssetType::AT_TEXTURE, "TEXTURE" },
-	{ LLAssetType::AT_SOUND, "SOUND" },
-	{ LLAssetType::AT_CALLINGCARD, "CALLINGCARD" },
-	{ LLAssetType::AT_LANDMARK, "LANDMARK" },
-	{ LLAssetType::AT_SCRIPT, "SCRIPT" },
-	{ LLAssetType::AT_CLOTHING, "CLOTHING" },
-	{ LLAssetType::AT_OBJECT, "OBJECT" },
-	{ LLAssetType::AT_NOTECARD, "NOTECARD" },
-	{ LLAssetType::AT_CATEGORY, "CATEGORY" },
-	{ LLAssetType::AT_ROOT_CATEGORY, "ROOT_CATEGORY" },
-	{ LLAssetType::AT_LSL_TEXT, "LSL_TEXT" },
-	{ LLAssetType::AT_LSL_BYTECODE, "LSL_BYTECODE" },
-	{ LLAssetType::AT_TEXTURE_TGA, "TEXTURE_TGA" },
-	{ LLAssetType::AT_BODYPART, "BODYPART" },
-	{ LLAssetType::AT_TRASH, "TRASH" },
-	{ LLAssetType::AT_SNAPSHOT_CATEGORY, "SNAPSHOT_CATEGORY" },
-	{ LLAssetType::AT_LOST_AND_FOUND, "LOST_AND_FOUND" },
-	{ LLAssetType::AT_SOUND_WAV, "SOUND_WAV" },
-	{ LLAssetType::AT_IMAGE_TGA, "IMAGE_TGA" },
-	{ LLAssetType::AT_IMAGE_JPEG, "IMAGE_JPEG" },
-	{ LLAssetType::AT_ANIMATION, "ANIMATION" },
-	{ LLAssetType::AT_GESTURE, "GESTURE" },
-	{ LLAssetType::AT_SIMSTATE, "SIMSTATE" },
-	{ LLAssetType::AT_FAVORITE, "FAVORITE" },
-	{ LLAssetType::AT_LINK, "LINK" },
-	{ LLAssetType::AT_LINK_FOLDER, "CURRENT" },
-	{ LLAssetType::AT_CURRENT_OUTFIT, "FOLDER_LINK" },
-	{ LLAssetType::AT_OUTFIT, "OUTFIT" },
-	{ LLAssetType::AT_MY_OUTFITS, "MY_OUTFITS" },
-	{ LLAssetType::AT_NONE, "NONE" }
+public:
+	LLAssetDictionary();
 };
 
-LLAssetType::EType LLAssetType::getType(const std::string& sin)
+LLAssetDictionary::LLAssetDictionary()
 {
-	std::string s = sin;
+	//       												   DESCRIPTION			TYPE NAME	HUMAN NAME			CAN LINK?   CAN FETCH?  CAN KNOW?	
+	//      												  |--------------------|-----------|-------------------|-----------|-----------|---------|
+	addEntry(LLAssetType::AT_TEXTURE, 			new AssetEntry("TEXTURE",			"texture",	"texture",			false,		false,		true));
+	addEntry(LLAssetType::AT_SOUND, 			new AssetEntry("SOUND",				"sound",	"sound",			false,		true,		true));
+	addEntry(LLAssetType::AT_CALLINGCARD, 		new AssetEntry("CALLINGCARD",		"callcard",	"calling card",		false,		false,		false));
+	addEntry(LLAssetType::AT_LANDMARK, 			new AssetEntry("LANDMARK",			"landmark",	"landmark",			false,		true,		true));
+	addEntry(LLAssetType::AT_SCRIPT, 			new AssetEntry("SCRIPT",			"script",	"legacy script",	false,		false,		false));
+	addEntry(LLAssetType::AT_CLOTHING, 			new AssetEntry("CLOTHING",			"clothing",	"clothing",			true,		true,		true));
+	addEntry(LLAssetType::AT_OBJECT, 			new AssetEntry("OBJECT",			"object",	"object",			true,		false,		false));
+	addEntry(LLAssetType::AT_NOTECARD, 			new AssetEntry("NOTECARD",			"notecard",	"note card",		false,		false,		true));
+	addEntry(LLAssetType::AT_CATEGORY, 			new AssetEntry("CATEGORY",			"category",	"folder",			true,		false,		false));
+	addEntry(LLAssetType::AT_LSL_TEXT, 			new AssetEntry("LSL_TEXT",			"lsltext",	"lsl2 script",		false,		false,		false));
+	addEntry(LLAssetType::AT_LSL_BYTECODE, 		new AssetEntry("LSL_BYTECODE",		"lslbyte",	"lsl bytecode",		false,		false,		false));
+	addEntry(LLAssetType::AT_TEXTURE_TGA, 		new AssetEntry("TEXTURE_TGA",		"txtr_tga",	"tga texture",		false,		false,		false));
+	addEntry(LLAssetType::AT_BODYPART, 			new AssetEntry("BODYPART",			"bodypart",	"body part",		true,		true,		true));
+	addEntry(LLAssetType::AT_SOUND_WAV, 		new AssetEntry("SOUND_WAV",			"snd_wav",	"sound",			false,		false,		false));
+	addEntry(LLAssetType::AT_IMAGE_TGA, 		new AssetEntry("IMAGE_TGA",			"img_tga",	"targa image",		false,		false,		false));
+	addEntry(LLAssetType::AT_IMAGE_JPEG, 		new AssetEntry("IMAGE_JPEG",		"jpeg",		"jpeg image",		false,		false,		false));
+	addEntry(LLAssetType::AT_ANIMATION, 		new AssetEntry("ANIMATION",			"animatn",	"animation",		false,		true,		true));
+	addEntry(LLAssetType::AT_GESTURE, 			new AssetEntry("GESTURE",			"gesture",	"gesture",			true,		true,		true));
+	addEntry(LLAssetType::AT_SIMSTATE, 			new AssetEntry("SIMSTATE",			"simstate",	"simstate",			false,		false,		false));
+	addEntry(LLAssetType::AT_LINK, 				new AssetEntry("LINK",				"link",		"sym link",			false,		false,		true));
+	addEntry(LLAssetType::AT_LINK_FOLDER, 		new AssetEntry("FOLDER_LINK",		"link_f", 	"sym folder link",	false,		false,		true));
+//	addEntry(LLAssetType::AT_MESH,              new AssetEntry("MESH",              "mesh",     "mesh",             false,		false,		false));
+	addEntry(LLAssetType::AT_NONE, 				new AssetEntry("NONE",				"-1",		NULL,		  		FALSE,		FALSE,		FALSE));
+};
+
+// static
+LLAssetType::EType LLAssetType::getType(const std::string& desc_name)
+{
+	std::string s = desc_name;
 	LLStringUtil::toUpper(s);
-	for (S32 idx = 0; ;idx++)
-	{
-		asset_info_t* info = asset_types + idx;
-		if (info->type == LLAssetType::AT_NONE)
-			break;
-		if (s == info->desc)
-			return info->type;
-	}
-	return LLAssetType::AT_NONE;
+	return LLAssetDictionary::getInstance()->lookup(s);
 }
 
-std::string LLAssetType::getDesc(LLAssetType::EType type)
-{
-	for (S32 idx = 0; ;idx++)
-	{
-		asset_info_t* info = asset_types + idx;
-		if (type == info->type)
-			return info->desc;
-		if (info->type == LLAssetType::AT_NONE)
-			break;
-	}
-	return "BAD TYPE";
-}
-
-//============================================================================
-
-// The asset type names are limited to 8 characters.
 // static
-const char* LLAssetType::mAssetTypeNames[LLAssetType::AT_COUNT] =
-{ 
-	"texture",
-	"sound",
-	"callcard",
-	"landmark",
-	"script",
-	"clothing",
-	"object",
-	"notecard",
-	"category",
-	"root",
-	"lsltext",
-	"lslbyte",
-	"txtr_tga",// Intentionally spelled this way.  Limited to eight characters.
-	"bodypart",
-	"trash",
-	"snapshot",
-	"lstndfnd",
-	"snd_wav",
-	"img_tga",
-	"jpeg",
-	"animatn",
-	"gesture",
-	"simstate",
-	"favorite",
-	"link",
-	"link_f",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"current",
-	"outfit",
-	"my_otfts"
-};
-
-// This table is meant for decoding to human readable form. Put any
-// and as many printable characters you want in each one.
-// See also llinventory.cpp INVENTORY_TYPE_HUMAN_NAMES
-const char* LLAssetType::mAssetTypeHumanNames[LLAssetType::AT_COUNT] =
-{ 
-	"texture",
-	"sound",
-	"calling card",
-	"landmark",
-	"legacy script",
-	"clothing",
-	"object",
-	"note card",
-	"folder",
-	"root",
-	"lsl2 script",
-	"lsl bytecode",
-	"tga texture",
-	"body part",
-	"trash",
-	"snapshot",
-	"lost and found",
-	"sound",
-	"targa image",
-	"jpeg image",
-	"animation",
-	"gesture",
-	"simstate",
-	"",
-	"symbolic link",
-	"symbolic folder link"
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"current outfit",
-	"outfit",
-	"my outfits"
-};
-
-///----------------------------------------------------------------------------
-/// class LLAssetType
-///----------------------------------------------------------------------------
-
-// static
-const char* LLAssetType::lookup( LLAssetType::EType type )
+const std::string &LLAssetType::getDesc(LLAssetType::EType asset_type)
 {
-	if( (type >= 0) && (type < AT_COUNT ))
+	const AssetEntry *entry = LLAssetDictionary::getInstance()->lookup(asset_type);
+	if (entry)
 	{
-		return mAssetTypeNames[ S32( type ) ];
+		return entry->mName;
 	}
 	else
 	{
-		return "-1";
+		return badLookup();
 	}
 }
 
 // static
-LLAssetType::EType LLAssetType::lookup( const char* name )
+const char *LLAssetType::lookup(LLAssetType::EType asset_type)
+{
+	const LLAssetDictionary *dict = LLAssetDictionary::getInstance();
+	const AssetEntry *entry = dict->lookup(asset_type);
+	if (entry)
+	{
+		return entry->mTypeName;
+	}
+	else
+	{
+		return badLookup().c_str();
+	}
+}
+
+// static
+LLAssetType::EType LLAssetType::lookup(const char* name)
 {
 	return lookup(ll_safe_string(name));
 }
 
-LLAssetType::EType LLAssetType::lookup( const std::string& name )
+// static
+LLAssetType::EType LLAssetType::lookup(const std::string& type_name)
 {
-	for( S32 i = 0; i < AT_COUNT; i++ )
+	const LLAssetDictionary *dict = LLAssetDictionary::getInstance();
+	for (LLAssetDictionary::const_iterator iter = dict->begin();
+		 iter != dict->end();
+		 iter++)
 	{
-		if( name == mAssetTypeNames[i] )
+		const AssetEntry *entry = iter->second;
+		if (type_name == entry->mTypeName)
 		{
-			// match
-			return (EType)i;
+			return iter->first;
 		}
 	}
 	return AT_NONE;
 }
 
 // static
-const char* LLAssetType::lookupHumanReadable(LLAssetType::EType type)
+const char *LLAssetType::lookupHumanReadable(LLAssetType::EType asset_type)
 {
-	if( (type >= 0) && (type < AT_COUNT ))
+	const LLAssetDictionary *dict = LLAssetDictionary::getInstance();
+	const AssetEntry *entry = dict->lookup(asset_type);
+	if (entry)
 	{
-		return mAssetTypeHumanNames[S32(type)];
+		return entry->mHumanName;
 	}
 	else
 	{
-		return NULL;
+		return badLookup().c_str();
 	}
 }
 
 // static
-LLAssetType::EType LLAssetType::lookupHumanReadable( const char* name )
+LLAssetType::EType LLAssetType::lookupHumanReadable(const char* name)
 {
 	return lookupHumanReadable(ll_safe_string(name));
 }
 
-LLAssetType::EType LLAssetType::lookupHumanReadable( const std::string& name )
+// static
+LLAssetType::EType LLAssetType::lookupHumanReadable(const std::string& readable_name)
 {
-	for( S32 i = 0; i < AT_COUNT; i++ )
+	const LLAssetDictionary *dict = LLAssetDictionary::getInstance();
+	for (LLAssetDictionary::const_iterator iter = dict->begin();
+		 iter != dict->end();
+		 iter++)
 	{
-		if( name == mAssetTypeHumanNames[i] )
+		const AssetEntry *entry = iter->second;
+		if (entry->mHumanName && (readable_name == entry->mHumanName))
 		{
-			// match
-			return (EType)i;
+			return iter->first;
 		}
 	}
 	return AT_NONE;
-}
-
-EDragAndDropType LLAssetType::lookupDragAndDropType( EType asset )
-{
-	switch( asset )
-	{
-	case AT_TEXTURE:		return DAD_TEXTURE;
-	case AT_SOUND:			return DAD_SOUND;
-	case AT_CALLINGCARD:	return DAD_CALLINGCARD;
-	case AT_LANDMARK:		return DAD_LANDMARK;
-	case AT_SCRIPT:			return DAD_NONE;
-	case AT_CLOTHING:		return DAD_CLOTHING;
-	case AT_OBJECT:			return DAD_OBJECT;
-	case AT_NOTECARD:		return DAD_NOTECARD;
-	case AT_CATEGORY:		return DAD_CATEGORY;
-	case AT_ROOT_CATEGORY:	return DAD_ROOT_CATEGORY;
-	case AT_LSL_TEXT:		return DAD_SCRIPT;
-	case AT_BODYPART:		return DAD_BODYPART;
-	case AT_ANIMATION:		return DAD_ANIMATION;
-	case AT_GESTURE:		return DAD_GESTURE;
-	case AT_FAVORITE:		return DAD_CATEGORY;
-	case AT_LINK:			return DAD_LINK;
-	case AT_LINK_FOLDER:	return DAD_LINK;
-	case AT_CURRENT_OUTFIT:	return DAD_LINK;
-	case AT_OUTFIT:			return DAD_LINK;
-	case AT_MY_OUTFITS:		return DAD_CATEGORY;
-	default: 				return DAD_NONE;
-	};
-}
-
-// static. Generate a good default description
-void LLAssetType::generateDescriptionFor(LLAssetType::EType type,
-										 std::string& desc)
-{
-	const S32 BUF_SIZE = 30;
-	char time_str[BUF_SIZE];	/* Flawfinder: ignore */
-	time_t now;
-	time(&now);
-	memset(time_str, '\0', BUF_SIZE);
-	strftime(time_str, BUF_SIZE - 1, "%Y-%m-%d %H:%M:%S ", localtime(&now));
-	desc.assign(time_str);
-	desc.append(LLAssetType::lookupHumanReadable(type));
 }
 
 // static
 bool LLAssetType::lookupCanLink(EType asset_type)
 {
-	return (asset_type == AT_CLOTHING || asset_type == AT_OBJECT || asset_type == AT_CATEGORY ||
-			asset_type == AT_BODYPART || asset_type == AT_GESTURE);
+	const LLAssetDictionary *dict = LLAssetDictionary::getInstance();
+	const AssetEntry *entry = dict->lookup(asset_type);
+	if (entry)
+	{
+		return entry->mCanLink;
+	}
+	return false;
 }
 
 // static
 // Not adding this to dictionary since we probably will only have these two types
 bool LLAssetType::lookupIsLinkType(EType asset_type)
 {
-	return (asset_type == AT_LINK || asset_type == AT_LINK_FOLDER);
+	if (asset_type == AT_LINK || asset_type == AT_LINK_FOLDER)
+	{
+		return true;
+	}
+	return false;
+}
+
+// static
+const std::string &LLAssetType::badLookup()
+{
+	static const std::string sBadLookup = "llassettype_bad_lookup";
+	return sBadLookup;
 }
 
 // static
 bool LLAssetType::lookupIsAssetFetchByIDAllowed(EType asset_type)
 {
-	return (asset_type == AT_SOUND || asset_type == AT_LANDMARK ||
-			asset_type == AT_CLOTHING || asset_type == AT_BODYPART ||
-			asset_type == AT_ANIMATION ||asset_type == AT_GESTURE);
+	const LLAssetDictionary *dict = LLAssetDictionary::getInstance();
+	const AssetEntry *entry = dict->lookup(asset_type);
+	if (entry)
+	{
+		return entry->mCanFetch;
+	}
+	return false;
 }
 
 // static
-bool LLAssetType::lookupIsAssetIDKnowable(LLAssetType::EType asset_type)
+bool LLAssetType::lookupIsAssetIDKnowable(EType asset_type)
 {
-	return (asset_type == AT_TEXTURE || asset_type == AT_SOUND ||
-			asset_type == AT_LANDMARK || asset_type == AT_CLOTHING ||
-			asset_type == AT_NOTECARD ||asset_type == AT_BODYPART ||
-			asset_type == AT_ANIMATION || asset_type == AT_GESTURE ||
-			asset_type == AT_LINK || asset_type == AT_LINK_FOLDER);
+	const LLAssetDictionary *dict = LLAssetDictionary::getInstance();
+	const AssetEntry *entry = dict->lookup(asset_type);
+	if (entry)
+	{
+		return entry->mCanKnow;
+	}
+	return false;
 }

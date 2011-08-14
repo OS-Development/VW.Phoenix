@@ -8,7 +8,6 @@ include(LLMath)
 include(LLMessage)
 include(LLVFS)
 #include(LLAddBuildTest)
-include(Tut)
 
 include_directories (${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -21,6 +20,7 @@ include_directories(
 
 set(llmessage_SOURCE_FILES
     llares.cpp
+    llareslistener.cpp
     llassetstorage.cpp
     llavatarnamecache.cpp
     llblowfishcipher.cpp
@@ -107,6 +107,7 @@ set(llmessage_HEADER_FILES
     CMakeLists.txt
 
     llares.h
+    llareslistener.h
     llassetstorage.h
     llavatarnamecache.h
     llblowfishcipher.h

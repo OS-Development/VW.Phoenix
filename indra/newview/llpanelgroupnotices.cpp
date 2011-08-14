@@ -39,7 +39,7 @@
 #include "llinventory.h"
 #include "llviewerinventory.h"
 #include "llinventorymodel.h"
-#include "llinventoryview.h"
+#include "llinventoryicon.h"	// for getIconName
 #include "llagent.h"
 #include "lltooldraganddrop.h"
 
@@ -321,10 +321,10 @@ void LLPanelGroupNotices::setItem(LLPointer<LLInventoryItem> inv_item)
 		item_is_multi = TRUE;
 	};
 
-	std::string icon_name = get_item_icon_name(inv_item->getType(),
-										inv_item->getInventoryType(),
-										inv_item->getFlags(),
-										item_is_multi );
+	std::string icon_name = LLInventoryIcon::getIconName(inv_item->getType(),
+														 inv_item->getInventoryType(),
+														 inv_item->getFlags(),
+														 item_is_multi);
 
 	mCreateInventoryIcon->setImage(icon_name);
 	mCreateInventoryIcon->setVisible(TRUE);
@@ -480,9 +480,9 @@ void LLPanelGroupNotices::processNotices(LLMessageSystem* msg)
 		row["columns"][0]["column"] = "icon";
 		if (has_attachment)
 		{
-			std::string icon_name = get_item_icon_name(
-									(LLAssetType::EType)asset_type,
-									LLInventoryType::IT_NONE,FALSE, FALSE);
+			std::string icon_name = LLInventoryIcon::getIconName((LLAssetType::EType)asset_type,
+																 LLInventoryType::IT_NONE,
+																 FALSE, FALSE);
 			row["columns"][0]["type"] = "icon";
 			row["columns"][0]["value"] = icon_name;
 		}
@@ -535,10 +535,12 @@ void LLPanelGroupNotices::showNotice(const std::string& subject,
 {
 	arrangeNoticeView(VIEW_PAST_NOTICE);
 
-	if(mViewSubject) mViewSubject->setText(subject);
-	if(mViewMessage)
+	if (mViewSubject) mViewSubject->setText(subject);
+	if (mViewMessage)
 	{
-		mViewMessage->clear();
+ 		// We need to prune the highlights, and clear() is not doing it...
+ 		mViewMessage->removeTextFromEnd(mViewMessage->getMaxLength());
+ 		// Now we append the new text (setText() won't highlight URLs)
 		mViewMessage->appendColoredText(message, false, false, mViewMessage->getReadOnlyFgColor());
 	}
 	
@@ -553,9 +555,9 @@ void LLPanelGroupNotices::showNotice(const std::string& subject,
 	{
 		mInventoryOffer = inventory_offer;
 
-		std::string icon_name = get_item_icon_name(mInventoryOffer->mType,
-												LLInventoryType::IT_TEXTURE,
-												0, FALSE);
+		std::string icon_name = LLInventoryIcon::getIconName(mInventoryOffer->mType,
+															 LLInventoryType::IT_TEXTURE,
+															 0, FALSE);
 
 		mViewInventoryIcon->setImage(icon_name);
 		mViewInventoryIcon->setVisible(TRUE);

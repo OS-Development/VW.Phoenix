@@ -308,8 +308,8 @@ bool LLViewerInventoryItem::exportFileLocal(LLFILE* fp) const
 	fprintf(fp, "\t\tparent_id\t%s\n", uuid_str.c_str());
 	mPermissions.exportFile(fp);
 	fprintf(fp, "\t\ttype\t%s\n", LLAssetType::lookup(mType));
-	const char* inv_type_str = LLInventoryType::lookup(mInventoryType);
-	if(inv_type_str) fprintf(fp, "\t\tinv_type\t%s\n", inv_type_str);
+	const std::string inv_type_str = LLInventoryType::lookup(mInventoryType);
+	if (!inv_type_str.empty()) fprintf(fp, "\t\tinv_type\t%s\n", inv_type_str.c_str());
 	fprintf(fp, "\t\tname\t%s|\n", mName.c_str());
 	fprintf(fp, "\t\tcreation_date\t%d\n", (S32) mCreationDate);
 	fprintf(fp,"\t}\n");
@@ -363,7 +363,7 @@ EWearableType LLViewerInventoryItem::getWearableType() const
 
 LLViewerInventoryCategory::LLViewerInventoryCategory(const LLUUID& uuid,
 													 const LLUUID& parent_uuid,
-													 LLAssetType::EType pref,
+													 LLFolderType::EType pref,
 													 const std::string& name,
 													 const LLUUID& owner_id) :
 	LLInventoryCategory(uuid, parent_uuid, pref, name),
@@ -419,7 +419,10 @@ void LLViewerInventoryCategory::updateParentOnServer(BOOL restamp) const
 void LLViewerInventoryCategory::updateServer(BOOL is_new) const
 {
 	// communicate that change with the server.
-	if ( (LLAssetType::AT_NONE != mPreferredType) && (LLAssetType::AT_OUTFIT != mPreferredType) )
+
+	// Ansariel: Old check
+	//if ( (LLAssetType::AT_NONE != mPreferredType) && (LLAssetType::AT_OUTFIT != mPreferredType) )
+	if (LLFolderType::lookupIsProtectedType(mPreferredType))
 	{
 		LLNotifications::instance().add("CannotModifyProtectedCategories");
 		return;
@@ -443,7 +446,10 @@ void LLViewerInventoryCategory::removeFromServer( void )
 	llinfos << "Removing inventory category " << mUUID << " from server."
 			<< llendl;
 	// communicate that change with the server.
-	if ( (LLAssetType::AT_NONE != mPreferredType) && (LLAssetType::AT_OUTFIT != mPreferredType) )
+
+	// Ansariel: Old check
+	//if ( (LLAssetType::AT_NONE != mPreferredType) && (LLAssetType::AT_OUTFIT != mPreferredType) )
+	if (LLFolderType::lookupIsProtectedType(mPreferredType))
 	{
 		LLNotifications::instance().add("CannotRemoveProtectedCategories");
 		return;
@@ -523,7 +529,7 @@ void LLViewerInventoryCategory::createBasicHair()
 	LLUUID item_id = LLUUID("30d1d71b-38a6-4956-b27e-3bbcc17da0e2"); //lolhack, it's my UUID?
 	
 	//Make some hair just in case, using the library item so we're not hacking.
-	LLUUID folder_id(gInventory.findCategoryUUIDForType(LLAssetType::AT_BODYPART));
+	LLUUID folder_id(gInventory.findCategoryUUIDForType(LLFolderType::FT_BODYPART));
 	LLPermissions* perms = new LLPermissions();
 	perms->set(LLPermissions::DEFAULT);
 	perms->setOwnerAndGroup(LLUUID::null, LLUUID::null, LLUUID::null, false);
@@ -595,7 +601,7 @@ bool LLViewerInventoryCategory::importFileLocal(LLFILE* fp)
 		}
 		else if(0 == strcmp("pref_type", keyword))
 		{
-			mPreferredType = LLAssetType::lookup(valuestr);
+			mPreferredType = LLFolderType::lookup(valuestr);
 		}
 		else if(0 == strcmp("name", keyword))
 		{
@@ -633,7 +639,7 @@ bool LLViewerInventoryCategory::exportFileLocal(LLFILE* fp) const
 	mParentUUID.toString(uuid_str);
 	fprintf(fp, "\t\tparent_id\t%s\n", uuid_str.c_str());
 	fprintf(fp, "\t\ttype\t%s\n", LLAssetType::lookup(mType));
-	fprintf(fp, "\t\tpref_type\t%s\n", LLAssetType::lookup(mPreferredType));
+	fprintf(fp, "\t\tpref_type\t%s\n", LLFolderType::lookup(mPreferredType).c_str());
 	fprintf(fp, "\t\tname\t%s|\n", mName.c_str());
 	mOwnerID.toString(uuid_str);
 	fprintf(fp, "\t\towner_id\t%s\n", uuid_str.c_str());
@@ -917,38 +923,51 @@ public:
 
 void copy_inventory_from_notecard(const LLUUID& object_id, const LLUUID& notecard_inv_id, const LLInventoryItem *src, U32 callback_id)
 {
-	LLSD body;
-	LLViewerRegion* viewer_region = NULL;
-	if(object_id.notNull())
+	if (NULL == src)
 	{
-		LLViewerObject* vo = gObjectList.findObject(object_id);
-		if(vo)
-		{
-			viewer_region = vo->getRegion();
-		}
+		llwarns << "Null pointer to item was passed for object_id " << object_id
+				<< " and notecard_inv_id " << notecard_inv_id << llendl;
+		return;
+	}
+
+	LLViewerRegion* viewer_region = NULL;
+	LLViewerObject* vo = NULL;
+	if (object_id.notNull() && (vo = gObjectList.findObject(object_id)) != NULL)
+	{
+		viewer_region = vo->getRegion();
 	}
 
 	// Fallback to the agents region if for some reason the 
 	// object isn't found in the viewer.
-	if(!viewer_region)
+	if (!viewer_region)
 	{
 		viewer_region = gAgent.getRegion();
 	}
 
-	if(viewer_region)
+	if (!viewer_region)
 	{
-		std::string url = viewer_region->getCapability("CopyInventoryFromNotecard");
-		if (!url.empty())
-		{
-			body["notecard-id"] = notecard_inv_id;
-			body["object-id"] = object_id;
-			body["item-id"] = src->getUUID();
-			body["folder-id"] = gInventory.findCategoryUUIDForType(src->getType());
-			body["callback-id"] = (LLSD::Integer)callback_id;
+        llwarns << "Can't find region from object_id " << object_id
+				<< " or gAgent" << llendl;
+        return;
+    }
 
-			LLHTTPClient::post(url, body, new LLCopyInventoryFromNotecardResponder());
-		}
+	// check capability to prevent a crash while LL_ERRS in LLCapabilityListener::capListener. See EXT-8459.
+	std::string url = viewer_region->getCapability("CopyInventoryFromNotecard");
+	if (url.empty())
+	{
+        llwarns << "There is no 'CopyInventoryFromNotecard' capability for region: "
+				<< viewer_region->getName() << llendl;
+		return;
 	}
+
+	LLSD body;
+	body["notecard-id"] = notecard_inv_id;
+	body["object-id"] = object_id;
+	body["item-id"] = src->getUUID();
+	body["folder-id"] = gInventory.findCategoryUUIDForType(LLFolderType::assetTypeToFolderType(src->getType()));
+	body["callback-id"] = (LLSD::Integer)callback_id;
+
+	LLHTTPClient::post(url, body, new LLCopyInventoryFromNotecardResponder());
 }
 
 

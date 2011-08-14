@@ -17,6 +17,7 @@
 #include "llviewerprecompiledheaders.h"
 #include "llagent.h"
 #include "llstartup.h"
+#include "llviewerfoldertype.h"
 #include "llviewerobject.h"
 #include "llvoavatar.h"
 
@@ -29,7 +30,7 @@
 #include "boost/algorithm/string.hpp"
 
 // Only defined in llinventorymodel.cpp
-extern const char* NEW_CATEGORY_NAME;
+//extern const char* NEW_CATEGORY_NAME;
 
 // ============================================================================
 // Static variable initialization
@@ -427,7 +428,9 @@ void RlvRenameOnWearObserver::doneIdle()
 					std::string strFolderName = ".(" + strAttachPt + ")";
 
 					// Rename the item's parent folder if it's called "New Folder", isn't directly under #RLV and contains exactly 1 object
-					if ( (NEW_CATEGORY_NAME == pFolder->getName()) && 
+					// Ansariel: Merged from Firestorm
+					//if ( (NEW_CATEGORY_NAME == pFolder->getName()) && 
+					if ( (LLViewerFolderType::lookupNewCategoryName(LLFolderType::FT_NONE) == pFolder->getName()) && 
 						 (pFolder->getParentUUID() != pRlvRoot->getUUID()) && 
 						 (1 == RlvInventory::getDirectDescendentsCount(pFolder, LLAssetType::AT_OBJECT)) )
 					{
@@ -438,7 +441,7 @@ void RlvRenameOnWearObserver::doneIdle()
 					else
 					{
 						// "No modify" item with a non-renameable parent: create a new folder named and move the item into it
-						LLUUID idAttachFolder = gInventory.createNewCategory(pFolder->getUUID(), LLAssetType::AT_NONE, strFolderName);
+						LLUUID idAttachFolder = gInventory.createNewCategory(pFolder->getUUID(), LLFolderType::FT_NONE, strFolderName);
 						move_inventory_item(gAgent.getID(), gAgent.getSessionID(), pItem->getUUID(), idAttachFolder, std::string(), NULL);
 					}
 				}
@@ -712,7 +715,7 @@ bool RlvWearableItemCollector::onCollectItem(const LLInventoryItem* pItem)
 				const LLUUID& idLinkedFolder = pItem->getLinkedUUID();
 				LLViewerInventoryCategory* pLinkedFolder = gInventory.getCategory(idLinkedFolder);
 				// Link can't point to an outfit folder, or start a second level of indirection, or have the base folder as an ancestor
-				if ( (pLinkedFolder) && (LLAssetType::AT_OUTFIT != pLinkedFolder->getPreferredType()) &&
+				if ( (pLinkedFolder) && (LLFolderType::FT_OUTFIT != pLinkedFolder->getPreferredType()) &&
 					 (gInventory.isObjectDescendentOf(pItem->getUUID(), m_idFolder)) && 
 					 (!gInventory.isObjectDescendentOf(idLinkedFolder, m_idFolder)) )
 				{

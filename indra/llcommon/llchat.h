@@ -34,7 +34,6 @@
 #ifndef LL_LLCHAT_H
 #define LL_LLCHAT_H
 
-#include "llstring.h"
 #include "lluuid.h"
 #include "v3math.h"
 
@@ -44,7 +43,8 @@ typedef enum e_chat_source_type
 	CHAT_SOURCE_SYSTEM = 0,
 	CHAT_SOURCE_AGENT = 1,
 	CHAT_SOURCE_OBJECT = 2,
-	CHAT_SOURCE_OBJECT_IM = 3
+	CHAT_SOURCE_UNKNOWN = 3,
+	CHAT_SOURCE_OBJECT_IM = 4
 } EChatSourceType;
 
 typedef enum e_chat_type
@@ -58,7 +58,7 @@ typedef enum e_chat_type
 	CHAT_TYPE_DEBUG_MSG = 6,
 	CHAT_TYPE_REGION = 7,
 	CHAT_TYPE_OWNER = 8,
-	CHAT_TYPE_DIRECT = 9
+	CHAT_TYPE_DIRECT = 9		// From llRegionSayTo()
 } EChatType;
 
 typedef enum e_chat_audible_level
@@ -72,7 +72,7 @@ typedef enum e_chat_audible_level
 class LLChat
 {
 public:
-	LLChat(const std::string& text = LLStringUtil::null)
+	LLChat(const std::string& text = std::string())
 	:	mText(text),
 		mFromName(),
 		mFromID(),
@@ -80,7 +80,7 @@ public:
 		mRlvLocFiltered(FALSE),
 		mRlvNamesFiltered(FALSE),
 // [/RLVa:KB]
-		mSourceType(CHAT_SOURCE_AGENT),
+		mSourceType(CHAT_SOURCE_UNKNOWN),
 		mChatType(CHAT_TYPE_NORMAL),
 		mAudible(CHAT_AUDIBLE_FULLY),
 		mMuted(FALSE),

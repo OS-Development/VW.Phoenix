@@ -37,7 +37,7 @@
 #include "locale.h"
 #include "stdtypes.h"
 #include "llstring.h"
-#include "llmemory.h"
+#include "llsingleton.h"
 
 enum LLLOCALE_ID
 {

@@ -91,7 +91,7 @@ public:
 	virtual bool operator()(LLInventoryCategory* cat,
 							LLInventoryItem* item)
 	{
-		if(cat && (cat->getPreferredType() == LLAssetType::AT_NONE))
+		if(cat && (cat->getPreferredType() == LLFolderType::FT_NONE))
 		{
 			return true;
 		}
@@ -108,7 +108,7 @@ public:
 							LLInventoryItem* item)
 	{
 		if(item) return true;
-		if(cat && (cat->getPreferredType() == LLAssetType::AT_NONE))
+		if(cat && (cat->getPreferredType() == LLFolderType::FT_NONE))
 		{
 			return true;
 		}
@@ -1324,8 +1324,7 @@ void LLToolDragAndDrop::dropObject(LLViewerObject* raycast_target,
 
 	// Check if it's in the trash.
 	bool is_in_trash = false;
-	LLUUID trash_id;
-	trash_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+	const LLUUID trash_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 	if(gInventory.isObjectDescendentOf(item->getUUID(), trash_id))
 	{
 		is_in_trash = true;
@@ -2126,7 +2125,7 @@ EAcceptance LLToolDragAndDrop::dad3dRezAttachmentFromInv(
 	if(!item || !item->isComplete()) return ACCEPT_NO;
 
 	// must not be in the trash
-	LLUUID trash_id(gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH));
+	const LLUUID trash_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 	if( gInventory.isObjectDescendentOf( item->getUUID(), trash_id ) )
 	{
 		return ACCEPT_NO;
@@ -2233,8 +2232,7 @@ EAcceptance LLToolDragAndDrop::dad3dRezObjectOnLand(
 	}
 
 	// Check if it's in the trash.
-	LLUUID trash_id;
-	trash_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+	const LLUUID trash_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 	if(gInventory.isObjectDescendentOf(item->getUUID(), trash_id))
 	{
 		accept = ACCEPT_YES_SINGLE;
@@ -2324,8 +2322,7 @@ EAcceptance LLToolDragAndDrop::dad3dRezObjectOnObject(
 	}
 
 	// Check if it's in the trash.
-	LLUUID trash_id;
-	trash_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+	const LLUUID trash_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 	if(gInventory.isObjectDescendentOf(item->getUUID(), trash_id))
 	{
 		accept = ACCEPT_YES_SINGLE;
@@ -2463,7 +2460,7 @@ EAcceptance LLToolDragAndDrop::dad3dWearItem(
 	if(mSource == SOURCE_AGENT || mSource == SOURCE_LIBRARY)
 	{
 		// it's in the agent inventory
-		LLUUID trash_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+		const LLUUID trash_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 		if( gInventory.isObjectDescendentOf( item->getUUID(), trash_id ) )
 		{
 			return ACCEPT_NO;
@@ -2525,7 +2522,7 @@ EAcceptance LLToolDragAndDrop::dad3dActivateGesture(
 	if(mSource == SOURCE_AGENT || mSource == SOURCE_LIBRARY)
 	{
 		// it's in the agent inventory
-		LLUUID trash_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+		const LLUUID trash_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 		if( gInventory.isObjectDescendentOf( item->getUUID(), trash_id ) )
 		{
 			return ACCEPT_NO;
@@ -2584,7 +2581,7 @@ EAcceptance LLToolDragAndDrop::dad3dWearCategory(
 
 	if(mSource == SOURCE_AGENT)
 	{
-		LLUUID trash_id(gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH));
+		const LLUUID trash_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 		if( gInventory.isObjectDescendentOf( category->getUUID(), trash_id ) )
 		{
 			return ACCEPT_NO;

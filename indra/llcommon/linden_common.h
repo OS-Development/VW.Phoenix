@@ -33,6 +33,11 @@
 #ifndef LL_LINDEN_COMMON_H
 #define LL_LINDEN_COMMON_H
 
+// *NOTE:  Please keep includes here to a minimum!
+//
+// Files included here are included in every library .cpp file and
+// are not precompiled.
+
 #if defined(LL_WINDOWS) && defined(_DEBUG)
 # if _MSC_VER >= 1400 // Visual C++ 2005 or later
 #  define _CRTDBG_MAP_ALLOC

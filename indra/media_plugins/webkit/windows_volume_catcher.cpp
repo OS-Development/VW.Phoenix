@@ -28,7 +28,7 @@
 
 #include "volume_catcher.h"
 #include <windows.h>
-#include "llmemory.h"
+#include "llsingleton.h"
 class VolumeCatcherImpl : public LLSingleton<VolumeCatcherImpl>
 {
 friend LLSingleton<VolumeCatcherImpl>;
