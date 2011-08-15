@@ -34,7 +34,7 @@
 
 #include "linden_common.h"
 #include "llsdserialize.h"
-#include "llmemory.h"
+#include "llpointer.h"
 #include "llstreamtools.h" // for fullread
 
 #include <iostream>
@@ -77,7 +77,7 @@ void LLSDSerialize::serialize(const LLSD& sd, std::ostream& str, ELLSD_Serialize
 		break;
 
 	default:
-		llwarns << "serialize request for unkown ELLSD_Serialize" << llendl;
+		llwarns << "serialize request for unknown ELLSD_Serialize" << llendl;
 	}
 
 	if (f.notNull())
@@ -1502,7 +1502,7 @@ void LLSDBinaryFormatter::formatString(
  */
 int deserialize_string(std::istream& istr, std::string& value, S32 max_bytes)
 {
-	char c = istr.get();
+	int c = istr.get();
 	if(istr.fail())
 	{
 		// No data in stream, bail out but mention the character we
@@ -1544,7 +1544,7 @@ int deserialize_string_delim(
 
 	while (true)
 	{
-		char next_char = istr.get();
+		int next_byte = istr.get();
 		++count;
 
 		if(istr.fail())
@@ -1553,7 +1553,9 @@ int deserialize_string_delim(
 			value = write_buffer.str();
 			return LLSDParser::PARSE_FAILURE;
 		}
-		
+
+		char next_char = (char)next_byte; // Now that we know it's not EOF
+
 		if(found_escape)
 		{
 			// next character(s) is a special sequence.
@@ -1641,7 +1643,7 @@ int deserialize_string_raw(
 	char buf[BUF_LEN];		/* Flawfinder: ignore */
 	istr.get(buf, BUF_LEN - 1, ')');
 	count += istr.gcount();
-	char c = istr.get();
+	int c = istr.get();
 	c = istr.get();
 	count += 2;
 	if(((c == '"') || (c == '\'')) && (buf[0] == '('))

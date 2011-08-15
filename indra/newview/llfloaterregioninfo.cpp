@@ -2557,12 +2557,7 @@ void LLPanelEstateInfo::setAccessAllowedEnabled(bool enable_agent,
 }
 
 // static
-void LLPanelEstateInfo::callbackCacheName(
-	const LLUUID& id,
-	const std::string& first,
-	const std::string& last,
-	BOOL is_group,
-	void*)
+void LLPanelEstateInfo::callbackCacheName(const LLUUID& id,	const std::string& full_name, bool is_group)
 {
 	LLPanelEstateInfo* self = LLFloaterRegionInfo::getPanelEstate();
 	if (!self) return;
@@ -2575,7 +2570,7 @@ void LLPanelEstateInfo::callbackCacheName(
 	}
 	else
 	{
-		name = first + " " + last;
+		name = full_name;
 	}
 
 	self->setOwnerName(name);

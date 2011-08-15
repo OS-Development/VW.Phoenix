@@ -36,8 +36,9 @@
 #define LL_LLSDSERIALIZE_H
 
 #include <iosfwd>
+#include "llpointer.h"
+#include "llrefcount.h"
 #include "llsd.h"
-#include "llmemory.h"
 
 /** 
  * @class LLSDParser
@@ -637,9 +638,14 @@ protected:
  *	params << "[{'version':i1}," << LLSDOStreamer<LLSDNotationFormatter>(sd)
  *    << "]";
  *  </code>
- */
+ *
+ * *NOTE - formerly this class inherited from its template parameter Formatter,
+ * but all instantiations passed in LLRefCount subclasses.  This conflicted with
+ * the auto allocation intended for this class template (demonstrated in the
+ * example above).  -brad
+*/
 template <class Formatter>
-class LLSDOStreamer : public Formatter
+class LLSDOStreamer
 {
 public:
 	/** 
@@ -660,7 +666,8 @@ public:
 		std::ostream& str,
 		const LLSDOStreamer<Formatter>& formatter)
 	{
-		formatter.format(formatter.mSD, str, formatter.mOptions);
+		LLPointer<Formatter> f = new Formatter;
+		f->format(formatter.mSD, str, formatter.mOptions);
 		return str;
 	}
 
@@ -753,6 +760,9 @@ public:
 		LLPointer<LLSDXMLParser> p = new LLSDXMLParser;
 		return p->parse(str, sd, LLSDSerialize::SIZE_UNLIMITED);
 	}
+	// Line oriented parser, 30% faster than fromXML(), but can
+	// only be used when you know you have the complete XML
+	// document available in the stream.
 	static S32 fromXMLDocument(LLSD& sd, std::istream& str)
 	{
 		LLPointer<LLSDXMLParser> p = new LLSDXMLParser();

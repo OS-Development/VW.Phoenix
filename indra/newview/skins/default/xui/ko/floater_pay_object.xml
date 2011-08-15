@@ -7,7 +7,7 @@
 		주민 지불:
 	</text>
 	<text type="string" length="1" name="payee_name">
-		[FIRST] [LAST]
+		[NAME]
 	</text>
 	<text type="string" length="1" name="object_name_label">
 		매개 오브젝트:

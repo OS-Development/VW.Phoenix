@@ -126,7 +126,6 @@ LLFloaterAvatarInfo::LLFloaterAvatarInfo(const std::string& name, const LLRect &
 
 	gAvatarInfoInstances.addData(avatar_id, this); // must be done before callback below is called.
 	LLAvatarNameCache::get(avatar_id, boost::bind(&LLFloaterAvatarInfo::callbackLoadAvatarName, _1, _2));
-	//gCacheName->get(avatar_id, FALSE, callbackLoadAvatarName);
 }
 
 // virtual

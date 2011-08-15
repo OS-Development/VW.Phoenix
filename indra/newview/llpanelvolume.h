@@ -35,7 +35,7 @@
 
 #include "v3math.h"
 #include "llpanel.h"
-#include "llmemory.h"
+#include "llpointer.h"
 #include "llvolume.h"
 
 class LLSpinCtrl;

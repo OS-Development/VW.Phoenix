@@ -10,7 +10,7 @@
 		支付给居民:
 	</text>
 	<text type="string" length="1" name="payee_name">
-		[FIRST] [LAST]
+		[NAME]
 	</text>
 	<text type="string" length="1" name="fastpay text">
 		快速支付:

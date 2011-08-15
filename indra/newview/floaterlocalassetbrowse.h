@@ -8,6 +8,7 @@ tag: vaa phoenix local_asset_browser
 #ifndef VAA_LOCALBROWSER
 #define VAA_LOCALBROWSER
 
+#include "lleventtimer.h"
 #include "llfloater.h"
 #include "llscrolllistctrl.h"
 #include "lltexturectrl.h"

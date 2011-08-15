@@ -36,7 +36,7 @@
 #include <vector>
 
 #include "llfloater.h"
-#include "llmemory.h"
+#include "llpointer.h"
 #include "llcolorswatch.h"
 #include "llspinctrl.h"
 #include "lltextureentry.h"

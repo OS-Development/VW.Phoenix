@@ -35,10 +35,10 @@
 #ifndef LL_LLFLOATERFRIENDS_H
 #define LL_LLFLOATERFRIENDS_H
 
+#include "lleventtimer.h"
 #include "llpanel.h"
 #include "llstring.h"
 #include "lluuid.h"
-#include "lltimer.h"
 #include "llcallingcard.h"
 
 class LLFriendObserver;

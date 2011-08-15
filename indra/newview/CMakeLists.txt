@@ -242,6 +242,7 @@ set(viewer_SOURCE_FILES
     llfloaterobjectiminfo.cpp
     llfloateropenobject.cpp
     llfloaterparcel.cpp
+    llfloaterpay.cpp
     llfloaterpermissionsmgr.cpp
     llfloaterperms.cpp
     llfloaterpostcard.cpp
@@ -274,7 +275,6 @@ set(viewer_SOURCE_FILES
     llframestats.cpp
     llframestatview.cpp
     llgesturemgr.cpp
-    llgivemoney.cpp
     llglsandbox.cpp
     llgroupmgr.cpp
     llgroupnotify.cpp
@@ -735,6 +735,7 @@ set(viewer_HEADER_FILES
     llfloateropenobject.h
 	llfloaterteleporthistory.h
     llfloaterparcel.h
+    llfloaterpay.h
     llfloaterpermissionsmgr.h
     llfloaterpostcard.h
     llfloaterpostprocess.h
@@ -766,7 +767,6 @@ set(viewer_HEADER_FILES
     llframestats.h
     llframestatview.h
     llgesturemgr.h
-    llgivemoney.h
     llgroupmgr.h
     llgroupnotify.h
     llhomelocationresponder.h

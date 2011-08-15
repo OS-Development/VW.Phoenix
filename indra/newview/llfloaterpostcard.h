@@ -36,7 +36,7 @@
 #include "llfloater.h"
 #include "llcheckboxctrl.h"
 
-#include "llmemory.h"
+#include "llpointer.h"
 #include "llimagegl.h"
 
 class LLTextEditor;

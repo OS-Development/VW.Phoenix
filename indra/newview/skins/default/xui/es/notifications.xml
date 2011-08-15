@@ -2967,13 +2967,13 @@ Pulse Aceptar para coger la llamada o Rehusar para declinar la invitación. Puls
 		</form>
 	</notification>
 	<notification name="AutoUnmuteByIM">
-		[FIRST] [LAST], a quien ha enviado un mensaje instantáneo, ha dejado automáticamente de estar ignorado.
+		[NAME], a quien ha enviado un mensaje instantáneo, ha dejado automáticamente de estar ignorado.
 	</notification>
 	<notification name="AutoUnmuteByMoney">
-		[FIRST] [LAST], a quien ha dado dinero, ha dejado automáticamente de estar ignorado.
+		[NAME], a quien ha dado dinero, ha dejado automáticamente de estar ignorado.
 	</notification>
 	<notification name="AutoUnmuteByInventory">
-		[FIRST] [LAST], a quien ha ofrecido algo del inventario, ha dejado automáticamente de estar ignorado.
+		[NAME], a quien ha ofrecido algo del inventario, ha dejado automáticamente de estar ignorado.
 	</notification>
 	<notification name="VoiceInviteGroup">
 		[NAME] ha empezado un chat de voz con el grupo [GROUP].

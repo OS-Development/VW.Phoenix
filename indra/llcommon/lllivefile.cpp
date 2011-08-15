@@ -31,9 +31,9 @@
 
 #include "linden_common.h"
 
+#include "lleventtimer.h"
 #include "lllivefile.h"
 #include "llframetimer.h"
-#include "lltimer.h"
 
 const F32 DEFAULT_CONFIG_FILE_REFRESH = 5.0f;
 
@@ -41,7 +41,7 @@ const F32 DEFAULT_CONFIG_FILE_REFRESH = 5.0f;
 class LLLiveFile::Impl
 {
 public:
-	Impl(const std::string &filename, const F32 refresh_period);
+	Impl(const std::string& filename, const F32 refresh_period);
 	~Impl();
 	
 	bool check();

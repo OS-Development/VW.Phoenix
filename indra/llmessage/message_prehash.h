@@ -632,6 +632,8 @@ extern char const* const _PREHASH_OfferCallingCard;
 extern char const* const _PREHASH_AcceptCallingCard;
 extern char const* const _PREHASH_DeclineCallingCard;
 extern char const* const _PREHASH_AgentAccess;
+extern char const* const _PREHASH_AgentLegacyAccess;
+extern char const* const _PREHASH_AgentMaxAccess;
 extern char const* const _PREHASH_DataHomeLocationReply;
 extern char const* const _PREHASH_EventLocationReply;
 extern char const* const _PREHASH_TerseDateID;

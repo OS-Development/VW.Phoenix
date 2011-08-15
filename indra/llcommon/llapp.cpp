@@ -37,9 +37,9 @@
 #include "llapr.h"
 #include "llerrorcontrol.h"
 #include "llerrorthread.h"
+#include "lleventtimer.h"
 #include "llframetimer.h"
 #include "llmemory.h"
-#include "lltimer.h"
 
 //
 // Signal handling

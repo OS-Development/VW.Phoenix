@@ -198,8 +198,9 @@ private:
 	};
 };
 
-static void cacheNameUpdateRefreshesBuyLand(const LLUUID&,
-	const std::string&, const std::string&, BOOL, void* data)
+//static void cacheNameUpdateRefreshesBuyLand(const LLUUID&,
+//	const std::string&, const std::string&, BOOL, void* data)
+static void cacheNameUpdateRefreshesBuyLand(const LLUUID&, const std::string&, bool)
 {
 	LLFloaterBuyLandUI* ui = LLFloaterBuyLandUI::soleInstance(false);
 	if (ui)

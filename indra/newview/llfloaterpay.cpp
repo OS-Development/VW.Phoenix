@@ -1,5 +1,5 @@
 /** 
- * @file llgivemoney.cpp
+ * @file llfloaterpay.cpp
  * @author Aaron Brashears, Kelly Washington, James Cook
  * @brief Implementation of the LLFloaterPay class.
  *
@@ -33,7 +33,7 @@
 
 #include "llviewerprecompiledheaders.h"
 
-#include "llgivemoney.h"
+#include "llfloaterpay.h"
 
 #include "message.h"
 
@@ -74,6 +74,7 @@ struct LLGiveMoneyInfo
 /// Class LLFloaterPay
 ///----------------------------------------------------------------------------
 
+std::set<LLFloaterPay*> LLFloaterPay::sInstances;
 S32 LLFloaterPay::sLastAmount = 0;
 const S32 MAX_AMOUNT_LENGTH = 10;
 const S32 FASTPAY_BUTTON_WIDTH = 80;
@@ -103,7 +104,8 @@ LLFloaterPay::LLFloaterPay(const std::string& name,
 		LLUICtrlFactory::getInstance()->buildFloater(this,"floater_pay.xml");
 	}
 
-	
+	sInstances.insert(this);
+
 	S32 i =0;
 
 	LLGiveMoneyInfo* info = new LLGiveMoneyInfo(this, PAY_BUTTON_DEFAULT_0);
@@ -147,7 +149,7 @@ LLFloaterPay::LLFloaterPay(const std::string& name,
 	++i;
 
 	
-    childSetVisible("amount text", FALSE);	
+    childSetVisible("amount text", FALSE);
 	childSetVisible("currency text", FALSE);
 
 
@@ -180,10 +182,9 @@ LLFloaterPay::LLFloaterPay(const std::string& name,
 // Destroys the object
 LLFloaterPay::~LLFloaterPay()
 {
-	std::for_each(mCallbackData.begin(), mCallbackData.end(), DeletePointer());
+	sInstances.erase(this);
 
-	// Clean up if we are still waiting for a name.
-	gCacheName->cancelCallback(mTargetUUID,onCacheOwnerName,this);
+	std::for_each(mCallbackData.begin(), mCallbackData.end(), DeletePointer());
 }
 
 // static
@@ -210,7 +211,6 @@ void LLFloaterPay::processPayPriceReply(LLMessageSystem* msg, void **userdata)
 			self->childSetVisible("pay btn", FALSE);
 			self->childSetVisible("amount text", FALSE);
 			self->childSetVisible("currency text", FALSE);
-
 		}
 		else if (PAY_PRICE_DEFAULT == price)
 		{			
@@ -381,7 +381,7 @@ void LLFloaterPay::payDirectly(money_callback callback,
 	
 void LLFloaterPay::finishPayUI(const LLUUID& target_id, BOOL is_group)
 {
-	gCacheName->get(target_id, is_group, onCacheOwnerName, (void*)this);
+	gCacheName->get(target_id, is_group, boost::bind(&LLFloaterPay::onCacheOwnerName, _1, _2, _3, this));
 
 	// Make sure the amount field has focus
 
@@ -392,29 +392,26 @@ void LLFloaterPay::finishPayUI(const LLUUID& target_id, BOOL is_group)
 	mTargetIsGroup = is_group;
 }
 
-// static
-void LLFloaterPay::onCacheOwnerName(const LLUUID& owner_id,
-									const std::string& firstname,
-									const std::string& lastname,
-									BOOL is_group,
-									void* userdata)
+//static
+void LLFloaterPay::onCacheOwnerName(const LLUUID& owner_id,	const std::string& full_name, bool is_group, LLFloaterPay* self)
 {
-	LLFloaterPay* self = (LLFloaterPay*)userdata;
-	if (!self) return;
-	
+	if 	(!sInstances.count(self))
+	{
+		return;
+	}
+
 	if (is_group)
 	{
-		self->childSetVisible("payee_group",true);
-		self->childSetVisible("payee_resident",false);
+		self->childSetVisible("payee_group", true);
+		self->childSetVisible("payee_resident", false);
 	}
 	else
 	{
-		self->childSetVisible("payee_group",false);
-		self->childSetVisible("payee_resident",true);
+		self->childSetVisible("payee_group", false);
+		self->childSetVisible("payee_resident", true);
 	}
-	
-	self->childSetTextArg("payee_name", "[FIRST]", firstname);
-	self->childSetTextArg("payee_name", "[LAST]", lastname);
+
+	self->childSetTextArg("payee_name", "[NAME]", full_name);
 }
 
 // static
@@ -485,7 +482,7 @@ void LLFloaterPay::give(S32 amount)
 
 					// request the object owner in order to check if the owner needs to be unmuted
 					LLSelectMgr::registerObjectPropertiesFamilyRequest(mTargetUUID);
- 					LLMessageSystem* msg = gMessageSystem;
+					LLMessageSystem* msg = gMessageSystem;
 					msg->newMessageFast(_PREHASH_RequestObjectPropertiesFamily);
 					msg->nextBlockFast(_PREHASH_AgentData);
 					msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());

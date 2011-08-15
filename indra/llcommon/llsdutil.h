@@ -59,6 +59,7 @@ LL_COMMON_API LLSD ll_binary_from_string(const LLSD& sd);
 LL_COMMON_API char* ll_print_sd(const LLSD& sd);
 
 // Serializes sd to static buffer and returns pointer, using "pretty printing" mode.
+LL_COMMON_API char* ll_pretty_print_sd_ptr(const LLSD* sd);
 LL_COMMON_API char* ll_pretty_print_sd(const LLSD& sd);
 
 //compares the structure of an LLSD to a template LLSD and stores the

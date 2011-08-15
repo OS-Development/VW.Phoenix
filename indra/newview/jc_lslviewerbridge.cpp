@@ -145,10 +145,13 @@ struct n2kdat
 	S32 channel;
 	std::string reply;
 };
-void callbackname2key(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* data)
+
+//void callbackname2key(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* data)
+void callbackname2key(const LLUUID& id, const std::string& fullname, bool is_group, n2kdat* dat)
 {
-	n2kdat* dat = (n2kdat*)data; 
-	std::string send = dat->reply + first+" "+last;
+	//n2kdat* dat = (n2kdat*)data; 
+	//std::string send = dat->reply + first+" "+last;
+	std::string send = dat->reply + fullname;
 	JCLSLBridge::send_chat_to_object(send, dat->channel, dat->source);
 	delete dat;
 	//if(id == subjectA.owner_id)sInstance->childSetValue("owner_a_name", first + " " + last);
@@ -235,7 +238,8 @@ bool JCLSLBridge::lsltobridge(std::string message, std::string from_name, LLUUID
 				bool group = (bool)atoi(args[4].asString().c_str());
 				data->reply = llformat("key2namereply|%s|",uniq.c_str());
 				data->source = source_id;
-				gCacheName->get(LLUUID(args[2].asString()), group, callbackname2key, data);
+				//gCacheName->get(LLUUID(args[2].asString()), group, callbackname2key, data);
+				gCacheName->get(LLUUID(args[2].asString()), group, boost::bind(&callbackname2key, _1, _2, _3, data));
 				return true;
 			}
 			else if(cmd == "emao")

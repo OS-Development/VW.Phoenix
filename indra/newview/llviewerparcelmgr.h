@@ -36,7 +36,7 @@
 #include "v3dmath.h"
 #include "lldarray.h"
 #include "llframetimer.h"
-#include "llmemory.h"
+#include "llsingleton.h"
 #include "llparcelselection.h"
 #include "llui.h"
 

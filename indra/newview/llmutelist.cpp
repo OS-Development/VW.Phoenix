@@ -510,11 +510,8 @@ void LLMuteList::updateRemove(const LLMute& mute)
 	gAgent.sendReliableMessage();
 }
 
-void notify_automute_callback(const LLUUID& agent_id, const std::string& first_name, const std::string& last_name, BOOL is_group, void* user_data)
+void notify_automute_callback(const LLUUID& agent_id, const std::string& full_name, bool is_group, LLMuteList::EAutoReason reason)
 {
-	U32 temp_data = (U32) (uintptr_t) user_data;
-	LLMuteList::EAutoReason reason = (LLMuteList::EAutoReason)temp_data;
-	
 	std::string notif_name;
 	switch (reason)
 	{
@@ -531,9 +528,8 @@ void notify_automute_callback(const LLUUID& agent_id, const std::string& first_n
 	}
 
 	LLSD args;
-	args["FIRST"] = first_name;
-	args["LAST"] = last_name;
-    
+	args["NAME"] = full_name;
+
 	LLNotificationPtr notif_ptr = LLNotifications::instance().add(notif_name, args);
 	if (notif_ptr)
 	{
@@ -564,24 +560,26 @@ BOOL LLMuteList::autoRemove(const LLUUID& agent_id, const EAutoReason reason, co
 		removed = TRUE;
 		remove(automute);
 
-		if (first_name.empty() && last_name.empty())
+		std::string full_name = LLCacheName::buildFullName(first_name, last_name);
+		if (full_name.empty())
 		{
-			std::string cache_first, cache_last;
-			if (gCacheName->getName(agent_id, cache_first, cache_last))
+			if (gCacheName->getFullName(agent_id, full_name))
 			{
 				// name in cache, call callback directly
-				notify_automute_callback(agent_id, cache_first, cache_last, FALSE, (void *)reason);
+				notify_automute_callback(agent_id, full_name, false, reason);
 			}
 			else
 			{
 				// not in cache, lookup name from cache
-				gCacheName->get(agent_id, FALSE, notify_automute_callback, (void *)reason);
+				gCacheName->get(agent_id, false,
+								boost::bind(&notify_automute_callback,
+											_1, _2, _3, reason));
 			}
 		}
 		else
 		{
 			// call callback directly
-			notify_automute_callback(agent_id, first_name, last_name, FALSE, (void *)reason);
+			notify_automute_callback(agent_id, full_name, false, reason);
 		}
 	}
 

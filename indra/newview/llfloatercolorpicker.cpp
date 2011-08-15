@@ -51,7 +51,6 @@
 #include "lluictrlfactory.h"
 #include "llviewerwindow.h"
 #include "llgl.h"
-#include "llmemory.h"
 #include "llimage.h"
 #include "llmousehandler.h"
 #include "llimagegl.h"

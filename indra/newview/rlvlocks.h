@@ -25,6 +25,7 @@
 //
 
 #include "llagent.h"
+#include "lleventtimer.h"
 #include "llviewerjointattachment.h"
 #include "llviewerobject.h"
 #include "llvoavatar.h"

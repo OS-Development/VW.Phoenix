@@ -35,7 +35,7 @@
 
 #include <map>
 //#include "lllocalidhashmap.h"
-#include "llmemory.h"
+#include "llpointer.h"
 #include "llstl.h"
 
 #include "llimagegl.h"

@@ -1301,7 +1301,7 @@ LLPanelAvatar::LLPanelAvatar(
 	mPanelFirstLife(NULL),
 	mPanelWeb(NULL),
 	mDropTarget(NULL),
-	mAvatarID( LLUUID::null ),	// mAvatarID is set with 'setAvatar' or 'setAvatarID'
+	mAvatarID(LLUUID::null),	// mAvatarID is set with 'setAvatarID()'
 	mHaveProperties(FALSE),
 	mHaveStatistics(FALSE),
 	mHaveNotes(false),
@@ -1370,6 +1370,7 @@ BOOL LLPanelAvatar::canClose()
 	return mPanelClassified && mPanelClassified->canClose();
 }
 
+/*
 void LLPanelAvatar::setAvatar(LLViewerObject *avatarp)
 {
 	// find the avatar and grab the name
@@ -1393,6 +1394,7 @@ void LLPanelAvatar::setAvatar(LLViewerObject *avatarp)
 	// If we have an avatar pointer, they must be online.
 	setAvatarID(avatarp->getID(), name, ONLINE_STATUS_YES);
 }
+*/
 
 class JCProfileCallback : public JCBridgeCallback
 {

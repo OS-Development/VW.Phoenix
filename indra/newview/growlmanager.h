@@ -30,7 +30,7 @@
 #ifndef GROWLMANAGER_H
 #define GROWLMANAGER_H
 #include "growlnotifier.h"
-#include "lltimer.h"
+#include "lleventtimer.h"
 #include <map>
 
 struct GrowlNotification

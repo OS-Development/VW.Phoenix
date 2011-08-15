@@ -48,49 +48,50 @@ using namespace std;
 
 #define INCHES_TO_METERS 0.02540005f
 
-const F32 POSITION_KEYFRAME_THRESHOLD = 0.03f;
+const F32 POSITION_KEYFRAME_THRESHOLD_SQUARED = 0.03f * 0.03f;
 const F32 ROTATION_KEYFRAME_THRESHOLD = 0.01f;
 
-const F32 POSITION_MOTION_THRESHOLD = 0.001f;
+const F32 POSITION_MOTION_THRESHOLD_SQUARED = 0.001f * 0.001f;
 const F32 ROTATION_MOTION_THRESHOLD = 0.001f;
 
 char gInFile[1024];		/* Flawfinder: ignore */
-char gOutFile[1024];		/* Flawfinder: ignore */
+char gOutFile[1024];	/* Flawfinder: ignore */
 
 //------------------------------------------------------------------------
 // Status Codes
 //------------------------------------------------------------------------
-const char *LLBVHLoader::ST_OK				= "Ok";
-const char *LLBVHLoader::ST_EOF				= "Premature end of file.";
+const char *LLBVHLoader::ST_OK					= "Ok";
+const char *LLBVHLoader::ST_EOF					= "Premature end of file.";
 const char *LLBVHLoader::ST_NO_CONSTRAINT		= "Can't read constraint definition.";
-const char *LLBVHLoader::ST_NO_FILE			= "Can't open BVH file.";
-const char *LLBVHLoader::ST_NO_HIER			= "Invalid HIERARCHY header.";
+const char *LLBVHLoader::ST_NO_FILE				= "Can't open BVH file.";
+const char *LLBVHLoader::ST_NO_HIER				= "Invalid HIERARCHY header.";
 const char *LLBVHLoader::ST_NO_JOINT			= "Can't find ROOT or JOINT.";
-const char *LLBVHLoader::ST_NO_NAME			= "Can't get JOINT name.";
+const char *LLBVHLoader::ST_NO_NAME				= "Can't get JOINT name.";
 const char *LLBVHLoader::ST_NO_OFFSET			= "Can't find OFFSET.";
-const char *LLBVHLoader::ST_NO_CHANNELS		= "Can't find CHANNELS.";
-const char *LLBVHLoader::ST_NO_ROTATION		= "Can't get rotation order.";
-const char *LLBVHLoader::ST_NO_AXIS			= "Can't get rotation axis.";
+const char *LLBVHLoader::ST_NO_CHANNELS			= "Can't find CHANNELS.";
+const char *LLBVHLoader::ST_NO_ROTATION			= "Can't get rotation order.";
+const char *LLBVHLoader::ST_NO_AXIS				= "Can't get rotation axis.";
 const char *LLBVHLoader::ST_NO_MOTION			= "Can't find MOTION.";
 const char *LLBVHLoader::ST_NO_FRAMES			= "Can't get number of frames.";
 const char *LLBVHLoader::ST_NO_FRAME_TIME		= "Can't get frame time.";
-const char *LLBVHLoader::ST_NO_POS			= "Can't get position values.";
-const char *LLBVHLoader::ST_NO_ROT			= "Can't get rotation values.";
-const char *LLBVHLoader::ST_NO_XLT_FILE		= "Can't open translation file.";
+const char *LLBVHLoader::ST_NO_POS				= "Can't get position values.";
+const char *LLBVHLoader::ST_NO_ROT				= "Can't get rotation values.";
+const char *LLBVHLoader::ST_NO_XLT_FILE			= "Can't open translation file.";
 const char *LLBVHLoader::ST_NO_XLT_HEADER		= "Can't read translation header.";
-const char *LLBVHLoader::ST_NO_XLT_NAME		= "Can't read translation names.";
+const char *LLBVHLoader::ST_NO_XLT_NAME			= "Can't read translation names.";
 const char *LLBVHLoader::ST_NO_XLT_IGNORE		= "Can't read translation ignore value.";
-const char *LLBVHLoader::ST_NO_XLT_RELATIVE	= "Can't read translation relative value.";
-const char *LLBVHLoader::ST_NO_XLT_OUTNAME	= "Can't read translation outname value.";
+const char *LLBVHLoader::ST_NO_XLT_RELATIVE		= "Can't read translation relative value.";
+const char *LLBVHLoader::ST_NO_XLT_OUTNAME		= "Can't read translation outname value.";
 const char *LLBVHLoader::ST_NO_XLT_MATRIX		= "Can't read translation matrix.";
-const char *LLBVHLoader::ST_NO_XLT_MERGECHILD = "Can't get mergechild name.";
-const char *LLBVHLoader::ST_NO_XLT_MERGEPARENT = "Can't get mergeparent name.";
-const char *LLBVHLoader::ST_NO_XLT_PRIORITY	= "Can't get priority value.";
-const char *LLBVHLoader::ST_NO_XLT_LOOP		= "Can't get loop value.";
+const char *LLBVHLoader::ST_NO_XLT_MERGECHILD	= "Can't get mergechild name.";
+const char *LLBVHLoader::ST_NO_XLT_MERGEPARENT	= "Can't get mergeparent name.";
+const char *LLBVHLoader::ST_NO_XLT_PRIORITY		= "Can't get priority value.";
+const char *LLBVHLoader::ST_NO_XLT_LOOP			= "Can't get loop value.";
 const char *LLBVHLoader::ST_NO_XLT_EASEIN		= "Can't get easeIn values.";
-const char *LLBVHLoader::ST_NO_XLT_EASEOUT	= "Can't get easeOut values.";
-const char *LLBVHLoader::ST_NO_XLT_HAND		= "Can't get hand morph value.";
+const char *LLBVHLoader::ST_NO_XLT_EASEOUT		= "Can't get easeOut values.";
+const char *LLBVHLoader::ST_NO_XLT_HAND			= "Can't get hand morph value.";
 const char *LLBVHLoader::ST_NO_XLT_EMOTE		= "Can't read emote name.";
+const char *LLBVHLoader::ST_BAD_ROOT        	= "Illegal ROOT joint.";
 
 //------------------------------------------------------------------------
 // find_next_whitespace()
@@ -732,6 +733,16 @@ LLBVHLoader::Status LLBVHLoader::loadBVHFile(const char *buffer, char* error_tex
 			return ST_NO_NAME;
 		}
 
+		//---------------------------------------------------------------
+		// we require the root joint be "hip" - DEV-26188
+		//---------------------------------------------------------------
+		const char* FORCED_ROOT_NAME = "hip";
+		if (mJoints.size() == 0 && !strstr(jointName, FORCED_ROOT_NAME))
+		{
+			strncpy(error_text, line.c_str(), 127);	/* Flawfinder: ignore */
+			return ST_BAD_ROOT;
+ 		}
+
 		//----------------------------------------------------------------
 		// add a set of keyframes for this joint
 		//----------------------------------------------------------------
@@ -1144,7 +1155,7 @@ void LLBVHLoader::optimize()
 				if (ki_prev == ki_last_good_pos)
 				{
 					joint->mNumPosKeys++;
-					if (dist_vec(LLVector3(ki_prev->mPos), first_frame_pos) > POSITION_MOTION_THRESHOLD)
+					if (dist_vec_squared(LLVector3(ki_prev->mPos), first_frame_pos) > POSITION_MOTION_THRESHOLD_SQUARED)
 					{
 						pos_changed = TRUE;
 					}
@@ -1157,12 +1168,12 @@ void LLBVHLoader::optimize()
 					LLVector3 current_pos(ki->mPos);
 					LLVector3 interp_pos = lerp(current_pos, last_good_pos, 1.f / (F32)numPosFramesConsidered);
 
-					if (dist_vec(current_pos, first_frame_pos) > POSITION_MOTION_THRESHOLD)
+					if (dist_vec_squared(current_pos, first_frame_pos) > POSITION_MOTION_THRESHOLD_SQUARED)
 					{
 						pos_changed = TRUE;
 					}
 
-					if (dist_vec(interp_pos, test_pos) < POSITION_KEYFRAME_THRESHOLD)
+					if (dist_vec_squared(interp_pos, test_pos) < POSITION_KEYFRAME_THRESHOLD_SQUARED)
 					{
 						ki_prev->mIgnorePos = TRUE;
 						numPosFramesConsidered++;

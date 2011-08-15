@@ -3190,14 +3190,14 @@ Macの場合は、Cmd-Opt-Shift-Dを押してください。
 		</form>
 	</notification>
 	<notification name="AutoUnmuteByIM">
-		[FIRST] [LAST]に
+		[NAME]に
 インスタント・メッセージが送信され、無視設定は自動的に解除されました。
 	</notification>
 	<notification name="AutoUnmuteByMoney">
-		[FIRST] [LAST]にお金を渡したため、 無視設定が自動的に解除されました。
+		[NAME]にお金を渡したため、 無視設定が自動的に解除されました。
 	</notification>
 	<notification name="AutoUnmuteByInventory">
-		[FIRST] [LAST]に持ち物を渡したため、 無視設定が自動的に解除されました。
+		[NAME]に持ち物を渡したため、 無視設定が自動的に解除されました。
 	</notification>
 	<notification name="VoiceInviteGroup">
 		[NAME]が、 グループ[GROUP]とのボイスチャットコールに参加しました。

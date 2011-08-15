@@ -1756,9 +1756,9 @@ LLTextureFetchWorker* LLTextureFetch::getWorkerAfterLock(const LLUUID& id)
 
 LLTextureFetchWorker* LLTextureFetch::getWorker(const LLUUID& id)
 {
-	LLMutexLock lock(&mQueueMutex) ;
+	LLMutexLock lock(&mQueueMutex);
 
-	return getWorkerAfterLock(id) ;
+	return getWorkerAfterLock(id);
 }
 
 

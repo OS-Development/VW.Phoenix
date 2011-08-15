@@ -39,7 +39,7 @@
 #include "v4math.h"
 #include "v4coloru.h"
 #include "llstrider.h"
-#include "llmemory.h"
+#include "llrefcount.h"
 #include "llrender.h"
 #include <set>
 #include <vector>

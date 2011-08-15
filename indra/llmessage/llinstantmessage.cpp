@@ -41,9 +41,7 @@
 #include "llsd.h"
 #include "llsdserialize.h"
 #include "llsdutil_math.h"
-#include "llmemory.h"
-#include "message.h"
-
+#include "llpointer.h"
 #include "message.h"
 
 const U8 IM_ONLINE = 0;

@@ -40,7 +40,7 @@
 #include "lldrawpool.h"
 #include "llspatialpartition.h"
 #include "m4math.h"
-#include "llmemory.h"
+#include "llpointer.h"
 #include "lldrawpool.h"
 #include "llgl.h"
 #include "lldrawable.h"

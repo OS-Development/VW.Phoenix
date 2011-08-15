@@ -2933,13 +2933,13 @@ Clique Aceitar para atender, ou Recusar para recusar o convite. Clique Mudo para
 		</form>
 	</notification>
 	<notification name="AutoUnmuteByIM">
-		[FIRST] [LAST] recebeu uma Mensagem Instantânea sua e automaticamente não está mais no modo mudo.
+		[NAME] recebeu uma Mensagem Instantânea sua e automaticamente não está mais no modo mudo.
 	</notification>
 	<notification name="AutoUnmuteByMoney">
-		[FIRST] [LAST] recebeu pagamento seu e automaticamente não está mais no modo mudo.
+		[NAME] recebeu pagamento seu e automaticamente não está mais no modo mudo.
 	</notification>
 	<notification name="AutoUnmuteByInventory">
-		[FIRST] [LAST] recebeu inventário seu e automaticamente não está mais mudo.
+		[NAME] recebeu inventário seu e automaticamente não está mais mudo.
 	</notification>
 	<notification name="VoiceInviteGroup">
 		[NAME] juntou-se a uma conversa com voz do grupo [GROUP].

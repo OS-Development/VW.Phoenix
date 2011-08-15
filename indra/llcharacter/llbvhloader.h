@@ -166,6 +166,7 @@ public:
 	Translation()
 	{
 		mIgnore = FALSE;
+		mIgnorePositions = FALSE;
 		mRelativePositionKey = FALSE;
 		mRelativeRotationKey = FALSE;
 		mPriorityModifier = 0;
@@ -230,6 +231,7 @@ public:
 	static const char *ST_NO_XLT_EASEOUT;
 	static const char *ST_NO_XLT_HAND;
 	static const char *ST_NO_XLT_EMOTE;
+	static const char *ST_BAD_ROOT;
 
 	// Loads the specified translation table.
 	Status loadTranslationTable(const char *fileName);

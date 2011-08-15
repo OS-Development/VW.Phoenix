@@ -989,7 +989,8 @@ void LLIMMgr::inviteToSession(
 	{
 		if (caller_name.empty())
 		{
-			gCacheName->getName(caller_id, onInviteNameLookup, new LLSD(payload));
+			gCacheName->get(caller_id, false,
+							boost::bind(&LLIMMgr::onInviteNameLookup, _1, _2, _3, payload));
 		}
 		else
 		{
@@ -1029,16 +1030,13 @@ void LLIMMgr::inviteToSession(
 }
 
 //static 
-void LLIMMgr::onInviteNameLookup(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* userdata)
+void LLIMMgr::onInviteNameLookup(const LLUUID& id, const std::string& full_name, bool is_group, LLSD payload)
 {
-	LLSD payload = *(LLSD*)userdata;
-	delete (LLSD*)userdata;
-
-	payload["caller_name"] = first + " " + last;
+	payload["caller_name"] = full_name;
 	payload["session_name"] = payload["caller_name"].asString();
 
 	LLSD args;
-	args["NAME"] = payload["caller_name"].asString();
+	args["NAME"] = full_name;
 
 	LLNotifications::instance().add(
 		payload["notify_box_type"].asString(),

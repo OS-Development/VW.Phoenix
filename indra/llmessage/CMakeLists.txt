@@ -65,6 +65,7 @@ set(llmessage_SOURCE_FILES
     llregionpresenceverifier.cpp
     llsdappservices.cpp
     llsdhttpserver.cpp
+    llsdmessage.cpp
     llsdmessagebuilder.cpp
     llsdmessagereader.cpp
     llsdrpcclient.cpp
@@ -164,6 +165,7 @@ set(llmessage_HEADER_FILES
     llregionpresenceverifier.h
     llsdappservices.h
     llsdhttpserver.h
+    llsdmessage.h
     llsdmessagebuilder.h
     llsdmessagereader.h
     llsdrpcclient.h

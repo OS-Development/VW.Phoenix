@@ -77,8 +77,9 @@ private:
 	static LLFloaterInspect* sInstance;
 	static void onClickBlacklist(void *user_data);
 	static void onClickProfile(void *user_data);
-	static void callbackLoadAvatarName(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* data);
-
+	//static void callbackLoadAvatarName(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* data);
+	static void callbackLoadAvatarName(const LLUUID& id, const std::string& fullname, bool is_group);
+	
 	LLSafeHandle<LLObjectSelection> mObjectSelection;
 	// <edit>
 	std::map<LLUUID,std::pair<S32,S32> > mInventoryNums; //<scripts,total>

@@ -107,10 +107,11 @@ namespace LLAvatarNameCache
 
 	void requestNamesViaCapability();
 
-
-	// agent_id/group_id, first_name, last_name, is_group, user_data
 	// Legacy name system callback
-	void legacyNameCallback(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* data);
+	void legacyNameCallback(const LLUUID& agent_id,
+							const std::string& full_name,
+							bool is_group
+							);
 
 	void requestNamesViaLegacy();
 
@@ -229,7 +230,7 @@ public:
 			av_name.mUsername = DUMMY_NAME;
 			av_name.mDisplayName = DUMMY_NAME;
 			av_name.mIsDisplayNameDefault = false;
-			av_name.mIsDummy = true;
+			av_name.mIsTemporaryName = true;
 			av_name.mExpires = expires;
 
 			it = unresolved_agents.beginArray();
@@ -264,7 +265,7 @@ public:
 		av_name.mUsername = DUMMY_NAME;
 		av_name.mDisplayName = DUMMY_NAME;
 		av_name.mIsDisplayNameDefault = false;
-		av_name.mIsDummy = true;
+		av_name.mIsTemporaryName = true;
 		av_name.mExpires = retry_timestamp;
 
 		// Add dummy records for all agent IDs in this request
@@ -337,7 +338,7 @@ void LLAvatarNameCache::processName(const LLUUID& agent_id,
 		//  sCache[agent_id] = av_name;
 		// [SL:KB] - Patch: Agent-DisplayNames | Checked: 2010-12-28 (Catznip-2.4.0h) | Added: Catznip-2.4.0h
 		  // Don't replace existing entries with dummies
-		  cache_t::iterator itName = (av_name.mIsDummy) ? sCache.find(agent_id) : sCache.end();
+		  cache_t::iterator itName = (av_name.mIsTemporaryName) ? sCache.find(agent_id) : sCache.end();
 		  if (sCache.end() != itName)
 		   itName->second.mExpires = av_name.mExpires;
 		  else
@@ -419,9 +420,10 @@ void LLAvatarNameCache::requestNamesViaCapability()
 	// We've moved all asks to the pending request queue
 	sAskQueue.clear();
 }
-void LLAvatarNameCache::legacyNameCallback(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* data)
+void LLAvatarNameCache::legacyNameCallback(const LLUUID& agent_id,
+										   const std::string& full_name,
+										   bool is_group)
 {
-	std::string full_name = first + " " +last;
 	// Construct a dummy record for this name.  By convention, SLID is blank
 	// Never expires, but not written to disk, so lasts until end of session.
 	LLAvatarName av_name;
@@ -430,7 +432,7 @@ void LLAvatarNameCache::legacyNameCallback(const LLUUID& id, const std::string& 
 	// Don't add to cache, the data already exists in the legacy name system
 	// cache and we don't want or need duplicate storage, because keeping the
 	// two copies in sync is complex.
-	processName(id, av_name, false);
+	processName(agent_id, av_name, false);
 }
 
 void LLAvatarNameCache::requestNamesViaLegacy()
@@ -446,7 +448,9 @@ void LLAvatarNameCache::requestNamesViaLegacy()
 		// invoked below.  This should never happen in practice.
 		sPendingQueue[agent_id] = now;
 
-		gCacheName->get(agent_id, false, legacyNameCallback);
+		gCacheName->get(agent_id, false,  // legacy compatibility
+			boost::bind(&LLAvatarNameCache::legacyNameCallback,
+				_1, _2, _3));
 	}
 
 	// We've either answered immediately or moved all asks to the
@@ -496,7 +500,7 @@ void LLAvatarNameCache::exportFile(std::ostream& ostr)
 	{
 		const LLUUID& agent_id = it->first;
 		const LLAvatarName& av_name = it->second;
-		if (!av_name.mIsDummy)
+		if (!av_name.mIsTemporaryName)
 		{
 			// key must be a string
 			agents[agent_id.asString()] = av_name.asLLSD();
@@ -597,7 +601,7 @@ void LLAvatarNameCache::buildLegacyName(const std::string& full_name,
 	av_name->mUsername = "";
 	av_name->mDisplayName = full_name;
 	av_name->mIsDisplayNameDefault = true;
-	av_name->mIsDummy = true;
+	av_name->mIsTemporaryName = true;
 	av_name->mExpires = F64_MAX;
 
 	// [Ansariel/Henri]
@@ -802,6 +806,9 @@ F64 LLAvatarNameCache::nameExpirationFromHeaders(LLSD headers)
 
 bool LLAvatarNameCache::expirationFromCacheControl(LLSD headers, F64 *expires)
 {
+	bool fromCacheControl = false;
+	F64 now = LLFrameTimer::getTotalSeconds();
+
 	// Allow the header to override the default
 	LLSD cache_control_header = headers["cache-control"];
 	if (cache_control_header.isDefined())
@@ -810,12 +817,11 @@ bool LLAvatarNameCache::expirationFromCacheControl(LLSD headers, F64 *expires)
 		std::string cache_control = cache_control_header.asString();
 		if (max_age_from_cache_control(cache_control, &max_age))
 		{
-			F64 now = LLFrameTimer::getTotalSeconds();
 			*expires = now + (F64)max_age;
-			return true;
+			fromCacheControl = true;
 		}
 	}
-	return false;
+	return fromCacheControl;
 }
 
 

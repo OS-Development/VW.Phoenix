@@ -39,6 +39,7 @@ set(llcommon_SOURCE_FILES
     lleventapi.cpp
     lleventdispatcher.cpp
     llevents.cpp
+    lleventtimer.cpp
     llfasttimer.cpp
     llfile.cpp
     llfindlocale.cpp
@@ -61,6 +62,7 @@ set(llcommon_SOURCE_FILES
     llprocessor.cpp
     llqueuedthread.cpp
     llrand.cpp
+    llrefcount.cpp
     llrun.cpp
     llsd.cpp
     llsdserialize.cpp
@@ -80,7 +82,6 @@ set(llcommon_SOURCE_FILES
     metaclass.cpp
     metaproperty.cpp
     reflective.cpp
-    timing.cpp
     u64.cpp
     )
     
@@ -115,8 +116,8 @@ set(llcommon_HEADER_FILES
     lldarrayptr.h
     lldate.h
     lldefs.h
-    lldepthstack.h
 	lldependencies.h
+    lldepthstack.h
 	lldictionary.h
     lldlinked.h
     lldqueueptr.h
@@ -131,6 +132,7 @@ set(llcommon_HEADER_FILES
     lleventdispatcher.h
     lleventemitter.h
 	llevents.h
+    lldepthstack.h
     llextendedstatus.h
     llfasttimer.h
     llfile.h
@@ -160,6 +162,7 @@ set(llcommon_HEADER_FILES
     llmortician.h
     llnametable.h
     lloptioninterface.h
+    llpointer.h
     llpreprocessor.h
     llpriqueuemap.h
     llprocesslauncher.h
@@ -168,7 +171,9 @@ set(llcommon_HEADER_FILES
     llptrskipmap.h
     llqueuedthread.h
     llrand.h
+    llrefcount.h
     llrun.h
+    llsafehandle.h
     llsd.h
     llsdserialize.h
     llsdserialize_xml.h
@@ -200,7 +205,6 @@ set(llcommon_HEADER_FILES
     metaclasst.h
     metaproperty.h
     metapropertyt.h
-    processor.h
     reflective.h
     reflectivet.h
     roles_constants.h
@@ -236,8 +240,8 @@ target_link_libraries(
     ${EXPAT_LIBRARIES}
     ${ZLIB_LIBRARIES}
 	${WINDOWS_LIBRARIES}
-    ${BOOST_PROGRAM_OPTIONS_LIBRARY}
-    ${BOOST_REGEX_LIBRARY}
+    ${Boost_PROGRAM_OPTIONS_LIBRARY}
+    ${Boost_REGEX_LIBRARY}
     ${GOOGLE_PERFTOOLS_LIBRARIES}
     )
 

@@ -456,6 +456,7 @@ static void get_random_bytes(void *buf, int nbytes)
 }
 
 #if LL_WINDOWS
+
 typedef struct _ASTAT_
 {
 	ADAPTER_STATUS adapt;
@@ -463,7 +464,7 @@ typedef struct _ASTAT_
 }ASTAT, * PASTAT;
 
 // static
-S32 LLUUID::getNodeID(unsigned char * node_id)
+S32 LLUUID::getNodeID(unsigned char *node_id)
 {
 	  ASTAT Adapter;
       NCB Ncb;
@@ -477,7 +478,6 @@ S32 LLUUID::getNodeID(unsigned char * node_id)
       Ncb.ncb_buffer = (UCHAR *)&lenum;
       Ncb.ncb_length = sizeof(lenum);
       uRetCode = Netbios( &Ncb );
- //     printf( "The NCBENUM return code is: 0x%x \n", uRetCode );
 
       for(i=0; i < lenum.length ;i++)
       {
@@ -486,8 +486,6 @@ S32 LLUUID::getNodeID(unsigned char * node_id)
           Ncb.ncb_lana_num = lenum.lana[i];
 
           uRetCode = Netbios( &Ncb );
- //         printf( "The NCBRESET on LANA %d return code is: 0x%x \n",
- //                 lenum.lana[i], uRetCode );
 
           memset( &Ncb, 0, sizeof (Ncb) );
           Ncb.ncb_command = NCBASTAT;
@@ -498,21 +496,10 @@ S32 LLUUID::getNodeID(unsigned char * node_id)
           Ncb.ncb_length = sizeof(Adapter);
 
           uRetCode = Netbios( &Ncb );
-//          printf( "The NCBASTAT on LANA %d return code is: 0x%x \n",
-//                 lenum.lana[i], uRetCode );
           if ( uRetCode == 0 )
           {
-//            printf( "The Ethernet Number on LANA %d is: %02x%02x%02x%02x%02x%02x\n",
-//	 			  lenum.lana[i],
-//                  Adapter.adapt.adapter_address[0],
-//                  Adapter.adapt.adapter_address[1],
-//                  Adapter.adapt.adapter_address[2],
-//                  Adapter.adapt.adapter_address[3],
-//                  Adapter.adapt.adapter_address[4],
-//                  Adapter.adapt.adapter_address[5] );
 			memcpy(node_id,Adapter.adapt.adapter_address,6);		/* Flawfinder: ignore */
 			retval = 1;
-
           }
 	  }
 	return retval;

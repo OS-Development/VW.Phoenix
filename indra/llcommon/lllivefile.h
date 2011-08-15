@@ -39,7 +39,7 @@ extern const F32 DEFAULT_CONFIG_FILE_REFRESH;
 class LL_COMMON_API LLLiveFile
 {
 public:
-	LLLiveFile(const std::string &filename, const F32 refresh_period = 5.f);
+	LLLiveFile(const std::string& filename, const F32 refresh_period = 5.f);
 	virtual ~LLLiveFile();
 
 	/**

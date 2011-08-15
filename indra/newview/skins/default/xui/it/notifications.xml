@@ -2980,13 +2980,13 @@ Fai clic su Accetta per partecipare alla chiamata o su Rifiuta per rifiutare l&a
 		</form>
 	</notification>
 	<notification name="AutoUnmuteByIM">
-		A [FIRST] [LAST] e&apos; stato mandato un messaggio instantaneo ed è stato quindi automaticamente non mutato.
+		A [NAME] e&apos; stato mandato un messaggio instantaneo ed è stato quindi automaticamente non mutato.
 	</notification>
 	<notification name="AutoUnmuteByMoney">
-		A [FIRST] [LAST] è stato dato del denaro ed è stato automaticamente non mutato.
+		A [NAME] è stato dato del denaro ed è stato automaticamente non mutato.
 	</notification>
 	<notification name="AutoUnmuteByInventory">
-		A [FIRST] [LAST] é stato passato qualcosa dall&apos;inventario ed è stato automaticamente non mutato.
+		A [NAME] é stato passato qualcosa dall&apos;inventario ed è stato automaticamente non mutato.
 	</notification>
 	<notification name="VoiceInviteGroup">
 		[NAME] ha iniziato una chiamata Voice-Chat con il gruppo [GROUP].

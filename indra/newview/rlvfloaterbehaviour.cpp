@@ -105,7 +105,9 @@ void RlvFloaterBehaviour::refreshAll()
 				}
 				else if (m_PendingLookup.end() == std::find(m_PendingLookup.begin(), m_PendingLookup.end(), idOption))
 				{
-					gCacheName->get(idOption, FALSE, onAvatarNameLookup, this);
+					// Ansariel: Changed to boost::bind callback
+					//gCacheName->get(idOption, FALSE, onAvatarNameLookup, this);
+					gCacheName->get(idOption, false, boost::bind(&RlvFloaterBehaviour::onAvatarNameLookup, this, _1, _2, _3));
 					m_PendingLookup.push_back(idOption);
 				}
 			}
@@ -140,11 +142,12 @@ void RlvFloaterBehaviour::onClose(bool fQuitting)
 
 	gRlvHandler.removeBehaviourObserver(this);
 
-	for (std::list<LLUUID>::const_iterator itLookup = m_PendingLookup.begin(); itLookup != m_PendingLookup.end(); ++itLookup)
-	{
-		gCacheName->cancelCallback(*itLookup, onAvatarNameLookup, this);
-	}
-	m_PendingLookup.clear();
+	// Ansariel: Changed to boost::bind callback
+	//for (std::list<LLUUID>::const_iterator itLookup = m_PendingLookup.begin(); itLookup != m_PendingLookup.end(); ++itLookup)
+	//{
+	//	gCacheName->cancelCallback(*itLookup, onAvatarNameLookup, this);
+	//}
+	//m_PendingLookup.clear();
 }
 
 BOOL RlvFloaterBehaviour::postBuild()
@@ -164,6 +167,8 @@ void RlvFloaterBehaviour::changed(const RlvCommand& /*rlvCmd*/, bool /*fInternal
 
 // ============================================================================
 
+// Ansariel: Changed to boost::bind callback
+/*
 void RlvFloaterBehaviour::onAvatarNameLookup(const LLUUID& uuid, const std::string& strFirst, const std::string& strLast, BOOL fGroup, void* pParam)
 {
 	RlvFloaterBehaviour* pSelf = (RlvFloaterBehaviour*)pParam;
@@ -173,6 +178,16 @@ void RlvFloaterBehaviour::onAvatarNameLookup(const LLUUID& uuid, const std::stri
 		pSelf->m_PendingLookup.erase(itLookup);
 
 	pSelf->refreshAll();
+}
+*/
+
+void RlvFloaterBehaviour::onAvatarNameLookup(const LLUUID& uuid, const std::string& fullname, bool is_group)
+{
+	std::list<LLUUID>::iterator itLookup = std::find(m_PendingLookup.begin(), m_PendingLookup.end(), uuid);
+	if (itLookup != m_PendingLookup.end())
+		m_PendingLookup.erase(itLookup);
+	if (getVisible())
+		refreshAll();
 }
 
 // ============================================================================

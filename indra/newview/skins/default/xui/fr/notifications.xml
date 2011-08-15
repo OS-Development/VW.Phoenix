@@ -2900,13 +2900,13 @@ Pour y participer, cliquez sur Accepter. Sinon, cliquez sur Refuser. Pour ignore
 		</form>
 	</notification>
 	<notification name="AutoUnmuteByIM">
-		[FIRST] [LAST] a reçu un message instantané et n&apos;est donc plus ignoré.
+		[NAME] a reçu un message instantané et n&apos;est donc plus ignoré.
 	</notification>
 	<notification name="AutoUnmuteByMoney">
-		[FIRST] [LAST] a reçu de l&apos;argent et n&apos;est donc plus ignoré.
+		[NAME] a reçu de l&apos;argent et n&apos;est donc plus ignoré.
 	</notification>
 	<notification name="AutoUnmuteByInventory">
-		[FIRST] [LAST] a reçu un inventaire et n&apos;est donc plus ignoré.
+		[NAME] a reçu un inventaire et n&apos;est donc plus ignoré.
 	</notification>
 	<notification name="VoiceInviteGroup">
 		[NAME] a rejoint un chat vocal avec le groupe [GROUP].

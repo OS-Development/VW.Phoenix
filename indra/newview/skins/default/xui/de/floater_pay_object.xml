@@ -7,7 +7,7 @@
 		Einwohner bezahlen:
 	</text>
 	<text type="string" length="1" name="payee_name" left="128" width="168">
-		[FIRST] [LAST]
+		[NAME]
 	</text>
 	<text type="string" length="1" name="object_name_label" halign="left">
 		Über Objekt:

@@ -35,7 +35,9 @@
 
 #include "llavatarnamecache.h"
 #include "llfloater.h"
-#include "llmemory.h"
+#include "llpointer.h"
+#include "llrefcount.h"
+#include "llsingleton.h"
 #include "llvoiceclient.h"
 #include "llframetimer.h"
 #include "llevent.h"
@@ -75,7 +77,6 @@ public:
 	void lookupName();
 
     // [Ansariel/Henri: Display name support]
-	//static void onAvatarNameLookup(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* user_data);
     static void onAvatarNameLookup(const LLUUID& id, const LLAvatarName& avatar_name, void* user_data);
     // [/Ansariel/Henri: Display name support]
 

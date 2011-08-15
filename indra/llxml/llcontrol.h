@@ -38,6 +38,7 @@
 #include "llmap.h"
 #include "llstring.h"
 #include "llrect.h"
+#include "llrefcount.h"
 
 #include "llcontrolgroupreader.h"
 

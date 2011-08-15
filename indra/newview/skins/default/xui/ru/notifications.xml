@@ -2958,13 +2958,13 @@ X и Y задает их позицию. D (плотность) определя
 		</form>
 	</notification>
 	<notification name="AutoUnmuteByIM">
-		Мгновенное сообщение было отправлено [FIRST] [LAST] и он(а) автоматически разблокирован.
+		Мгновенное сообщение было отправлено [NAME] и он(а) автоматически разблокирован.
 	</notification>
 	<notification name="AutoUnmuteByMoney">
-		[FIRST] [LAST] получил деньги и был(а) автоматически разблокирован.
+		[NAME] получил деньги и был(а) автоматически разблокирован.
 	</notification>
 	<notification name="AutoUnmuteByInventory">
-		Инвентарь был предложен [FIRST] [LAST] и он(а) автоматически разблокирован.
+		Инвентарь был предложен [NAME] и он(а) автоматически разблокирован.
 	</notification>
 	<notification name="VoiceInviteGroup">
 		[NAME] присоединился к голосовому чату в группе [GROUP].

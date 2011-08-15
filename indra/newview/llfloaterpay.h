@@ -1,6 +1,6 @@
 /** 
- * @file llgivemoney.h
- * @brief LLGiveMoney class header file
+ * @file llfloaterpay.h
+ * @brief LLFloaterPay class header file
  *
  * $LicenseInfo:firstyear=2002&license=viewergpl$
  * 
@@ -30,8 +30,8 @@
  * $/LicenseInfo$
  */
 
-#ifndef LL_LLGIVEMONEY_H
-#define LL_LLGIVEMONEY_H
+#ifndef LL_LLFLOATERPAY_H
+#define LL_LLFLOATERPAY_H
 
 #include "lluuid.h"
 #include "llfloater.h"
@@ -77,12 +77,10 @@ private:
 	static void onGive(void* data);
 	void give(S32 amount);
 	static void processPayPriceReply(LLMessageSystem* msg, void **userdata);
-	static void onCacheOwnerName(const LLUUID& owner_id,
-								 const std::string& firstname,
-								 const std::string& lastname,
-								 BOOL is_group,
-								 void* userdata);
+	static void onCacheOwnerName(const LLUUID& owner_id, const std::string& full_name, bool is_group, LLFloaterPay* self);
 	void finishPayUI(const LLUUID& target_id, BOOL is_group);
+
+	static std::set<LLFloaterPay*> sInstances;
 
 protected:
 	std::vector<LLGiveMoneyInfo*> mCallbackData;
@@ -102,4 +100,4 @@ protected:
 };
 
 
-#endif // LL_LLGIVEMONEY_H
+#endif // LL_LLFLOATERPAY_H

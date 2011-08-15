@@ -48,7 +48,7 @@ class LLNameEditor
 public:
 	LLNameEditor(const std::string& name, const LLRect& rect,
 		const LLUUID& name_id = LLUUID::null,
-		BOOL is_group = FALSE,
+		bool is_group = false,
 		const LLFontGL* glfont = NULL,
 		S32 max_text_length = 254,
 		void (*commit_callback)(LLUICtrl* caller, void* user_data) = NULL,
@@ -65,16 +65,15 @@ public:
 	virtual LLXMLNodePtr getXML(bool save_children = true) const;
 	static LLView* fromXML(LLXMLNodePtr node, LLView *parent, LLUICtrlFactory *factory);
 
-	void setNameID(const LLUUID& name_id, BOOL is_group);
+	void setNameID(const LLUUID& name_id, bool is_group);
 
-	void refresh(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group);
+	void refresh(const LLUUID& id, const std::string& fullname, bool is_group);
 
-	static void refreshAll(const LLUUID& id, const std::string& firstname,
-						   const std::string& lastname, BOOL is_group);
+	static void refreshAll(const LLUUID& id, const std::string& fullname, bool is_group);
 
 
 	// Take/return agent UUIDs
-	virtual void	setValue( const LLSD& value );
+	virtual void	setValue(const LLSD& value);
 	virtual LLSD	getValue() const;
 
 private:

@@ -52,13 +52,13 @@
 #	include <sys/sysctl.h>
 #	include <sys/utsname.h>
 #	include <stdint.h>
+#	include <Carbon/Carbon.h>
 #elif LL_LINUX
 #	include <errno.h>
 #	include <sys/utsname.h>
 #	include <unistd.h>
 #	include <sys/sysinfo.h>
 const char MEMINFO_FILE[] = "/proc/meminfo";
-const char CPUINFO_FILE[] = "/proc/cpuinfo";
 #elif LL_SOLARIS
 #	include <stdio.h>
 #	include <unistd.h>
@@ -246,6 +246,7 @@ LLOSInfo::LLOSInfo() :
 			else   // Use the registry on early versions of Windows NT.
 			{
 				mOSStringSimple = "Microsoft Windows (unrecognized) ";
+
 				HKEY hKey;
 				WCHAR szProductType[80];
 				DWORD dwBufLen;
@@ -332,6 +333,56 @@ LLOSInfo::LLOSInfo() :
 	}
 	mOSString += compatibility_mode;
 
+#elif LL_DARWIN
+	
+	// Initialize mOSStringSimple to something like:
+	// "Mac OS X 10.6.7"
+	{
+		const char * DARWIN_PRODUCT_NAME = "Mac OS X";
+		
+		SInt32 major_version, minor_version, bugfix_version;
+		OSErr r1 = Gestalt(gestaltSystemVersionMajor, &major_version);
+		OSErr r2 = Gestalt(gestaltSystemVersionMinor, &minor_version);
+		OSErr r3 = Gestalt(gestaltSystemVersionBugFix, &bugfix_version);
+
+		if((r1 == noErr) && (r2 == noErr) && (r3 == noErr))
+		{
+			mMajorVer = major_version;
+			mMinorVer = minor_version;
+			mBuild = bugfix_version;
+
+			std::stringstream os_version_string;
+			os_version_string << DARWIN_PRODUCT_NAME << " " << mMajorVer << "." << mMinorVer << "." << mBuild;
+			
+			// Put it in the OS string we are compiling
+			mOSStringSimple.append(os_version_string.str());
+		}
+		else
+		{
+			mOSStringSimple.append("Unable to collect OS info");
+		}
+	}
+	
+	// Initialize mOSString to something like:
+	// "Mac OS X 10.6.7 Darwin Kernel Version 10.7.0: Sat Jan 29 15:17:16 PST 2011; root:xnu-1504.9.37~1/RELEASE_I386 i386"
+	struct utsname un;
+	if(uname(&un) != -1)
+	{		
+		mOSString = mOSStringSimple;
+		mOSString.append(" ");
+		mOSString.append(un.sysname);
+		mOSString.append(" ");
+		mOSString.append(un.release);
+		mOSString.append(" ");
+		mOSString.append(un.version);
+		mOSString.append(" ");
+		mOSString.append(un.machine);
+	}
+	else
+	{
+		mOSString = mOSStringSimple;
+	}
+	
 #else
 	struct utsname un;
 	if(uname(&un) != -1)
@@ -348,15 +399,7 @@ LLOSInfo::LLOSInfo() :
 
 		// Simplify 'Simple'
 		std::string ostype = mOSStringSimple.substr(0, mOSStringSimple.find_first_of(" ", 0));
-		if (ostype == "Darwin")
-		{
-			// Only care about major Darwin versions, truncate at first '.'
-			S32 idx1 = mOSStringSimple.find_first_of(".", 0);
-			std::string simple = mOSStringSimple.substr(0, idx1);
-			if (simple.length() > 0)
-				mOSStringSimple = simple;
-		}
-		else if (ostype == "Linux")
+		if (ostype == "Linux")
 		{
 			// Only care about major and minor Linux versions, truncate at second '.'
 			std::string::size_type idx1 = mOSStringSimple.find_first_of(".", 0);
@@ -647,6 +690,26 @@ U32 LLMemoryInfo::getPhysicalMemoryClamped() const
 	{
 		return phys_kb << 10;
 	}
+}
+
+//static
+void LLMemoryInfo::getAvailableMemoryKB(U32& avail_physical_mem_kb, U32& avail_virtual_mem_kb)
+{
+#if LL_WINDOWS
+	MEMORYSTATUSEX state;
+	state.dwLength = sizeof(state);
+	GlobalMemoryStatusEx(&state);
+
+	avail_physical_mem_kb = (U32)(state.ullAvailPhys/1024) ;
+	avail_virtual_mem_kb = (U32)(state.ullAvailVirtual/1024) ;
+
+#else
+	//do not know how to collect available memory info for other systems.
+	//leave it blank here for now.
+
+	avail_physical_mem_kb = -1 ;
+	avail_virtual_mem_kb = -1 ;
+#endif
 }
 
 void LLMemoryInfo::stream(std::ostream& s) const

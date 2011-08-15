@@ -280,11 +280,11 @@ void release_start_screen();
 void reset_login();
 void apply_udp_blacklist(const std::string& csv);
 
-void callback_cache_name(const LLUUID& id, const std::string& firstname, const std::string& lastname, BOOL is_group, void* data)
+void callback_cache_name(const LLUUID& id, const std::string& fullname, bool is_group)
 {
-	LLNameListCtrl::refreshAll(id, firstname, lastname, is_group);
-	LLNameBox::refreshAll(id, firstname, lastname, is_group);
-	LLNameEditor::refreshAll(id, firstname, lastname, is_group);
+	LLNameListCtrl::refreshAll(id, fullname, is_group);
+	LLNameBox::refreshAll(id, fullname, is_group);
+	LLNameEditor::refreshAll(id, fullname, is_group);
 
 	// TODO: Actually be intelligent about the refresh.
 	// For now, just brute force refresh the dialogs.
@@ -2063,10 +2063,10 @@ bool idle_startup()
 
 		gXferManager->registerCallbacks(gMessageSystem);
 
-		if ( gCacheName == NULL )
+		if (gCacheName == NULL)
 		{
 			gCacheName = new LLCacheName(gMessageSystem);
-			gCacheName->addObserver(callback_cache_name);
+			gCacheName->addObserver(&callback_cache_name);
 
 			// Load stored cache if possible
             LLAppViewer::instance()->loadNameCache();

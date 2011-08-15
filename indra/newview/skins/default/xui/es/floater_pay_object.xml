@@ -7,7 +7,7 @@
 		Pagar al residente:
 	</text>
 	<text length="1" name="payee_name" type="string" left="120" width="180">
-		[FIRST] [LAST]
+		[NAME]
 	</text>
 	<text length="1" name="object_name_label" type="string" left="5" width="110">
 		A través del objeto:

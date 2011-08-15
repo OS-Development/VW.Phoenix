@@ -32,23 +32,19 @@
 
 #include "llviewerprecompiledheaders.h"
 
+#include "lltracker.h"
+
 // library includes
 #include "llcoord.h"
-#include "lldarray.h"
 #include "llfontgl.h"
 #include "llgl.h"
 #include "llrender.h"
 #include "llinventory.h"
-#include "llmemory.h"
-#include "llstring.h"
-#include "lluuid.h"
 #include "v3math.h"
-#include "v3dmath.h"
 #include "v4color.h"
 
 // viewer includes
 #include "llappviewer.h"
-#include "lltracker.h"
 #include "llagent.h"
 #include "llcallingcard.h"
 #include "llcolorscheme.h"

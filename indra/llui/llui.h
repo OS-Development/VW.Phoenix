@@ -35,15 +35,18 @@
 #ifndef LL_LLUI_H
 #define LL_LLUI_H
 
-#include "llrect.h"
 #include "llcontrol.h"
-#include "llrect.h"
 #include "llcoord.h"
 #include "llsingleton.h"
-//#include "llhtmlhelp.h"
 #include "llgl.h"			// *TODO: break this dependency
-#include <stack>
+//#include "llhtmlhelp.h"
 //#include "llimagegl.h"
+#include "llpointer.h"
+#include "llrect.h"
+#include "llrefcount.h"
+#include "llsingleton.h"
+
+#include <stack>
 #include <boost/signal.hpp>
 
 // LLUIFactory

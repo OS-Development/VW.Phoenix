@@ -37,7 +37,8 @@
 
 #include "v3dmath.h"
 #include "lluuid.h"
-#include "llmemory.h"
+#include "llpointer.h"
+#include "llsingleton.h"
 #include "llviewerregion.h"
 #include "llviewerimage.h"
 

@@ -380,7 +380,13 @@ void LLFloaterInspect::drawTextureEntry(const LLViewerImage* img, const U8 i)
 			if (decodedComment.find("a")!=decodedComment.end())
 			{
 				mTex[i].uploaderkey = LLUUID(decodedComment["a"]);
-				gCacheName->get(mTex[i].uploaderkey, FALSE, callbackLoadAvatarName, mTex[i].line2);
+
+				std::string uploadName;
+				if (!gCacheName->getFullName(mTex[i].uploaderkey, uploadName))
+				{
+					gCacheName->get(mTex[i].uploaderkey, false, boost::bind(&LLFloaterInspect::callbackLoadAvatarName, _1, _2, _3));
+				}
+
 				if (decodedComment.find("z")!=decodedComment.end()) 
 				{
 					std::string strtime= decodedComment["z"];
@@ -467,6 +473,7 @@ void LLFloaterInspect::onClickProfile(void* user_data)
 	
 }
 
+/*
 void LLFloaterInspect::callbackLoadAvatarName(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* data)
 {
 	if(!sInstance) return;
@@ -475,6 +482,12 @@ void LLFloaterInspect::callbackLoadAvatarName(const LLUUID& id, const std::strin
 	fullname << "Uploaded by " << first << " " << last;
 	LLTextBox* line = (LLTextBox*) data;
 	line->setText(fullname.str());
+}
+*/
+void LLFloaterInspect::callbackLoadAvatarName(const LLUUID& id, const std::string& fullname, bool is_group)
+{
+	if(!sInstance) return;
+	sInstance->setDirty();
 }
 
 LLUUID LLFloaterInspect::getSelectedUUID()

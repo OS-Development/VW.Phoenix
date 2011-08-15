@@ -331,11 +331,11 @@ std::string LLDir::getExpandedFilename(ELLPath location, const std::string& subd
 		prefix += "character";
 		break;
 		
-	case LL_PATH_MOTIONS:
-		prefix = getAppRODataDir();
-		prefix += mDirDelimiter;
-		prefix += "motions";
-		break;
+	//case LL_PATH_MOTIONS:
+	//	prefix = getAppRODataDir();
+	//	prefix += mDirDelimiter;
+	//	prefix += "motions";
+	//	break;
 		
 	case LL_PATH_HELP:
 		prefix = "help";

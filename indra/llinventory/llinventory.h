@@ -41,6 +41,7 @@
 #include "llinventorytype.h"
 #include "llmemtype.h"
 #include "llpermissions.h"
+#include "llrefcount.h"
 #include "llsaleinfo.h"
 #include "llsd.h"
 #include "lluuid.h"

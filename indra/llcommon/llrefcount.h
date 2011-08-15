@@ -1,10 +1,10 @@
 /** 
- * @file processor.h
- * @brief Legacy wrapper header.
+ * @file llrefcount.h
+ * @brief Base class for reference counted objects for use with LLPointer
  *
- * $LicenseInfo:firstyear=2000&license=viewergpl$
+ * $LicenseInfo:firstyear=2002&license=viewergpl$
  * 
- * Copyright (c) 2000-2009, Linden Research, Inc.
+ * Copyright (c) 2010, Linden Research, Inc.
  * 
  * Second Life Viewer Source Code
  * The source code in this file ("Source Code") is provided by Linden Lab
@@ -29,5 +29,51 @@
  * COMPLETENESS OR PERFORMANCE.
  * $/LicenseInfo$
  */
+#ifndef LLREFCOUNT_H
+#define LLREFCOUNT_H
 
-#include "llprocessor.h"
+#include <boost/noncopyable.hpp>
+
+//----------------------------------------------------------------------------
+// RefCount objects should generally only be accessed by way of LLPointer<>'s
+// see llthread.h for LLThreadSafeRefCount
+//----------------------------------------------------------------------------
+
+class LL_COMMON_API LLRefCount
+{
+protected:
+	LLRefCount(const LLRefCount& other);
+	LLRefCount& operator=(const LLRefCount&);
+	virtual ~LLRefCount(); // use unref()
+	
+public:
+	LLRefCount();
+
+	inline void ref() const
+	{ 
+		mRef++; 
+	} 
+
+	inline S32 unref() const
+	{
+		llassert(mRef >= 1);
+		if (0 == --mRef) 
+		{
+			delete this; 
+			return 0;
+		}
+		return mRef;
+	}	
+
+	//NOTE: when passing around a const LLRefCount object, this can return different results
+	// at different types, since mRef is mutable
+	S32 getNumRefs() const
+	{
+		return mRef;
+	}
+
+private: 
+	mutable S32	mRef; 
+};
+
+#endif

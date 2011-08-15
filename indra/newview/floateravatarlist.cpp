@@ -1132,6 +1132,10 @@ void LLFloaterAvatarList::updateAvatarList()
 	for(i = 0; i < count; ++i)
 	{
 		const LLUUID &avid = avatar_ids[i];
+		if (avid.isNull())
+		{
+			continue;
+		}
 
 		LLVector3d position;
 		LLVOAvatar* avatarp = gObjectList.findAvatar(avid);

@@ -37,6 +37,7 @@
 
 #include "llhudobject.h"
 #include "lldarray.h"
+#include "lldarrayptr.h"
 
 class LLViewerObject;
 class LLHUDEffect;

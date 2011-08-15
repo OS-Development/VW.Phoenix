@@ -44,18 +44,17 @@ class LLNameBox
 :	public LLTextBox
 {
 public:
-	LLNameBox(const std::string& name, const LLRect& rect, const LLUUID& name_id = LLUUID::null, BOOL is_group = FALSE, const LLFontGL* font = NULL, BOOL mouse_opaque = TRUE );
+	LLNameBox(const std::string& name, const LLRect& rect, const LLUUID& name_id = LLUUID::null, bool is_group = false, const LLFontGL* font = NULL, BOOL mouse_opaque = TRUE );
 		// By default, follows top and left and is mouse-opaque.
 		// If no text, text = name.
 		// If no font, uses default system font.
 	virtual ~LLNameBox();
 
-	void setNameID(const LLUUID& name_id, BOOL is_group);
+	void setNameID(const LLUUID& name_id, bool is_group);
 
-	void refresh(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group);
+	void refresh(const LLUUID& id, const std::string& fullname, bool is_group);
 
-	static void refreshAll(const LLUUID& id, const std::string& firstname,
-						   const std::string& lastname, BOOL is_group);
+	static void refreshAll(const LLUUID& id, const std::string& fullname, bool is_group);
 
 private:
 	static std::set<LLNameBox*> sInstances;

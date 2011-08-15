@@ -237,6 +237,8 @@ void LLPreviewTexture::init()
 	combo->setCurrentByIndex(0);
 }
 
+// Ansariel: Changed to boost::bind callback
+/*
 void LLPreviewTexture::callbackLoadAvatarName(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* data)
 {
 	if (!sInstance) return;
@@ -244,6 +246,13 @@ void LLPreviewTexture::callbackLoadAvatarName(const LLUUID& id, const std::strin
 	fullname << first << " " << last;
 	sInstance->childSetText("uploader", fullname.str());
 }
+*/
+void LLPreviewTexture::callbackLoadAvatarName(const LLUUID& id, const std::string& fullname, bool is_group)
+{
+	if (!sInstance) return;
+	sInstance->childSetText("uploader", fullname);
+}
+
 
 void LLPreviewTexture::draw()
 {
@@ -291,7 +300,10 @@ void LLPreviewTexture::draw()
 			{
 				uploaderkey = LLUUID(mImage->mDecodedComment["a"]);
 				childSetText("uploader", mImage->mDecodedComment["a"]);
-				gCacheName->get(uploaderkey, FALSE, callbackLoadAvatarName);
+
+				// Ansariel: Changed to boost::bind callback
+				//gCacheName->get(uploaderkey, FALSE, callbackLoadAvatarName);
+				gCacheName->get(uploaderkey, false, boost::bind(&callbackLoadAvatarName, _1, _2, _3));
 			}
 			if (color.empty()&&(mImage->mDecodedComment.find("c")!=mImage->mDecodedComment.end()))
 			{

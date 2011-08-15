@@ -1,10 +1,10 @@
 /** 
- * @file timing.cpp
- * @brief This file will be deprecated in the future.
+ * @file llrefcount.cpp
+ * @brief Base class for reference counted objects for use with LLPointer
  *
- * $LicenseInfo:firstyear=2000&license=viewergpl$
+ * $LicenseInfo:firstyear=2002&license=viewergpl$
  * 
- * Copyright (c) 2000-2009, Linden Research, Inc.
+ * Copyright (c) 2002-2009, Linden Research, Inc.
  * 
  * Second Life Viewer Source Code
  * The source code in this file ("Source Code") is provided by Linden Lab
@@ -29,3 +29,32 @@
  * COMPLETENESS OR PERFORMANCE.
  * $/LicenseInfo$
  */
+#include "linden_common.h"
+
+#include "llrefcount.h"
+
+#include "llerror.h"
+
+LLRefCount::LLRefCount(const LLRefCount& other)
+:	mRef(0)
+{
+}
+
+LLRefCount& LLRefCount::operator=(const LLRefCount&)
+{
+	// do nothing, since ref count is specific to *this* reference
+	return *this;
+}
+
+LLRefCount::LLRefCount() :
+	mRef(0)
+{
+}
+
+LLRefCount::~LLRefCount()
+{ 
+	if (mRef != 0)
+	{
+		llerrs << "deleting non-zero reference" << llendl;
+	}
+}
