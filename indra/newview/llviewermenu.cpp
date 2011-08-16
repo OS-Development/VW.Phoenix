@@ -125,6 +125,7 @@
 #include "llfloaterperms.h"
 #include "llfloaterpostprocess.h"
 #include "llfloaterpreference.h"
+#include "llfloaterregiondebugconsole.h"
 #include "llfloaterregioninfo.h"
 #include "llfloaterreporter.h"
 #include "llfloaterscriptdebug.h"
@@ -328,6 +329,7 @@ void handle_dump_focus(void*);
 
 // Advanced->Consoles menu
 void handle_show_notifications_console(void*);
+void handle_region_debug_console(void*);
 void handle_region_dump_settings(void*);
 void handle_region_dump_temp_asset_data(void*);
 void handle_region_clear_temp_asset_data(void*);
@@ -810,7 +812,8 @@ void init_client_menu(LLMenuGL* menu)
 		// Debugging view for unified notifications
 		sub->append(new LLMenuItemCallGL("Notifications Console...",
 						 &handle_show_notifications_console, NULL, NULL, '5', MASK_CONTROL|MASK_SHIFT ));
-		
+		sub->append(new LLMenuItemCallGL("Region Debug Console", 
+					&handle_region_debug_console, NULL, NULL, 'C', MASK_CONTROL|MASK_SHIFT));		
 
 		sub->appendSeparator();
 
@@ -3191,6 +3194,11 @@ void handle_dump_group_info(void *)
 	llinfos << "powers " << gAgent.mGroupPowers << llendl;
 	llinfos << "title   " << gAgent.mGroupTitle << llendl;
 	//llinfos << "insig   " << gAgent.mGroupInsigniaID << llendl;
+}
+
+void handle_region_debug_console(void *)
+{
+	LLFloaterRegionDebugConsole::showInstance();
 }
 
 void handle_dump_capabilities_info(void *)
