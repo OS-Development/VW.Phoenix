@@ -152,6 +152,8 @@ public:
 	F32 getXKerning(const LLFontGlyphInfo* left_fgi, const LLFontGlyphInfo* right_fgi) const;
 	virtual void reset() = 0;
 
+	static bool sOpenGLcrashOnRestart;
+
 protected:
 	virtual BOOL hasGlyph(const llwchar wch) const;		// Has a glyph for this character
 	virtual BOOL addChar(const llwchar wch) const;		// Add a new character to the font if necessary
