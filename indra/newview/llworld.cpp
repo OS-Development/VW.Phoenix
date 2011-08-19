@@ -670,19 +670,19 @@ void LLWorld::updateParticles()
 
 void LLWorld::updateClouds(const F32 dt)
 {
-	static BOOL* sFreezeTime = rebind_llcontrol<BOOL>("FreezeTime", &gSavedSettings, true);
-	if (*sFreezeTime)
+	static LLCachedControl<bool> sFreezeTime(gSavedSettings, "FreezeTime");
+	if (sFreezeTime)
 	{
 		// don't move clouds in snapshot mode
 		return;
 	}
 
-	static BOOL* sSkyUseClassicClouds = rebind_llcontrol<BOOL>("SkyUseClassicClouds2", &gSavedSettings, true);
-	if (mClassicCloudsEnabled != (*sSkyUseClassicClouds))
+	static LLCachedControl<bool> sSkyUseClassicClouds(gSavedSettings, "SkyUseClassicClouds2");
+	if (mClassicCloudsEnabled != (BOOL)sSkyUseClassicClouds)
 	{
 		// The classic cloud toggle has been flipped
 		// gotta update all of the cloud layers
-		mClassicCloudsEnabled = (*sSkyUseClassicClouds);
+		mClassicCloudsEnabled = (BOOL)sSkyUseClassicClouds;
 
 		if (!mClassicCloudsEnabled && mActiveRegionList.size())
 		{

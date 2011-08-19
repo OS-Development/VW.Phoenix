@@ -223,9 +223,9 @@ LLNotifyBox::LLNotifyBox(LLNotificationPtr notification, BOOL layout_script_dial
 		caution_box->setFontStyle(LLFontGL::BOLD);
 		caution_box->setColor(gColors.getColor("NotifyCautionWarnColor"));
 
-		static LLColor4* sNotifyCautionBoxColor = rebind_llcontrol<LLColor4>("NotifyCautionBoxColor", &gColors, true);
+		static LLCachedControl<LLColor4U> sNotifyCautionBoxColor(gColors, "NotifyCautionBoxColor");
 		
-		caution_box->setBackgroundColor((*sNotifyCautionBoxColor));
+		caution_box->setBackgroundColor((LLColor4)sNotifyCautionBoxColor);
 		caution_box->setBorderVisible(FALSE);
 		caution_box->setWrappedText(notification->getMessage());
 		
@@ -517,10 +517,10 @@ void LLNotifyBox::drawBackground() const
 	{
 		gGL.getTexUnit(0)->bind(imagep->getImage());
 		// set proper background color depending on whether notify box is a caution or not
-		static LLColor4* sNotifyCautionBoxColor = rebind_llcontrol<LLColor4>("NotifyCautionBoxColor", &gColors, true);
-		static LLColor4* sNotifyBoxColor = rebind_llcontrol<LLColor4>("NotifyBoxColor", &gColors, true);
+		static LLCachedControl<LLColor4U> sNotifyCautionBoxColor(gColors, "NotifyCautionBoxColor");
+		static LLCachedControl<LLColor4U> sNotifyBoxColor(gColors, "NotifyBoxColor");
 
-		LLColor4 color = mIsCaution? (*sNotifyCautionBoxColor) : (*sNotifyBoxColor);
+		LLColor4 color = mIsCaution ? (LLColor4)sNotifyCautionBoxColor : (LLColor4)sNotifyBoxColor;
 		if(gFocusMgr.childHasKeyboardFocus( this ))
 		{
 			const S32 focus_width = 2;
@@ -535,9 +535,9 @@ void LLNotifyBox::drawBackground() const
 			gl_segmented_rect_2d_tex(0, getRect().getHeight(), getRect().getWidth(), 0, imagep->getTextureWidth(), imagep->getTextureHeight(), 16, mIsTip ? ROUNDED_RECT_TOP : ROUNDED_RECT_BOTTOM);
 
 			if( mIsCaution )
-				color = (*sNotifyCautionBoxColor);
+				color = (LLColor4)sNotifyCautionBoxColor;
 			else
-				color = (*sNotifyBoxColor);
+				color = (LLColor4)sNotifyBoxColor;
 
 			gGL.color4fv(color.mV);
 			gl_segmented_rect_2d_tex(1, getRect().getHeight()-1, getRect().getWidth()-1, 1, imagep->getTextureWidth(), imagep->getTextureHeight(), 16, mIsTip ? ROUNDED_RECT_TOP : ROUNDED_RECT_BOTTOM);

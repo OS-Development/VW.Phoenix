@@ -304,9 +304,9 @@ public:
 		U32 ypos = 64;
 		const U32 y_inc = 20;
 
-		static BOOL *sDebugShowTime = rebind_llcontrol<BOOL>("DebugShowTime", &gSavedSettings, true);
+		static LLCachedControl<bool> debug_show_time(gSavedSettings, "DebugShowTime");
 
-		if(*sDebugShowTime)
+		if (debug_show_time)
 		{
 			const U32 y_inc2 = 15;
 			for (std::map<S32,LLFrameTimer>::reverse_iterator iter = gDebugTimers.rbegin();
@@ -315,9 +315,9 @@ public:
 				S32 idx = iter->first;
 				LLFrameTimer& timer = iter->second;
 				F32 time = timer.getElapsedTimeF32();
-				S32 hours = (S32)(time / (60*60));
-				S32 mins = (S32)((time - hours*(60*60)) / 60);
-				S32 secs = (S32)((time - hours*(60*60) - mins*60));
+				S32 hours = (S32)(time / 3600);
+				S32 mins = (S32)((time - hours * 3600) / 60);
+				S32 secs = (S32)((time - hours * 3600 - mins * 60));
 				std::string label = gDebugTimerLabel[idx];
 				if (label.empty()) label = llformat("Debug: %d", idx);
 				addText(xpos, ypos, llformat(" %s: %d:%02d:%02d", label.c_str(), hours,mins,secs)); ypos += y_inc2;
@@ -422,7 +422,8 @@ public:
 			ypos += y_inc;
 		}*/
 		
-		if (gSavedSettings.getBOOL("DebugShowRenderInfo"))
+		static LLCachedControl<bool> debug_show_render_info(gSavedSettings, "DebugShowRenderInfo");
+		if (debug_show_render_info)
 		{
 			if (gPipeline.getUseVertexShaders() == 0)
 			{
@@ -490,7 +491,9 @@ public:
 				LLVertexBuffer::sSetCount = LLImageGL::sUniqueCount = 
 				gPipeline.mNumVisibleNodes = LLPipeline::sVisibleLightCount = 0;
 		}
-		if (gSavedSettings.getBOOL("DebugShowRenderMatrices"))
+
+		static LLCachedControl<bool> debug_show_render_matrices(gSavedSettings, "DebugShowRenderMatrices");
+		if (debug_show_render_matrices)
 		{
 			addText(xpos, ypos, llformat("%.4f    .%4f    %.4f    %.4f", gGLProjection[12], gGLProjection[13], gGLProjection[14], gGLProjection[15]));
 			ypos += y_inc;
@@ -531,10 +534,10 @@ public:
 			addText(xpos, ypos, llformat("%d %d %d %d", color[0], color[1], color[2], color[3]));
 			ypos += y_inc;
 		}
-		static BOOL* sBeaconAlwaysOn = rebind_llcontrol<BOOL>("BeaconAlwaysOn", &gSavedSettings, true);
 
 		// only display these messages if we are actually rendering beacons at this moment
-		if (LLPipeline::getRenderBeacons(NULL) && *sBeaconAlwaysOn)
+		static LLCachedControl<bool> beacons_always_on(gSavedSettings, "BeaconAlwaysOn");
+		if (LLPipeline::getRenderBeacons(NULL) && beacons_always_on)
 		{
 			if (LLPipeline::getRenderParticleBeacons(NULL))
 			{
@@ -2317,9 +2320,9 @@ void LLViewerWindow::draw()
 	//S32 screen_x, screen_y;
 
 	// HACK for timecode debugging
-	static BOOL* sDisplayTimecode = rebind_llcontrol<BOOL>("DisplayTimecode", &gSavedSettings, true);
+	static LLCachedControl<bool> sDisplayTimecode(gSavedSettings, "DisplayTimecode");
 
-	if (*sDisplayTimecode)
+	if (sDisplayTimecode)
 	{
 		// draw timecode block
 		std::string text;
@@ -2788,9 +2791,9 @@ BOOL LLViewerWindow::handlePerFrameHover()
 
 	LLVector2 mouse_vel; 
 
-	static BOOL* sMouseSmooth = rebind_llcontrol<BOOL>("MouseSmooth", &gSavedSettings, true);
+	static LLCachedControl<bool> sMouseSmooth(gSavedSettings, "MouseSmooth");
 
-	if (*sMouseSmooth)
+	if (sMouseSmooth)
 	{
 		static F32 fdx = 0.f;
 		static F32 fdy = 0.f;
@@ -2945,9 +2948,9 @@ BOOL LLViewerWindow::handlePerFrameHover()
 	// Show a new tool tip (or update one that is alrady shown)
 	BOOL tool_tip_handled = FALSE;
 	std::string tool_tip_msg;
-	static F32 *sToolTipDelay = rebind_llcontrol<F32>("ToolTipDelay", &gSavedSettings, true);
+	static LLCachedControl<F32> sToolTipDelay(gSavedSettings, "ToolTipDelay");
 
-	F32 tooltip_delay = (*sToolTipDelay);
+	F32 tooltip_delay = sToolTipDelay;
 	//HACK: hack for tool-based tooltips which need to pop up more quickly
 	//Also for show xui names as tooltips debug mode
 	if ((mouse_captor && !mouse_captor->isView()) || LLUI::sShowXUINames)
@@ -2999,9 +3002,9 @@ BOOL LLViewerWindow::handlePerFrameHover()
 			mToolTip->setVisible( tooltip_vis );
 		}
 	}	
-	static BOOL* sFreezeTime = rebind_llcontrol<BOOL>("FreezeTime", &gSavedSettings, true);
+	static LLCachedControl<bool> sFreezeTime(gSavedSettings, "FreezeTime");
 	
-	if (tool && tool != gToolNull  && tool != LLToolCompInspect::getInstance() && tool != LLToolDragAndDrop::getInstance() && !(*sFreezeTime))
+	if (tool && tool != gToolNull  && tool != LLToolCompInspect::getInstance() && tool != LLToolDragAndDrop::getInstance() && !sFreezeTime)
 	{ 
 		LLMouseHandler *captor = gFocusMgr.getMouseCapture();
 		// With the null, inspect, or drag and drop tool, don't muck

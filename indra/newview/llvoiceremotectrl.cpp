@@ -108,17 +108,17 @@ void LLVoiceRemoteCtrl::draw()
 	mTalkBtn->setEnabled(voice_active);
 	mTalkLockBtn->setEnabled(voice_active);
 
-	static BOOL *sPTTCurrentlyEnabled = rebind_llcontrol<BOOL>("PTTCurrentlyEnabled", &gSavedSettings, true);
+	static LLCachedControl<bool> sPTTCurrentlyEnabled(gSavedSettings, "PTTCurrentlyEnabled");
 
 
 	// propagate ptt state to button display,
 	if (!mTalkBtn->hasMouseCapture())
 	{
 		// not in push to talk mode, or push to talk is active means I'm talking
-		mTalkBtn->setToggleState(!(*sPTTCurrentlyEnabled) || gVoiceClient->getUserPTTState());
+		mTalkBtn->setToggleState(!sPTTCurrentlyEnabled || gVoiceClient->getUserPTTState());
 	}
 	mSpeakersBtn->setToggleState(LLFloaterActiveSpeakers::instanceVisible(LLSD()));
-	mTalkLockBtn->setToggleState(!(*sPTTCurrentlyEnabled));
+	mTalkLockBtn->setToggleState(!sPTTCurrentlyEnabled);
 
 	std::string talk_blip_image;
 	if (gVoiceClient->getIsSpeaking(gAgent.getID()))

@@ -363,8 +363,8 @@ void LLNetMap::draw()
 
 		// Draw avatars
 //		LLColor4 mapcolor = gAvatarMapColor;
-		static LLColor4* sMapAvatar = rebind_llcontrol<LLColor4>("MapAvatar", &gColors, true);
-		LLColor4 avatar_color = (*sMapAvatar).getValue();
+		static LLCachedControl<LLColor4U> sMapAvatar(gColors, "MapAvatar");
+		LLColor4 avatar_color = (LLColor4)sMapAvatar;
 
 		LLColor4 standard_color = avatar_color;
 		//LLColor4 friend_color = gColors.getColor( "MapFriend" );
@@ -378,7 +378,7 @@ void LLNetMap::draw()
 		std::vector<LLVector3d> positions;
 		LLWorld::getInstance()->getAvatars(&avatar_ids, &positions);
 		U32 a;
-		static BOOL *friendsGroupsOnMinimap = rebind_llcontrol<BOOL>("PhoenixFriendsGroupsColorizeMiniMap",&gSavedSettings,true);
+		static LLCachedControl<bool> friendsGroupsOnMinimap(gSavedSettings, "PhoenixFriendsGroupsColorizeMiniMap");
 		for(U32 i=0; i<avatar_ids.size(); i++)
 		{
 			avatar_color = standard_color;
@@ -393,7 +393,7 @@ void LLNetMap::draw()
 			if(LLMuteList::getInstance()->isMuted(avatar_ids[i])) avatar_color = muted_color;
 			if(is_agent_friend(avatar_ids[i]))
 			{
-				if(*friendsGroupsOnMinimap)
+				if(friendsGroupsOnMinimap)
 				{
 					LLColor4 fgColor = LGGFriendsGroups::getInstance()->getFriendColor(avatar_ids[i]);
 					if(fgColor!=LGGFriendsGroups::getInstance()->getDefaultColor())
@@ -627,33 +627,22 @@ BOOL LLNetMap::handleToolTip( S32 x, S32 y, std::string& msg, LLRect* sticky_rec
             }
             else
             {
-#ifdef LL_RRINTERFACE_H //MK
-    			if (gRRenabled && gAgent.mRRInterface.mContainsShownames)
-    			{
-	    			fullname = gAgent.mRRInterface.getDummyName(fullname);
-		    	}
-			    else
-			    {
-#endif //mk
-				    if (LLAvatarNameCache::useDisplayNames())
-    				{
-	    				LLAvatarName avatar_name;
-		    			if (LLAvatarNameCache::get(mClosestAgentToCursor, &avatar_name))
-			    		{
-							static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-    						if (*sPhoenixNameSystem == 2 || (*sPhoenixNameSystem == 1 && avatar_name.mIsDisplayNameDefault))
-					    	{
-						    	fullname = avatar_name.mDisplayName;
-    						}
-	    					else
-		    				{
-			    				fullname = avatar_name.getCompleteName(true);
-				    		}
-					    }
-    				}
-#ifdef LL_RRINTERFACE_H //MK
-			    }
-#endif //mk
+			    if (LLAvatarNameCache::useDisplayNames())
+				{
+    				LLAvatarName avatar_name;
+	    			if (LLAvatarNameCache::get(mClosestAgentToCursor, &avatar_name))
+		    		{
+						static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+						if (sPhoenixNameSystem == 2 || (sPhoenixNameSystem == 1 && avatar_name.mIsDisplayNameDefault))
+				    	{
+					    	fullname = avatar_name.mDisplayName;
+						}
+    					else
+	    				{
+		    				fullname = avatar_name.getCompleteName(true);
+			    		}
+				    }
+				}
                 msg.append(fullname);
             }
             // [/Ansariel/Henri: Display name support]

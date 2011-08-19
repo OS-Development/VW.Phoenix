@@ -336,13 +336,14 @@ LLAppViewer::LLUpdaterInfo *LLAppViewer::sUpdaterInfo = NULL ;
 void idle_afk_check()
 {
 	// check idle timers
+	static LLCachedControl<F32> afk_timeout(gSavedSettings, "AFKTimeout");
 	//if (gAllowIdleAFK && (gAwayTriggerTimer.getElapsedTimeF32() > gSavedSettings.getF32("AFKTimeout")))
 // [RLVa:KB] - Checked: 2009-10-19 (RLVa-1.1.0g) | Added: RLVa-1.1.0g
 #ifdef RLV_EXTENSION_CMD_ALLOWIDLE
 	if ( (gAllowIdleAFK || gRlvHandler.hasBehaviour(RLV_BHVR_ALLOWIDLE)) &&
-		 (gAwayTriggerTimer.getElapsedTimeF32() > gSavedSettings.getF32("AFKTimeout")))
+		 (gAwayTriggerTimer.getElapsedTimeF32() > afk_timeout))
 #else
-	if (gAllowIdleAFK && (gAwayTriggerTimer.getElapsedTimeF32() > gSavedSettings.getF32("AFKTimeout")))
+	if (gAllowIdleAFK && (gAwayTriggerTimer.getElapsedTimeF32() > afk_timeout))
 #endif // RLV_EXTENSION_CMD_ALLOWIDLE
 // [/RLVa:KB]
 	{
@@ -681,9 +682,7 @@ bool LLAppViewer::init()
     // Called before threads are created.
     LLCurl::initClass();
 
-	LLViewerThrottle::sThrottleBandwidthKBPS = rebind_llcontrol<F32>("ThrottleBandwidthKBPS", &gSavedSettings, true);
-
-    initThreads();
+	initThreads();
 
     writeSystemInfo();
 
@@ -957,23 +956,23 @@ bool LLAppViewer::init()
 
 	LLViewerJoystick::getInstance()->init(false);
 
-        gSavedSettings.getControl("PhoenixGeneralSpamEnabled")->getSignal()->connect((boost::function<void (const LLSD &)>) &gSpam);
-        generalSpamOn = gSavedSettings.getBOOL("PhoenixGeneralSpamEnabled");
-        gSavedSettings.getControl("PhoenixChatSpamEnabled")->getSignal()->connect((boost::function<void (const LLSD &)>) &chSpam);
-        chatSpamOn = gSavedSettings.getBOOL("PhoenixChatSpamEnabled");
-        gSavedSettings.getControl("PhoenixDialogSpamEnabled")->getSignal()->connect((boost::function<void (const LLSD &)>) &dSpam);
-        dialogSpamOn = gSavedSettings.getBOOL("PhoenixDialogSpamEnabled");
-        gSavedSettings.getControl("PhoenixCardSpamEnabled")->getSignal()->connect((boost::function<void (const LLSD &)>) &cSpam);
-        callingSpamOn = gSavedSettings.getBOOL("PhoenixCardSpamEnabled");
-        gSavedSettings.getControl("PhoenixSpamTime")->getSignal()->connect((boost::function<void (const LLSD &)>) &setSpamTime);
-        spamTime = gSavedSettings.getF32("PhoenixSpamTime");
-        gSavedSettings.getControl("PhoenixSpamCount")->getSignal()->connect((boost::function<void (const LLSD &)>) &setSpamCount);
-        spamCount = gSavedSettings.getF32("PhoenixSpamCount");
-        gSavedSettings.getControl("PhoenixChatSpamTime")->getSignal()->connect((boost::function<void (const LLSD &)>) &setChatSpamTime);
-        chatSpamTime = gSavedSettings.getF32("PhoenixChatSpamTime");
-        gSavedSettings.getControl("PhoenixChatSpamCount")->getSignal()->connect((boost::function<void (const LLSD &)>) &setChatSpamCount);
-        chatSpamCount = gSavedSettings.getF32("PhoenixChatSpamCount");
-		gSavedSettings.getControl("PhoenixRenderHighlightSelections")->getSignal()->connect((boost::function<void (const LLSD &)>) &setHighlights);
+	gSavedSettings.getControl("PhoenixGeneralSpamEnabled")->getSignal()->connect(boost::bind(&gSpam, _2));
+    generalSpamOn = gSavedSettings.getBOOL("PhoenixGeneralSpamEnabled");
+	gSavedSettings.getControl("PhoenixChatSpamEnabled")->getSignal()->connect(boost::bind(&chSpam, _2));
+    chatSpamOn = gSavedSettings.getBOOL("PhoenixChatSpamEnabled");
+	gSavedSettings.getControl("PhoenixDialogSpamEnabled")->getSignal()->connect(boost::bind(&dSpam, _2));
+    dialogSpamOn = gSavedSettings.getBOOL("PhoenixDialogSpamEnabled");
+	gSavedSettings.getControl("PhoenixCardSpamEnabled")->getSignal()->connect(boost::bind(&cSpam, _2));
+    callingSpamOn = gSavedSettings.getBOOL("PhoenixCardSpamEnabled");
+	gSavedSettings.getControl("PhoenixSpamTime")->getSignal()->connect(boost::bind(&setSpamTime, _2));
+    spamTime = gSavedSettings.getF32("PhoenixSpamTime");
+	gSavedSettings.getControl("PhoenixSpamCount")->getSignal()->connect(boost::bind(&setSpamCount, _2));
+    spamCount = gSavedSettings.getF32("PhoenixSpamCount");
+	gSavedSettings.getControl("PhoenixChatSpamTime")->getSignal()->connect(boost::bind(&setChatSpamTime, _2));
+    chatSpamTime = gSavedSettings.getF32("PhoenixChatSpamTime");
+	gSavedSettings.getControl("PhoenixChatSpamCount")->getSignal()->connect(boost::bind(&setChatSpamCount, _2));
+    chatSpamCount = gSavedSettings.getF32("PhoenixChatSpamCount");
+	gSavedSettings.getControl("PhoenixRenderHighlightSelections")->getSignal()->connect(boost::bind(&setHighlights, _2));
 
 	return true;
 }
@@ -1122,7 +1121,8 @@ bool LLAppViewer::mainLoop()
 			// Sleep and run background threads
 			{
 				LLFastTimer t2(LLFastTimer::FTM_SLEEP);
-				bool run_multiple_threads = gSavedSettings.getBOOL("RunMultipleThreads");
+				//bool run_multiple_threads = gSavedSettings.getBOOL("RunMultipleThreads");
+				static LLCachedControl<bool> run_multiple_threads(gSavedSettings, "RunMultipleThreads");
 
 				// yield some time to the os based on command line option
 				if(mYieldTime >= 0)
@@ -1136,7 +1136,8 @@ bool LLAppViewer::mainLoop()
 						|| !gFocusMgr.getAppHasFocus())
 				{
 					// Sleep if we're not rendering, or the window is minimized.
-					S32 milliseconds_to_sleep = llclamp(gSavedSettings.getS32("BackgroundYieldTime"), 0, 1000);
+					static LLCachedControl<S32> background_yield_time(gSavedSettings, "BackgroundYieldTime");
+					S32 milliseconds_to_sleep = llclamp((S32)background_yield_time, 0, 1000);
 					// don't sleep when BackgroundYieldTime set to 0, since this will still yield to other threads
 					// of equal priority on Windows
 					if (milliseconds_to_sleep > 0)
@@ -1850,7 +1851,7 @@ bool LLAppViewer::initConfiguration()
 
 	//Load settings files list
 	std::string settings_file_list = gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "settings_files.xml");
-	LLControlGroup settings_control;
+	LLControlGroup settings_control("SettingsFiles");
 	llinfos << "Loading settings file list" << settings_file_list << llendl;
 	if (0 == settings_control.loadFromFile(settings_file_list))
 	{
@@ -1909,7 +1910,7 @@ bool LLAppViewer::initConfiguration()
 	gSavedSettings.setBOOL("WatchdogEnabled", FALSE);
 #endif
 
-	gCrashSettings.getControl(CRASH_BEHAVIOR_SETTING)->getSignal()->connect(boost::bind(&handleCrashSubmitBehaviorChanged, _1));
+	gCrashSettings.getControl(CRASH_BEHAVIOR_SETTING)->getSignal()->connect(boost::bind(&handleCrashSubmitBehaviorChanged, _2));
 
 	// These are warnings that appear on the first experience of that condition.
 	// They are already set in the settings_default.xml file, but still need to be added to LLFirstUse
@@ -3575,8 +3576,9 @@ void LLAppViewer::idle()
 	    F32 agent_update_time = agent_update_timer.getElapsedTimeF32();
 
 	    BOOL flags_changed = gAgent.controlFlagsDirty() || (last_control_flags != gAgent.getControlFlags());
-		static F32 *sPhoenixAgentUpdateFrequency = rebind_llcontrol<F32>("PhoenixAgentUpdatesPerSecond", &gSavedSettings, true);
-		if (flags_changed || (agent_update_time > (1.0f / llmax(*sPhoenixAgentUpdateFrequency , 0.0001f))))
+		static LLCachedControl<F32> sPhoenixAgentUpdateFrequency(gSavedSettings, "PhoenixAgentUpdatesPerSecond");
+
+		if (flags_changed || (agent_update_time > (1.0f / llmax(F32(sPhoenixAgentUpdateFrequency) , 0.0001f))))
 	    {
 		    // Send avatar and camera info
 		    last_control_flags = gAgent.getControlFlags();
@@ -4313,8 +4315,8 @@ void LLAppViewer::resumeMainloopTimeout(const std::string& state, F32 secs)
 	{
 		if(secs < 0.0f)
 		{
-			static F32 *sMainloopTimeoutDefault = rebind_llcontrol<F32>("MainloopTimeoutDefault", &gSavedSettings, true);
-			secs = *sMainloopTimeoutDefault;
+			static LLCachedControl<F32> sMainloopTimeoutDefault(gSavedSettings, "MainloopTimeoutDefault");
+			secs = sMainloopTimeoutDefault;
 		}
 
 		mMainloopTimeout->setTimeout(secs);
@@ -4341,8 +4343,8 @@ void LLAppViewer::pingMainloopTimeout(const std::string& state, F32 secs)
 	{
 		if(secs < 0.0f)
 		{
-			static F32 *sMainloopTimeoutDefault = rebind_llcontrol<F32>("MainloopTimeoutDefault", &gSavedSettings, true);
-			secs = *sMainloopTimeoutDefault;
+			static LLCachedControl<F32> sMainloopTimeoutDefault(gSavedSettings, "MainloopTimeoutDefault");
+			secs = sMainloopTimeoutDefault;
 		}
 
 		mMainloopTimeout->setTimeout(secs);

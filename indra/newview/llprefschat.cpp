@@ -142,9 +142,8 @@ void LLPrefsChatImpl::refreshValues()
 	mPlayTypingAnim = gSavedSettings.getBOOL("PlayTypingAnim"); 
 	mConsoleOpacity = gSavedSettings.getF32("ConsoleBackgroundOpacity");
 
-	static F32* sChatBubbleOpacity = rebind_llcontrol<F32>("ChatBubbleOpacity", &gSavedSettings, true);
-	
-	mBubbleOpacity = *sChatBubbleOpacity;
+	static LLCachedControl<F32> sChatBubbleOpacity(gSavedSettings, "ChatBubbleOpacity");
+	mBubbleOpacity = sChatBubbleOpacity;
 	mTranslateLanguage = gSavedSettings.getString("TranslateLanguage");
 	mTranslateChat = gSavedSettings.getBOOL("TranslateChat");
 	mIMEncryptedChatColor = gSavedSettings.getColor4("PhoenixIMEncryptedChatColor");
@@ -185,19 +184,19 @@ void LLPrefsChatImpl::apply()
 	gSavedSettings.setF32("ChatPersistTime", childGetValue("fade_chat_time").asReal());
 	gSavedSettings.setS32("ConsoleMaxLines", childGetValue("max_chat_count"));
 
-	gSavedSettings.setColor4("SystemChatColor", childGetValue("system"));
-	gSavedSettings.setColor4("UserChatColor", childGetValue("user"));
-	gSavedSettings.setColor4("AgentChatColor", childGetValue("agent"));
-	gSavedSettings.setColor4("PhoenixFriendChatColor", childGetValue("friend")); //Phoenix:KC
-	gSavedSettings.setColor4("IMChatColor", childGetValue("im"));
-	gSavedSettings.setColor4("ScriptErrorColor", childGetValue("script_error"));
-	gSavedSettings.setColor4("ObjectChatColor", childGetValue("objects"));
-	gSavedSettings.setColor4("llOwnerSayChatColor", childGetValue("owner"));
-	gSavedSettings.setColor4("BackgroundChatColor", childGetValue("background"));
-	gSavedSettings.setColor4("PhoenixIMEncryptedChatColor", childGetValue("encrypted"));
+	gSavedSettings.setColor4("SystemChatColor", LLColor4(childGetValue("system")));
+	gSavedSettings.setColor4("UserChatColor", LLColor4(childGetValue("user")));
+	gSavedSettings.setColor4("AgentChatColor", LLColor4(childGetValue("agent")));
+	gSavedSettings.setColor4("PhoenixFriendChatColor", LLColor4(childGetValue("friend"))); //Phoenix:KC
+	gSavedSettings.setColor4("IMChatColor", LLColor4(childGetValue("im")));
+	gSavedSettings.setColor4("ScriptErrorColor", LLColor4(childGetValue("script_error")));
+	gSavedSettings.setColor4("ObjectChatColor", LLColor4(childGetValue("objects")));
+	gSavedSettings.setColor4("llOwnerSayChatColor", LLColor4(childGetValue("owner")));
+	gSavedSettings.setColor4("BackgroundChatColor", LLColor4(childGetValue("background")));
+	gSavedSettings.setColor4("PhoenixIMEncryptedChatColor", LLColor4(childGetValue("encrypted")));
 
-	gSavedSettings.setColor4("HTMLLinkColor", childGetValue("links"));
-	LLTextEditor::setLinkColor(childGetValue("links"));
+	gSavedSettings.setColor4("HTMLLinkColor", LLColor4(childGetValue("links")));
+	LLTextEditor::setLinkColor(LLColor4(childGetValue("links")));
 
 	gSavedSettings.setBOOL("ArrowKeysMoveAvatar", childGetValue("arrow_keys_move_avatar_check"));
 	gSavedSettings.setBOOL("ChatShowTimestamps", childGetValue("show_timestamps_check"));

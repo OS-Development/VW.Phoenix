@@ -75,16 +75,16 @@
 
 BOOL LLAgent::setLookAt(ELookAtType target_type, LLViewerObject *object, LLVector3 position)
 {
-	static BOOL* sPhoenixBroadcastPointers = rebind_llcontrol<BOOL>("PhoenixBroadcastPointers", &gSavedSettings, true);
+	static LLCachedControl<bool> sPhoenixBroadcastPointers(gSavedSettings, "PhoenixBroadcastPointers");
 
-	if(!(*sPhoenixBroadcastPointers))
+	if (!sPhoenixBroadcastPointers)
 	{
 		if(!mLookAt || mLookAt->isDead())
 			return FALSE;
 		position.clearVec();
 		return mLookAt->setLookAt(LOOKAT_TARGET_NONE, mAvatarObject, position);
 	}
-	if(object && object->isAttachment())
+	if (object && object->isAttachment())
 	{
 		LLViewerObject* parent = object;
 		while(parent)
@@ -109,10 +109,10 @@ BOOL LLAgent::setLookAt(ELookAtType target_type, LLViewerObject *object, LLVecto
 
 BOOL LLAgent::setPointAt(EPointAtType target_type, LLViewerObject *object, LLVector3 position)
 {
-	static BOOL* sPhoenixBroadcastPointers2 = rebind_llcontrol<BOOL>("PhoenixBroadcastPointers2", &gSavedSettings, true);
+	static LLCachedControl<bool> sPhoenixBroadcastPointers2(gSavedSettings, "PhoenixBroadcastPointers2");
 
 	// disallow pointing at attachments and avatars
-	if ((object && (object->isAttachment() || object->isAvatar())) || !(*sPhoenixBroadcastPointers2))
+	if ((object && (object->isAttachment() || object->isAvatar())) || !sPhoenixBroadcastPointers2)
 	{
 		return FALSE;
 	}

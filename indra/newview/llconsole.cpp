@@ -215,7 +215,7 @@ void LLConsole::draw()
 // VWR-8999
 // ChatSpacing:   0 -- chat lines are close together, as they were in the 1.20 viewer.
 //                4 -- chat lines are farther apart as they are in SnowGlobe 1.4.
-	static LLCachedControl<S32> chat_spacing("ChatSpacing", 0);
+	static LLCachedControl<S32> chat_spacing(gSavedSettings, "ChatSpacing");
 	// Perform clamping.
 	S32 const clamped_chat_spacing = llclamp((S32)chat_spacing, -16, 128);
 	if (chat_spacing != clamped_chat_spacing)

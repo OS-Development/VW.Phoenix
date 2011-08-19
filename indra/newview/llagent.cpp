@@ -318,7 +318,7 @@ LLAgent::LLAgent() :
 	mbAlwaysRun(false),
 	mbRunning(false),
 
-	mAgentAccess(gSavedSettings),
+	mAgentAccess(new LLAgentAccess(gSavedSettings)),
 	mTeleportState( TELEPORT_NONE ),
 	mRegionp(NULL),
 
@@ -493,9 +493,11 @@ void LLAgent::init()
 
 	mEffectColor = gSavedSettings.getColor4("EffectColor");
 	ignorePrejump = gSavedSettings.getBOOL("PhoenixIgnoreFinishAnimation");
-	gSavedSettings.getControl("PhoenixIgnoreFinishAnimation")->getSignal()->connect((boost::function<void (const LLSD &)>) &updateIgnorePrejump);
+	//gSavedSettings.getControl("PhoenixIgnoreFinishAnimation")->getSignal()->connect((boost::function<void (const LLSD &)>) &updateIgnorePrejump);
+	gSavedSettings.getControl("PhoenixIgnoreFinishAnimation")->getSignal()->connect(boost::bind(&updateIgnorePrejump, _2));
 	PhoenixForceFly = gSavedSettings.getBOOL("PhoenixAlwaysFly");
-	gSavedSettings.getControl("PhoenixAlwaysFly")->getSignal()->connect((boost::function<void (const LLSD &)>) &updatePhoenixForceFly);
+	//gSavedSettings.getControl("PhoenixAlwaysFly")->getSignal()->connect((boost::function<void (const LLSD &)>) &updatePhoenixForceFly);
+	gSavedSettings.getControl("PhoenixAlwaysFly")->getSignal()->connect(boost::bind(&updatePhoenixForceFly, _2));
 	mBlockSpam=gSavedSettings.getBOOL("PhoenixBlockSpam");
 	mInitialized = TRUE;
 }
@@ -531,6 +533,9 @@ LLAgent::~LLAgent()
 	delete [] mActiveCacheQueries;
 	mActiveCacheQueries = NULL;
 
+	delete mAgentAccess;
+	mAgentAccess = NULL;
+
 	// *Note: this is where LLViewerCamera::getInstance() used to be deleted.
 }
 
@@ -565,9 +570,9 @@ void LLAgent::resetView(BOOL reset_camera, BOOL change_camera)
 		if (gMenuHolder) gMenuHolder->hideMenus();
 	}
 
-	static BOOL* sFreezeTime = rebind_llcontrol<BOOL>("FreezeTime", &gSavedSettings, true);
+	static LLCachedControl<bool> sFreezeTime(gSavedSettings, "FreezeTime");
 
-	if (change_camera && !(*sFreezeTime))
+	if (change_camera && !sFreezeTime)
 	{
 		changeCameraToDefault();
 		
@@ -591,7 +596,7 @@ void LLAgent::resetView(BOOL reset_camera, BOOL change_camera)
 	}
 
 
-	if (reset_camera && !(*sFreezeTime))
+	if (reset_camera && !sFreezeTime)
 	{
 		if (!gViewerWindow->getLeftMouseDown() && cameraThirdPerson())
 		{
@@ -2020,9 +2025,9 @@ void LLAgent::cameraOrbitIn(const F32 meters)
 		
 		mCameraZoomFraction = (mTargetCameraDistance - meters) / camera_offset_dist;
 
-		static BOOL* sFreezeTime = rebind_llcontrol<BOOL>("FreezeTime", &gSavedSettings, true);
+		static LLCachedControl<bool> sFreezeTime(gSavedSettings, "FreezeTime");
 
-		if (!(*sFreezeTime) && mCameraZoomFraction < MIN_ZOOM_FRACTION && meters > 0.f)
+		if (!sFreezeTime && mCameraZoomFraction < MIN_ZOOM_FRACTION && meters > 0.f)
 		{
 			// No need to animate, camera is already there.
 			changeCameraToMouselook(FALSE);
@@ -2930,7 +2935,7 @@ U8 LLAgent::getRenderState()
 		return 0;
 	}
 
-	static LLCachedControl<BOOL> PhoenixVoiceAnimWhileTyping("PhoenixVoiceAnimWhileTyping", 0);
+	static LLCachedControl<bool> PhoenixVoiceAnimWhileTyping(gSavedSettings, "PhoenixVoiceAnimWhileTyping");
 	if((mRenderState & AGENT_STATE_TYPING) && PhoenixVoiceAnimWhileTyping){ // If we are typing and voice anim should be played
 		LLVOAvatar* avatarp = gAgent.getAvatarObject();
 		if (avatarp)
@@ -2977,8 +2982,8 @@ static const LLFloaterView::skip_list_t& get_skip_list()
 {
 	static LLFloaterView::skip_list_t skip_list;
 	skip_list.insert(LLFloaterMap::getInstance());
-	static BOOL *sPhoenixShowStatusBarInMouselook = rebind_llcontrol<BOOL>("PhoenixShowStatusBarInMouselook", &gSavedSettings, true);
-	if(*sPhoenixShowStatusBarInMouselook)
+	static LLCachedControl<bool> sPhoenixShowStatusBarInMouselook(gSavedSettings, "PhoenixShowStatusBarInMouselook");
+	if(sPhoenixShowStatusBarInMouselook)
 	{
 		skip_list.insert(LLFloaterStats::getInstance());
 	}
@@ -5150,27 +5155,27 @@ void LLAgent::onAnimStop(const LLUUID& id)
 
 BOOL LLAgent::isGodlike() const
 {
-	return mAgentAccess.isGodlike();
+	return mAgentAccess->isGodlike();
 }
 
 U8 LLAgent::getGodLevel() const
 {
-	return mAgentAccess.getGodLevel();
+	return mAgentAccess->getGodLevel();
 }
 
 bool LLAgent::wantsPGOnly() const
 {
-	return mAgentAccess.wantsPGOnly();
+	return mAgentAccess->wantsPGOnly();
 }
 
 bool LLAgent::canAccessMature() const
 {
-	return mAgentAccess.canAccessMature();
+	return mAgentAccess->canAccessMature();
 }
 
 bool LLAgent::canAccessAdult() const
 {
-	return mAgentAccess.canAccessAdult();
+	return mAgentAccess->canAccessAdult();
 }
 
 bool LLAgent::canAccessMaturityInRegion( U64 region_handle ) const
@@ -5205,37 +5210,37 @@ bool LLAgent::canAccessMaturityAtGlobal( LLVector3d pos_global ) const
 
 bool LLAgent::prefersPG() const
 {
-	return mAgentAccess.prefersPG();
+	return mAgentAccess->prefersPG();
 }
 
 bool LLAgent::prefersMature() const
 {
-	return mAgentAccess.prefersMature();
+	return mAgentAccess->prefersMature();
 }
 	
 bool LLAgent::prefersAdult() const
 {
-	return mAgentAccess.prefersAdult();
+	return mAgentAccess->prefersAdult();
 }
 
 bool LLAgent::isTeen() const
 {
-	return mAgentAccess.isTeen();
+	return mAgentAccess->isTeen();
 }
 
 bool LLAgent::isMature() const
 {
-	return mAgentAccess.isMature();
+	return mAgentAccess->isMature();
 }
 
 bool LLAgent::isAdult() const
 {
-	return mAgentAccess.isAdult();
+	return mAgentAccess->isAdult();
 }
 
 void LLAgent::setTeen(bool teen)
 {
-	mAgentAccess.setTeen(teen);
+	mAgentAccess->setTeen(teen);
 }
 
 //static 
@@ -5277,32 +5282,32 @@ bool LLAgent::sendMaturityPreferenceToServer(int preferredMaturity)
 
 BOOL LLAgent::getAdminOverride() const	
 { 
-	return mAgentAccess.getAdminOverride(); 
+	return mAgentAccess->getAdminOverride();
 }
 
 void LLAgent::setMaturity(char text)
 {
-	mAgentAccess.setMaturity(text);
+	mAgentAccess->setMaturity(text);
 }
 
 void LLAgent::setAdminOverride(BOOL b)	
 { 
-	mAgentAccess.setAdminOverride(b);
+	mAgentAccess->setAdminOverride(b);
 }
 
 void LLAgent::setGodLevel(U8 god_level)	
 { 
-	mAgentAccess.setGodLevel(god_level);
+	mAgentAccess->setGodLevel(god_level);
 }
 
 void LLAgent::setAOTransition()
 {
-	mAgentAccess.setTransition();
+	mAgentAccess->setTransition();
 }
 
 const LLAgentAccess& LLAgent::getAgentAccess()
 {
-	return mAgentAccess;
+	return *mAgentAccess;
 }
 
 
@@ -6620,9 +6625,9 @@ void LLAgent::setTeleportState(ETeleportState state)
 {
 	mTeleportState = state;
 
-	static BOOL* sFreezeTime = rebind_llcontrol<BOOL>("FreezeTime", &gSavedSettings, true);
+	static LLCachedControl<bool> sFreezeTime(gSavedSettings, "FreezeTime");
 
-	if (mTeleportState > TELEPORT_NONE && (*sFreezeTime))
+	if (mTeleportState > TELEPORT_NONE && sFreezeTime)
 	{
 		LLFloaterSnapshot::hide(0);
 	}

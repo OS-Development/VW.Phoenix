@@ -167,9 +167,9 @@ void lggFriendsGroupsFloater::onBackgroundChange(LLUICtrl* ctrl, void* userdata)
 
 	if(cctrl)
 	{
-		std::string *currentGroup = rebind_llcontrol<std::string>("PhoenixFriendsGroupsSelectedGroup", &gSavedSettings, true);
+		LLCachedControl<std::string> currentGroup(gSavedSettings, "PhoenixFriendsGroupsSelectedGroup");
 
-		LGGFriendsGroups::getInstance()->setGroupColor(*currentGroup,cctrl->get());
+		LGGFriendsGroups::getInstance()->setGroupColor(currentGroup,cctrl->get());
 
 	}
 
@@ -180,9 +180,9 @@ void lggFriendsGroupsFloater::onNoticesChange(LLUICtrl* ctrl, void* userdata)
 
 	if(cctrl)
 	{
-		std::string *currentGroup = rebind_llcontrol<std::string>("PhoenixFriendsGroupsSelectedGroup", &gSavedSettings, true);
+		LLCachedControl<std::string> currentGroup(gSavedSettings, "PhoenixFriendsGroupsSelectedGroup");
 
-		LGGFriendsGroups::getInstance()->setNotifyForGroup(*currentGroup, ctrl->getValue().asBoolean());
+		LGGFriendsGroups::getInstance()->setNotifyForGroup(currentGroup, ctrl->getValue().asBoolean());
 		
 	}
 
@@ -222,13 +222,14 @@ void lggFriendsGroupsFloater::updateGroupsList()
 }
 void lggFriendsGroupsFloater::updateGroupGUIs()
 {
-	std::string *currentGroup = rebind_llcontrol<std::string>("PhoenixFriendsGroupsSelectedGroup", &gSavedSettings, true);
+	LLCachedControl<std::string> scurrentGroup(gSavedSettings, "PhoenixFriendsGroupsSelectedGroup");
+	std::string currentGroup(scurrentGroup);
+
+	groupColorBox->set(LGGFriendsGroups::getInstance()->getGroupColor(currentGroup),TRUE);	
 	
-	groupColorBox->set(LGGFriendsGroups::getInstance()->getGroupColor(*currentGroup),TRUE);	
+	groupsList->setSimple(currentGroup);
 	
-	groupsList->setSimple(*currentGroup);
-	
-	noticeBox->set(LGGFriendsGroups::getInstance()->getNotifyForGroup(*currentGroup));
+	noticeBox->set(LGGFriendsGroups::getInstance()->getNotifyForGroup(currentGroup));
 }
 void lggFriendsGroupsFloater::onSelectGroup(LLUICtrl* ctrl, void* userdata)
 {
@@ -285,7 +286,8 @@ void lggFriendsGroupsFloater::drawScrollBars()
 }
 void lggFriendsGroupsFloater::drawRightClick()
 {
-	std::string *currentGroup = rebind_llcontrol<std::string>("PhoenixFriendsGroupsSelectedGroup", &gSavedSettings, true);
+	LLCachedControl<std::string> scurrentGroup(gSavedSettings, "PhoenixFriendsGroupsSelectedGroup");
+	std::string currentGroup(scurrentGroup);
 
 	if(!sInstance->hasFocus())
 	{
@@ -375,7 +377,7 @@ void lggFriendsGroupsFloater::drawRightClick()
 	//draw remove button
 	LLRect remBackGround;
 	remBackGround.setLeftTopAndSize(contextRect.mLeft,top,width,heightPer);
-	gGL.color4fv(LGGFriendsGroups::getInstance()->getGroupColor(*currentGroup).mV);
+	gGL.color4fv(LGGFriendsGroups::getInstance()->getGroupColor(currentGroup).mV);
 	gl_rect_2d(remBackGround);
 	if(remBackGround.pointInRect(mouse_x,mouse_y))
 	{
@@ -388,7 +390,7 @@ void lggFriendsGroupsFloater::drawRightClick()
 			{
 				LLUUID afriend = currentList[selected[v]];
 				LGGFriendsGroups::getInstance()->removeFriendFromGroup(
-					afriend,*currentGroup);
+					afriend,currentGroup);
 
 				generateCurrentList();
 			}
@@ -398,7 +400,7 @@ void lggFriendsGroupsFloater::drawRightClick()
 	}
 
 	LLFontGL::getFontSansSerif()->renderUTF8(
-		std::string("Remove From: "+*currentGroup)
+		std::string("Remove From: "+currentGroup)
 		, 0,
 		contextRect.mLeft,
 		top-(heightPer/2),
@@ -550,7 +552,7 @@ void lggFriendsGroupsFloater::drawRightClick()
 	//group of avatars
 	if(selected.size()>1)
 	{
-		LLColor4 groupColor = LGGFriendsGroups::getInstance()->getGroupColor(*currentGroup);
+		LLColor4 groupColor = LGGFriendsGroups::getInstance()->getGroupColor(currentGroup);
 		LLDynamicArray<LLUUID> ids;
 		for(int se=0;se<selected.size();se++)
 		{
@@ -589,7 +591,7 @@ void lggFriendsGroupsFloater::drawRightClick()
 			{
 				//confrence				
 				gIMMgr->setFloaterOpen(TRUE);
-				gIMMgr->addSession(std::string(*currentGroup+" Conference"), IM_SESSION_CONFERENCE_START, ids[0], ids);
+				gIMMgr->addSession(std::string(currentGroup+" Conference"), IM_SESSION_CONFERENCE_START, ids[0], ids);
 			}
 		}
 		LLFontGL::getFontSansSerif()->renderUTF8(
@@ -689,10 +691,9 @@ void lggFriendsGroupsFloater::draw()
 	LLFontGL* hugeFont = LLFontGL::getFontSansSerifHuge();
 
 
-	static std::string *currentGroup = rebind_llcontrol<std::string>("PhoenixFriendsGroupsSelectedGroup", &gSavedSettings, true);
-	static BOOL *textNotBg = rebind_llcontrol<BOOL>("PhoenixFriendsGroupsColorizeText",&gSavedSettings,true);
-	static BOOL *barNotBg = rebind_llcontrol<BOOL>("PhoenixFriendsGroupsColorizeBar",&gSavedSettings,true);
-	
+	static LLCachedControl<std::string> currentGroup(gSavedSettings, "PhoenixFriendsGroupsSelectedGroup");
+	static LLCachedControl<bool> textNotBg(gSavedSettings, "PhoenixFriendsGroupsColorizeText");
+	static LLCachedControl<bool> barNotBg(gSavedSettings, "PhoenixFriendsGroupsColorizeBar");
 		
 	std::vector<LLUUID> workingList;
 	workingList= currentList;
@@ -716,7 +717,7 @@ void lggFriendsGroupsFloater::draw()
 		{
 			LLUIImage *arrowUpImage = LLUI::getUIImage("map_avatar_above_32.tga");
 			LLUIImage *arrowDownImage = LLUI::getUIImage("map_avatar_below_32.tga");
-			LLColor4 active = LGGFriendsGroups::getInstance()->getGroupColor(*currentGroup);
+			LLColor4 active = LGGFriendsGroups::getInstance()->getGroupColor(currentGroup);
 			LLColor4 unactive = LGGFriendsGroups::toneDownColor(active,.5);
 
 			LLColor4 useColor = unactive;
@@ -807,22 +808,23 @@ void lggFriendsGroupsFloater::draw()
 
 			LLUUID agent_id = workingList[p];
 
-			BOOL *showOtherGroups = rebind_llcontrol<BOOL>("PhoenixFriendsGroupsShowOtherGroups", &gSavedSettings, true);
-			std::string *cg = rebind_llcontrol<std::string>("PhoenixFriendsGroupsSelectedGroup", &gSavedSettings, true);
+			LLCachedControl<bool> showOtherGroups(gSavedSettings, "PhoenixFriendsGroupsShowOtherGroups");
+			LLCachedControl<std::string> cg(gSavedSettings, "PhoenixFriendsGroupsSelectedGroup");
+
 			std::vector<std::string> groupsIsIn;				
 			groupsIsIn= LGGFriendsGroups::getInstance()->getFriendGroups(agent_id);
 
-			LLColor4 color = LGGFriendsGroups::getInstance()->getGroupColor(*cg);
-			if(!LGGFriendsGroups::getInstance()->isFriendInGroup(agent_id,*cg))
+			LLColor4 color = LGGFriendsGroups::getInstance()->getGroupColor(cg);
+			if(!LGGFriendsGroups::getInstance()->isFriendInGroup(agent_id,cg))
 				color = LGGFriendsGroups::getInstance()->getDefaultColor();
-			if(*showOtherGroups)color = LGGFriendsGroups::getInstance()->
-				getFriendColor(agent_id,*cg);
+			if(showOtherGroups)color = LGGFriendsGroups::getInstance()->
+				getFriendColor(agent_id,cg);
 
 			if(!iAMSelected)
 				color = LGGFriendsGroups::toneDownColor(color,((F32)bubble)/((F32)bMag));
 			
 			gGL.color4fv(color.mV);			
-			if(!(*barNotBg) && !(*textNotBg))
+			if(!barNotBg && !textNotBg)
 			{
 				gl_rect_2d(box);
 			}else
@@ -1012,8 +1014,8 @@ void lggFriendsGroupsFloater::draw()
 				if (LLAvatarNameCache::get(agent_id, &avatar_name))
 				{
 					std::string fullname;
-					static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-					switch (*sPhoenixNameSystem)
+					static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+					switch (sPhoenixNameSystem)
 					{
 					case 0 : fullname = avatar_name.getLegacyName(); break;
 					case 1 : fullname = (avatar_name.mIsDisplayNameDefault? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
@@ -1028,10 +1030,10 @@ void lggFriendsGroupsFloater::draw()
 				if(thisSize>25)useFont = hugeFont;
 				
 				int roomForBar = 0;
-				if((*barNotBg)||(*textNotBg))roomForBar=10+(bubble/2);
+				if(barNotBg||textNotBg)roomForBar=10+(bubble/2);
 
 				LLColor4 nameTextColor = LLColor4::white;
-				if((*textNotBg)&(groupsIsIn.size()>0))nameTextColor=LGGFriendsGroups::toneDownColor(color,1.0f);
+				if(textNotBg&&(groupsIsIn.size()>0))nameTextColor=LGGFriendsGroups::toneDownColor(color,1.0f);
 
 				useFont->renderUTF8(
 					text
@@ -1128,8 +1130,8 @@ BOOL lggFriendsGroupsFloater::compareAv(LLUUID av1, LLUUID av2)
 	if (LLAvatarNameCache::get(av1, &avatar_name))
 	{
 		std::string fullname;
-		static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-		switch (*sPhoenixNameSystem)
+		static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+		switch (sPhoenixNameSystem)
 		{
 		case 0 : fullname = avatar_name.getLegacyName(); break;
 		case 1 : fullname = (avatar_name.mIsDisplayNameDefault? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
@@ -1142,8 +1144,8 @@ BOOL lggFriendsGroupsFloater::compareAv(LLUUID av1, LLUUID av2)
 	if (LLAvatarNameCache::get(av2, &avatar_name))
 	{
 		std::string fullname;
-		static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-		switch (*sPhoenixNameSystem)
+		static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+		switch (sPhoenixNameSystem)
 		{
 		case 0 : fullname = avatar_name.getLegacyName(); break;
 		case 1 : fullname = (avatar_name.mIsDisplayNameDefault? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
@@ -1160,11 +1162,11 @@ BOOL lggFriendsGroupsFloater::compareAv(LLUUID av1, LLUUID av2)
 }
 BOOL lggFriendsGroupsFloater::generateCurrentList()
 {
-	static BOOL *showOnline = rebind_llcontrol<BOOL>("PhoenixFriendsGroupsShowOnline", &gSavedSettings, true);
-	static BOOL *showOffline = rebind_llcontrol<BOOL>("PhoenixFriendsGroupsShowOffline", &gSavedSettings, true);
-	static BOOL *yshowAllFriends = rebind_llcontrol<BOOL>("PhoenixFriendsGroupsShowAllFriends", &gSavedSettings, true);
-	//static BOOL *showOtherGroups = rebind_llcontrol<BOOL>("PhoenixFriendsGroupsShowOtherGroups", &gSavedSettings, true);
-	static std::string *currentGroup = rebind_llcontrol<std::string>("PhoenixFriendsGroupsSelectedGroup", &gSavedSettings, true);
+	static LLCachedControl<bool> showOnline(gSavedSettings, "PhoenixFriendsGroupsShowOnline");
+	static LLCachedControl<bool> showOffline(gSavedSettings, "PhoenixFriendsGroupsShowOffline");
+	static LLCachedControl<bool> yshowAllFriends(gSavedSettings, "PhoenixFriendsGroupsShowAllFriends");
+	//static LLCachedControl<bool> showOtherGroups(gSavedSettings, "PhoenixFriendsGroupsShowAllFriends");
+	static LLCachedControl<std::string> currentGroup(gSavedSettings, "PhoenixFriendsGroupsSelectedGroup");
 
 	currentList.clear();
 	std::map<LLUUID, LLRelationship*>::iterator p;
@@ -1175,9 +1177,9 @@ BOOL lggFriendsGroupsFloater::generateCurrentList()
 		p != friends.end(); p++)
 	{
 		LLRelationship* relation = p->second;
-		if((! (*showOnline))&&(relation->isOnline()))continue;
-		if((! (*showOffline))&&(!relation->isOnline()))continue;
-		if((! (*yshowAllFriends)&&(!LGGFriendsGroups::getInstance()->isFriendInGroup(p->first,*currentGroup))))continue;
+		if((! showOnline)&&(relation->isOnline()))continue;
+		if((! showOffline)&&(!relation->isOnline()))continue;
+		if((! yshowAllFriends&&(!LGGFriendsGroups::getInstance()->isFriendInGroup(p->first,currentGroup))))continue;
 
 		currentList.push_back(p->first);
 	}
@@ -1186,9 +1188,9 @@ BOOL lggFriendsGroupsFloater::generateCurrentList()
 }
 void lggFriendsGroupsFloater::onClickDelete(void* data)
 {
-	std::string *currentGroup = rebind_llcontrol<std::string>("PhoenixFriendsGroupsSelectedGroup", &gSavedSettings, true);
+	LLCachedControl<std::string> currentGroup(gSavedSettings, "PhoenixFriendsGroupsSelectedGroup");
 
-	LGGFriendsGroups::getInstance()->deleteGroup(*currentGroup);
+	LGGFriendsGroups::getInstance()->deleteGroup(currentGroup);
 	gSavedSettings.setString("PhoenixFriendsGroupsSelectedGroup","");
 	sInstance->updateGroupsList();
 }

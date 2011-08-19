@@ -484,8 +484,9 @@ void LLFloaterChat::addChat(const LLChat& chat,
 		else if(from_instant_message)
 		{
 			//Phoenix:KC - color chat from friends. taking care not to color when RLV hide names is in effect, lol
-			static BOOL* sPhoenixColorFriendsChat = rebind_llcontrol<BOOL>("PhoenixColorFriendsChat", &gSavedSettings, true);
-			if (!*sPhoenixColorFriendsChat
+			static LLCachedControl<bool> sPhoenixColorFriendsChat(gSavedSettings, "PhoenixColorFriendsChat");
+
+			if (!sPhoenixColorFriendsChat
 			|| !LLAvatarTracker::instance().isBuddy(chat.mFromID))
 			{
 				text_color = gSavedSettings.getColor("IMChatColor");
@@ -577,16 +578,17 @@ LLColor4 get_text_color(const LLChat& chat)
 			else
 			{
 				//Phoenix:KC - color chat from friends. taking care not to color when RLV hide names is in effect, lol
-				static BOOL* sPhoenixColorFriendsChat = rebind_llcontrol<BOOL>("PhoenixColorFriendsChat", &gSavedSettings, true);
-				static BOOL* sPhoenixColorLindensChat = rebind_llcontrol<BOOL>("PhoenixColorLindensChat", &gSavedSettings, true);
-				static BOOL* sPhoenixColorFriendsGroupsChat = rebind_llcontrol<BOOL>("PhoenixFriendsGroupsColorizeChat", &gSavedSettings, true);
-				if ( (*sPhoenixColorFriendsChat || *sPhoenixColorFriendsGroupsChat)
+				static LLCachedControl<bool> sPhoenixColorFriendsChat(gSavedSettings, "PhoenixColorFriendsChat");
+				static LLCachedControl<bool> sPhoenixColorLindensChat(gSavedSettings, "PhoenixColorLindensChat");
+				static LLCachedControl<bool> sPhoenixColorFriendsGroupsChat(gSavedSettings, "PhoenixFriendsGroupsColorizeChat");
+
+				if ( (sPhoenixColorFriendsChat || sPhoenixColorFriendsGroupsChat)
 				&& LLAvatarTracker::instance().isBuddy(chat.mFromID)
 				&& (!rlv_handler_t::isEnabled()
 				|| !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES)))
 				{
 					text_color = gSavedSettings.getColor4("PhoenixFriendChatColor");
-					if(*sPhoenixColorFriendsGroupsChat)
+					if(sPhoenixColorFriendsGroupsChat)
 					{
 						LLColor4 fgColor = LGGFriendsGroups::getInstance()->getFriendColor(chat.mFromID);
 						if(fgColor!=LGGFriendsGroups::getInstance()->getDefaultColor())
@@ -597,7 +599,7 @@ LLColor4 get_text_color(const LLChat& chat)
 				{
 					text_color = gSavedSettings.getColor4("UserChatColor");
 				}
-				else if (*sPhoenixColorLindensChat && LLMuteList::getInstance()->isLinden(chat.mFromID))
+				else if (sPhoenixColorLindensChat && LLMuteList::getInstance()->isLinden(chat.mFromID))
 				{
 					text_color = gSavedSettings.getColor4("PhoenixLindensChatColor");
 				}

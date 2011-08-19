@@ -111,9 +111,9 @@ public:
 	*/
 	//@{
 		typedef bool			Boolean;
-		typedef U32				Unsigned;
+		//typedef U32				Unsigned;
 		typedef S32				Integer;
-		typedef F32				Float;
+		//typedef F32				Float;
 		typedef F64				Real;
 		typedef std::string		String;
 		typedef LLUUID			UUID;
@@ -121,7 +121,7 @@ public:
 		typedef LLURI			URI;
 		typedef std::vector<U8>	Binary;
 	//@}
-	
+
 	/** @name Scalar Constructors */
 	//@{
 		LLSD(Boolean);
@@ -187,9 +187,9 @@ public:
 	*/
 	//@{
 		Boolean	asBoolean() const;
-		Unsigned asUnsigned() const {return (U32)asInteger();}
+		//Unsigned asUnsigned() const {return (U32)asInteger();}
 		Integer	asInteger() const;
-		Float	asFloat() const {return (F32)asReal();}
+		//Float	asFloat() const {return (F32)asReal();}
 		Real	asReal() const;
 		String	asString() const;
 		UUID	asUUID() const;
@@ -198,9 +198,9 @@ public:
 		Binary	asBinary() const;
 
 		operator Boolean() const	{ return asBoolean(); }
-		operator Unsigned() const	{ return asUnsigned(); }
+		//operator Unsigned() const	{ return asUnsigned(); }
 		operator Integer() const	{ return asInteger(); }
-		operator Float() const		{ return asFloat(); }
+		//operator Float() const		{ return asFloat(); }
 		operator Real() const		{ return asReal(); }
 		operator String() const		{ return asString(); }
 		operator UUID() const		{ return asUUID(); }
@@ -334,7 +334,7 @@ public:
 private:
 		Impl* impl;
 	//@}
-	
+
 	/** @name Unit Testing Interface */
 	//@{
 public:

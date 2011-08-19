@@ -652,9 +652,10 @@ void LLIMMgr::addMessage(
 	bool is_encrypted = (msg.substr(0, 3) == "\xe2\x80\xa7");
 	LLColor4 color;
 	//Phoenix:KC - color chat from friends. taking care not to color when RLV hide names is in effect, lol
-	static BOOL* sPhoenixColorFriendsChat = rebind_llcontrol<BOOL>("PhoenixColorFriendsChat", &gSavedSettings, true);
-	static BOOL* sPhoenixColorLindensChat = rebind_llcontrol<BOOL>("PhoenixColorLindensChat", &gSavedSettings, true);
-	static BOOL* sPhoenixColorFriendsGroupsChat = rebind_llcontrol<BOOL>("PhoenixFriendsGroupsColorizeChat", &gSavedSettings, true);
+	static LLCachedControl<bool> sPhoenixColorFriendsChat(gSavedSettings, "PhoenixColorFriendsChat");
+	static LLCachedControl<bool> sPhoenixColorLindensChat(gSavedSettings, "PhoenixColorLindensChat");
+	static LLCachedControl<bool> sPhoenixColorFriendsGroupsChat(gSavedSettings, "PhoenixFriendsGroupsColorizeChat");
+
 	if (is_from_system)
 	{
 		color = gSavedSettings.getColor4("SystemChatColor");
@@ -667,7 +668,7 @@ void LLIMMgr::addMessage(
 	{
 		color = gSavedSettings.getColor("UserChatColor");
 	}
-	else if ((*sPhoenixColorFriendsChat||*sPhoenixColorFriendsGroupsChat)
+	else if ((sPhoenixColorFriendsChat||sPhoenixColorFriendsGroupsChat)
 	&& LLAvatarTracker::instance().isBuddy(other_participant_id)
 	&& (!rlv_handler_t::isEnabled()
 	|| !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES)))
@@ -677,7 +678,7 @@ void LLIMMgr::addMessage(
 		if(fgColor!=LGGFriendsGroups::getInstance()->getDefaultColor())
 			color=fgColor;
 	}
-	else if (*sPhoenixColorLindensChat && is_linden)
+	else if (sPhoenixColorLindensChat && is_linden)
 	{
 		color = gSavedSettings.getColor4("PhoenixLindensChatColor");
 	}
@@ -1605,8 +1606,8 @@ public:
 // [/RLVa:KB]
 
 			//Kadah - PHOE-277: fix for group chat still coming thru on console when disabled
-			static LLCachedControl<BOOL> PhoenixMuteAllGroups("PhoenixMuteAllGroups", 0);
-			static LLCachedControl<BOOL> PhoenixMuteGroupWhenNoticesDisabled("PhoenixMuteGroupWhenNoticesDisabled", 0);
+			static LLCachedControl<bool> PhoenixMuteAllGroups(gSavedSettings, "PhoenixMuteAllGroups");
+			static LLCachedControl<bool> PhoenixMuteGroupWhenNoticesDisabled(gSavedSettings, "PhoenixMuteGroupWhenNoticesDisabled");
 			LLGroupData group_data;
 			if (gAgent.getGroupData(session_id, group_data))
 			{

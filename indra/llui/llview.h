@@ -37,6 +37,9 @@
 // the HUD or a dialog box or a button.  It can also contain sub-views
 // and child widgets
 
+#include <boost/function.hpp>
+#include <boost/signals2.hpp>
+
 #include "llcoord.h"
 #include "llfontgl.h"
 #include "llmortician.h"
@@ -208,7 +211,7 @@ public:
 	}
 };
 
-class LLView : public LLMouseHandler, public LLMortician, public LLFocusableElement
+class LLView : public LLMouseHandler, public LLMortician, public LLFocusableElement, public boost::signals2::trackable
 {
 public:
 	LOG_CLASS(LLView);
@@ -663,7 +666,7 @@ private:
 	typedef std::map<std::string, LLView*> dummy_widget_map_t;
 	mutable dummy_widget_map_t mDummyWidgets;
 
-	boost::signals::connection mControlConnection;
+	boost::signals2::connection mControlConnection;
 
 	ECursorType mHoverCursor;
 	

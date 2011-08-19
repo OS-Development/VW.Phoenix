@@ -1762,8 +1762,8 @@ void LLFloaterIMPanel::addHistoryLine(const std::string &utf8msg, LLColor4 incol
 			if ((LLUUID::null != source) &&
 				LLAvatarNameCache::get(source, &avatar_name))
 			{
-				static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-				switch (*sPhoenixNameSystem)
+				static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+				switch (sPhoenixNameSystem)
 				{
 					case 0 : show_name = avatar_name.getCompleteName(); break;
 					case 1 : show_name = (avatar_name.mIsDisplayNameDefault ? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;

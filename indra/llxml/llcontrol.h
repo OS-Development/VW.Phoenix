@@ -33,12 +33,14 @@
 #ifndef LL_LLCONTROL_H
 #define LL_LLCONTROL_H
 
+#include "llboost.h"
 #include "llevent.h"
 #include "llnametable.h"
 #include "llmap.h"
 #include "llstring.h"
 #include "llrect.h"
 #include "llrefcount.h"
+#include "llinstancetracker.h"
 
 #include "llcontrolgroupreader.h"
 
@@ -54,7 +56,16 @@
 #endif
 
 #include <boost/bind.hpp>
-#include <boost/signal.hpp>
+
+#if LL_WINDOWS
+	#pragma warning (push)
+	#pragma warning (disable : 4263) // boost::signals2::expired_slot::what() has const mismatch
+	#pragma warning (disable : 4264) 
+#endif
+#include <boost/signals2.hpp>
+#if LL_WINDOWS
+	#pragma warning (pop)
+#endif
 
 #if LL_WINDOWS
 # if (_MSC_VER >= 1300 && _MSC_VER < 1400)
@@ -90,7 +101,10 @@ typedef enum e_control_type
 class LLControlVariable : public LLRefCount
 {
 	friend class LLControlGroup;
-	typedef boost::signal<void(const LLSD&)> signal_t;
+
+public:
+	typedef boost::signals2::signal<bool(LLControlVariable* control, const LLSD&), boost_boolean_combiner> validate_signal_t;
+	typedef boost::signals2::signal<void(LLControlVariable* control, const LLSD&)> commit_signal_t;
 
 private:
 	std::string		mName;
@@ -100,7 +114,8 @@ private:
 	bool			mHideFromSettingsEditor;
 	std::vector<LLSD> mValues;
 	
-	signal_t mSignal;
+	commit_signal_t mCommitSignal;
+	validate_signal_t mValidateSignal;
 	
 public:
 	LLControlVariable(const std::string& name, eControlType type,
@@ -117,13 +132,16 @@ public:
 
 	void resetToDefault(bool fire_signal = false);
 
-	signal_t* getSignal() { return &mSignal; }
+	commit_signal_t* getSignal() { return &mCommitSignal; } // shorthand for commit signal
+	commit_signal_t* getCommitSignal() { return &mCommitSignal; }
+	validate_signal_t* getValidateSignal() { return &mValidateSignal; }
+
 
 	bool isDefault() { return (mValues.size() == 1); }
 	bool isSaveValueDefault();
 	bool isPersisted() { return mPersist; }
 	bool isHiddenFromSettingsEditor() { return mHideFromSettingsEditor; }
-	LLSD get()			const;
+	LLSD get()			const	{ return getValue(); }
 	LLSD getValue()		const	{ return mValues.back(); }
 	LLSD getDefault()	const	{ return mValues.front(); }
 	LLSD getSaveValue() const;
@@ -137,7 +155,7 @@ public:
 
 	void firePropertyChanged()
 	{
-		mSignal(mValues.back());
+		mCommitSignal(this, mValues.back());
 	}
 private:
 	LLSD getComparableValue(const LLSD& value);
@@ -145,8 +163,32 @@ private:
 
 };
 
+typedef LLPointer<LLControlVariable> LLControlVariablePtr;
+
+//! Helper functions for converting between static types and LLControl values
+template <class T> 
+eControlType get_control_type()
+{
+	llwarns << "Usupported control type: " << typeid(T).name() << "." << llendl;
+	return TYPE_COUNT;
+}
+
+template <class T> 
+LLSD convert_to_llsd(const T& in)
+{
+	// default implementation
+	return LLSD(in);
+}
+
+template <class T>
+T convert_from_llsd(const LLSD& sd, eControlType type, const std::string& control_name)
+{
+	// needs specialization
+	return T(sd);
+}
+
 //const U32 STRING_CACHE_SIZE = 10000;
-class LLControlGroup : public LLControlGroupReader
+class LLControlGroup : public LLInstanceTracker<LLControlGroup, std::string>
 {
 	LOG_CLASS(LLControlGroup);
 protected:
@@ -156,13 +198,16 @@ protected:
 	std::string mTypeString[TYPE_COUNT];
 
 	eControlType typeStringToEnum(const std::string& typestr);
-	std::string typeEnumToString(eControlType typeenum);	
+	std::string typeEnumToString(eControlType typeenum);
+
 public:
-	LLControlGroup();
+	LLControlGroup(const std::string& name);
 	~LLControlGroup();
 	void cleanup();
 	
-	LLPointer<LLControlVariable> getControl(const std::string& name);
+	typedef LLInstanceTracker<LLControlGroup, std::string>::instance_iter instance_iter;
+
+	LLControlVariablePtr getControl(const std::string& name);
 
 	struct ApplyFunctor
 	{
@@ -180,32 +225,48 @@ public:
 	BOOL declareVec3(const std::string& name, const LLVector3 &initial_val,const std::string& comment,  BOOL persist = TRUE);
 	BOOL declareVec3d(const std::string& name, const LLVector3d &initial_val, const std::string& comment, BOOL persist = TRUE);
 	BOOL declareRect(const std::string& name, const LLRect &initial_val, const std::string& comment, BOOL persist = TRUE);
-	BOOL declareColor4U(const std::string& name, const LLColor4U &initial_val, const std::string& comment, BOOL persist = TRUE);
 	BOOL declareColor4(const std::string& name, const LLColor4 &initial_val, const std::string& comment, BOOL persist = TRUE);
+	BOOL declareColor4U(const std::string& name, const LLColor4U &initial_val, const std::string& comment, BOOL persist = TRUE);
 	BOOL declareColor3(const std::string& name, const LLColor3 &initial_val, const std::string& comment, BOOL persist = TRUE);
 	BOOL declareLLSD(const std::string& name, const LLSD &initial_val, const std::string& comment, BOOL persist = TRUE);
 	
-	std::string 	findString(const std::string& name);
-
 	std::string 	getString(const std::string& name);
-	LLWString	getWString(const std::string& name);
 	std::string	getText(const std::string& name);
-	LLVector3	getVector3(const std::string& name);
-	LLVector3d	getVector3d(const std::string& name);
-	LLRect		getRect(const std::string& name);
 	BOOL		getBOOL(const std::string& name);
 	S32			getS32(const std::string& name);
 	F32			getF32(const std::string& name);
 	U32			getU32(const std::string& name);
+	
+	LLWString	getWString(const std::string& name);
+	LLVector3	getVector3(const std::string& name);
+	LLVector3d	getVector3d(const std::string& name);
+	LLRect		getRect(const std::string& name);
 	LLSD        getLLSD(const std::string& name);
 
 
-	// Note: If an LLColor4U control exists, it will cast it to the correct
-	// LLColor4 for you.
 	LLColor4	getColor(const std::string& name);
-	LLColor4U	getColor4U(const std::string& name);
 	LLColor4	getColor4(const std::string& name);
+	LLColor4U	getColor4U(const std::string& name);
 	LLColor3	getColor3(const std::string& name);
+
+	// generic getter
+	template<typename T> T get(const std::string& name)
+	{
+		LLControlVariable* control = getControl(name);
+		LLSD value;
+		eControlType type = TYPE_COUNT;
+
+		if (control)		
+		{
+			value = control->get();
+			type = control->type();
+		}
+		else
+		{
+			llwarns << "Control " << name << " not found." << llendl;
+		}
+		return convert_from_llsd<T>(value, type, name);
+	}
 
 	void	setBOOL(const std::string& name, BOOL val);
 	void	setS32(const std::string& name, S32 val);
@@ -215,12 +276,26 @@ public:
 	void	setVector3(const std::string& name, const LLVector3 &val);
 	void	setVector3d(const std::string& name, const LLVector3d &val);
 	void	setRect(const std::string& name, const LLRect &val);
-	void	setColor4U(const std::string& name, const LLColor4U &val);
 	void	setColor4(const std::string& name, const LLColor4 &val);
-	void	setColor3(const std::string& name, const LLColor3 &val);
 	void    setLLSD(const std::string& name, const LLSD& val);
-	void	setValue(const std::string& name, const LLSD& val);
-	
+
+	// type agnostic setter that takes LLSD
+	void	setUntypedValue(const std::string& name, const LLSD& val);
+
+	// generic setter
+	template<typename T> void set(const std::string& name, const T& val)
+	{
+		LLControlVariable* control = getControl(name);
+ 	
+		if (control && control->isType(get_control_type<T>()))
+		{
+			control->set(convert_to_llsd(val));
+		}
+		else
+		{
+			llwarns << "Invalid control " << name << llendl;
+		}
+	}
 	
 	BOOL    controlExists(const std::string& name);
 
@@ -229,9 +304,8 @@ public:
 	// as the given type.
 	U32	loadFromFileLegacy(const std::string& filename, BOOL require_declaration = TRUE, eControlType declare_as = TYPE_STRING);
  	U32 saveToFile(const std::string& filename, BOOL nondefault_only);
- 	U32	loadFromFile(const std::string& filename, bool default_values = false);
-	void	resetToDefaults();
-
+ 	U32	loadFromFile(const std::string& filename, bool default_values = false, bool save_values = true);
+	void resetToDefaults();
 	
 	// Ignorable Warnings
 	
@@ -239,89 +313,166 @@ public:
 	void addWarning(const std::string& name);
 	BOOL getWarning(const std::string& name);
 	void setWarning(const std::string& name, BOOL val);
-	
+
 	// Resets all ignorables
 	void resetWarnings();
 };
 
-///////////////////////
-namespace jc_you_suck
-{
-class jc_rebind
-{
-	template <typename REC>		static void rebind_callback(const LLSD &data, REC *reciever){ *reciever = data; }
+//! Publish/Subscribe object to interact with LLControlGroups.
 
-	typedef boost::signal<void(const LLSD&)> signal_t;
-
+//! Use an LLCachedControl instance to connect to a LLControlVariable
+//! without have to manually create and bind a listener to a local
+//! object.
+template <class T>
+class LLControlCache : public LLRefCount, public LLInstanceTracker<LLControlCache<T>, std::string>
+{
 public:
-
-//#define binder_debug
-
-	template <typename RBTYPE> static RBTYPE* rebind_llcontrol(std::string name, LLControlGroup* controlgroup, bool init)
+	// This constructor will declare a control if it doesn't exist in the contol group
+	LLControlCache(LLControlGroup& group,
+					const std::string& name, 
+					const T& default_value, 
+					const std::string& comment)
+	:	LLInstanceTracker<LLControlCache<T>, std::string >(name)
 	{
-		static std::map<LLControlGroup*, std::map<std::string, void*> > references;
-
-#ifdef binder_debug
-		llinfos << "rebind_llcontrol" << llendl;
-#endif
-
-		RBTYPE* type = NULL;
-		if(controlgroup)
+		if(!group.controlExists(name))
 		{
-			if(references.find(controlgroup) == references.end())
+			if(!declareTypedControl(group, name, default_value, comment))
 			{
-#ifdef binder_debug
-				llinfos << "was no map for a group, adding" << llendl;
-#endif
-				references[controlgroup] = std::map<std::string, void*>();
-			}
-
-			if(references[controlgroup].find(name) != references[controlgroup].end())
-			{
-#ifdef binder_debug
-				llinfos << "pulling type from map for " << name << llendl;
-#endif
-				type = (RBTYPE*)(references[controlgroup][name]);
-				if(type == NULL)llerrs << "bad type stored" << llendl;
-			}else
-			{
-#ifdef binder_debug
-				llinfos << "creating type in map for " << name << llendl;
-#endif
-				type = new RBTYPE();
-				references[controlgroup][name] = (void*)type;
-				LLControlVariable* control = controlgroup->getControl(name);
-				if(control)
-				{
-#ifdef binder_debug
-					llinfos << "control there " << name << llendl;
-#endif
-					signal_t* signal = control->getSignal();
-					if(signal)
-					{
-#ifdef binder_debug
-						llinfos << "signal there" << name << llendl;
-#endif
-						signal->connect(boost::bind(&jc_rebind::rebind_callback<RBTYPE>, _1, type));
-						if(init)jc_rebind::rebind_callback<RBTYPE>(control->getValue(),type);
-					}else llerrs << "no signal!" << llendl;
-				}else llerrs << "no control for " << name << "!" << llendl;
+				llerrs << "The control could not be created!!!" << llendl;
 			}
 		}
-		return type;
+
+		bindToControl(group, name);
 	}
+
+	LLControlCache(LLControlGroup& group,
+					const std::string& name)
+	:	LLInstanceTracker<LLControlCache<T>, std::string >(name)
+	{
+		if(!group.controlExists(name))
+		{
+			llerrs << "Control named " << name << " not found." << llendl;
+		}
+
+		bindToControl(group, name);
+	}
+
+	~LLControlCache()
+	{
+	}
+
+	const T& getValue() const { return mCachedValue; }
+	
+private:
+	void bindToControl(LLControlGroup& group, const std::string& name)
+	{
+		LLControlVariablePtr controlp = group.getControl(name);
+		mType = controlp->type();
+		mCachedValue = convert_from_llsd<T>(controlp->get(), mType, name);
+
+		// Add a listener to the controls signal...
+		mConnection = controlp->getSignal()->connect(
+			boost::bind(&LLControlCache<T>::handleValueChange, this, _2)
+			);
+		mType = controlp->type();
+	}
+	bool declareTypedControl(LLControlGroup& group,
+							const std::string& name, 
+							 const T& default_value,
+							 const std::string& comment)
+	{
+		LLSD init_value;
+		eControlType type = get_control_type<T>();
+		init_value = convert_to_llsd(default_value);
+		if(type < TYPE_COUNT)
+		{
+			group.declareControl(name, type, init_value, comment, FALSE);
+			return true;
+		}
+		return false;
+	}
+
+	bool handleValueChange(const LLSD& newvalue)
+	{
+		mCachedValue = convert_from_llsd<T>(newvalue, mType, "");
+		return true;
+	}
+
+private:
+    T							mCachedValue;
+	eControlType				mType;
+    boost::signals2::scoped_connection	mConnection;
 };
 
-template <>					void jc_rebind::rebind_callback<S32>(const LLSD &data, S32 *reciever);
-template <>					void jc_rebind::rebind_callback<F32>(const LLSD &data, F32 *reciever);
-template <>					void jc_rebind::rebind_callback<U32>(const LLSD &data, U32 *reciever);
-template <>					void jc_rebind::rebind_callback<std::string>(const LLSD &data, std::string *reciever);
-template <>					void jc_rebind::rebind_callback<LLColor4>(const LLSD &data, LLColor4 *reciever);
+template <typename T>
+class LLCachedControl
+{
+public:
+	LLCachedControl(LLControlGroup& group,
+					const std::string& name, 
+					const T& default_value, 
+					const std::string& comment = "Declared In Code")
+	{
+		mCachedControlPtr = LLControlCache<T>::getInstance(name);
+		if (mCachedControlPtr.isNull())
+		{
+			mCachedControlPtr = new LLControlCache<T>(group, name, default_value, comment);
+		}
+	}
 
-}
-using namespace jc_you_suck;
-#define rebind_llcontrol jc_rebind::rebind_llcontrol
+	LLCachedControl(LLControlGroup& group,
+					const std::string& name)
+	{
+		mCachedControlPtr = LLControlCache<T>::getInstance(name);
+		if (mCachedControlPtr.isNull())
+		{
+			mCachedControlPtr = new LLControlCache<T>(group, name);
+		}
+	}
 
-///////////////////////
+	operator const T&() const { return mCachedControlPtr->getValue(); }
+	operator boost::function<const T&()> () const { return boost::function<const T&()>(*this); }
+	const T& operator()() { return mCachedControlPtr->getValue(); }
+
+private:
+	LLPointer<LLControlCache<T> > mCachedControlPtr;
+};
+
+template <> eControlType get_control_type<U32>();
+template <> eControlType get_control_type<S32>();
+template <> eControlType get_control_type<F32>();
+template <> eControlType get_control_type<bool>(); 
+// Yay BOOL, its really an S32.
+//template <> eControlType get_control_type<BOOL> () 
+template <> eControlType get_control_type<std::string>();
+template <> eControlType get_control_type<LLVector3>();
+template <> eControlType get_control_type<LLVector3d>(); 
+template <> eControlType get_control_type<LLRect>();
+template <> eControlType get_control_type<LLColor4>();
+template <> eControlType get_control_type<LLColor4U>();
+template <> eControlType get_control_type<LLColor3>();
+template <> eControlType get_control_type<LLSD>();
+
+template <> LLSD convert_to_llsd<U32>(const U32& in);
+template <> LLSD convert_to_llsd<LLVector3>(const LLVector3& in);
+template <> LLSD convert_to_llsd<LLVector3d>(const LLVector3d& in); 
+template <> LLSD convert_to_llsd<LLRect>(const LLRect& in);
+template <> LLSD convert_to_llsd<LLColor4>(const LLColor4& in);
+template <> LLSD convert_to_llsd<LLColor4U>(const LLColor4U& in);
+template <> LLSD convert_to_llsd<LLColor3>(const LLColor3& in);
+
+template<> std::string convert_from_llsd<std::string>(const LLSD& sd, eControlType type, const std::string& control_name);
+template<> LLWString convert_from_llsd<LLWString>(const LLSD& sd, eControlType type, const std::string& control_name);
+template<> LLVector3 convert_from_llsd<LLVector3>(const LLSD& sd, eControlType type, const std::string& control_name);
+template<> LLVector3d convert_from_llsd<LLVector3d>(const LLSD& sd, eControlType type, const std::string& control_name);
+template<> LLRect convert_from_llsd<LLRect>(const LLSD& sd, eControlType type, const std::string& control_name);
+template<> bool convert_from_llsd<bool>(const LLSD& sd, eControlType type, const std::string& control_name);
+template<> S32 convert_from_llsd<S32>(const LLSD& sd, eControlType type, const std::string& control_name);
+template<> F32 convert_from_llsd<F32>(const LLSD& sd, eControlType type, const std::string& control_name);
+template<> U32 convert_from_llsd<U32>(const LLSD& sd, eControlType type, const std::string& control_name);
+template<> LLColor3 convert_from_llsd<LLColor3>(const LLSD& sd, eControlType type, const std::string& control_name);
+template<> LLColor4 convert_from_llsd<LLColor4>(const LLSD& sd, eControlType type, const std::string& control_name);
+template<> LLColor4U convert_from_llsd<LLColor4U>(const LLSD& sd, eControlType type, const std::string& control_name);
+template<> LLSD convert_from_llsd<LLSD>(const LLSD& sd, eControlType type, const std::string& control_name);
 
 #endif

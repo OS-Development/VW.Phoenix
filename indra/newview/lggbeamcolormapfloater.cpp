@@ -197,9 +197,9 @@ void lggBeamColorMapFloater::draw()
 		gGL.end();
 	}
 
-	static F32* opacity = rebind_llcontrol<F32>("PickerContextOpacity", &gSavedSettings, true);
+	static LLCachedControl<F32> opacity(gSavedSettings, "PickerContextOpacity");
 
-	mContextConeOpacity = lerp(mContextConeOpacity, *opacity, LLCriticalDamp::getInterpolant(CONTEXT_FADE_TIME));
+	mContextConeOpacity = lerp(mContextConeOpacity, opacity, LLCriticalDamp::getInterpolant(CONTEXT_FADE_TIME));
 
 
 	//Draw Base Stuff

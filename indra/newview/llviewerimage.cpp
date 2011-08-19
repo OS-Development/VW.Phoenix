@@ -635,7 +635,7 @@ void LLViewerImage::processTextureStats()
 
 	updateVirtualSize() ;
 	
-	static LLCachedControl<BOOL> textures_fullres("PhoenixTextureLoadFullRes", 0);
+	static LLCachedControl<bool> textures_fullres(gSavedSettings, "PhoenixTextureLoadFullRes");
 	if (textures_fullres)
 	{
 		mDesiredDiscardLevel = 0;

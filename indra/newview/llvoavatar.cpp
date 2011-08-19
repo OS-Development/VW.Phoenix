@@ -3282,12 +3282,12 @@ void LLVOAvatar::resolveClient(LLColor4& avatar_name_color, std::string& client,
 	if(LLVOAvatar::sClientResolutionList.has("isComplete") && LLVOAvatar::sClientResolutionList.has(idx.asString()) && avatar->isReallyFullyLoaded())
 	{
 		LLSD cllsd = LLVOAvatar::sClientResolutionList[idx.asString()];
-		static BOOL* sPhoenixClientTagsShowAny = rebind_llcontrol<BOOL>("PhoenixClientTagsShowAny", &gSavedSettings, true);
-		if (*sPhoenixClientTagsShowAny || (cllsd.has("tpvd") && cllsd["tpvd"].asBoolean()))
+		static LLCachedControl<bool> sPhoenixClientTagsShowAny(gSavedSettings, "PhoenixClientTagsShowAny");
+		if (sPhoenixClientTagsShowAny || (cllsd.has("tpvd") && cllsd["tpvd"].asBoolean()))
 		{
 			LLColor4 colour;
-			static BOOL* sPhoenixDontUseMultipleColorTags = rebind_llcontrol<BOOL>("PhoenixDontUseMultipleColorTags", &gSavedSettings, true);
-			if ((*sPhoenixDontUseMultipleColorTags || !cllsd.has("color")) && cllsd.has("alt"))
+			static LLCachedControl<bool> sPhoenixDontUseMultipleColorTags(gSavedSettings, "PhoenixDontUseMultipleColorTags");
+			if ((sPhoenixDontUseMultipleColorTags || !cllsd.has("color")) && cllsd.has("alt"))
 			{
 				cllsd = LLVOAvatar::sClientResolutionList[cllsd["alt"].asString()];
 			}
@@ -3407,13 +3407,11 @@ void LLVOAvatar::idleUpdateNameTag(const LLVector3& root_pos_last)
 	}
 	
 	const F32 time_visible = mTimeVisible.getElapsedTimeF32();	
-	static F32* sRenderNameShowTime = rebind_llcontrol<F32>("RenderNameShowTime", &gSavedSettings, true);
-	static F32* sRenderNameFadeDuration = rebind_llcontrol<F32>("RenderNameFadeDuration", &gSavedSettings, true);
 
+	static LLCachedControl<F32> NAME_SHOW_TIME(gSavedSettings, "RenderNameShowTime");	// seconds
+	static LLCachedControl<F32> FADE_DURATION(gSavedSettings, "RenderNameFadeDuration"); // seconds
 
-	const F32 NAME_SHOW_TIME = *sRenderNameShowTime;	// seconds
-	const F32 FADE_DURATION = *sRenderNameFadeDuration; // seconds
-// [RLVa:KB] - Checked: 2010-04-04 (RLVa-1.2.2a) | Added: RLVa-0.2.0b
+	// [RLVa:KB] - Checked: 2010-04-04 (RLVa-1.2.2a) | Added: RLVa-0.2.0b
 	bool fRlvShowNames = gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES);
 // [/RLVa:KB]
 	BOOL visible_avatar = isVisible() || mNeedsAnimUpdate;
@@ -3429,9 +3427,10 @@ void LLVOAvatar::idleUpdateNameTag(const LLVector3& root_pos_last)
 	// draw if we're specifically hiding our own name.
 	if (mIsSelf)
 	{
+		static LLCachedControl<bool> render_name_hide_self(gSavedSettings, "RenderNameHideSelf");
 		render_name = render_name
 						&& !gAgent.cameraMouselook()
-						&& (visible_chat || !gSavedSettings.getBOOL("RenderNameHideSelf"));
+						&& (visible_chat || !render_name_hide_self);
 	}
 
 	if ( !render_name )
@@ -3556,19 +3555,18 @@ void LLVOAvatar::idleUpdateNameTagText(BOOL new_name)
 // [/RLVa:KB]
 	bool is_cloud = getIsCloud();
 
-	static LLColor4* sAvatarNameColor = rebind_llcontrol<LLColor4>("AvatarNameColor", &gColors, true);
-	static BOOL* sPhoenixChangeColorOnClient = rebind_llcontrol<BOOL>("PhoenixChangeColorOnClient", &gSavedSettings, true);
-	static BOOL* sPhoenixClientTagDisplay = rebind_llcontrol<BOOL>("PhoenixClientTagDisplay", &gSavedSettings, true);
-	static BOOL* sPhoenixShowOwnClientColor = rebind_llcontrol<BOOL>("PhoenixShowOwnClientColor", &gSavedSettings, true);
-
+	static LLCachedControl<LLColor4U> sAvatarNameColor(gColors, "AvatarNameColor");
+	static LLCachedControl<bool> sPhoenixChangeColorOnClient(gSavedSettings, "PhoenixChangeColorOnClient");
+	static LLCachedControl<bool> sPhoenixClientTagDisplay(gSavedSettings, "PhoenixClientTagDisplay");
+	static LLCachedControl<bool> sPhoenixShowOwnClientColor(gSavedSettings, "PhoenixShowOwnClientColor");
 	
 	// Get Clientname + Color
 	std::string client;
-	LLColor4 name_tag_color = *sAvatarNameColor;
-	LLColor4 avatar_name_tag_color = *sAvatarNameColor;
+	LLColor4 name_tag_color = (LLColor4)sAvatarNameColor;
+	LLColor4 avatar_name_tag_color = (LLColor4)sAvatarNameColor;
 
 	if(!isSelf()) resolveClient(avatar_name_tag_color,client, this);
-	else if(*sPhoenixShowOwnClientColor && LLVOAvatar::sClientResolutionList.has("isComplete") && LLVOAvatar::sClientResolutionList.has(LLPrimitive::tagstring))
+	else if(sPhoenixShowOwnClientColor && LLVOAvatar::sClientResolutionList.has("isComplete") && LLVOAvatar::sClientResolutionList.has(LLPrimitive::tagstring))
 	{
 		LLSD cllsd = LLVOAvatar::sClientResolutionList[LLPrimitive::tagstring];
 		LLColor4 colour;
@@ -3576,22 +3574,23 @@ void LLVOAvatar::idleUpdateNameTagText(BOOL new_name)
 		avatar_name_tag_color = colour;
 	}
 
-	if(*sPhoenixChangeColorOnClient && (!isSelf() || *sPhoenixShowOwnClientColor))
+	if(sPhoenixChangeColorOnClient && (!isSelf() || sPhoenixShowOwnClientColor))
 	{
 		name_tag_color = avatar_name_tag_color;
 	}
-	if(!*sPhoenixClientTagDisplay)
+	if(!sPhoenixClientTagDisplay)
 	{
 		client = "";
 	}
 
 	
 	//Phoenix:KC - color friend's name tags
-	static BOOL* sPhoenixColorFriendsNameTags = rebind_llcontrol<BOOL>("PhoenixColorFriendsNameTags", &gSavedSettings, true);
-	static BOOL* sPhoenixFriendsGroupsColorizeNameTag = rebind_llcontrol<BOOL>("PhoenixFriendsGroupsColorizeNameTag", &gSavedSettings, true);
-	static LLCachedControl<LLColor4> PhoenixFriendNameColor("PhoenixFriendNameColor", LLColor4(0.447f, 0.784f, 0.663f, 1.f));
-	if(is_friend && *sPhoenixColorFriendsNameTags) name_tag_color = PhoenixFriendNameColor;
-	if(*sPhoenixFriendsGroupsColorizeNameTag)
+	static LLCachedControl<bool> sPhoenixColorFriendsNameTags(gSavedSettings, "PhoenixColorFriendsNameTags");
+	static LLCachedControl<bool> sPhoenixFriendsGroupsColorizeNameTag(gSavedSettings, "PhoenixFriendsGroupsColorizeNameTag");
+	static LLCachedControl<LLColor4> PhoenixFriendNameColor(gSavedSettings, "PhoenixFriendNameColor");
+	
+	if (is_friend && sPhoenixColorFriendsNameTags) name_tag_color = PhoenixFriendNameColor;
+	if (sPhoenixFriendsGroupsColorizeNameTag)
 	{
 		LLColor4 fgColor = LGGFriendsGroups::getInstance()->getFriendColor(getID());
 		if(fgColor!=LGGFriendsGroups::getInstance()->getDefaultColor())
@@ -3615,12 +3614,12 @@ void LLVOAvatar::idleUpdateNameTagText(BOOL new_name)
 
 		clearNameTag();
 
-		static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-		static bool* sPhoenixNameTagOldStyle = rebind_llcontrol<bool>("PhoenixNameTagOldStyle", &gSavedSettings, true);
-		static BOOL* sSmallAvatarNames = rebind_llcontrol<BOOL>("SmallAvatarNames", &gSavedSettings, true);
-		
+		static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+		static LLCachedControl<bool> sPhoenixNameTagOldStyle(gSavedSettings, "PhoenixNameTagOldStyle");
+		static LLCachedControl<bool> sSmallAvatarNames(gSavedSettings, "SmallAvatarNames");
+
 		LLFontGL::StyleFlags style=LLFontGL::NORMAL;
-		if(!*sSmallAvatarNames){
+		if(!sSmallAvatarNames){
 			style=LLFontGL::BOLD;
 		}
 
@@ -3660,7 +3659,7 @@ void LLVOAvatar::idleUpdateNameTagText(BOOL new_name)
 			// trim last ", "
 			line.resize( line.length() - 2 );
 
-			if(!*sPhoenixNameTagOldStyle)
+			if(!sPhoenixNameTagOldStyle)
 			addNameTagLine(line, name_tag_color, style,
 				LLFontGL::getFontSansSerifSmall());
 		}
@@ -3670,17 +3669,21 @@ void LLVOAvatar::idleUpdateNameTagText(BOOL new_name)
 		if (sRenderGroupTitles && !fRlvShowNames
 // [/RLVa:KB]
 			&& title && title->getString() && title->getString()[0] != '\0')
-						{
+		{
 			std::string title_str = title->getString();
 			LLStringFn::replace_ascii_controlchars(title_str,LL_UNKNOWN_CHAR);
-			if(!*sPhoenixNameTagOldStyle)	addNameTagLine(title_str, name_tag_color, style, LLFontGL::getFontSansSerifSmall());
-			else	addNameTagLine(title_str, name_tag_color, style, LLFontGL::getFontSansSerif());
-						}
+			if (!sPhoenixNameTagOldStyle)
+			{
+				addNameTagLine(title_str, name_tag_color, style, LLFontGL::getFontSansSerifSmall());
+			}
+			else
+			{
+				addNameTagLine(title_str, name_tag_color, style, LLFontGL::getFontSansSerif());
+			}
+		}
 
-		bool show_display_names=false;
-		bool show_usernames=false;
-		if(*sPhoenixNameSystem==1) show_usernames=true;
-		if(*sPhoenixNameSystem==1 || *sPhoenixNameSystem==2) show_display_names=true;
+		bool show_usernames = (sPhoenixNameSystem == 1);
+		bool show_display_names = (sPhoenixNameSystem > 0);
 
 		if (LLAvatarNameCache::useDisplayNames())
 		{
@@ -3705,7 +3708,7 @@ void LLVOAvatar::idleUpdateNameTagText(BOOL new_name)
 												name_str += " ";
 												name_str += lastname->getString();
 					}
-					if(*sPhoenixNameTagOldStyle && line!="") name_str += " ("+line+")";
+					if(sPhoenixNameTagOldStyle && line!="") name_str += " ("+line+")";
 					addNameTagLine(name_str, name_tag_color, style,
 						LLFontGL::getFontSansSerif());
 				}
@@ -3713,23 +3716,23 @@ void LLVOAvatar::idleUpdateNameTagText(BOOL new_name)
 				if (show_usernames && !av_name.mIsDisplayNameDefault)
 				{
 					// *HACK: Desaturate the color
-					static BOOL* sPhoenixUseCustomUsernameColor = rebind_llcontrol<BOOL>("PhoenixUseCustomUsernameColor", &gSavedSettings, true);
-					
+					static LLCachedControl<bool> sPhoenixUseCustomUsernameColor(gSavedSettings, "PhoenixUseCustomUsernameColor");
+
 					LLColor4 username_color = name_tag_color * 0.83f;
-					if(*sPhoenixUseCustomUsernameColor){
-						static LLCachedControl<LLColor4> PhoenixCustomUsernameColor("PhoenixCustomUsernameColor", LLColor4(0.447f, 0.784f, 0.663f, 1.f));
+					if(sPhoenixUseCustomUsernameColor)
+					{
+						static LLCachedControl<LLColor4> PhoenixCustomUsernameColor(gSavedSettings, "PhoenixCustomUsernameColor");
 						username_color = PhoenixCustomUsernameColor;
 					}
-					addNameTagLine(av_name.mUsername, username_color, style,
-						LLFontGL::getFontSansSerifSmall());
+					addNameTagLine(av_name.mUsername, username_color, style, LLFontGL::getFontSansSerifSmall());
 				}
 // [RLVa:KB] - Checked: 2010-10-31 (RLVa-1.2.2a) | Modified: RLVa-1.2.2a
 			}
 			else
 			{
 				std::string name_str;
-				if(*sPhoenixNameTagOldStyle && line!="") name_str += " ("+line+")";
-				addNameTagLine(RlvStrings::getAnonym(av_name.getLegacyName())+name_str, name_tag_color, style, LLFontGL::getFontSansSerif());
+				if (sPhoenixNameTagOldStyle && line != "") name_str += " (" + line + ")";
+				addNameTagLine(RlvStrings::getAnonym(av_name.getLegacyName()) + name_str, name_tag_color, style, LLFontGL::getFontSansSerif());
 			}
 // [/RLVa:KB]
 		}
@@ -3745,7 +3748,7 @@ void LLVOAvatar::idleUpdateNameTagText(BOOL new_name)
 				full_name = RlvStrings::getAnonym(full_name);
 			}
 // [/RLVa:KB]
-			if(*sPhoenixNameTagOldStyle && line!="") full_name += " ("+line+")";
+			if (sPhoenixNameTagOldStyle && line != "") full_name += " (" + line + ")";
 			addNameTagLine(full_name, name_tag_color, style, font);
 		}
 
@@ -3775,7 +3778,7 @@ void LLVOAvatar::idleUpdateNameTagText(BOOL new_name)
 				std::deque<LLChat>::iterator chat_iter = mChats.begin();
 				mNameText->clearString();
 
-				LLColor4 new_chat = (*sAvatarNameColor);
+				LLColor4 new_chat = (LLColor4)sAvatarNameColor;
 				LLColor4 normal_chat = lerp(new_chat, LLColor4(0.8f, 0.8f, 0.8f, 1.f), 0.7f);
 				LLColor4 old_chat = lerp(normal_chat, LLColor4(0.6f, 0.6f, 0.6f, 1.f), 0.7f);
 				if (mTyping && mChats.size() >= MAX_BUBBLE_CHAT_UTTERANCES) 
@@ -4925,7 +4928,8 @@ U32 LLVOAvatar::renderSkinned(EAvatarRenderPass pass)
 
 	if (pass == AVATAR_RENDER_PASS_SINGLE)
 	{
-		static LLCachedControl<BOOL> PhoenixShowTransparentHidesAlpha("PhoenixShowTransparentHidesAlpha", 0);
+		//static LLCachedControl<BOOL> PhoenixShowTransparentHidesAlpha("PhoenixShowTransparentHidesAlpha", 0);
+		static LLCachedControl<bool> PhoenixShowTransparentHidesAlpha(gSavedSettings, "PhoenixShowTransparentHidesAlpha");
 		bool should_alpha_mask;
 		if(PhoenixShowTransparentHidesAlpha)
 		{
@@ -7883,14 +7887,14 @@ BOOL LLVOAvatar::isReallyFullyLoaded()
 
 BOOL LLVOAvatar::isFullyLoaded()
 {
-	static BOOL* sRenderUnloadedAvatar = rebind_llcontrol<BOOL>("RenderUnloadedAvatar", &gSavedSettings, true);
-//	if (*sRenderUnloadedAvatar)
+	static LLCachedControl<bool> sRenderUnloadedAvatar(gSavedSettings, "RenderUnloadedAvatar");
+//	if (sRenderUnloadedAvatar)
 //		return TRUE;
 //	else
 //		return mFullyLoaded;
 // [SL:KB] - Patch: Appearance-SyncAttach | Checked: 2010-09-22 (Catznip-2.2.0a) | Added: Catznip-2.2.0a
 	// Changes to LLAppearanceMgr::updateAppearanceFromCOF() expect this function to actually return mFullyLoaded for gAgentAvatarp
-	if ( (!isSelf()) && (*sRenderUnloadedAvatar) )
+	if ( (!isSelf()) && sRenderUnloadedAvatar )
 		return TRUE;
 	else
 		return mFullyLoaded;

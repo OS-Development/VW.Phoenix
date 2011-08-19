@@ -222,8 +222,8 @@ void LLPanelAvatarSecondLife::updatePartnerName()
 		if (LLAvatarNameCache::get(mPartnerID, &avatar_name))
 		{
 			std::string name;
-			static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-			switch (*sPhoenixNameSystem)
+			static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+			switch (sPhoenixNameSystem)
 			{
 				case 0 : name = avatar_name.getLegacyName(); break;
 				case 1 : name = (avatar_name.mIsDisplayNameDefault ? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
@@ -1727,9 +1727,10 @@ void LLPanelAvatar::resetGroupList()
 				row["columns"][0]["font"] = "SANSSERIF_SMALL";
 				if (!group_data.mListInProfile)
 				{
-					static LLColor4 *sScrollUnselectedColor = rebind_llcontrol<LLColor4>("ScrollUnselectedColor", LLUI::sColorsGroup, true);
+					static LLCachedControl<LLColor4U> sScrollUnselectedColor((*LLUI::sColorsGroup), "ScrollUnselectedColor");
 
-					row["columns"][0]["color"] = (*sScrollUnselectedColor).getValue();
+					LLColor4 tmpcol = (LLColor4)sScrollUnselectedColor;
+					row["columns"][0]["color"] = tmpcol.getValue();
 				}
 				row["columns"][0]["width"] = 0;
 				group_list->addElement(row);
@@ -2323,9 +2324,10 @@ void LLPanelAvatar::processAvatarGroupsReply(LLMessageSystem *msg, void**)
 				// Set unselected color if found and group is not visible in profile
 				if (group_data && !group_data->mListInProfile)
 				{
-					static LLColor4 *sScrollUnselectedColor = rebind_llcontrol<LLColor4>("ScrollUnselectedColor", LLUI::sColorsGroup, true);
+					static LLCachedControl<LLColor4U> sScrollUnselectedColor((*LLUI::sColorsGroup), "ScrollUnselectedColor");
 
-					row["columns"][0]["color"] = (*sScrollUnselectedColor).getValue();
+					LLColor4 tmpcol = (LLColor4)sScrollUnselectedColor;
+					row["columns"][0]["color"] = tmpcol.getValue();
 				}
 				if (group_list)
 				{
@@ -2333,7 +2335,7 @@ void LLPanelAvatar::processAvatarGroupsReply(LLMessageSystem *msg, void**)
 				}
 			}
 		}
-		if(group_list) group_list->sortByColumnIndex(0, TRUE);
+		if (group_list) group_list->sortByColumnIndex(0, TRUE);
 	}
 }
 

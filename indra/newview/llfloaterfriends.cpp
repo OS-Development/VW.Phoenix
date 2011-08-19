@@ -250,8 +250,8 @@ BOOL LLPanelFriends::addFriend(const LLUUID& agent_id)
 	BOOL have_name;
 	if (LLAvatarNameCache::get(agent_id, &avatar_name))
 	{
-		static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-		switch (*sPhoenixNameSystem)
+		static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+		switch (sPhoenixNameSystem)
 		{
 			case 0 : fullname = avatar_name.getLegacyName(); break;
 			case 1 : fullname = (avatar_name.mIsDisplayNameDefault ? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
@@ -352,8 +352,8 @@ BOOL LLPanelFriends::updateFriendItem(const LLUUID& agent_id, const LLRelationsh
 	BOOL have_name;
 	if (LLAvatarNameCache::get(agent_id, &avatar_name))
 	{
-		static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-		switch (*sPhoenixNameSystem)
+		static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+		switch (sPhoenixNameSystem)
 		{
 			case 0 : fullname = avatar_name.getLegacyName(); break;
 			case 1 : fullname = (avatar_name.mIsDisplayNameDefault ? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
@@ -815,8 +815,8 @@ void LLPanelFriends::onClickRemove(void* user_data)
 			if (LLAvatarNameCache::get(agent_id, &avatar_name))
 			{
 				std::string fullname;
-				static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-				switch (*sPhoenixNameSystem)
+				static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+				switch (sPhoenixNameSystem)
 				{
 					case 0 : fullname = avatar_name.getLegacyName(); break;
 					case 1 : fullname = (avatar_name.mIsDisplayNameDefault ? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
@@ -1074,8 +1074,8 @@ void LLPanelFriends::confirmModifyRights(rights_map_t& ids, EGrantRevoke command
 			if (LLAvatarNameCache::get(agent_id, &avatar_name))
 			{
 				std::string fullname;
-				static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-				switch (*sPhoenixNameSystem)
+				static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+				switch (sPhoenixNameSystem)
 				{
 					case 0 : fullname = avatar_name.getLegacyName(); break;
 					case 1 : fullname = (avatar_name.mIsDisplayNameDefault ? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;

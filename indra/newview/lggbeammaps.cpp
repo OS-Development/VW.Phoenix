@@ -92,22 +92,22 @@ LLSD lggBeamMaps::getPic(std::string filename)
 LLColor4U lggBeamMaps::getCurrentColor(LLColor4U agentColor)
 {
 
-	static std::string* settingName = rebind_llcontrol<std::string >("PhoenixBeamColorFile", &gSavedSettings, true);
+	static LLCachedControl<std::string> ssettingName(gSavedSettings, "PhoenixBeamColorFile");
+	std::string settingName = std::string(ssettingName);
+	if(settingName == "===OFF===") return agentColor;
 
-	if(*settingName == "===OFF===") return agentColor;
-
-	if(*settingName != lastColorFileName)
+	if(settingName != lastColorFileName)
 	{
-		lastColorFileName = *settingName;
+		lastColorFileName = settingName;
 	
 		std::string path_name(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "beamsColors", ""));
 		std::string path_name2(gDirUtilp->getExpandedFilename( LL_PATH_USER_SETTINGS , "beamsColors", ""));
-		std::string filename = path_name + *settingName + ".xml";
+		std::string filename = path_name + settingName + ".xml";
 		if(gDirUtilp->fileExists(filename))
 		{
 		}else
 		{
-			filename = path_name2 + *settingName + ".xml";
+			filename = path_name2 + settingName + ".xml";
 			if(!gDirUtilp->fileExists(filename))
 			{
 				return agentColor;
@@ -155,8 +155,9 @@ void lggBeamMaps::fireCurrentBeams(LLPointer<LLHUDEffectSpiral> mBeam, LLColor4U
 	for(int i = 0; i < (int)dots.size(); i++)
 	{
 		LLColor4U myColor = rgb;
-		static std::string* colorf = rebind_llcontrol<std::string >("PhoenixBeamColorFile", &gSavedSettings, true);
-		if(*colorf == "===OFF===")
+		static LLCachedControl<std::string> scolorf(gSavedSettings, "PhoenixBeamColorFile");
+		std::string colorf(scolorf);
+		if(colorf == "===OFF===")
 			myColor = dots[i].c;
 
 		F32 distanceAdjust = dist_vec(mBeam->getPositionGlobal(),gAgent.getPositionGlobal()) ;
@@ -198,21 +199,22 @@ void lggBeamMaps::forceUpdate()
 }
 F32 lggBeamMaps::setUpAndGetDuration()
 {
-	static std::string* settingName = rebind_llcontrol<std::string>("PhoenixBeamShape", &gSavedSettings, true);
-	if(*settingName != lastFileName)
+	static LLCachedControl<std::string> ssettingName(gSavedSettings, "PhoenixBeamShape");
+	std::string settingName(ssettingName);
+	if(settingName != lastFileName)
 	{
-		lastFileName = *settingName;
-		if( *settingName != "===OFF===" && *settingName != "")
+		lastFileName = settingName;
+		if(settingName != "===OFF===" && settingName != "")
 		{
 
 			std::string path_name(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "beams", ""));
 			std::string path_name2(gDirUtilp->getExpandedFilename( LL_PATH_USER_SETTINGS , "beams", ""));
-			std::string filename = path_name + *settingName + ".xml";
+			std::string filename = path_name + settingName + ".xml";
 			if(gDirUtilp->fileExists(filename))
 			{
 			}else
 			{
-				filename =path_name2 + *settingName +".xml";
+				filename =path_name2 + settingName +".xml";
 			}
 			LLSD mydata = getPic(filename);
 			scale = (F32)mydata["scale"].asReal()/10.0f;
@@ -222,7 +224,7 @@ F32 lggBeamMaps::setUpAndGetDuration()
 			{
 				LLSD beamData = myPicture[i];
 				lggBeamData dot;
-				dot.p = beamData["offset"];
+				dot.p = LLVector3d(beamData["offset"]);
 				dot.p *= (gSavedSettings.getF32("PhoenixBeamShapeScale")*2.0f);
 				LLColor4 color = beamData["color"];
 				

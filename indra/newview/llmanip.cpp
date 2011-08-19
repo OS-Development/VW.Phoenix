@@ -106,11 +106,16 @@ LLManip::LLManip( const std::string& name, LLToolComposite* composite )
 {
 	initPivot();
 
-	gSavedSettings.getControl("PhoenixBuildPrefs_ActualRoot")->getSignal()->connect((boost::function<void (const LLSD &)>) &updateActualRoot);
-	gSavedSettings.getControl("PhoenixBuildPrefs_PivotIsPercent")->getSignal()->connect((boost::function<void (const LLSD &)>) &updatePivotIsPercent);
-	gSavedSettings.getControl("PhoenixBuildPrefs_PivotX")->getSignal()->connect((boost::function<void (const LLSD &)>) &updatePivotX);
-	gSavedSettings.getControl("PhoenixBuildPrefs_PivotY")->getSignal()->connect((boost::function<void (const LLSD &)>) &updatePivotY);
-	gSavedSettings.getControl("PhoenixBuildPrefs_PivotZ")->getSignal()->connect((boost::function<void (const LLSD &)>) &updatePivotZ);
+	//gSavedSettings.getControl("PhoenixBuildPrefs_ActualRoot")->getSignal()->connect((boost::function<void (const LLSD &)>) &updateActualRoot);
+	//gSavedSettings.getControl("PhoenixBuildPrefs_PivotIsPercent")->getSignal()->connect((boost::function<void (const LLSD &)>) &updatePivotIsPercent);
+	//gSavedSettings.getControl("PhoenixBuildPrefs_PivotX")->getSignal()->connect((boost::function<void (const LLSD &)>) &updatePivotX);
+	//gSavedSettings.getControl("PhoenixBuildPrefs_PivotY")->getSignal()->connect((boost::function<void (const LLSD &)>) &updatePivotY);
+	//gSavedSettings.getControl("PhoenixBuildPrefs_PivotZ")->getSignal()->connect((boost::function<void (const LLSD &)>) &updatePivotZ);
+	gSavedSettings.getControl("PhoenixBuildPrefs_ActualRoot")->getSignal()->connect(boost::bind(&updateActualRoot, _2));
+	gSavedSettings.getControl("PhoenixBuildPrefs_PivotIsPercent")->getSignal()->connect(boost::bind(&updatePivotIsPercent, _2));
+	gSavedSettings.getControl("PhoenixBuildPrefs_PivotX")->getSignal()->connect(boost::bind(&updatePivotX, _2));
+	gSavedSettings.getControl("PhoenixBuildPrefs_PivotY")->getSignal()->connect(boost::bind(&updatePivotY, _2));
+	gSavedSettings.getControl("PhoenixBuildPrefs_PivotZ")->getSignal()->connect(boost::bind(&updatePivotZ, _2));
 }
 //static
 void LLManip::initPivot()

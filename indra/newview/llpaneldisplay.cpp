@@ -382,8 +382,9 @@ void LLPanelDisplay::refresh()
 	mCustomSettings = gSavedSettings.getBOOL("RenderCustomSettings");
 
 	// shader settings
-	static BOOL* sRenderObjectBump = rebind_llcontrol<BOOL>("RenderObjectBump", &gSavedSettings, true);
-	mBumpShiny = *sRenderObjectBump;
+	static LLCachedControl<bool> sRenderObjectBump(gSavedSettings, "RenderObjectBump");
+
+	mBumpShiny = (BOOL)sRenderObjectBump;
 	mShaderEnable = gSavedSettings.getBOOL("VertexShaderEnable");
 	mWindLight = gSavedSettings.getBOOL("WindLightUseAtmosShaders");
 	mReflections = gSavedSettings.getBOOL("RenderWaterReflections");

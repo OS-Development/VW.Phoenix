@@ -608,8 +608,8 @@ void LLAvatarTracker::processChange(LLMessageSystem* msg)
 					LLAvatarName avatar_name;
 					if (LLAvatarNameCache::get(agent_id, &avatar_name))
 					{
-						static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-						switch (*sPhoenixNameSystem)
+						static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+						switch (sPhoenixNameSystem)
 						{
 							case 0 : fullname = avatar_name.getLegacyName(); break;
 							case 1 : fullname = (avatar_name.mIsDisplayNameDefault ? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
@@ -672,8 +672,8 @@ void LLAvatarTracker::processNotify(LLMessageSystem* msg, bool online)
 					LLAvatarName avatar_name;
 					if (LLAvatarNameCache::get(agent_id, &avatar_name))
 					{
-						static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-						switch (*sPhoenixNameSystem)
+						static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+						switch (sPhoenixNameSystem)
 						{
 							case 0 : fullname = avatar_name.getLegacyName(); break;
 							case 1 : fullname = (avatar_name.mIsDisplayNameDefault ? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;

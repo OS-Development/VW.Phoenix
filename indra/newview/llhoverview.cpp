@@ -270,8 +270,8 @@ void LLHoverView::updateText()
     					LLAvatarName avatar_name;
     					if (LLAvatarNameCache::get(hit_object->getID(), &avatar_name))
     					{
-							static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-    						if (*sPhoenixNameSystem == 2 || (*sPhoenixNameSystem == 1 && avatar_name.mIsDisplayNameDefault))
+							static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+    						if (sPhoenixNameSystem == 2 || (sPhoenixNameSystem == 1 && avatar_name.mIsDisplayNameDefault))
     						{
     							complete_name = avatar_name.mDisplayName;
     						}
@@ -356,8 +356,8 @@ void LLHoverView::updateText()
 						//else if(gCacheName->getFullName(owner, name))
 						else if (LLAvatarNameCache::get(owner, &avatar_name))
 						{
-							static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-							switch (*sPhoenixNameSystem)
+							static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+							switch (sPhoenixNameSystem)
 							{
 								case 0 : name = avatar_name.getCompleteName(); break;
 								case 1 : name = (avatar_name.mIsDisplayNameDefault ? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;

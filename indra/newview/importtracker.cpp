@@ -49,7 +49,7 @@ void ImportTracker::importer(std::string file,  void (*callback)(LLViewerObject*
 	groupcounter=0;
 	LLSD ls_llsd;
 	ls_llsd=linksetgroups[groupcounter]["Object"];
-	linksetoffset=linksetgroups[groupcounter]["ObjectPos"];
+	linksetoffset=LLVector3(linksetgroups[groupcounter]["ObjectPos"]);
 	initialPos=gAgent.getCameraPositionAgent();
 	import(ls_llsd);
 }
@@ -137,7 +137,7 @@ void ImportTracker::cleanUp()
 			++groupcounter;
 			LLSD ls_llsd;
 			ls_llsd=linksetgroups[groupcounter]["Object"];
-			linksetoffset=linksetgroups[groupcounter]["ObjectPos"];
+			linksetoffset=LLVector3(linksetgroups[groupcounter]["ObjectPos"]);
 			import(ls_llsd);
 		}
 	}
@@ -167,17 +167,17 @@ void ImportTracker::get_update(S32 newid, BOOL justCreated, BOOL createSelected)
 				LLPrimitive obj;
 				obj.setNumTEs(U8(10));	
 				S32 shinnyLevel = 0;
-				static std::string* shinystr = rebind_llcontrol<std::string>("PhoenixBuildPrefs_Shiny", &gSavedSettings, true);
-				if(*shinystr == "None") shinnyLevel = 0;
-				if(*shinystr == "Low") shinnyLevel = 1;
-				if(*shinystr == "Medium") shinnyLevel = 2;
-				if(*shinystr == "High") shinnyLevel = 3;
+				static LLCachedControl<std::string> sshinystr(gSavedSettings, "PhoenixBuildPrefs_Shiny");
+				std::string shinystr = sshinystr;
+				if(shinystr == "None") shinnyLevel = 0;
+				if(shinystr == "Low") shinnyLevel = 1;
+				if(shinystr == "Medium") shinnyLevel = 2;
+				if(shinystr == "High") shinnyLevel = 3;
 				
 				for (int i = 0; i < 10; i++)
 				{
-					static std::string* buildpreftex = rebind_llcontrol<std::string>("PhoenixBuildPrefs_Texture", &gSavedSettings, true);
-
-					LLTextureEntry tex =  LLTextureEntry(LLUUID(*buildpreftex));
+					static LLCachedControl<std::string> buildpreftex(gSavedSettings, "PhoenixBuildPrefs_Texture");
+					LLTextureEntry tex =  LLTextureEntry(LLUUID(buildpreftex));
 					tex.setColor(gSavedSettings.getColor4("PhoenixBuildPrefs_Color"));
 					tex.setAlpha(1.0 - ((gSavedSettings.getF32("PhoenixBuildPrefs_Alpha")) / 100.0));
 					tex.setGlow(gSavedSettings.getF32("PhoenixBuildPrefs_Glow"));
@@ -794,7 +794,7 @@ void ImportTracker::send_vectors(LLSD& prim,int counter)
 		rotation = rotq.packToVector3();
 	else
 		rotation = (rotq * rootrot).packToVector3();
-	LLVector3 scale = prim["scale"];
+	LLVector3 scale(prim["scale"]);
 	U8 data[256];
 	
 	LLMessageSystem* msg = gMessageSystem;
@@ -1071,7 +1071,7 @@ void ImportTracker::wear(LLSD &prim)
 	
 	msg->sendReliable(gAgent.getRegion()->getHost());
 
-	LLVector3 position = prim["attachpos"];
+	LLVector3 position(prim["attachpos"]);
 	
 	LLSD rot = prim["attachrot"];
 	LLQuaternion rotq;

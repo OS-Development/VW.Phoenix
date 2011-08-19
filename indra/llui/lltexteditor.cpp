@@ -3068,8 +3068,8 @@ void LLTextEditor::drawSelectionBackground()
 void LLTextEditor::autoCorrectText()
 {
 	
-	static BOOL *doAnything = rebind_llcontrol<BOOL>("PhoenixEnableAutoCorrect", &gSavedSettings, true);
-	if( (!mReadOnly) && (*doAnything) && (isSpellDirty()) )
+	static LLCachedControl<bool> doAnything(gSavedSettings, "PhoenixEnableAutoCorrect");
+	if( (!mReadOnly) && doAnything && (isSpellDirty()) )
 	{
 		S32 wordStart = 0;
 		S32 wordEnd = mCursorPos-1;

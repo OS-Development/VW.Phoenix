@@ -3313,30 +3313,23 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
 		  // [Ansariel/Henri: Display name support]
 		  if (chatter->isAvatar())
 		  {
-#ifdef LL_RRINTERFACE_H //MK
-            if (!gRRenabled || !gAgent.mRRInterface.mContainsShownames)
+			if (LLAvatarNameCache::useDisplayNames())
 			{
-#endif //mk
-				if (LLAvatarNameCache::useDisplayNames())
+				LLAvatarName avatar_name;
+				if (LLAvatarNameCache::get(from_id, &avatar_name))
 				{
-					LLAvatarName avatar_name;
-					if (LLAvatarNameCache::get(from_id, &avatar_name))
+					static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+					if (sPhoenixNameSystem == 2 || (sPhoenixNameSystem == 1 && avatar_name.mIsDisplayNameDefault))
 					{
-					    static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-						if (*sPhoenixNameSystem == 2 || (*sPhoenixNameSystem == 1 && avatar_name.mIsDisplayNameDefault))
-						{
-							from_name = avatar_name.mDisplayName;
-						}
-						else
-						{
-							from_name = avatar_name.getCompleteName();
-						}
+						from_name = avatar_name.mDisplayName;
 					}
-					chat.mFromName = from_name;
+					else
+					{
+						from_name = avatar_name.getCompleteName();
+					}
 				}
-#ifdef LL_RRINTERFACE_H //MK
+				chat.mFromName = from_name;
 			}
-#endif //mk
 		  }
 		  // [/Ansariel/Henri: Display name support]
 		}
@@ -3434,8 +3427,8 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
 
 			if (!is_muted && !is_busy)
 			{
-				static BOOL* sUseChatBubbles = rebind_llcontrol<BOOL>("UseChatBubbles", &gSavedSettings, true);
-				visible_in_chat_bubble = *sUseChatBubbles;
+				static LLCachedControl<bool> sUseChatBubbles(gSavedSettings, "UseChatBubbles");
+				visible_in_chat_bubble = (BOOL)sUseChatBubbles;
 				((LLVOAvatar*)chatter)->addChat(chat);
 			}
 		}

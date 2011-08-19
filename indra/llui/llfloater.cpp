@@ -1408,12 +1408,13 @@ void LLFloater::draw()
 		S32 right = getRect().getWidth() - LLPANEL_BORDER_WIDTH;
 		S32 bottom = LLPANEL_BORDER_WIDTH;
 
-		/*static LLColor4* sColorDropShadow = rebind_llcontrol<LLColor4>("ColorDropShadow", LLUI::sColorsGroup, true);
 
-		LLColor4 shadow_color = (*sColorDropShadow);
-		static S32* sDropShadowFloater = rebind_llcontrol<S32>("DropShadowFloater", LLUI::sConfigGroup, true);
+		/*
+		static LLCachedControl<LLColor4U> sColorDropShadow((*LLUI::sColorsGroup), "ColorDropShadow");
+		LLColor4 shadow_color = (LLColor4)sColorDropShadow;
 
-		F32 shadow_offset = (F32)(*sDropShadowFloater);
+		static LLCachedControl<S32> sDropShadowFloater((*LLUI::sConfigGroup), "DropShadowFloater");
+		F32 shadow_offset = sDropShadowFloater;
 		if (!isBackgroundOpaque())
 		{
 			shadow_offset *= 0.2f;
@@ -1494,12 +1495,12 @@ void LLFloater::draw()
 		// add in a border to improve spacialized visual aclarity ;)
 		// use lines instead of gl_rect_2d so we can round the edges as per james' recommendation
 
-		static LLColor4* sFloaterFocusBorderColor = rebind_llcontrol<LLColor4>("FloaterFocusBorderColor", LLUI::sColorsGroup, true);
-		static LLColor4* sFloaterUnfocusBorderColor = rebind_llcontrol<LLColor4>("FloaterUnfocusBorderColor", LLUI::sColorsGroup, true);
-	
+		// Ansariel: Watch out! Colors from the colors control group are loaded as LLColor4U, not LLColor4!	
+		static LLCachedControl<LLColor4U> sFloaterFocusBorderColor((*LLUI::sColorsGroup), "FloaterFocusBorderColor");
+		static LLCachedControl<LLColor4U> sFloaterUnfocusBorderColor((*LLUI::sColorsGroup), "FloaterUnfocusBorderColor");
 
 		LLUI::setLineWidth(1.5f);
-		LLColor4 outlineColor = gFocusMgr.childHasKeyboardFocus(this) ? *sFloaterFocusBorderColor : *sFloaterUnfocusBorderColor;
+		LLColor4 outlineColor = gFocusMgr.childHasKeyboardFocus(this) ? (LLColor4)sFloaterFocusBorderColor : (LLColor4)sFloaterUnfocusBorderColor;
 		gl_rect_2d_offset_local(0, getRect().getHeight() + 1, getRect().getWidth() + 1, 0, outlineColor, -LLPANEL_BORDER_WIDTH, FALSE);
 		LLUI::setLineWidth(1.f);
 	}

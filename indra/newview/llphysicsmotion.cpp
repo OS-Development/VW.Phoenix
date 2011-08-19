@@ -489,7 +489,7 @@ F32 LLPhysicsMotion::calculateAcceleration_local(const F32 velocity_local)
 BOOL LLPhysicsMotionController::onUpdate(F32 time, U8* joint_mask)
 {
         // Skip if disabled globally.
-		static LLCachedControl<bool> avatar_physics("AvatarPhysics",false);
+		static LLCachedControl<bool> avatar_physics(gSavedSettings, "AvatarPhysics");
         if (!avatar_physics || (!((LLVOAvatar*)mCharacter)->isSelf() && !((LLVOAvatar*)mCharacter)->mSupportsPhysics))
         {
 			if(!mIsDefault)

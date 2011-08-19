@@ -47,7 +47,7 @@
 #include "llsingleton.h"
 
 #include <stack>
-#include <boost/signal.hpp>
+#include <boost/signals2.hpp>
 
 // LLUIFactory
 #include "llsd.h"
@@ -609,7 +609,7 @@ public:
 class LLCallbackRegistry
 {
 public:
-	typedef boost::signal<void()> callback_signal_t;
+	typedef boost::signals2::signal<void()> callback_signal_t;
 	
 	void registerCallback(const callback_signal_t::slot_type& slot)
 	{

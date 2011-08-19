@@ -185,8 +185,9 @@ void LLDrawPoolBump::prerender()
 // static
 S32 LLDrawPoolBump::numBumpPasses()
 {
-	static BOOL* sRenderObjectBump = rebind_llcontrol<BOOL>("RenderObjectBump", &gSavedSettings, true);
-	if (*sRenderObjectBump)
+	static LLCachedControl<bool> sRenderObjectBump(gSavedSettings, "RenderObjectBump");
+
+	if (sRenderObjectBump)
 	{
 		if (mVertexShaderLevel > 1)
 		{

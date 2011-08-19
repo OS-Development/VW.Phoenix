@@ -801,7 +801,7 @@ void LLVOVolume::sculpt()
 					   
 			sculpt_data = raw_image->getData();
 		}
-		static LLCachedControl<bool> sPhoenixOblongSculptLODHack("PhoenixOblongSculptLODHack", 0);
+		static LLCachedControl<bool> sPhoenixOblongSculptLODHack(gSavedSettings, "PhoenixOblongSculptLODHack");
 		getVolume()->sculpt(sculpt_width, sculpt_height, sculpt_components, sculpt_data, discard_level, sPhoenixOblongSculptLODHack);
 	}
 }
@@ -2293,13 +2293,12 @@ void LLVolumeGeometryManager::rebuildGeom(LLSpatialGroup* group)
 	std::vector<LLFace*> alpha_faces;
 	U32 useage = group->mSpatialPartition->mBufferUsage;
 
+	static LLCachedControl<S32> sRenderMaxVBOSize(gSavedSettings, "RenderMaxVBOSize");
+	static LLCachedControl<S32> sRenderMaxNodeSize(gSavedSettings, "RenderMaxNodeSize");
 
-	static S32* sRenderMaxVBOSize = rebind_llcontrol<S32>("RenderMaxVBOSize", &gSavedSettings, true);
-	static S32* sRenderMaxNodeSize = rebind_llcontrol<S32>("RenderMaxNodeSize", &gSavedSettings, true);
+	U32 max_vertices = (sRenderMaxVBOSize * 1024) / LLVertexBuffer::calcStride(group->mSpatialPartition->mVertexDataMask);
+	U32 max_total = (sRenderMaxNodeSize * 1024) / LLVertexBuffer::calcStride(group->mSpatialPartition->mVertexDataMask);
 
-
-	U32 max_vertices = ((*sRenderMaxVBOSize)*1024)/LLVertexBuffer::calcStride(group->mSpatialPartition->mVertexDataMask);
-	U32 max_total = ((*sRenderMaxNodeSize)*1024)/LLVertexBuffer::calcStride(group->mSpatialPartition->mVertexDataMask);
 	max_vertices = llmin(max_vertices, (U32) 65535);
 
 	U32 cur_total = 0;
@@ -2321,12 +2320,12 @@ void LLVolumeGeometryManager::rebuildGeom(LLSpatialGroup* group)
 
 		LLVOVolume* vobj = drawablep->getVOVolume();
 		
-		static F32* sSculptSurfaceAreaThreshold = rebind_llcontrol<F32>("ZwagothSculptSAThresh", &gSavedSettings, true);
-		static F32* sSculptSurfaceAreaMax = rebind_llcontrol<F32>("ZwagothSculptSAMax", &gSavedSettings, true);
-		if (vobj->mSculptSurfaceArea > (*sSculptSurfaceAreaThreshold))
+		static LLCachedControl<F32> sSculptSurfaceAreaThreshold(gSavedSettings, "ZwagothSculptSAThresh");
+		static LLCachedControl<F32> sSculptSurfaceAreaMax(gSavedSettings, "ZwagothSculptSAMax");
+		if (vobj->mSculptSurfaceArea > sSculptSurfaceAreaThreshold)
 		{
 		    LLPipeline::sSculptSurfaceAreaFrame += vobj->mSculptSurfaceArea;
-		    if(LLPipeline::sSculptSurfaceAreaFrame > (*sSculptSurfaceAreaMax))
+		    if(LLPipeline::sSculptSurfaceAreaFrame > sSculptSurfaceAreaMax)
 		    {
 		      continue;
 		    }
@@ -2584,9 +2583,10 @@ void LLVolumeGeometryManager::rebuildMesh(LLSpatialGroup* group)
 
 void LLVolumeGeometryManager::genDrawInfo(LLSpatialGroup* group, U32 mask, std::vector<LLFace*>& faces, BOOL distance_sort)
 {
-	static S32* sRenderMaxVBOSize = rebind_llcontrol<S32>("RenderMaxVBOSize", &gSavedSettings, true);
+	static LLCachedControl<S32> sRenderMaxVBOSize(gSavedSettings, "RenderMaxVBOSize");
+
 	//calculate maximum number of vertices to store in a single buffer
-	U32 max_vertices = ((*sRenderMaxVBOSize)*1024)/LLVertexBuffer::calcStride(group->mSpatialPartition->mVertexDataMask);
+	U32 max_vertices = (sRenderMaxVBOSize * 1024) / LLVertexBuffer::calcStride(group->mSpatialPartition->mVertexDataMask);
 	max_vertices = llmin(max_vertices, (U32) 65535);
 
 	if (!distance_sort)

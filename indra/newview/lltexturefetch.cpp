@@ -306,8 +306,8 @@ public:
 							  const LLChannelDescriptors& channels,
 							  const LLIOPipe::buffer_ptr_t& buffer)
 	{
-		static LLCachedControl<bool> log_to_viewer_log("LogTextureDownloadsToViewerLog", 0);
-		static LLCachedControl<bool> log_to_sim("LogTextureDownloadsToSimulator", 0);
+		static LLCachedControl<bool> log_to_viewer_log(gSavedSettings, "LogTextureDownloadsToViewerLog");
+		static LLCachedControl<bool> log_to_sim(gSavedSettings,"LogTextureDownloadsToSimulator");
 
 		if (log_to_viewer_log || log_to_sim)
 		{
@@ -768,7 +768,8 @@ bool LLTextureFetchWorker::doWork(S32 param)
 
 	if (mState == LOAD_FROM_NETWORK)
 	{
-		static LLCachedControl<bool> use_http("ImagePipelineUseHTTPFetch3", 0);
+		//static LLCachedControl<bool> use_http("ImagePipelineUseHTTPFetch3", 0);
+		static LLCachedControl<bool> use_http(gSavedSettings, "ImagePipelineUseHTTPFetch3");
 
 // 		if (mHost != LLHost::invalid) get_url = false;
 		if ( use_http && mCanUseHTTP && mUrl.empty())//get http url.
@@ -866,7 +867,8 @@ bool LLTextureFetchWorker::doWork(S32 param)
 			
 			// Changed this to default of 8 and added debug setting. 32 seems to cause failures. -KC
 			//static const S32 MAX_NUM_OF_HTTP_REQUESTS_IN_QUEUE = 32 ;
-			static LLCachedControl<S32> max_requests("ImagePipelineUseHTTPFetchMaxRequests", 8);
+			//static LLCachedControl<S32> max_requests("ImagePipelineUseHTTPFetchMaxRequests", 8);
+			static LLCachedControl<U32> max_requests(gSavedSettings, "ImagePipelineUseHTTPFetchMaxRequests");
 			if(mFetcher->getNumHTTPRequests() > max_requests)
 			{
 				return false;  //wait.
@@ -1080,7 +1082,7 @@ bool LLTextureFetchWorker::doWork(S32 param)
 	
 	if (mState == DECODE_IMAGE)
 	{
-		static LLCachedControl<bool> textures_decode_disabled("TextureDecodeDisabled", 0);
+		static LLCachedControl<bool> textures_decode_disabled(gSavedSettings, "TextureDecodeDisabled");
 		if(textures_decode_disabled || mDesiredDiscard < 0 || mFormattedImage->getDataSize() <= 0 || mLoadedDiscard < 0)
 		{
 			// for debug use, don't decode
@@ -1836,7 +1838,9 @@ S32 LLTextureFetch::update(U32 max_time_ms)
 {
 	{
 		mNetworkQueueMutex.lock() ;
-		mMaxBandwidth = gSavedSettings.getF32("ThrottleBandwidthKBPS");
+		//mMaxBandwidth = gSavedSettings.getF32("ThrottleBandwidthKBPS");
+		static LLCachedControl<F32> throttle_bandwidth_kbps(gSavedSettings, "ThrottleBandwidthKBPS");
+		mMaxBandwidth = llmax((F32)throttle_bandwidth_kbps, 32.0f);
 
 		gImageList.sTextureBits += mHTTPTextureBits;
 		mHTTPTextureBits = 0 ;
@@ -2048,8 +2052,8 @@ void LLTextureFetch::sendRequestListToSimulators()
 // 				llinfos << "IMAGE REQUEST: " << req->mID << " Discard: " << req->mDesiredDiscard
 // 						<< " Packet: " << packet << " Priority: " << req->mImagePriority << llendl;
 
-				static LLCachedControl<bool> log_to_viewer_log("LogTextureDownloadsToViewerLog", 0);
-				static LLCachedControl<bool> log_to_sim("LogTextureDownloadsToSimulator", 0);
+				static LLCachedControl<bool> log_to_viewer_log(gSavedSettings, "LogTextureDownloadsToViewerLog");
+				static LLCachedControl<bool> log_to_sim(gSavedSettings, "LogTextureDownloadsToSimulator");
 				if (log_to_viewer_log || log_to_sim)
 				{
 					mTextureInfo.setRequestStartTime(req->mID, LLTimer::getTotalTime());
@@ -2271,8 +2275,8 @@ bool LLTextureFetch::receiveImagePacket(const LLHost& host, const LLUUID& id, U1
 
 	if(packet_num >= (worker->mTotalPackets - 1))
 	{
-		static LLCachedControl<bool> log_to_viewer_log("LogTextureDownloadsToViewerLog", 0);
-		static LLCachedControl<bool> log_to_sim("LogTextureDownloadsToSimulator", 0);
+		static LLCachedControl<bool> log_to_viewer_log(gSavedSettings, "LogTextureDownloadsToViewerLog");
+		static LLCachedControl<bool> log_to_sim(gSavedSettings, "LogTextureDownloadsToSimulator");
 
 		if (log_to_viewer_log || log_to_sim)
 		{

@@ -19,9 +19,9 @@ else (STANDALONE)
       set(Boost_REGEX_LIBRARY
           optimized libboost_regex-vc80-mt-${BOOST_VERSION}
           debug libboost_regex-vc80-mt-gd-${BOOST_VERSION})
-      set(Boost_SIGNALS_LIBRARY 
-          optimized libboost_signals-vc80-mt-${BOOST_VERSION}
-          debug libboost_signals-vc80-mt-gd-${BOOST_VERSION})
+#      set(Boost_SIGNALS_LIBRARY 
+#          optimized libboost_signals-vc80-mt-${BOOST_VERSION}
+#          debug libboost_signals-vc80-mt-gd-${BOOST_VERSION})
       set(Boost_WAVE_LIBRARY 
           optimized libboost_wave-vc80-mt-${BOOST_VERSION}
           debug libboost_wave-vc80-mt-gd-${BOOST_VERSION})
@@ -32,9 +32,9 @@ else (STANDALONE)
       set(Boost_REGEX_LIBRARY
           optimized libboost_regex-vc90-mt-${BOOST_VERSION}
           debug libboost_regex-vc90-mt-gd-${BOOST_VERSION})
-      set(Boost_SIGNALS_LIBRARY 
-          optimized libboost_signals-vc90-mt-${BOOST_VERSION}
-          debug libboost_signals-vc90-mt-gd-${BOOST_VERSION})
+#      set(Boost_SIGNALS_LIBRARY 
+#          optimized libboost_signals-vc90-mt-${BOOST_VERSION}
+#          debug libboost_signals-vc90-mt-gd-${BOOST_VERSION})
       set(Boost_WAVE_LIBRARY 
           optimized libboost_wave-vc90-mt-${BOOST_VERSION}
           debug libboost_wave-vc90-mt-gd-${BOOST_VERSION})
@@ -43,7 +43,7 @@ else (STANDALONE)
   	set(Boost_PROGRAM_OPTIONS_LIBRARY boost_program_options-mt)  	
   	set(Boost_REGEX_LIBRARY boost_regex-mt)
   	set(Boost_PYTHON_LIBRARY boost_python-mt)
-  	set(Boost_SIGNALS_LIBRARY boost_signals-mt)
+#  	set(Boost_SIGNALS_LIBRARY boost_signals-mt)
   	set(Boost_WAVE_LIBRARY boost_wave-mt)
   	set(Boost_SYSTEM_LIBRARY boost_system-mt)
   	set(Boost_FILESYSTEM_LIBRARY boost_filesystem-mt)
@@ -54,7 +54,7 @@ else (STANDALONE)
   	set(Boost_PROGRAM_OPTIONS_LIBRARY boost_program_options)  	
   	set(Boost_REGEX_LIBRARY boost_regex)
   	set(Boost_PYTHON_LIBRARY boost_python)
-  	set(Boost_SIGNALS_LIBRARY boost_signals)
+#  	set(Boost_SIGNALS_LIBRARY boost_signals)
   	set(Boost_WAVE_LIBRARY boost_wave)
   	set(Boost_SYSTEM_LIBRARY boost_system)
   	set(Boost_FILESYSTEM_LIBRARY boost_filesystem)

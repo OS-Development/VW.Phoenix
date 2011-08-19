@@ -840,7 +840,7 @@ private:
 	bool mbAlwaysRun; // should the avatar run by default rather than walk
 	bool mbRunning;	// is the avatar trying to run right now
 
-	LLAgentAccess   mAgentAccess;
+	LLAgentAccess*	mAgentAccess;
 	
 	ETeleportState	mTeleportState;
 	std::string		mTeleportMessage;

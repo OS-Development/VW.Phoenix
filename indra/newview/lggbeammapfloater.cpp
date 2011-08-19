@@ -152,10 +152,9 @@ void lggBeamMapFloater::draw()
 		gGL.end();
 	}
 
-	static F32* opacity = rebind_llcontrol<F32>("PickerContextOpacity", &gSavedSettings, true);
+	static LLCachedControl<F32> opacity(gSavedSettings, "PickerContextOpacity");
 
-
-	mContextConeOpacity = lerp(mContextConeOpacity, *opacity, LLCriticalDamp::getInterpolant(CONTEXT_FADE_TIME));
+	mContextConeOpacity = lerp(mContextConeOpacity, opacity, LLCriticalDamp::getInterpolant(CONTEXT_FADE_TIME));
 
 
 	//getChild<LLPanel>("beamshape_draw")->setBackgroundColor(getChild<LLColorSwatchCtrl>("back_color_swatch")->get());
@@ -366,7 +365,7 @@ void lggBeamMapFloater::onClickLoad(void* data)
 		
 		LLSD beamData = myPicture[i];
 		lggPoint p;
-		LLVector3 vec =  beamData["offset"];
+		LLVector3 vec(beamData["offset"]);
 		vec *= (scale)/(8.0f/(rec.getWidth()));
 		LLColor4 color = beamData["color"];
 		p.c = color;

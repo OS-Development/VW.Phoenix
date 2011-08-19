@@ -113,8 +113,8 @@ void LLSpeaker::onAvatarNameLookup(const LLUUID& id, const LLAvatarName& avatar_
 	if (speaker_ptr)
 	{
         // [Ansariel/Henri: Display name support]
-		static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-		switch (*sPhoenixNameSystem)
+		static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+		switch (sPhoenixNameSystem)
 		{
 			case 0 : speaker_ptr->mDisplayName = avatar_name.getLegacyName(); break;
 			case 1 : speaker_ptr->mDisplayName = (avatar_name.mIsDisplayNameDefault ? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
@@ -538,9 +538,9 @@ void LLPanelActiveSpeakers::refreshSpeakers()
 			}
 			else
 			{
-				static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
+				static LLCachedControl<LLColor4U> sDefaultListText(gColors, "DefaultListText");
 
-				name_cell->setColor((*sDefaultListText));
+				name_cell->setColor((LLColor4)sDefaultListText);
 			}
 
 			std::string speaker_name;
