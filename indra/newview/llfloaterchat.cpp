@@ -587,12 +587,17 @@ LLColor4 get_text_color(const LLChat& chat)
 				&& (!rlv_handler_t::isEnabled()
 				|| !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES)))
 				{
-					text_color = gSavedSettings.getColor4("PhoenixFriendChatColor");
-					if(sPhoenixColorFriendsGroupsChat)
+					if (sPhoenixColorFriendsChat)
+					{
+						text_color = gSavedSettings.getColor4("PhoenixFriendChatColor");
+					}
+					if (sPhoenixColorFriendsGroupsChat)
 					{
 						LLColor4 fgColor = LGGFriendsGroups::getInstance()->getFriendColor(chat.mFromID);
-						if(fgColor!=LGGFriendsGroups::getInstance()->getDefaultColor())
+						if (fgColor!=LGGFriendsGroups::getInstance()->getDefaultColor())
+						{
 							text_color=fgColor;
+						}
 					}
 				}
 				else if(gAgent.getID() == chat.mFromID)

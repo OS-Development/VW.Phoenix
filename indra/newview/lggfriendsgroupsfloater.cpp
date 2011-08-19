@@ -77,6 +77,9 @@
 #include "llviewermessage.h"
 #include "llfloaterworldmap.h"
 #include "llstring.h"
+#include "llclipboard.h"
+#include "llfloateravatarpicker.h"
+#include "llfirstuse.h"
 
 class lggFriendsGroupsFloater;
 class lggFriendsGroupsFloater : public LLFloater, public LLFloaterSingleton<lggFriendsGroupsFloater>, public LLFriendObserver
@@ -91,23 +94,31 @@ public:
 	BOOL handleMouseDown(S32 x,S32 y,MASK mask);
 	void update();
 	BOOL handleRightMouseDown(S32 x,S32 y,MASK mask);
+	BOOL handleKeyHere( KEY key, MASK mask );
+	BOOL handleDoubleClick(S32 x, S32 y, MASK mask);
 	BOOL handleHover(S32 x, S32 y, MASK mask);
+	BOOL handleUnicodeCharHere(llwchar uni_char);
+	BOOL handleScrollWheel(S32 x, S32 y, S32 clicks);
 	
 	BOOL generateCurrentList();
 	void draw();
 	void drawScrollBars();
 	void drawRightClick();
-	void toggleSelect(int pos);
+	void drawFilter();
+	BOOL toggleSelect(int pos);
 	static BOOL compareAv(LLUUID av1, LLUUID av2);
 
 	static void onClickSettings(void* data);
 	static void onClickNew(void* data);
 	static void onClickDelete(void* data);
+	static void onPickAvatar(const std::vector<std::string>& names, const std::vector<LLUUID>& ids, void* user_data);
+
 
 	static void onBackgroundChange(LLUICtrl* ctrl, void* userdata);
 
 	static void onNoticesChange(LLUICtrl* ctrl, void* userdata);
 	static void onCheckBoxChange(LLUICtrl* ctrl, void* userdata);
+	static void hitSpaceBar(LLUICtrl* ctrl, void* userdata);
 
 	void updateGroupsList();
 	void updateGroupGUIs();
@@ -126,7 +137,10 @@ private:
 	S32 mouse_x;
 	S32 mouse_y;
 	F32 hovered;
+	F32 scrollStarted;
 	S32 maxSize;
+	std::string currentFilter;
+	std::string currentRightClickText;
 	std::vector<S32> selected;
 	std::vector<LLUUID> currentList;
 	S32 scrollLoc;
@@ -142,7 +156,9 @@ lggFriendsGroupsFloater::~lggFriendsGroupsFloater()
 	sInstance = NULL;
 }
 lggFriendsGroupsFloater::lggFriendsGroupsFloater(const LLSD& seed)
-:mouse_x(0),mouse_y(900),hovered(0.f),justClicked(FALSE),scrollLoc(0),showRightClick(FALSE),maxSize(0)
+:mouse_x(0),mouse_y(900),hovered(0.f),justClicked(FALSE),scrollLoc(0),
+showRightClick(FALSE),maxSize(0),scrollStarted(0),currentFilter(""),
+currentRightClickText("")
 {
 	if(sInstance)delete sInstance;
 	sInstance = this;
@@ -159,7 +175,19 @@ lggFriendsGroupsFloater::lggFriendsGroupsFloater(const LLSD& seed)
 }
 void lggFriendsGroupsFloater::changed(U32 mask)
 {
-	sInstance->generateCurrentList();
+	if(mask & (LLFriendObserver::ADD | LLFriendObserver::REMOVE ))
+	{
+		sInstance->generateCurrentList();
+	}
+	if(mask & (LLFriendObserver::ONLINE))
+	{
+		LLCachedControl<bool> showOnline(gSavedSettings, "PhoenixFriendsGroupsShowOnline");
+		LLCachedControl<bool> showOffline(gSavedSettings, "PhoenixFriendsGroupsShowOffline");
+		if (!showOffline && showOnline)
+		{
+			sInstance->generateCurrentList();
+		}
+	}
 }
 void lggFriendsGroupsFloater::onBackgroundChange(LLUICtrl* ctrl, void* userdata)
 {
@@ -193,24 +221,53 @@ void lggFriendsGroupsFloater::onCheckBoxChange(LLUICtrl* ctrl, void* userdata)
 
 	if(cctrl)
 	{
-		sInstance->generateCurrentList();
-		
+		sInstance->generateCurrentList();		
 	}
+}
+void lggFriendsGroupsFloater::onPickAvatar(const std::vector<std::string>& names,
+								  const std::vector<LLUUID>& ids,
+								  void* )
+{
+	if (names.empty()) return;
+	if (ids.empty()) return;
+	LGGFriendsGroups::getInstance()->addNonFriendToList(ids[0]);
+	sInstance->updateGroupsList();
+	LLFirstUse::usePhoenixFriendsNonFriend();
+}
+void lggFriendsGroupsFloater::hitSpaceBar(LLUICtrl* ctrl, void* userdata)
+{
+	LLCheckBoxCtrl* cctrl = (LLCheckBoxCtrl*)ctrl;
 
+	if(cctrl)
+	{
+		if((sInstance->currentFilter=="" && !sInstance->showRightClick)||
+			(sInstance->currentRightClickText=="" && sInstance->showRightClick))
+			sInstance->justClicked=TRUE;
+		else
+		{
+			if(!sInstance->showRightClick)
+			{
+				sInstance->currentFilter+=' ';
+				sInstance->generateCurrentList();
+			}else
+			{
+				sInstance->currentRightClickText+=' ';
+			}
+		}
+	}
 }
 void lggFriendsGroupsFloater::updateGroupsList()
 {
 	std::string currentGroup = gSavedSettings.getString("PhoenixFriendsGroupsSelectedGroup");
 	LLComboBox * cb = groupsList;
 	//if(	sInstance->groupsList != NULL) cb = sInstance->groupsList;
-	
+
 	cb->clear();
 	cb->removeall();
 	std::vector<std::string> groups = LGGFriendsGroups::getInstance()->getAllGroups();
 	for(int i =0;i<groups.size();i++)
 	{
 		cb->add(groups[i],groups[i],ADD_BOTTOM,TRUE);
-		
 	}
 	if((currentGroup=="")&&(groups.size()>0))
 	{
@@ -265,9 +322,13 @@ BOOL lggFriendsGroupsFloater::postBuild(void)
 	getChild<LLCheckBoxCtrl>("lgg_fg_showOtherGroups")->setCommitCallback(onCheckBoxChange);
 	getChild<LLCheckBoxCtrl>("lgg_fg_showAllFriends")->setCommitCallback(onCheckBoxChange);
 
+	getChild<LLCheckBoxCtrl>("haxCheckbox")->setCommitCallback(hitSpaceBar);
+
 	updateGroupsList();
 	generateCurrentList();
 	updateGroupGUIs();
+
+	LLFirstUse::usePhoenixFriendsGroup();
 
 	return true;
 }
@@ -294,15 +355,23 @@ void lggFriendsGroupsFloater::drawRightClick()
 		showRightClick=FALSE;
 		return;
 	}
-	int heightPer = 20;
+	int heightPer = 17;
 	int width = 200;
+	BOOL drawRemove=FALSE;
 
-	int extras = 5;//make sure we have room for the extra options
+	int extras = 4;//make sure we have room for the extra options
 	BOOL canMap = FALSE;
+	int isNonFriend=0;
 	if(selected.size()==1)
 	{
-		extras+=5;//space,name,tp, profile, im
+		extras+=7;//space,name,tp, profile, im, rename 
 		//map
+		if(LGGFriendsGroups::getInstance()->isNonFriend(currentList[selected[0]]))
+		{
+			isNonFriend=1;
+			extras+=1;//add remove option
+
+		}else
 		if((LLAvatarTracker::instance().getBuddyInfo(currentList[selected[0]])->getRightsGrantedFrom())& LLRelationship::GRANT_MAP_LOCATION)
 		{
 			if(LLAvatarTracker::instance().getBuddyInfo(currentList[selected[0]])->isOnline())
@@ -311,13 +380,32 @@ void lggFriendsGroupsFloater::drawRightClick()
 				canMap=TRUE;
 			}
 		}
+		if(LGGFriendsGroups::getInstance()->hasPseudonym(currentList[selected[0]]))
+		{
+			extras+=1;//for clearing it
+		}
 	}
 	if(selected.size()>1)
 	{
 		extras+=4;//name, conference, mass tp, space
+		for(int i=0;i<selected.size();i++)
+		{
+			if(LGGFriendsGroups::getInstance()->isNonFriend(currentList[selected[i]]))
+				isNonFriend++;
+		}
+	}
+	if (currentGroup != "All Groups" && currentGroup != "No Groups" && currentGroup != "")
+	{
+		drawRemove = TRUE;
+		extras += 2;
 	}
 
-	std::vector<std::string> groups = LGGFriendsGroups::getInstance()->getAllGroups();
+	std::vector<std::string> groups = LGGFriendsGroups::getInstance()->getAllGroups(FALSE);
+	if(selected.size()==0)
+	{
+		groups.clear();
+		extras+=4;
+	}
 	int height = heightPer*(extras+groups.size());
 
 	LLRect rec = sInstance->getChild<LLPanel>("draw_region")->getRect();
@@ -367,47 +455,51 @@ void lggFriendsGroupsFloater::drawRightClick()
 			std::string("Add to: "+groups[i])
 			, 0,
 			contextRect.mLeft,
-			top-(heightPer/2),
+			top-(heightPer/2)-2,
 			LLColor4::white, LLFontGL::LEFT,
 			LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
 
 		top-=heightPer;
 	}
-	top-=heightPer;
-	//draw remove button
+
 	LLRect remBackGround;
-	remBackGround.setLeftTopAndSize(contextRect.mLeft,top,width,heightPer);
-	gGL.color4fv(LGGFriendsGroups::getInstance()->getGroupColor(currentGroup).mV);
-	gl_rect_2d(remBackGround);
-	if(remBackGround.pointInRect(mouse_x,mouse_y))
+	if(drawRemove)
 	{
-		//draw hover effect
-		gGL.color4fv(LLColor4::yellow.mV);
-		gl_rect_2d(remBackGround,FALSE);
-		if(justClicked)
+		//draw remove button
+		top-=heightPer;
+		remBackGround.setLeftTopAndSize(contextRect.mLeft,top,width,heightPer);
+	gGL.color4fv(LGGFriendsGroups::getInstance()->getGroupColor(currentGroup).mV);
+		gl_rect_2d(remBackGround);
+		if(remBackGround.pointInRect(mouse_x,mouse_y))
 		{
-			for(int v=0;v<selected.size();v++)
+			//draw hover effect
+			gGL.color4fv(LLColor4::yellow.mV);
+			gl_rect_2d(remBackGround,FALSE);
+			if(justClicked)
 			{
-				LLUUID afriend = currentList[selected[v]];
-				LGGFriendsGroups::getInstance()->removeFriendFromGroup(
+				for(int v=0;v<selected.size();v++)
+				{
+					LLUUID afriend = currentList[selected[v]];
+					LGGFriendsGroups::getInstance()->removeFriendFromGroup(
 					afriend,currentGroup);
 
-				generateCurrentList();
+					sInstance->generateCurrentList();
+				}
+
+				selected.clear();
 			}
-
-			selected.clear();
 		}
-	}
 
-	LLFontGL::getFontSansSerif()->renderUTF8(
+		LLFontGL::getFontSansSerif()->renderUTF8(
 		std::string("Remove From: "+currentGroup)
-		, 0,
-		contextRect.mLeft,
-		top-(heightPer/2),
-		LLColor4::white, LLFontGL::LEFT,
-		LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
+			, 0,
+			contextRect.mLeft,
+			top-(heightPer/2)-2,
+			LLColor4::white, LLFontGL::LEFT,
+			LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
 
-	top-=heightPer;
+		top-=heightPer;
+	}
 	top-=heightPer;
 	//specials
 	if(selected.size()==1)
@@ -418,12 +510,14 @@ void lggFriendsGroupsFloater::drawRightClick()
 		if(LLAvatarNameCache::get(currentList[selected[0]], &avatar_name))avName=avatar_name.getLegacyName();
 
 		LLColor4 friendColor = LGGFriendsGroups::getInstance()->getFriendColor(currentList[selected[0]],"");
+		
+		
 		remBackGround.setLeftTopAndSize(contextRect.mLeft,top,width,heightPer);
 		if(remBackGround.pointInRect(mouse_x,mouse_y))
 		{
 			//draw hover effect
-			gGL.color4fv(LLColor4::yellow.mV);
-			gl_rect_2d(remBackGround,FALSE);
+			//gGL.color4fv(LLColor4::yellow.mV);
+			//gl_rect_2d(remBackGround,FALSE);
 			if(justClicked)
 			{
 				//no
@@ -433,11 +527,113 @@ void lggFriendsGroupsFloater::drawRightClick()
 			avName
 			, 0,
 			contextRect.mLeft,
-			top-(heightPer/2),
+			top-(heightPer/2)-2,
 			LLColor4::white, LLFontGL::LEFT,
 			LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
 		top-=heightPer;
 		
+		//rename start
+
+		remBackGround.setLeftTopAndSize(contextRect.mLeft,top,width,heightPer);
+		//draw text block background after the :rename text
+		int remWidth = LLFontGL::getFontSansSerif()->getWidth("Rename");
+		LLRect inTextBox;
+		inTextBox.setLeftTopAndSize(remBackGround.mLeft+8+remWidth,remBackGround.mTop,
+			remBackGround.getWidth()-8-remWidth,remBackGround.getHeight());
+		gGL.color4fv(LLColor4::white.mV);
+		gl_rect_2d(inTextBox);
+
+		//draw text in black of rightclicktext
+		LLFontGL::getFontSansSerif()->renderUTF8(
+		sInstance->currentRightClickText
+			, 0,
+			inTextBox.mLeft,
+			inTextBox.mBottom+8,
+			LLColor4::black, LLFontGL::LEFT,
+			LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
+
+		if(remBackGround.pointInRect(mouse_x,mouse_y))
+		{
+			//draw hover effect
+			gGL.color4fv(LLColor4::yellow.mV);
+			gl_rect_2d(remBackGround,FALSE);
+			if(justClicked)
+			{
+				//rename avatar
+				if(sInstance->currentRightClickText!="")
+				{
+					LGGFriendsGroups::getInstance()->setPseudonym(currentList[selected[0]],sInstance->currentRightClickText);
+					sInstance->updateGroupsList();
+					LLFirstUse::usePhoenixFriendsGroupRename();
+				}
+			}
+		}
+		LLFontGL::getFontSansSerif()->renderUTF8(
+			"Rename:"
+			, 0,
+			contextRect.mLeft,
+			top-(heightPer/2)-2,
+			LLColor4::white, LLFontGL::LEFT,
+			LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
+		top-=heightPer;
+
+		if(LGGFriendsGroups::getInstance()->hasPseudonym(currentList[selected[0]]))
+		{
+
+			remBackGround.setLeftTopAndSize(contextRect.mLeft,top,width,heightPer);
+			if(remBackGround.pointInRect(mouse_x,mouse_y))
+			{
+				//draw hover effect
+				gGL.color4fv(LLColor4::yellow.mV);
+				gl_rect_2d(remBackGround,FALSE);
+				if(justClicked)
+				{
+					//cler avs rename
+					LGGFriendsGroups::getInstance()->clearPseudonym(currentList[selected[0]]);
+					sInstance->generateCurrentList();
+					sInstance->updateGroupsList();
+				}
+			}
+			LLFontGL::getFontSansSerif()->renderUTF8(
+				"Remove Pseudonym"
+				, 0,
+				contextRect.mLeft,
+				top-(heightPer/2)-2,
+				LLColor4::white, LLFontGL::LEFT,
+				LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
+			top-=heightPer;
+
+
+		}
+		if(isNonFriend)
+		{
+			remBackGround.setLeftTopAndSize(contextRect.mLeft,top,width,heightPer);
+			if(remBackGround.pointInRect(mouse_x,mouse_y))
+			{
+				//draw hover effect
+				gGL.color4fv(LLColor4::yellow.mV);
+				gl_rect_2d(remBackGround,FALSE);
+				if(justClicked)
+				{
+					//cler avs rename
+					LGGFriendsGroups::getInstance()->removeNonFriendFromList(currentList[selected[0]]);
+					sInstance->generateCurrentList();
+				}
+			}
+			LLFontGL::getFontSansSerif()->renderUTF8(
+				"Remove From List"
+				, 0,
+				contextRect.mLeft,
+				top-(heightPer/2)-2,
+				LLColor4::white, LLFontGL::LEFT,
+				LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
+			top-=heightPer;
+		}
+
+
+
+		//rename stop
+
 		remBackGround.setLeftTopAndSize(contextRect.mLeft,top,width,heightPer);
 		gGL.color4fv(friendColor.mV);
 		gl_rect_2d(remBackGround);
@@ -456,7 +652,7 @@ void lggFriendsGroupsFloater::drawRightClick()
 			std::string("View Profile")
 			, 0,
 			contextRect.mLeft,
-			top-(heightPer/2),
+			top-(heightPer/2)-2,
 			LLColor4::white, LLFontGL::LEFT,
 			LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
 		top-=heightPer;
@@ -487,7 +683,7 @@ void lggFriendsGroupsFloater::drawRightClick()
 				std::string("Map Avatar")
 				, 0,
 				contextRect.mLeft,
-				top-(heightPer/2),
+				top-(heightPer/2)-2,
 				LLColor4::white, LLFontGL::LEFT,
 				LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
 			top-=heightPer;
@@ -521,7 +717,7 @@ void lggFriendsGroupsFloater::drawRightClick()
 			std::string("Instant Message")
 			, 0,
 			contextRect.mLeft,
-			top-(heightPer/2),
+			top-(heightPer/2)-2,
 			LLColor4::white, LLFontGL::LEFT,
 			LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
 		top-=heightPer;
@@ -544,7 +740,7 @@ void lggFriendsGroupsFloater::drawRightClick()
 			std::string("Teleport Avatar")
 			, 0,
 			contextRect.mLeft,
-			top-(heightPer/2),
+			top-(heightPer/2)-2,
 			LLColor4::white, LLFontGL::LEFT,
 			LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
 		
@@ -556,7 +752,11 @@ void lggFriendsGroupsFloater::drawRightClick()
 		LLDynamicArray<LLUUID> ids;
 		for(int se=0;se<selected.size();se++)
 		{
-			ids.push_back(currentList[selected[se]]);
+			LLUUID avid= currentList[selected[se]];
+			if(!LGGFriendsGroups::getInstance()->isNonFriend(avid))//dont mass tp or confrence non friends
+			{
+				ids.push_back(avid);
+			}
 		}
 
 		remBackGround.setLeftTopAndSize(contextRect.mLeft,top,width,heightPer);
@@ -571,10 +771,10 @@ void lggFriendsGroupsFloater::drawRightClick()
 			}
 		}
 		LLFontGL::getFontSansSerif()->renderUTF8(
-			std::string(llformat("All %d Selected",selected.size()))
+			std::string(llformat("All %d Selected",ids.size()))
 			, 0,
 			contextRect.mLeft,
-			top-(heightPer/2),
+			top-(heightPer/2)-2,
 			LLColor4::white, LLFontGL::LEFT,
 			LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
 		top-=heightPer;
@@ -595,10 +795,10 @@ void lggFriendsGroupsFloater::drawRightClick()
 			}
 		}
 		LLFontGL::getFontSansSerif()->renderUTF8(
-			std::string(llformat("Start Conference Call (%d)",selected.size()))
+			std::string(llformat("Start Conference Call (%d)",ids.size()))
 			, 0, 
 			contextRect.mLeft,
-			top-(heightPer/2),
+			top-(heightPer/2)-2,
 			LLColor4::white, LLFontGL::LEFT,
 			LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
 		top-=heightPer;
@@ -618,10 +818,10 @@ void lggFriendsGroupsFloater::drawRightClick()
 			}
 		}
 		LLFontGL::getFontSansSerif()->renderUTF8(
-			std::string(llformat("Send Mass TP (%d)",selected.size()))
+			std::string(llformat("Send Mass TP (%d)",ids.size()))
 			, 0,
 			contextRect.mLeft,
-			top-(heightPer/2),
+			top-(heightPer/2)-2,
 			LLColor4::white, LLFontGL::LEFT,
 			LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
 		
@@ -644,7 +844,7 @@ void lggFriendsGroupsFloater::drawRightClick()
 		std::string(llformat("Deselect All (%d)",selected.size()))
 		, 0,
 		contextRect.mLeft,
-		top-(heightPer/2),
+		top-(heightPer/2)-2,
 		LLColor4::white, LLFontGL::LEFT,
 		LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
 	top-=heightPer;
@@ -670,9 +870,34 @@ void lggFriendsGroupsFloater::drawRightClick()
 		std::string(llformat("Select All (%d)",currentList.size()-selected.size()))
 		, 0,
 		contextRect.mLeft,
-		top-(heightPer/2),
+		top-(heightPer/2)-2,
 		LLColor4::white, LLFontGL::LEFT,
 		LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
+
+	top-=heightPer;
+	top-=heightPer;
+	remBackGround.setLeftTopAndSize(contextRect.mLeft,top,width,heightPer);
+	if(remBackGround.pointInRect(mouse_x,mouse_y))
+	{
+		//draw hover effect
+		gGL.color4fv(LLColor4::yellow.mV);
+		gl_rect_2d(remBackGround,FALSE);
+		if(justClicked)
+		{
+			//add new av
+			LLFloaterAvatarPicker* picker = LLFloaterAvatarPicker::show(onPickAvatar, NULL, FALSE, TRUE);
+			sInstance->addDependentFloater(picker);
+			
+		}
+	}
+	LLFontGL::getFontSansSerif()->renderUTF8(
+		"Add New Avatar"
+		, 0,
+		contextRect.mLeft,
+		top-(heightPer/2)-2,
+		LLColor4::white, LLFontGL::LEFT,
+		LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
+	
 
 	if(justClicked)
 	{
@@ -680,6 +905,56 @@ void lggFriendsGroupsFloater::drawRightClick()
 		if(selected.size()==1)selected.clear();
 	}
 	justClicked=FALSE;	
+}
+void lggFriendsGroupsFloater::drawFilter()
+{
+	if(sInstance->currentFilter=="")return;
+	int mySize = 40;
+
+	LLRect rec = sInstance->getChild<LLPanel>("top_region")->getRect();
+	LLRect aboveThisMess;
+	aboveThisMess.setLeftTopAndSize(rec.mLeft,rec.mTop+mySize,rec.getWidth(),mySize);
+	LLColor4 backGround(0,0,0,1.0);
+	LLColor4 foreGround(1,1,1,1.0);
+	if(aboveThisMess.pointInRect(sInstance->mouse_x,sInstance->mouse_y))
+	{
+		backGround=LLColor4(0,0,0,.4);
+		foreGround=LLColor4(1,1,1,.4);
+		gGL.color4fv(LLColor4(0,0,0,.2).mV);//for main bg
+	}else
+		gGL.color4fv(LLColor4(0,0,0,.8).mV);
+
+	gl_rect_2d(aboveThisMess);
+	std::string preText("Currently Using Filter: ");
+	int width1 = LLFontGL::getFontSansSerif()->getWidth(preText)+8;
+	int width2 = LLFontGL::getFontSansSerif()->getWidth(sInstance->currentFilter)+8;
+	int tSize = 24;
+	LLRect fullTextBox;
+	fullTextBox.setLeftTopAndSize(aboveThisMess.mLeft+20,aboveThisMess.getCenterY()+(tSize/2),width1+width2,tSize);
+	gGL.color4fv(backGround.mV);
+	gl_rect_2d(fullTextBox);
+	gGL.color4fv(foreGround.mV);
+	gl_rect_2d(fullTextBox,FALSE);
+	LLRect filterTextBox;
+	filterTextBox.setLeftTopAndSize(fullTextBox.mLeft+width1,fullTextBox.mTop,width2,tSize);
+	gl_rect_2d(filterTextBox);	
+	
+	LLFontGL::getFontSansSerif()->renderUTF8(
+		preText
+		, 0,
+		fullTextBox.mLeft+4,
+		fullTextBox.mBottom+4,
+		foreGround, LLFontGL::LEFT,
+		LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
+	LLFontGL::getFontSansSerif()->renderUTF8(
+		sInstance->currentFilter
+		, 0,
+		filterTextBox.mLeft+4,
+		filterTextBox.mBottom+4,
+		backGround, LLFontGL::LEFT,
+		LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
+
+
 }
 void lggFriendsGroupsFloater::draw()
 {
@@ -694,6 +969,8 @@ void lggFriendsGroupsFloater::draw()
 	static LLCachedControl<std::string> currentGroup(gSavedSettings, "PhoenixFriendsGroupsSelectedGroup");
 	static LLCachedControl<bool> textNotBg(gSavedSettings, "PhoenixFriendsGroupsColorizeText");
 	static LLCachedControl<bool> barNotBg(gSavedSettings, "PhoenixFriendsGroupsColorizeBar");
+	static LLCachedControl<bool> requireCTRL(gSavedSettings, "PhoenixFriendsGroupsRequireCTRL");
+	static LLCachedControl<bool> doZoom(gSavedSettings, "PhoenixFriendsGroupsDoZoom");
 		
 	std::vector<LLUUID> workingList;
 	workingList= currentList;
@@ -701,40 +978,55 @@ void lggFriendsGroupsFloater::draw()
 
 	LLRect topScroll = getChild<LLPanel>("top_region")->getRect();
 	LLRect bottomScroll = getChild<LLPanel>("bottom_region")->getRect();
-	LLRect rec  = getChild<LLPanel>("draw_region")->getRect();
-
+	LLPanel * mainPanel = getChild<LLPanel>("draw_region");
+	LLRect rec  = mainPanel->getRect();
+	if((rec.pointInRect(mouse_x,mouse_y))&&(sInstance->hasFocus()))//||justClicked||showRightClick))
+	{
+		//mainPanel->setFocus(TRUE);
+		//sInstance->setFocus(TRUE);
+		sInstance->getChild<LLCheckBoxCtrl>("haxCheckbox")->setFocus(TRUE);
+		
+	}
+	//LLPanel *panel = getChild<LLPanel>("draw_region");
+	
 	gGL.pushMatrix();
 	gl_circle_2d(rec.getCenterX(),rec.getCenterY(),2.0f,(S32)30,false);
 	int bMag = 35;
+	if (!doZoom) bMag=1;
 	//kinda magic numbers to compensate for max bloom effect and stuff
 	float sizeV = (F32)((rec.getHeight()-143)-(((F32)numberOfPanels)*1.07f)-0)/(F32)(numberOfPanels);
+	if (!doZoom) sizeV = (F32)((rec.getHeight()-10))/(F32)(numberOfPanels);
 	maxSize=sizeV+bMag;
-	if(sizeV<10)
+	int minSize = 10;
+	if (!doZoom) minSize=27;
+	if (sizeV < minSize)
 	{
 		//need scroll bars
-		sizeV=10;
-		if(this->hasFocus())
+		sizeV = minSize;
+		if (this->hasFocus())
 		{
 			LLUIImage *arrowUpImage = LLUI::getUIImage("map_avatar_above_32.tga");
 			LLUIImage *arrowDownImage = LLUI::getUIImage("map_avatar_below_32.tga");
 			LLColor4 active = LGGFriendsGroups::getInstance()->getGroupColor(currentGroup);
 			LLColor4 unactive = LGGFriendsGroups::toneDownColor(active,.5);
+			static LLCachedControl<S32> scrollSpeedSetting(gSavedSettings, "PhoenixFriendsGroupsScrollSpeed");
+			float speedFraction = ((F32)scrollSpeedSetting) / 100.0f;
 
 			LLColor4 useColor = unactive;
 			if(mouse_y<topScroll.mTop&& mouse_y > topScroll.mBottom)
 			{
 				useColor=active;
-				scrollLoc-=llclamp((numberOfPanels/16),20,70);
+				scrollLoc-=llclamp((S32)((((F32)numberOfPanels)/4.0f)*speedFraction),1,100);
 			}
-			if(scrollLoc>0)
+			if (scrollLoc > 0)
 			{
 				gGL.color4fv(useColor.mV);
-				gl_rect_2d(topScroll,true);
+				gl_rect_2d(topScroll, true);
 			}		
 			
-			int x=topScroll.mLeft;
-			if(scrollLoc>0)
-			for(;x<topScroll.mRight-topScroll.getHeight();x+=(30+topScroll.getHeight()))
+			int x = topScroll.mLeft;
+			if (scrollLoc > 0)
+			for ( ; x<topScroll.mRight-topScroll.getHeight(); x += (30 + topScroll.getHeight()))
 			{
 				gl_draw_scaled_image_with_border(x,
 					topScroll.mBottom,
@@ -743,24 +1035,25 @@ void lggFriendsGroupsFloater::draw()
 					useColor,
 					FALSE); 
 			}
-			int maxS =((numberOfPanels*11)+200-(rec.getHeight()));
-			useColor=unactive;
-			if(mouse_y<bottomScroll.mTop && mouse_y > bottomScroll.mBottom)
+			int maxS = ((numberOfPanels * 11) + 200 - (rec.getHeight()));
+			if (!doZoom) maxS = ((numberOfPanels * (minSize + 2)) + 10 - (rec.getHeight()));
+			useColor = unactive;
+			if (mouse_y < bottomScroll.mTop && mouse_y > bottomScroll.mBottom)
 			{
-				useColor=active;
-				scrollLoc+=llclamp((numberOfPanels/16),20,70);
+				useColor = active;
+				scrollLoc += llclamp((S32)((((F32)numberOfPanels) / 4.0f) * speedFraction), 1, 100);
 			}
-			if(scrollLoc<maxS)
+			if (scrollLoc < maxS)
 			{
 				gGL.color4fv(useColor.mV);
-				gl_rect_2d(bottomScroll,true);
+				gl_rect_2d(bottomScroll, true);
 			}
-			if(scrollLoc<maxS)
-				for(x=bottomScroll.mLeft;x<bottomScroll.mRight-bottomScroll.getHeight();x+=(30+bottomScroll.getHeight()))
+			if (scrollLoc < maxS)
+				for (x = bottomScroll.mLeft; x < bottomScroll.mRight - bottomScroll.getHeight(); x += (30 + bottomScroll.getHeight()))
 				{
 					gl_draw_scaled_image_with_border(x,
 						bottomScroll.mBottom,
-						bottomScroll.getHeight(),topScroll.getHeight(),
+						bottomScroll.getHeight(), topScroll.getHeight(),
 						arrowDownImage->getImage(),
 						useColor,
 						FALSE); 
@@ -772,37 +1065,40 @@ void lggFriendsGroupsFloater::draw()
 	{
 		scrollLoc=0;
 	}
-	float top=rec.mTop+scrollLoc;//sizeV+12;
-	if(mouse_y<15)mouse_y=15;
-	for(int p = 0; p < numberOfPanels ; p++)
+	float top = rec.mTop+scrollLoc;//sizeV+12;
+	if (mouse_y < 15) mouse_y = 15;
+	for (int p = 0; p < numberOfPanels; p++)
 	{
 		float thisSize = sizeV;
 		float pi = 3.1415f;
-		float piOver2Centered = pi/2+( (top-((F32)(sizeV+(40))/2.0f)-mouse_y)*.01);
-		float bubble =sin((float)llclamp(piOver2Centered,0.0f,pi))*bMag;
-		thisSize+=bubble;
+		float piOver2Centered = pi / 2 + ( (top - ((F32)(sizeV + (40)) / 2.0f) - mouse_y) * .01);
+		float bubble = sin((float)llclamp(piOver2Centered, 0.0f, pi)) * bMag;
+		thisSize += bubble;
 
-		if((top-thisSize)<rec.mBottom)continue; 
-		if((top-thisSize)>rec.mTop){}
+		if ((top - thisSize) < rec.mBottom) continue; 
+		if ((top - thisSize) > rec.mTop){}
 		else
 		{
-			if((top)>rec.mTop){top=rec.mTop;}//draw as much as the top one as we can
+			if ((top) > rec.mTop)
+			{
+				top = rec.mTop; //draw as much as the top one as we can
+			}
 
 			LLRect box;
 			box.setLeftTopAndSize(rec.mLeft+(bMag/2)+5-(bubble/2),llceil(top+.00001),(rec.getWidth()-bMag-10)+(bubble/1),(int)llfloor(thisSize+.00001f));
 
-			BOOL hoveringThis=FALSE;
-			if(top>mouse_y && (top-thisSize)<mouse_y)
+			BOOL hoveringThis = FALSE;
+			if (top > mouse_y && (top - thisSize) < mouse_y)
 			{
-				hoveringThis=TRUE;
+				hoveringThis = TRUE;
 				
 			}
 			BOOL iAMSelected = FALSE;
-			for(int i = 0; i < (int)selected.size();i++)
+			for (int i = 0; i < (int)selected.size(); i++)
 			{	
-				if(selected[i]==p)
+				if (selected[i] == p)
 				{
-					iAMSelected=TRUE;
+					iAMSelected = TRUE;
 				}
 			}
 
@@ -897,10 +1193,22 @@ void lggFriendsGroupsFloater::draw()
 			{
 				gl_rect_2d(imageBox,FALSE);
 				toDisplayToolTipText=toolTipText;
+				if(justClicked&&!showRightClick)
+				{
+					justClicked=FALSE;
+					toggleSelect(p);
+				}
 			}
 
 			LLUIImage *onlineImage = LLUI::getUIImage("icon_avatar_online.tga");
 			toolTipText = "Friend is Online";
+			LLColor4 overlay = LLColor4::white;
+			if(LGGFriendsGroups::getInstance()->isNonFriend(agent_id))
+			{
+				onlineImage = LLUI::getUIImage("icon_avatar_offline.tga");
+				toolTipText="Not on your friends list.";
+				overlay=LLColor4::black;
+			}else
 			if(!LLAvatarTracker::instance().getBuddyInfo(agent_id)->isOnline())
 			{
 				onlineImage = LLUI::getUIImage("icon_avatar_offline.tga");
@@ -911,7 +1219,7 @@ void lggFriendsGroupsFloater::draw()
 			gl_draw_scaled_image_with_border(imageBox.mLeft,imageBox.mBottom,
 				imageBox.getWidth(),imageBox.getHeight(),
 				onlineImage->getImage(), 
-				LLColor4::white,
+				overlay,
 				FALSE);
 			if(imageBox.pointInRect(mouse_x,mouse_y))
 			{
@@ -967,6 +1275,27 @@ void lggFriendsGroupsFloater::draw()
 					LLFloaterAvatarInfo::showFromDirectory(agent_id);
 				}
 			}
+
+			//(if set) av has been renamed button
+			if(LGGFriendsGroups::getInstance()->hasPseudonym(agent_id))
+			{
+				LLUIImage *profileImage = LLUI::getUIImage("icn_voice-localchat.tga");
+				imageBox.setLeftTopAndSize(xLoc-=(1+size),(box.getHeight()/2)+0+box.mBottom+(size/2),size,size);			
+				gl_draw_scaled_image_with_border(imageBox.mLeft,imageBox.mBottom,
+					imageBox.getWidth(),imageBox.getHeight(),
+					profileImage->getImage(),
+					LLColor4::white,
+					FALSE); 
+				if(imageBox.pointInRect(mouse_x,mouse_y))
+				{
+					//gl_rect_2d(imageBox,FALSE);
+					toDisplayToolTipText="Name has been changed.";
+					if(justClicked&&!showRightClick)
+					{
+						//nothing yet
+					}
+				}
+			}
 			//draw hover and selected			
 			if(iAMSelected)
 			{
@@ -981,11 +1310,20 @@ void lggFriendsGroupsFloater::draw()
 				gGL.color4fv(LLColor4::yellow.mV);
 				gl_rect_2d(box,FALSE);
 				if(justClicked&&!showRightClick)
-					toggleSelect(p);
-				
-				if(showRightClick)
 				{
-					if(selected.size()<1)
+					//if(requeireCTRL)//todo add setting
+					BOOL found = FALSE;
+					if(requireCTRL && (!gKeyboard->getKeyDown(KEY_CONTROL)))
+					{
+						found = toggleSelect(p);
+						selected.clear();
+					}
+					if (!found) toggleSelect(p);
+				}
+				
+				if (showRightClick)
+				{
+					if (selected.size() < 1)
 						toggleSelect(p);
 				}
 				
@@ -1069,12 +1407,13 @@ void lggFriendsGroupsFloater::draw()
 		LLColor4::white, LLFontGL::LEFT,
 		LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);*/
 
+	drawFilter();
 	if(showRightClick)drawRightClick();
 
 	gGL.popMatrix();
 	justClicked=FALSE;
 }
-void lggFriendsGroupsFloater::toggleSelect(int pos)
+BOOL lggFriendsGroupsFloater::toggleSelect(int pos)
 {
 	justClicked=FALSE;
 	bool found = false;
@@ -1096,6 +1435,7 @@ void lggFriendsGroupsFloater::toggleSelect(int pos)
 		}
 		selected=newList;
 	}
+	return found;
 	
 }
 BOOL lggFriendsGroupsFloater::handleMouseDown(S32 x,S32 y,MASK mask)
@@ -1109,19 +1449,165 @@ BOOL lggFriendsGroupsFloater::handleRightMouseDown(S32 x,S32 y,MASK mask)
 	{
 		contextRect.setLeftTopAndSize(x,y,2,2);
 		showRightClick=TRUE;
+		sInstance->currentRightClickText="";
 	}else
 	{
 		justClicked=TRUE;
 	}
 	return LLFloater::handleRightMouseDown(x,y,mask);
 }
-BOOL lggFriendsGroupsFloater::handleHover(S32 x,S32 y,MASK mask)
+BOOL lggFriendsGroupsFloater::handleScrollWheel(S32 x, S32 y, S32 clicks)
 {
-	mouse_x=x;
-	mouse_y=y;
-	hovered=gFrameTimeSeconds;
-	return LLFloater::handleHover(x,y,mask);
+	LLRect rec  = sInstance->getChild<LLPanel>("draw_region")->getRect();
+	int maxS =(((sInstance->currentList.size())*11)+200-(rec.getHeight()));
+
+	static LLCachedControl<bool> doZoom(gSavedSettings, "PhoenixFriendsGroupsDoZoom");
+	int moveAmt = 12;
+	if (!doZoom) moveAmt = 29;
+	
+
+	sInstance->scrollLoc=llclamp(sInstance->scrollLoc+(clicks*moveAmt),0,maxS);
+	return LLFloater::handleScrollWheel(x,y,clicks);
 }
+BOOL lggFriendsGroupsFloater::handleUnicodeCharHere(llwchar uni_char)
+{
+	if(' ' == uni_char 
+		&& !gKeyboard->getKeyRepeated(' ')
+		&& 
+		((!sInstance->showRightClick&&sInstance->currentFilter=="")||(sInstance->showRightClick&&sInstance->currentRightClickText==""))
+		)
+	{
+		sInstance->justClicked=TRUE;
+	}else
+	{
+		if(gKeyboard->getKeyDown(KEY_CONTROL)&&22==(U32)uni_char)
+		{
+			std::string toPaste=wstring_to_utf8str(gClipboard.getPasteWString());
+			if(sInstance->showRightClick)
+			{
+
+				sInstance->currentRightClickText+=toPaste;
+			}else
+			{
+				sInstance->currentFilter+=toPaste;
+			}
+		}else
+		if(((U32)uni_char!=27)&&((U32)uni_char!=8))
+		{
+			sInstance->getChild<LLCheckBoxCtrl>("haxCheckbox")->setFocus(TRUE);
+			if(!sInstance->showRightClick)
+			{
+				sInstance->currentFilter+=uni_char;
+				sInstance->generateCurrentList();
+			}else
+			{
+				sInstance->currentRightClickText+=uni_char;
+			}
+		}
+	}
+
+	return LLFloater::handleUnicodeCharHere(uni_char);
+}
+BOOL lggFriendsGroupsFloater::handleKeyHere( KEY key, MASK mask )
+{
+	LLRect rec  = sInstance->getChild<LLPanel>("draw_region")->getRect();
+	
+	int maxS =(((sInstance->currentList.size())*11)+200-(rec.getHeight()));
+	static LLCachedControl<bool> doZoom(gSavedSettings, "PhoenixFriendsGroupsDoZoom");
+	if (!doZoom) maxS = ((sInstance->currentList.size()*(29))+10-(rec.getHeight()));
+	std::string localFilter = sInstance->currentFilter;
+	if(sInstance->showRightClick)localFilter=sInstance->currentRightClickText;
+
+	int curLoc = sInstance->scrollLoc;
+	
+	if(key==KEY_PAGE_UP)
+	{
+		curLoc-=rec.getHeight();
+	}
+	else if (key == KEY_UP)
+	{
+		if (!doZoom) curLoc -= 29;
+		else curLoc -= 12;
+	}
+	else if(key == KEY_PAGE_DOWN)
+	{
+		curLoc += rec.getHeight();
+	}
+	else if(key == KEY_DOWN)
+	{
+		if (!doZoom) curLoc += 29;
+		else curLoc += 12;
+	}
+	if (key == KEY_ESCAPE)
+	{
+		if (localFilter != "")
+		{
+			sInstance->currentFilter = "";
+			sInstance->generateCurrentList();
+			return TRUE;
+		}
+		if(sInstance->showRightClick)
+		{
+			sInstance->showRightClick=FALSE;
+			return TRUE;
+		}
+	}
+	if (key == KEY_RETURN)
+	{
+		sInstance->justClicked=TRUE;
+	}
+	if (key == KEY_BACKSPACE)
+	{
+		int length = localFilter.length();
+		if (length > 0)
+		{
+			length--;
+			if (!sInstance->showRightClick)
+			{
+				sInstance->currentFilter=localFilter.substr(0,length);
+				sInstance->generateCurrentList();
+			}else
+			{
+				sInstance->currentRightClickText=localFilter.substr(0,length);
+			}
+		}
+	}
+
+	sInstance->scrollLoc = llclamp(curLoc, 0, maxS);
+
+	return LLFloater::handleKeyHere(key, mask);
+}
+
+BOOL lggFriendsGroupsFloater::handleDoubleClick(S32 x, S32 y, MASK mask)
+{
+	LLRect rec  = sInstance->getChild<LLPanel>("draw_region")->getRect();
+	LLRect topScroll = sInstance->getChild<LLPanel>("top_region")->getRect();
+	LLRect bottomScroll = sInstance->getChild<LLPanel>("bottom_region")->getRect();
+
+	int maxS =(((sInstance->currentList.size())*11)+200-(rec.getHeight()));
+	static LLCachedControl<bool> doZoom(gSavedSettings, "PhoenixFriendsGroupsDoZoom");
+	if (!doZoom) maxS = ((sInstance->currentList.size()*(29))+10-(rec.getHeight()));
+	
+	if (bottomScroll.pointInRect(x, y))
+	{
+		sInstance->scrollLoc = maxS;
+	}
+	else if (topScroll.pointInRect(x, y))
+	{
+		sInstance->scrollLoc = 0;
+	}
+	LGGFriendsGroups::getInstance()->setPseudonym(LLUUID("8465bb86-bc30-4589-b738-6c303e35ffc5"),"<3 Cazzie");
+	return LLFloater::handleDoubleClick(x,y,mask);
+}
+
+BOOL lggFriendsGroupsFloater::handleHover(S32 x, S32 y, MASK mask)
+{
+	mouse_x = x;
+	mouse_y = y;
+	hovered = gFrameTimeSeconds;
+	return LLFloater::handleHover(x, y, mask);
+}
+
 BOOL lggFriendsGroupsFloater::compareAv(LLUUID av1, LLUUID av2)
 {
 	std::string avN1("");
@@ -1133,10 +1619,10 @@ BOOL lggFriendsGroupsFloater::compareAv(LLUUID av1, LLUUID av2)
 		static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
 		switch (sPhoenixNameSystem)
 		{
-		case 0 : fullname = avatar_name.getLegacyName(); break;
-		case 1 : fullname = (avatar_name.mIsDisplayNameDefault? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
-		case 2 : fullname = avatar_name.mDisplayName; break;
-		default : fullname = avatar_name.getCompleteName(); break;
+			case 0 : fullname = avatar_name.getLegacyName(); break;
+			case 1 : fullname = (avatar_name.mIsDisplayNameDefault? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
+			case 2 : fullname = avatar_name.mDisplayName; break;
+			default : fullname = avatar_name.getCompleteName(); break;
 		}
 
 		avN1=fullname;
@@ -1147,10 +1633,10 @@ BOOL lggFriendsGroupsFloater::compareAv(LLUUID av1, LLUUID av2)
 		static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
 		switch (sPhoenixNameSystem)
 		{
-		case 0 : fullname = avatar_name.getLegacyName(); break;
-		case 1 : fullname = (avatar_name.mIsDisplayNameDefault? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
-		case 2 : fullname = avatar_name.mDisplayName; break;
-		default : fullname = avatar_name.getCompleteName(); break;
+			case 0 : fullname = avatar_name.getLegacyName(); break;
+			case 1 : fullname = (avatar_name.mIsDisplayNameDefault? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
+			case 2 : fullname = avatar_name.mDisplayName; break;
+			default : fullname = avatar_name.getCompleteName(); break;
 		}
 
 		avN2=fullname;
@@ -1180,9 +1666,42 @@ BOOL lggFriendsGroupsFloater::generateCurrentList()
 		if((! showOnline)&&(relation->isOnline()))continue;
 		if((! showOffline)&&(!relation->isOnline()))continue;
 		if((! yshowAllFriends&&(!LGGFriendsGroups::getInstance()->isFriendInGroup(p->first,currentGroup))))continue;
+		if(sInstance->currentFilter!="")
+		{
+			std::string avN("");
+			LLAvatarName avatar_name;
+			if (LLAvatarNameCache::get(p->first, &avatar_name))
+			{
+				std::string fullname;
+				static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+				switch (sPhoenixNameSystem)
+				{
+					case 0 : fullname = avatar_name.getLegacyName(); break;
+					case 1 : fullname = (avatar_name.mIsDisplayNameDefault? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
+					case 2 : fullname = avatar_name.mDisplayName; break;
+					default : fullname = avatar_name.getCompleteName(); break;
+				}
+
+				avN=fullname;
+			}
+
+			LLStringUtil::toLower(avN);
+			std::string workingFilter = sInstance->currentFilter;
+			LLStringUtil::toLower(workingFilter);
+			if(avN.find(workingFilter)==std::string::npos)
+			{
+				continue;
+			}
+		}
 
 		currentList.push_back(p->first);
 	}
+	//add ppl not in friends list
+	std::vector<LLUUID> nonFriends = LGGFriendsGroups::getInstance()->getListOfNonFriends();
+	//currentList.insert(currentList.end(), nonFriends.begin(), nonFriends.end());
+	for(int i=0;i<nonFriends.size();i++)
+		currentList.push_back(nonFriends[i]);
+
 	std::sort(currentList.begin(),currentList.end(),&lggFriendsGroupsFloater::compareAv);
 	return TRUE;
 }

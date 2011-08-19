@@ -673,10 +673,15 @@ void LLIMMgr::addMessage(
 	&& (!rlv_handler_t::isEnabled()
 	|| !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES)))
 	{
-		color = gSavedSettings.getColor4("PhoenixFriendChatColor");
+		if (sPhoenixColorFriendsChat)
+		{
+			color = gSavedSettings.getColor4("PhoenixFriendChatColor");
+		}
 		LLColor4 fgColor = LGGFriendsGroups::getInstance()->getFriendColor(other_participant_id);
-		if(fgColor!=LGGFriendsGroups::getInstance()->getDefaultColor())
-			color=fgColor;
+		if (fgColor != LGGFriendsGroups::getInstance()->getDefaultColor())
+		{
+			color = fgColor;
+		}
 	}
 	else if (sPhoenixColorLindensChat && is_linden)
 	{
