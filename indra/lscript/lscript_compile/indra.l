@@ -463,6 +463,8 @@ extern "C" { int yyerror(const char *fmt, ...); }
 "PRIM_TEXT"	     		{ count(); yylval.ival = LSL_PRIM_TEXT; return(INTEGER_CONSTANT); }
 "PRIM_NAME"	     		{ count(); yylval.ival = LSL_PRIM_NAME; return(INTEGER_CONSTANT); }
 "PRIM_DESC"	     		{ count(); yylval.ival = LSL_PRIM_DESC; return(INTEGER_CONSTANT); }
+"PRIM_OMEGA"			{ count(); yylval.ival = LSL_PRIM_OMEGA; return(INTEGER_CONSTANT); }
+"PRIM_ROT_LOCAL"		{ count(); yylval.ival = LSL_PRIM_ROT_LOCAL; return(INTEGER_CONSTANT); }
 
 "PRIM_TYPE_BOX"			{ count(); yylval.ival = LSL_PRIM_TYPE_BOX; return(INTEGER_CONSTANT); }
 "PRIM_TYPE_CYLINDER"	{ count(); yylval.ival = LSL_PRIM_TYPE_CYLINDER; return(INTEGER_CONSTANT); }
@@ -595,6 +597,7 @@ extern "C" { int yyerror(const char *fmt, ...); }
 "HTTP_BODY_MAXLENGTH" { count(); yylval.ival = HTTP_BODY_MAXLENGTH; return(INTEGER_CONSTANT); }
 "HTTP_BODY_TRUNCATED" { count(); yylval.ival = HTTP_BODY_TRUNCATED; return(INTEGER_CONSTANT); }
 "HTTP_VERIFY_CERT" { count(); yylval.ival = HTTP_VERIFY_CERT; return(INTEGER_CONSTANT); }
+"HTTP_VERBOSE_THROTTLE" { count(); yylval.ival = HTTP_VERBOSE_THROTTLE; return(INTEGER_CONSTANT); }
 
 "PARCEL_COUNT_TOTAL"		{ count(); yylval.ival = OC_TOTAL; return(INTEGER_CONSTANT); }
 "PARCEL_COUNT_OWNER"		{ count(); yylval.ival = OC_OWNER; return(INTEGER_CONSTANT); }
