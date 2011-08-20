@@ -76,6 +76,8 @@ const S32 LSL_PRIM_GLOW     	= 25;
 const S32 LSL_PRIM_TEXT     	= 26;
 const S32 LSL_PRIM_NAME     	= 27;
 const S32 LSL_PRIM_DESC     	= 28;
+const S32 LSL_PRIM_ROT_LOCAL	= 29;
+const S32 LSL_PRIM_OMEGA		= 32;
 
 const S32 LSL_PRIM_TYPE_BOX		= 0;
 const S32 LSL_PRIM_TYPE_CYLINDER= 1;
