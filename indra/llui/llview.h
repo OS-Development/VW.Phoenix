@@ -533,13 +533,16 @@ public:
 			if (widget)
 			{
 				// need non-const to update private dummy widget cache
-				llwarns << "Making dummy " << xml_tag << " named " << name << " in " << getName() << llendl;
+				llwarns << "Making dummy " << xml_tag << " named '" << name
+						<< "' in " << getName() << llendl;
 				mDummyWidgets.insert(std::make_pair(name, widget));
 			}
 			else
 			{
 				// dynamic cast will fail if T::fromXML only registered for base class
-				llwarns << "Failed to create dummy widget of requested type " << llendl;
+				llwarns << "Failed to create dummy widget of requested type ("
+						<< xml_tag << ") named '" << name << "'" << " in "
+						<< getName() << llendl;
 				return NULL;
 			}
 		}

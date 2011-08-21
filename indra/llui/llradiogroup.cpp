@@ -413,7 +413,7 @@ LLView* LLRadioGroup::fromXML(LLXMLNodePtr node, LLView *parent, LLUICtrlFactory
 			radio_group->addRadioButton(std::string("radio"), line, rect, font);
 			++token_iter;
 		}
-		llwarns << "Legacy radio group format used! Please convert to use <radio_item> tags!" << llendl;
+		llwarns << "Legacy radio group format used in " << parent->getName() << ". Please convert to use <radio_item> tags!" << llendl;
 	}
 	else
 	{

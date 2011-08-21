@@ -2797,7 +2797,7 @@ void LLView::setControlName(const std::string& control_name, LLView *context)
 
 	if (!mControlName.empty())
 	{
-		llwarns << "setControlName called twice on same control!" << llendl;
+		llwarns << "setControlName called twice on same control (" << control_name << ") !" << llendl;
 		mControlConnection.disconnect(); // disconnect current signal
 		mControlName.clear();
 	}
