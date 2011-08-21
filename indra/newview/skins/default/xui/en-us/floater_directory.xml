@@ -492,6 +492,9 @@ To buy direct, visit the land and click on the place name in the title bar.
 				<combo_item name="Parks&amp;Nature" value="park">
 					Parks &amp; Nature
 				</combo_item>
+				<combo_item name="Rental" value="rental">
+					Rental
+				</combo_item>
 				<combo_item name="Residential" value="home">
 					Residential
 				</combo_item>
@@ -536,6 +539,9 @@ To buy direct, visit the land and click on the place name in the title bar.
 				</combo_item>
 				<combo_item name="Parks&amp;Nature" value="park">
 					Parks &amp; Nature
+				</combo_item>
+				<combo_item name="Rental" value="rental">
+					Rental
 				</combo_item>
 				<combo_item name="Residential" value="home">
 					Residential
