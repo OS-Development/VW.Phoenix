@@ -262,19 +262,19 @@ void LLFace::setPool(LLFacePool* new_pool, LLViewerTexture *texturep)
 
 void LLFace::setTexture(LLViewerTexture* tex)
 {
-	if(mTexture == tex)
+	if (mTexture == tex)
 	{
 		return;
 	}
 
-	if(mTexture.notNull())
+	if (mTexture.notNull())
 	{
 		mTexture->removeFace(this);
 	}
 	
 	mTexture = tex;
 	
-	if(mTexture.notNull())
+	if (mTexture.notNull())
 	{
 		mTexture->addFace(this);
 	} 
@@ -478,17 +478,10 @@ void LLFace::renderSelected(LLViewerTexture *imagep, const LLColor4& color)
 			glMultMatrixf((GLfloat*)mDrawablep->getRegion()->mRenderMatrix.mMatrix);
 		}
 
-		setFaceColor(color);
-		renderSetColor();
-
+		glColor4fv(color.mV);
 		mVertexBuffer->setBuffer(LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0);
-#if !LL_RELEASE_FOR_DOWNLOAD
-		LLGLState::checkClientArrays("", LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0);
-#endif
 		mVertexBuffer->draw(LLRender::TRIANGLES, mIndicesCount, mIndicesIndex);
 
-		unsetFaceColor();
-		unsetFaceColor();
 		gGL.popMatrix();
 	}
 }
@@ -810,6 +803,7 @@ LLVector2 LLFace::surfaceToTexture(LLVector2 surface_coord, LLVector3 position, 
 // by planarProjection(). This is needed to match planar texgen parameters.
 void LLFace::getPlanarProjectedParams(LLQuaternion* face_rot, LLVector3* face_pos, F32* scale) const
 {
+	const LLMatrix4& vol_mat = getWorldMatrix();
 	const LLVolumeFace& vf = getViewerObject()->getVolume()->getVolumeFace(mTEOffset);
 	LLVector3 normal = vf.mVertices[0].mNormal;
 	LLVector3 binormal = vf.mVertices[0].mBinormal;
@@ -824,8 +818,8 @@ void LLFace::getPlanarProjectedParams(LLQuaternion* face_rot, LLVector3* face_po
 	ang = (projected_binormal.mV[VX] < 0.f) ? -ang : ang;
 	binormal.rotVec(ang, normal);
 	LLQuaternion local_rot( binormal % normal, binormal, normal );
-	*face_rot = local_rot * mXform->getWorldRotation();
-	*face_pos = mXform->getWorldPosition();
+	*face_rot = local_rot * vol_mat.quaternion();
+	*face_pos = vol_mat.getTranslation();
 }
 
 // Returns the necessary texture transform to align this face's TE to align_to's TE

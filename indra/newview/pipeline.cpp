@@ -3248,15 +3248,14 @@ void LLPipeline::renderForSelect(std::set<LLViewerObject*>& objects, BOOL render
 	gGL.setColorMask(true, false);
 	gPipeline.resetDrawOrders();
 
+	LLViewerCamera* viewer_camera = LLViewerCamera::getInstance();
 	for (std::set<LLViewerObject*>::iterator iter = objects.begin(); iter != objects.end(); ++iter)
 	{
-		stateSort((*iter)->mDrawable, *LLViewerCamera::getInstance());
+		stateSort((*iter)->mDrawable, *viewer_camera);
 	}
 
 	LLMemType mt(LLMemType::MTYPE_PIPELINE);
-	
-	
-	
+
 	glMatrixMode(GL_MODELVIEW);
 
 	LLGLSDefault gls_default;

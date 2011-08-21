@@ -313,8 +313,19 @@ private:
 
 inline LLFace* LLDrawable::getFace(const S32 i) const
 {
-	llassert((U32)i < mFaces.size());
-	llassert(mFaces[i]);
+	//llassert((U32)i < mFaces.size());
+	//llassert(mFaces[i]);
+
+	if ((U32)i >= mFaces.size())
+	{
+		llerrs << "Invalid face index." << llendl;
+	}
+
+	if (!mFaces[i])
+	{
+		llerrs << "Null face found." << llendl;
+	}
+
 	return mFaces[i];
 }
 

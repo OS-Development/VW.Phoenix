@@ -372,7 +372,7 @@ BOOL LLFastTimerView::handleMouseUp(S32 x, S32 y, MASK mask)
 
 BOOL LLFastTimerView::handleHover(S32 x, S32 y, MASK mask)
 {
-	if(LLFastTimer::sPauseHistory && mBarRect.pointInRect(x, y))
+	if (LLFastTimer::sPauseHistory && mBarRect.pointInRect(x, y))
 	{
 		mHoverIndex = -1;
 		mHoverBarIndex = MAX_VISIBLE_HISTORY - ((y - mBarRect.mBottom) * (MAX_VISIBLE_HISTORY + 2) / mBarRect.getHeight());
@@ -424,7 +424,7 @@ void LLFastTimerView::draw()
 	F64 iclock_freq = 1000.0 / clock_freq;
 	
 	S32 margin = 10;
-	S32 height = (S32) (gViewerWindow->getVirtualWindowRect().getHeight()*0.75f);
+	S32 height = (S32) (gViewerWindow->getVirtualWindowRect().getHeight() * 0.75f);
 	S32 width = (S32) (gViewerWindow->getVirtualWindowRect().getWidth() * 0.75f);
 	
 	// HACK: casting away const. Should use setRect or some helper function instead.

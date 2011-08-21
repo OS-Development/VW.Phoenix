@@ -1009,7 +1009,7 @@ BOOL LLVOVolume::genBBoxes(BOOL force_global)
 {
 	BOOL res = TRUE;
 
-	LLVector3 min,max;
+	LLVector3 min, max;
 
 	BOOL rebuild = mDrawable->isState(LLDrawable::REBUILD_VOLUME | LLDrawable::REBUILD_POSITION);
 
@@ -1020,9 +1020,9 @@ BOOL LLVOVolume::genBBoxes(BOOL force_global)
 		{
 			continue;
 		}
-		res &= face->genVolumeBBoxes(*getVolume(), i,
-										mRelativeXform, mRelativeXformInvTrans,
-										(mVolumeImpl && mVolumeImpl->isVolumeGlobal()) || force_global);
+		res &= face->genVolumeBBoxes(*getVolume(), i, mRelativeXform, mRelativeXformInvTrans,
+									 (mVolumeImpl && mVolumeImpl->isVolumeGlobal()) || force_global);
+
 		
 		if (rebuild)
 		{
@@ -1047,7 +1047,7 @@ BOOL LLVOVolume::genBBoxes(BOOL force_global)
 			}
 		}
 	}
-	
+
 	if (rebuild)
 	{
 		mDrawable->setSpatialExtents(min,max);
@@ -1056,7 +1056,7 @@ BOOL LLVOVolume::genBBoxes(BOOL force_global)
 
 	updateRadius();
 	mDrawable->movePartition();
-			
+
 	return res;
 }
 

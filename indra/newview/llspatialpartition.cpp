@@ -733,7 +733,7 @@ void LLSpatialGroup::unbound()
 
 LLSpatialGroup* LLSpatialGroup::getParent()
 {
-	if (isDead())
+	if (isDead() || !mOctreeNode)
 	{
 		return NULL;
 	}
@@ -2337,7 +2337,7 @@ void renderBoundingBox(LLDrawable* drawable, BOOL set_color = TRUE)
 		}
 		pos = (ext[0] + ext[1]) * 0.5f;
 		size = (ext[1] - ext[0]) * 0.5f;
-		drawBoxOutline(pos,size);
+		drawBoxOutline(pos, size);
 	}
 
 	//render drawable bounding box

@@ -6486,13 +6486,13 @@ void LLVOAvatar::setPixelAreaAndAngle(LLAgent &agent)
 	else
 	{
 		F32 radius = size.length();
-		mAppAngle = (F32) atan2( radius, range) * RAD_TO_DEG;
+		mAppAngle = (F32) atan2(radius, range) * RAD_TO_DEG;
 	}
 
 	// We always want to look good to ourselves
-	if( mIsSelf )
+	if (mIsSelf)
 	{
-		mPixelArea = llmax( mPixelArea, F32(TEX_IMAGE_SIZE_SELF / 16) );
+		mPixelArea = llmax(mPixelArea, F32(TEX_IMAGE_SIZE_SELF / 16));
 	}
 }
 

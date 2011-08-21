@@ -437,7 +437,7 @@ S32 LLQueuedThread::processNextRequest()
 	unlockData();
 
 	// This is the only place we will call req->setStatus() after
-	// it has initially been seet to STATUS_QUEUED, so it is
+	// it has initially been set to STATUS_QUEUED, so it is
 	// safe to access req.
 	if (req)
 	{

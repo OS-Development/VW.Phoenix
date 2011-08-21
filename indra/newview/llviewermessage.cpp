@@ -6640,147 +6640,157 @@ bool callback_script_dialog(const LLSD& notification, const LLSD& response)
 	return false;
 }
 static LLNotificationFunctorRegistration callback_script_dialog_reg_1("ScriptDialog", callback_script_dialog);
-static LLNotificationFunctorRegistration callback_script_dialog_reg_2("ScriptDialogGroup", callback_script_dialog);
+static LLNotificationFunctorRegistration callback_script_dialog_reg_2("ScriptTextBox", callback_script_dialog);
 
 void process_script_dialog(LLMessageSystem* msg, void**)
 {
-        if (!gAgent.mBlockSpam)
-        {
-	S32 i;
+	if (!gAgent.mBlockSpam)
+	{
+		S32 i;
 
-	LLSD payload;
+		LLSD payload;
 
-	std::string message;
-	std::string first_name;
-	std::string last_name;
-	std::string title;
+		std::string message;
+		std::string first_name;
+		std::string last_name;
+		std::string title;
 
-	LLUUID object_id;
-	S32 chat_channel;
-	msg->getUUID("Data", "ObjectID", object_id);
-	msg->getString("Data", "FirstName", first_name);
-	msg->getString("Data", "LastName", last_name);
-	msg->getString("Data", "ObjectName", title);
-	msg->getString("Data", "Message", message);
-	msg->getS32("Data", "ChatChannel", chat_channel);
+		LLUUID object_id;
+		S32 chat_channel;
+		msg->getUUID("Data", "ObjectID", object_id);
+		msg->getString("Data", "FirstName", first_name);
+		msg->getString("Data", "LastName", last_name);
+		msg->getString("Data", "ObjectName", title);
+		msg->getString("Data", "Message", message);
+		msg->getS32("Data", "ChatChannel", chat_channel);
+
+		if (first_name == "(???)")
+		{
+			first_name.clear();
+		}
+		if (last_name == "(???)")
+		{
+			last_name.clear();
+		}
 
 		// unused for now
-	LLUUID image_id;
-	msg->getUUID("Data", "ImageID", image_id);
+		LLUUID image_id;
+		msg->getUUID("Data", "ImageID", image_id);
 
-	payload["sender"] = msg->getSender().getIPandPort();
-	payload["object_id"] = object_id;
-	payload["chat_channel"] = chat_channel;
+		payload["sender"] = msg->getSender().getIPandPort();
+		payload["object_id"] = object_id;
+		payload["chat_channel"] = chat_channel;
 
-	// build up custom form
-	S32 button_count = msg->getNumberOfBlocks("Buttons");
-	if (button_count > SCRIPT_DIALOG_MAX_BUTTONS)
-	{
-		llwarns << "Too many script dialog buttons - omitting some" << llendl;
-		button_count = SCRIPT_DIALOG_MAX_BUTTONS;
-	}
+		// build up custom form
+		S32 button_count = msg->getNumberOfBlocks("Buttons");
+		if (button_count > SCRIPT_DIALOG_MAX_BUTTONS)
+		{
+			llwarns << "Too many script dialog buttons - omitting some" << llendl;
+			button_count = SCRIPT_DIALOG_MAX_BUTTONS;
+		}
 
-	LLNotificationForm form;
-	std::string firstbutton;
-	msg->getString("Buttons", "ButtonLabel", firstbutton, 0);
-	form.addElement("button", std::string(firstbutton));
-	BOOL isTextBox = FALSE;
-	std::string deftext;
-	if(firstbutton == "!!llTextBox!!")//hack 4 a hack o.o
-	{
+		LLNotificationForm form;
+		std::string firstbutton;
+		msg->getString("Buttons", "ButtonLabel", firstbutton, 0);
+		form.addElement("button", std::string(firstbutton));
+		BOOL isTextBox = FALSE;
+		std::string deftext;
+		if (firstbutton == "!!llTextBox!!")//hack 4 a hack o.o
+		{
 			isTextBox = TRUE;
 			for (i = 1; i < button_count; i++)
 			{
-					std::string tdesc;
-					msg->getString("Buttons", "ButtonLabel", tdesc, i);
-					deftext += tdesc;
+				std::string tdesc;
+				msg->getString("Buttons", "ButtonLabel", tdesc, i);
+				deftext += tdesc;
 			}
-	}
-	else
-	{
-		for (i = 1; i < button_count; i++)
-		{
-			std::string tdesc;
-			msg->getString("Buttons", "ButtonLabel", tdesc, i);
-			form.addElement("button", std::string(tdesc));
 		}
-	}
+		else
+		{
+			for (i = 1; i < button_count; i++)
+			{
+				std::string tdesc;
+				msg->getString("Buttons", "ButtonLabel", tdesc, i);
+				form.addElement("button", std::string(tdesc));
+			}
+		}
 
-	LLSD args;
-	args["TITLE"] = title;
-	args["MESSAGE"] = message;
-	LLNotificationPtr notification;
-	if (!first_name.empty())
-	{
-		args["FIRST"] = first_name;
-		args["LAST"] = last_name;
+		LLSD args;
+		args["TITLE"] = title;
+		args["MESSAGE"] = message;
+		LLNotificationPtr notification;
+		if (!first_name.empty())
+		{
+			args["FIRST"] = first_name;
+			args["LAST"] = last_name;
 
-		std::string fullname = first_name + " " + last_name;
-                bool is_us = false;
-                LLViewerObject* objectp = gObjectList.findObject(object_id);
-                if(objectp)
-                {
-                        is_us = objectp->permYouOwner();
-                }
+			std::string fullname = first_name + " " + last_name;
+			bool is_us = false;
+			LLViewerObject* objectp = gObjectList.findObject(object_id);
+			if (objectp)
+			{
+				is_us = objectp->permYouOwner();
+			}
 
-                // Dialog Spam Prevention by Cryogenic
-                if(dialogSpamOn && !is_us)
-                {
-                        if(!d_spam.getStarted())
-                        {
-                                d_spam.start();
-                        }
-                        if(blacklisted_names.find(fullname) != -1)
-                        {
-                                return;
-                        }
-                        std::map< std::string , S32 >::iterator itr = lastd_names.find(fullname);
-                        if(itr != lastd_names.end())
-                        {
-                                if(d_spam.getElapsedTimeF32() <= spamTime)
-                                {
-                                        if((*itr).second > spamCount)
-                                        {
-                                                blacklisted_names.put(fullname);
-                                                LL_INFOS("process_script_dialog") << "blocked " << object_id.asString() << " and muted " << fullname << LL_ENDL;//" (" << key.asString() << ")" <<LL_ENDL;
-                                                args["KEY"] = object_id;
-                                                LLNotifications::getInstance()->add("BlockedDialogs",args);
-                                                return;
-                                        }
-                                        else
-                                        {
-                                                (*itr).second++;
-                                        }
-                                }
-                                else
-                                {
-                                        lastd_names.erase(lastd_names.begin(),lastd_names.end());
-                                        d_spam.reset();
-                                }
-                        }
-                        else
-                        {
-                                //llinfos << "Added " << fullname << " to list" << llendl;
-                                lastd_names[fullname] = 0;
-                        }
-                }
-                if(!isTextBox)
-                {
-			notification = LLNotifications::instance().add(
+			// Dialog Spam Prevention by Cryogenic
+			if (dialogSpamOn && !is_us)
+			{
+				if (!d_spam.getStarted())
+				{
+					d_spam.start();
+				}
+                if (blacklisted_names.find(fullname) != -1)
+				{
+					return;
+				}
+				std::map< std::string , S32 >::iterator itr = lastd_names.find(fullname);
+				if (itr != lastd_names.end())
+				{
+					if (d_spam.getElapsedTimeF32() <= spamTime)
+					{
+						if ((*itr).second > spamCount)
+						{
+							blacklisted_names.put(fullname);
+							LL_INFOS("process_script_dialog") << "blocked " << object_id.asString() << " and muted " << fullname << LL_ENDL;//" (" << key.asString() << ")" <<LL_ENDL;
+							args["KEY"] = object_id;
+							LLNotifications::getInstance()->add("BlockedDialogs",args);
+							return;
+						}
+						else
+						{
+							(*itr).second++;
+						}
+					}
+					else
+					{
+						lastd_names.erase(lastd_names.begin(),lastd_names.end());
+						d_spam.reset();
+					}
+				}
+				else
+				{
+					//llinfos << "Added " << fullname << " to list" << llendl;
+					lastd_names[fullname] = 0;
+				}
+			}
+			if (!isTextBox)
+			{
+				notification = LLNotifications::instance().add(
 				LLNotification::Params("ScriptDialog").substitutions(args).payload(payload).form_elements(form.asLLSD()));
-                }else
-                {
-                        args["DEFAULT"] = deftext;
-                        payload["textbox"] = "true";
-                        LLNotifications::instance().add("ScriptTextBoxDialog", args, payload, callback_script_dialog);
-                }
-	}
-	else
-	{
-		args["GROUPNAME"] = last_name;
-		notification = LLNotifications::instance().add(
+			}
+			else
+			{
+				args["DEFAULT"] = deftext;
+				payload["textbox"] = "true";
+				LLNotifications::instance().add("ScriptTextBoxDialog", args, payload, callback_script_dialog);
+			}
+		}
+		else
+		{
+			args["GROUPNAME"] = last_name;
+			notification = LLNotifications::instance().add(
 			LLNotification::Params("ScriptDialogGroup").substitutions(args).payload(payload).form_elements(form.asLLSD()));
-	}
+		}
 	}
 }
 
