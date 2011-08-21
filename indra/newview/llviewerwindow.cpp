@@ -5416,7 +5416,7 @@ void LLPickInfo::fetchResults()
 	}
 	else if (objectp)
 	{
-		if( objectp->getPCode() == LLViewerObject::LL_VO_SURFACE_PATCH )
+		if (objectp->getPCode() == LLViewerObject::LL_VO_SURFACE_PATCH)
 		{
 			// Hit land
 			mPickType = PICK_LAND;
@@ -5424,11 +5424,15 @@ void LLPickInfo::fetchResults()
 
 			// put global position into land_pos
 			LLVector3d land_pos;
-			if (gViewerWindow->mousePointOnLandGlobal(mPickPt.mX, mPickPt.mY, &land_pos))
+			if (!gViewerWindow->mousePointOnLandGlobal(mPickPt.mX, mPickPt.mY, &land_pos))
 			{
-				// Fudge the land focus a little bit above ground.
-				mPosGlobal = land_pos + LLVector3d::z_axis * 0.1f;
+				// The selected point is beyond the draw distance or is otherwise 
+				// not selectable. Return before calling mPickCallback().
+				return;
 			}
+
+			// Fudge the land focus a little bit above ground.
+			mPosGlobal = land_pos + LLVector3d::z_axis * 0.1f;
 		}
 		else
 		{
