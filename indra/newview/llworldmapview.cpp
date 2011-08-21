@@ -164,15 +164,15 @@ void LLWorldMapView::cleanupClass()
 	sForSaleAdultImage = NULL;
 }
 
-LLWorldMapView::LLWorldMapView(const std::string& name, const LLRect& rect )
+LLWorldMapView::LLWorldMapView(const std::string& name, const LLRect& rect)
 :	LLPanel(name, rect, BORDER_NO), 
-	mBackgroundColor( LLColor4( OCEAN_RED, OCEAN_GREEN, OCEAN_BLUE, 1.f ) ),
+	mBackgroundColor(LLColor4(OCEAN_RED, OCEAN_GREEN, OCEAN_BLUE, 1.f)),
 	mItemPicked(FALSE),
-	mPanning( FALSE ),
-	mMouseDownPanX( 0 ),
-	mMouseDownPanY( 0 ),
-	mMouseDownX( 0 ),
-	mMouseDownY( 0 ),
+	mPanning(FALSE),
+	mMouseDownPanX(0),
+	mMouseDownPanY(0),
+	mMouseDownX(0),
+	mMouseDownY(0),
 	mSelectIDStart(0)
 {
 	//LL_INFOS("World Map") << "Creating the Map -> LLWorldMapView::LLWorldMapView()" << LL_ENDL;
@@ -181,44 +181,44 @@ LLWorldMapView::LLWorldMapView(const std::string& name, const LLRect& rect )
 
 	const S32 DIR_WIDTH = 10;
 	const S32 DIR_HEIGHT = 10;
-	LLRect major_dir_rect(  0, DIR_HEIGHT, DIR_WIDTH, 0 );
+	LLRect major_dir_rect(0, DIR_HEIGHT, DIR_WIDTH, 0);
 
-	mTextBoxNorth = new LLTextBox( std::string("N"), major_dir_rect );
-	addChild( mTextBoxNorth );
+	mTextBoxNorth = new LLTextBox(std::string("N"), major_dir_rect);
+	addChild(mTextBoxNorth);
 
-	LLColor4 minor_color( 1.f, 1.f, 1.f, .7f );
+	LLColor4 minor_color(1.f, 1.f, 1.f, .7f);
 	
-	mTextBoxEast =	new LLTextBox( std::string("E"), major_dir_rect );
-	mTextBoxEast->setColor( minor_color );
-	addChild( mTextBoxEast );
+	mTextBoxEast =	new LLTextBox(std::string("E"), major_dir_rect);
+	mTextBoxEast->setColor(minor_color);
+	addChild(mTextBoxEast);
 	
 	major_dir_rect.mRight += 1 ;
-	mTextBoxWest =	new LLTextBox( std::string("W"), major_dir_rect );
-	mTextBoxWest->setColor( minor_color );
-	addChild( mTextBoxWest );
+	mTextBoxWest = new LLTextBox(std::string("W"), major_dir_rect);
+	mTextBoxWest->setColor(minor_color);
+	addChild(mTextBoxWest);
 	major_dir_rect.mRight -= 1 ;
 
-	mTextBoxSouth = new LLTextBox( std::string("S"), major_dir_rect );
-	mTextBoxSouth->setColor( minor_color );
-	addChild( mTextBoxSouth );
+	mTextBoxSouth = new LLTextBox(std::string("S"), major_dir_rect);
+	mTextBoxSouth->setColor(minor_color);
+	addChild(mTextBoxSouth);
 
-	LLRect minor_dir_rect(  0, DIR_HEIGHT, DIR_WIDTH * 2, 0 );
+	LLRect minor_dir_rect(0, DIR_HEIGHT, DIR_WIDTH * 2, 0);
 
-	mTextBoxSouthEast =	new LLTextBox( std::string("SE"), minor_dir_rect );
-	mTextBoxSouthEast->setColor( minor_color );
-	addChild( mTextBoxSouthEast );
+	mTextBoxSouthEast =	new LLTextBox(std::string("SE"), minor_dir_rect);
+	mTextBoxSouthEast->setColor(minor_color);
+	addChild(mTextBoxSouthEast);
 	
-	mTextBoxNorthEast = new LLTextBox( std::string("NE"), minor_dir_rect );
-	mTextBoxNorthEast->setColor( minor_color );
-	addChild( mTextBoxNorthEast );
+	mTextBoxNorthEast = new LLTextBox(std::string("NE"), minor_dir_rect);
+	mTextBoxNorthEast->setColor(minor_color);
+	addChild(mTextBoxNorthEast);
 	
-	mTextBoxSouthWest =	new LLTextBox( std::string("SW"), minor_dir_rect );
-	mTextBoxSouthWest->setColor( minor_color );
-	addChild( mTextBoxSouthWest );
+	mTextBoxSouthWest =	new LLTextBox(std::string("SW"), minor_dir_rect);
+	mTextBoxSouthWest->setColor(minor_color);
+	addChild(mTextBoxSouthWest);
 
-	mTextBoxNorthWest = new LLTextBox( std::string("NW"), minor_dir_rect );
-	mTextBoxNorthWest->setColor( minor_color );
-	addChild( mTextBoxNorthWest );
+	mTextBoxNorthWest = new LLTextBox(std::string("NW"), minor_dir_rect);
+	mTextBoxNorthWest->setColor(minor_color);
+	addChild(mTextBoxNorthWest);
 }
 
 
@@ -236,7 +236,7 @@ void LLWorldMapView::cleanupTextures()
 
 
 // static
-void LLWorldMapView::setScale( F32 scale )
+void LLWorldMapView::setScale(F32 scale)
 {
 	if (scale != sMapScale)
 	{
@@ -259,7 +259,7 @@ void LLWorldMapView::setScale( F32 scale )
 
 
 // static
-void LLWorldMapView::translatePan( S32 delta_x, S32 delta_y )
+void LLWorldMapView::translatePan(S32 delta_x, S32 delta_y)
 {
 	sPanX += delta_x;
 	sPanY += delta_y;
@@ -270,7 +270,7 @@ void LLWorldMapView::translatePan( S32 delta_x, S32 delta_y )
 
 
 // static
-void LLWorldMapView::setPan( S32 x, S32 y, BOOL snap )
+void LLWorldMapView::setPan(S32 x, S32 y, BOOL snap)
 {
 	sTargetPanX = (F32)x;
 	sTargetPanY = (F32)y;
@@ -347,6 +347,8 @@ void LLWorldMapView::draw()
 	gGL.setAlphaRejectSettings(LLRender::CF_DEFAULT);
 	gGL.setColorMask(true, true);
 
+	static LLCachedControl<bool> map_show_land_for_sale(gSavedSettings, "MapShowLandForSale");
+
 	// Draw per sim overlayed information (names, mature, offline...)
 	for (LLWorldMap::sim_info_map_t::const_iterator it = LLWorldMap::getInstance()->getRegionMap().begin();
 		 it != LLWorldMap::getInstance()->getRegionMap().end(); ++it)
@@ -370,7 +372,7 @@ void LLWorldMapView::draw()
 
 		// Discard if region is outside the screen rectangle (not visible on screen)
 		if ((top < 0.f)   || (bottom > height) ||
-			(right < 0.f) || (left > width)       )
+			(right < 0.f) || (left > width))
 		{
 			// Drop the "land for sale" fetching priority since it's outside the view rectangle
 			info->dropImagePriority();
@@ -420,7 +422,7 @@ void LLWorldMapView::draw()
 			gGL.end();
 		}
 		 **********************/
-		else if (gSavedSettings.getBOOL("MapShowLandForSale") && (level <= DRAW_LANDFORSALE_THRESHOLD))
+		else if (map_show_land_for_sale && (level <= DRAW_LANDFORSALE_THRESHOLD))
 		{
 			// Draw the overlay image "Land for Sale / Land for Auction"
 			LLViewerTexture* overlayimage = info->getLandForSaleImage();
@@ -531,13 +533,20 @@ void LLWorldMapView::draw()
 	gGL.setAlphaRejectSettings(LLRender::CF_DEFAULT);
 	gGL.setSceneBlendType(LLRender::BT_ALPHA);
 
+	static LLCachedControl<bool> show_events(gSavedSettings, "MapShowEvents");
+	static LLCachedControl<bool> show_mature_events(gSavedSettings, "ShowMatureEvents");
+	static LLCachedControl<bool> show_adult_events(gSavedSettings, "ShowAdultEvents");
+	static LLCachedControl<bool> show_infohubs(gSavedSettings, "MapShowInfohubs");
+	static LLCachedControl<bool> show_telehubs(gSavedSettings, "MapShowTelehubs");
+	static LLCachedControl<bool> show_land_for_sale(gSavedSettings, "MapShowLandForSale");
+
 	// Draw item infos if we're not zoomed out too much and there's something to draw
-	if ((level <= DRAW_SIMINFO_THRESHOLD) && (gSavedSettings.getBOOL("MapShowInfohubs") || 
-											  gSavedSettings.getBOOL("MapShowTelehubs") ||
-											  gSavedSettings.getBOOL("MapShowLandForSale") || 
-											  gSavedSettings.getBOOL("MapShowEvents") || 
-											  gSavedSettings.getBOOL("ShowMatureEvents") ||
-											  gSavedSettings.getBOOL("ShowAdultEvents")))
+	if ((level <= DRAW_SIMINFO_THRESHOLD) && (show_infohubs || 
+											  show_telehubs ||
+											  show_land_for_sale || 
+											  show_events || 
+											  show_mature_events ||
+											  show_adult_events))
 	{
 		drawItems();
 	}
@@ -839,9 +848,16 @@ void LLWorldMapView::drawItems()
 {
 	bool mature_enabled = gAgent.canAccessMature();
 	bool adult_enabled = gAgent.canAccessAdult();
+	
+	static LLCachedControl<bool> show_events(gSavedSettings, "MapShowEvents");
+	static LLCachedControl<bool> show_mature_events(gSavedSettings, "ShowMatureEvents");
+	static LLCachedControl<bool> show_adult_events(gSavedSettings, "ShowAdultEvents");
+	static LLCachedControl<bool> show_infohubs(gSavedSettings, "MapShowInfohubs");
+	static LLCachedControl<bool> show_telehubs(gSavedSettings, "MapShowTelehubs");
+	static LLCachedControl<bool> show_land_for_sale(gSavedSettings, "MapShowLandForSale");
 
-    BOOL show_mature = mature_enabled && gSavedSettings.getBOOL("ShowMatureEvents");
-	BOOL show_adult = adult_enabled && gSavedSettings.getBOOL("ShowAdultEvents");
+    bool show_mature = mature_enabled && show_mature_events;
+	bool show_adult = adult_enabled && show_adult_events;
 
 	for (handle_list_t::iterator iter = mVisibleRegions.begin(); iter != mVisibleRegions.end(); ++iter)
 	{
@@ -852,17 +868,17 @@ void LLWorldMapView::drawItems()
 			continue;
 		}
 		// Infohubs
-		if (gSavedSettings.getBOOL("MapShowInfohubs"))
+		if (show_infohubs)
 		{
 			drawGenericItems(info->getInfoHub(), sInfohubImage);
 		}
 		// Telehubs
-		if (gSavedSettings.getBOOL("MapShowTelehubs"))
+		if (show_telehubs)
 		{
 			drawGenericItems(info->getTeleHub(), sTelehubImage);
 		}
 		// Land for sale
-		if (gSavedSettings.getBOOL("MapShowLandForSale"))
+		if (show_land_for_sale) 
 		{
 			drawGenericItems(info->getLandForSale(), sForSaleImage);
 			// for 1.23, we're showing normal land and adult land in the same UI; you don't
@@ -874,7 +890,7 @@ void LLWorldMapView::drawItems()
 			}
 		}
 		// PG Events
-		if (gSavedSettings.getBOOL("MapShowEvents"))
+		if (show_events)
 		{
 			drawGenericItems(info->getPGEvent(), sEventImage);
 		}
@@ -1511,6 +1527,7 @@ void LLWorldMapView::handleClick(S32 x, S32 y, MASK mask,
 	{
 		bool show_mature = gAgent.canAccessMature() && gSavedSettings.getBOOL("ShowMatureEvents");
 		bool show_adult = gAgent.canAccessAdult() && gSavedSettings.getBOOL("ShowAdultEvents");
+		BOOL show_land_for_sale = gSavedSettings.getBOOL("ShowAdultEvents");
 
 		// Test hits if trackable data are displayed, otherwise, we don't even bother
 		if (gSavedSettings.getBOOL("MapShowEvents") || show_mature || show_adult || gSavedSettings.getBOOL("MapShowLandForSale"))
@@ -1573,7 +1590,7 @@ void LLWorldMapView::handleClick(S32 x, S32 y, MASK mask,
 						++it;
 					}
 				}
-				if (gSavedSettings.getBOOL("MapShowLandForSale"))
+				if (show_land_for_sale)
 				{
 					LLSimInfo::item_info_list_t::const_iterator it = siminfo->getLandForSale().begin();
 					while (it != siminfo->getLandForSale().end())

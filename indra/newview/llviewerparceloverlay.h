@@ -99,7 +99,7 @@ private:
 
 	void 	updateOverlayTexture();
 	void	updatePropertyLines();
-	
+
 private:
 	// Back pointer to the region that owns this structure.
 	LLViewerRegion*	mRegion;

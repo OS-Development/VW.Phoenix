@@ -231,77 +231,53 @@ void LLViewerParcelOverlay::updateOverlayTexture()
 		return;
 	}
 	// Can do this because gColors are actually stored as LLColor4U
-	const LLColor4U avail = gColors.getColor4U("PropertyColorAvail");
-	const LLColor4U owned = gColors.getColor4U("PropertyColorOther");
-	const LLColor4U group = gColors.getColor4U("PropertyColorGroup");
-	const LLColor4U self  = gColors.getColor4U("PropertyColorSelf");
-	const LLColor4U for_sale  = gColors.getColor4U("PropertyColorForSale");
-	const LLColor4U auction  = gColors.getColor4U("PropertyColorAuction");
+	LLCachedControl<LLColor4U> property_color_avail(gColors, "PropertyColorAvail");
+	LLCachedControl<LLColor4U> property_color_other(gColors, "PropertyColorOther");
+	LLCachedControl<LLColor4U> property_color_group(gColors, "PropertyColorGroup");
+	LLCachedControl<LLColor4U> property_color_self(gColors, "PropertyColorSelf");
+	LLCachedControl<LLColor4U> property_color_for_sale(gColors, "PropertyColorForSale");
+	LLCachedControl<LLColor4U> property_color_auction(gColors, "PropertyColorAuction");
 
 	// Create the base texture.
+	LLColor4U color;
 	U8 *raw = mImageRaw->getData();
 	const S32 COUNT = mParcelGridsPerEdge * mParcelGridsPerEdge;
 	S32 max = mOverlayTextureIdx + mParcelGridsPerEdge;
 	if (max > COUNT) max = COUNT;
-	S32 pixel_index = mOverlayTextureIdx*OVERLAY_IMG_COMPONENTS;
+	S32 pixel_index = mOverlayTextureIdx * OVERLAY_IMG_COMPONENTS;
 	S32 i;
 	for (i = mOverlayTextureIdx; i < max; i++)
 	{
 		U8 ownership = mOwnership[i];
 
-		U8 r,g,b,a;
-
 		// Color stored in low three bits
-		switch( ownership & 0x7 )
+		switch (ownership & 0x7)
 		{
-		case PARCEL_PUBLIC:
-			r = avail.mV[VRED];
-			g = avail.mV[VGREEN];
-			b = avail.mV[VBLUE];
-			a = avail.mV[VALPHA];
-			break;
-		case PARCEL_OWNED:
-			r = owned.mV[VRED];
-			g = owned.mV[VGREEN];
-			b = owned.mV[VBLUE];
-			a = owned.mV[VALPHA];
-			break;
-		case PARCEL_GROUP:
-			r = group.mV[VRED];
-			g = group.mV[VGREEN];
-			b = group.mV[VBLUE];
-			a = group.mV[VALPHA];
-			break;
-		case PARCEL_SELF:
-			r = self.mV[VRED];
-			g = self.mV[VGREEN];
-			b = self.mV[VBLUE];
-			a = self.mV[VALPHA];
-			break;
-		case PARCEL_FOR_SALE:
-			r = for_sale.mV[VRED];
-			g = for_sale.mV[VGREEN];
-			b = for_sale.mV[VBLUE];
-			a = for_sale.mV[VALPHA];
-			break;
-		case PARCEL_AUCTION:
-			r = auction.mV[VRED];
-			g = auction.mV[VGREEN];
-			b = auction.mV[VBLUE];
-			a = auction.mV[VALPHA];
-			break;
-		default:
-			r = self.mV[VRED];
-			g = self.mV[VGREEN];
-			b = self.mV[VBLUE];
-			a = self.mV[VALPHA];
-			break;
+			case PARCEL_PUBLIC:
+				color = property_color_avail;
+				break;
+			case PARCEL_OWNED:
+				color = property_color_other;
+				break;
+			case PARCEL_GROUP:
+				color = property_color_group;
+				break;
+			case PARCEL_FOR_SALE:
+				color = property_color_for_sale;
+				break;
+			case PARCEL_AUCTION:
+				color = property_color_auction;
+				break;
+			case PARCEL_SELF:
+			default:
+				color = property_color_self;
+				break;
 		}
 
-		raw[pixel_index + 0] = r;
-		raw[pixel_index + 1] = g;
-		raw[pixel_index + 2] = b;
-		raw[pixel_index + 3] = a;
+		raw[pixel_index + 0] = color.mV[VRED];
+		raw[pixel_index + 1] = color.mV[VGREEN];
+		raw[pixel_index + 2] = color.mV[VBLUE];
+		raw[pixel_index + 3] = color.mV[VALPHA];
 
 		pixel_index += OVERLAY_IMG_COMPONENTS;
 	}
