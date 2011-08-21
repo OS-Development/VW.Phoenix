@@ -67,8 +67,6 @@
 #include "llviewermedia.h"
 #include "llvovolume.h"
 
-#include "lltexturecache.h"
-#include "llimagemetadatareader.h"
 ///////////////////////////////////////////////////////////////////////////////
 
 // statics
@@ -106,57 +104,6 @@ BOOL LLViewerTexture::sDontLoadVolumeTextures = FALSE;
 const F32 desired_discard_bias_min = -2.0f; // -max number of levels to improve image quality by
 const F32 desired_discard_bias_max = (F32)MAX_DISCARD_LEVEL; // max number of levels to reduce image quality by
 const F64 log_2 = log(2.0);
-
-class CommentCacheReadResponder : public LLTextureCache::ReadResponder
-{
-public:
-	CommentCacheReadResponder(LLPointer<LLViewerTexture> image)
-		: mViewerImage(image)
-	{
-		mID = image->getID();
-	}
-	void setData(U8* data, S32 datasize, S32 imagesize, S32 imageformat, BOOL imagelocal)
-	{
-		if (mFormattedImage.notNull())
-		{
-			if(imageformat==IMG_CODEC_TGA && mFormattedImage->getCodec()==IMG_CODEC_J2C)
-			{
-				//llwarns<<"Bleh its a tga not saving"<<llendl;
-				mFormattedImage=NULL;
-				mImageSize=0;
-				return;
-			}
-			llassert_always(mFormattedImage->getCodec() == imageformat);
-			mFormattedImage->appendData(data, datasize);
-		}
-		else
-		{
-			mFormattedImage = LLImageFormatted::createFromType(imageformat);
-			mFormattedImage->setData(data,datasize);
-		}
-		mImageSize = imagesize;
-		mImageLocal = imagelocal;
-	}
-
-	virtual void completed(bool success)
-	{
-		LLViewerFetchedTexture* tex = LLViewerTextureManager::staticCastToFetchedTexture(mViewerImage);
-		if(tex && success && (mFormattedImage.notNull()) && mImageSize>0 && mViewerImage.notNull())
-		{
-			//llinfos << "SUCCESS getting texture "<<mID<< llendl;
-			tex->mDecodedComment = LLImageMetaDataReader::ExtractKDUUploadComment(
-				mFormattedImage->getData(),
-				mFormattedImage->getDataSize());
-		}
-		if(mFormattedImage.notNull())
-			mFormattedImage->deleteData();		
-		mFormattedImage=NULL;
-	}
-private:
-	LLPointer<LLImageFormatted> mFormattedImage;
-	LLPointer<LLViewerTexture> mViewerImage;
-	LLUUID mID;
-};
 
 
 //----------------------------------------------------------------------------------------------
@@ -1418,6 +1365,9 @@ BOOL LLViewerFetchedTexture::createTexture(S32 usename/*= 0*/)
 // 						mRawDiscardLevel, 
 // 						mRawImage->getWidth(), mRawImage->getHeight(),mRawImage->getDataSize())
 // 			<< mID.getString() << llendl;
+
+	mDecodedComment = mRawImage->decodedComment;
+
 	BOOL res = TRUE;
 	if (!gNoRender)
 	{
@@ -1472,13 +1422,6 @@ BOOL LLViewerFetchedTexture::createTexture(S32 usename/*= 0*/)
 			setIsMissingAsset();
 			destroyRawImage();
 			return FALSE;
-		}
-
-		static LLCachedControl<bool> PhoenixShowCommentsForAll(gSavedSettings, "PhoenixShowCommentsForAll");
-		if(PhoenixShowCommentsForAll)
-		{
-			CommentCacheReadResponder* responder = new CommentCacheReadResponder(this);
-			LLAppViewer::getTextureCache()->readFromCache(getID(),LLWorkerThread::PRIORITY_HIGH,0,999999,responder);
 		}
 
 		res = mGLTexturep->createGLTexture(mRawDiscardLevel, mRawImage, usename, TRUE, mBoostLevel);
