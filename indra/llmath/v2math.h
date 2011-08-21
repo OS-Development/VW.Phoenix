@@ -249,6 +249,12 @@ inline F32		LLVector2::normalize(void)
 	return (mag);
 }
 
+// checker
+inline bool LLVector2::isFinite() const
+{
+	return (llfinite(mV[VX]) && llfinite(mV[VY]));
+}
+
 // deprecated
 inline F32		LLVector2::magVec(void) const
 {

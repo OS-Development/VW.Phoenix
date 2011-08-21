@@ -40,7 +40,7 @@
 #include "lldarray.h"
 #include "llframetimer.h"
 #include "lluuid.h"
-#include "llviewerimage.h"
+#include "llviewertexture.h"
 
 class LLViewerRegion;
 class LLVector3;
@@ -54,7 +54,7 @@ public:
 	~LLViewerParcelOverlay();
 
 	// ACCESS
-	LLImageGL*		getTexture() const		{ return mTexture; }
+	LLViewerTexture* getTexture() const { return mTexture; }
 
 	BOOL			isOwned(const LLVector3& pos) const;
 	BOOL			isOwnedSelf(const LLVector3& pos) const;
@@ -106,7 +106,7 @@ private:
 
 	S32				mParcelGridsPerEdge;
 
-	LLPointer<LLImageGL> mTexture;
+	LLPointer<LLViewerTexture> mTexture;
 	LLPointer<LLImageRaw> mImageRaw;
 	
 	// Size: mParcelGridsPerEdge * mParcelGridsPerEdge

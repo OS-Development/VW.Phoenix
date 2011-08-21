@@ -43,10 +43,10 @@
 #include "llagent.h"
 #include "llsky.h"
 #include "llviewercamera.h"
-#include "llviewerimagelist.h"
 #include "llviewercontrol.h"
 #include "llviewerobjectlist.h"
 #include "llviewerregion.h"
+#include "llviewertexturelist.h"
 #include "llworld.h"
 #include "llvoavatar.h"
 
@@ -71,7 +71,7 @@ LLVolumeImplFlexible::LLVolumeImplFlexible(LLViewerObject* vo, LLFlexibleObjectD
 
 	if(mVO->mDrawable.notNull())
 	{
-		mVO->mDrawable->makeActive() ;
+		mVO->mDrawable->makeActive();
 	}
 }//-----------------------------------------------
 

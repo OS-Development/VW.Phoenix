@@ -36,7 +36,7 @@
 
 #include "lluictrlfactory.h"
 #include "llviewerstats.h"
-#include "llviewerimage.h"
+#include "llviewertexture.h"
 #include "llviewercontrol.h"
 #include "llappviewer.h"
 
@@ -148,45 +148,45 @@ void LLFloaterLagMeter::determineClient()
 	if (!gFocusMgr.getAppHasFocus())
 	{
 		mClientButton->setImageUnselected(LAG_GOOD_IMAGE_NAME);
-		mClientText->setText( getString("client_frame_time_window_bg_msg", mStringArgs) );
-		mClientCause->setText( LLStringUtil::null );
+		mClientText->setText(getString("client_frame_time_window_bg_msg", mStringArgs));
+		mClientCause->setText(LLStringUtil::null);
 	}
-	else if(client_frame_time >= mClientFrameTimeCritical)
+	else if (client_frame_time >= mClientFrameTimeCritical)
 	{
 		mClientButton->setImageUnselected(LAG_CRITICAL_IMAGE_NAME);
-		mClientText->setText( getString("client_frame_time_critical_msg", mStringArgs) );
+		mClientText->setText(getString("client_frame_time_critical_msg", mStringArgs));
 		find_cause = true;
 	}
-	else if(client_frame_time >= mClientFrameTimeWarning)
+	else if (client_frame_time >= mClientFrameTimeWarning)
 	{
 		mClientButton->setImageUnselected(LAG_WARNING_IMAGE_NAME);
-		mClientText->setText( getString("client_frame_time_warning_msg", mStringArgs) );
+		mClientText->setText(getString("client_frame_time_warning_msg", mStringArgs));
 		find_cause = true;
 	}
 	else
 	{
 		mClientButton->setImageUnselected(LAG_GOOD_IMAGE_NAME);
-		mClientText->setText( getString("client_frame_time_normal_msg", mStringArgs) );
-		mClientCause->setText( LLStringUtil::null );
+		mClientText->setText(getString("client_frame_time_normal_msg", mStringArgs));
+		mClientCause->setText(LLStringUtil::null);
 	}	
 
-	if(find_cause)
+	if (find_cause)
 	{
-		if(gSavedSettings.getF32("RenderFarClip") > 128)
+		if (gSavedSettings.getF32("RenderFarClip") > 128)
 		{
-			mClientCause->setText( getString("client_draw_distance_cause_msg", mStringArgs) );
+			mClientCause->setText(getString("client_draw_distance_cause_msg", mStringArgs));
 		}
-		else if(LLAppViewer::instance()->getTextureFetch()->getNumRequests() > 2)
+		else if (LLAppViewer::instance()->getTextureFetch()->getNumRequests() > 2)
 		{
-			mClientCause->setText( getString("client_texture_loading_cause_msg", mStringArgs) );
+			mClientCause->setText(getString("client_texture_loading_cause_msg", mStringArgs));
 		}
-		else if((BYTES_TO_MEGA_BYTES(LLViewerImage::sBoundTextureMemoryInBytes)) > LLViewerImage::sMaxBoundTextureMemInMegaBytes)
+		else if ((BYTES_TO_MEGA_BYTES(LLViewerTexture::sBoundTextureMemoryInBytes)) > LLViewerTexture::sMaxBoundTextureMemInMegaBytes)
 		{
-			mClientCause->setText( getString("client_texture_memory_cause_msg", mStringArgs) );
+			mClientCause->setText(getString("client_texture_memory_cause_msg", mStringArgs));
 		}
 		else 
 		{
-			mClientCause->setText( getString("client_complex_objects_cause_msg", mStringArgs) );
+			mClientCause->setText(getString("client_complex_objects_cause_msg", mStringArgs));
 		}
 	}
 }

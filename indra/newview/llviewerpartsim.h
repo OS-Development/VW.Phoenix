@@ -38,10 +38,9 @@
 #include "llpartdata.h"
 #include "llviewerpartsource.h"
 
-class LLViewerImage;
 class LLViewerPart;
 class LLViewerRegion;
-class LLViewerImage;
+class LLViewerTexture;
 class LLVOPartGroup;
 
 typedef void (*LLVPCallback)(LLViewerPart &part, const F32 dt);
@@ -59,7 +58,7 @@ public:
 public:
 	LLViewerPart();
 
-	void init(LLPointer<LLViewerPartSource> sourcep, LLViewerImage *imagep, LLVPCallback cb);
+	void init(LLPointer<LLViewerPartSource> sourcep, LLViewerTexture *imagep, LLVPCallback cb);
 
 
 	U32					mPartID;					// Particle ID used primarily for moving between groups
@@ -71,7 +70,7 @@ public:
 	
 
 	// Current particle state (possibly used for rendering)
-	LLPointer<LLViewerImage>	mImagep;
+	LLPointer<LLViewerTexture>	mImagep;
 	LLVector3		mPosAgent;
 	LLVector3		mVelocity;
 	LLVector3		mAccel;

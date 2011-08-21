@@ -44,7 +44,7 @@
 #include "lltexteditor.h"
 #include "llalertdialog.h"
 #include "llerrorcontrol.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llgroupmgr.h"
 #include "llagent.h"
 #include "llwindow.h"
@@ -1176,11 +1176,12 @@ bool LLAppViewer::mainLoop()
  					work_pending += LLAppViewer::getTextureCache()->update(1); // unpauses the texture cache thread
  					work_pending += LLAppViewer::getImageDecodeThread()->update(1); // unpauses the image thread
  					work_pending += LLAppViewer::getTextureFetch()->update(1); // unpauses the texture fetch thread
+
 					io_pending += LLVFSThread::updateClass(1);
 					io_pending += LLLFSThread::updateClass(1);
 					if (io_pending > 1000)
 					{
-						ms_sleep(llmin(io_pending/100,100)); // give the vfs some time to catch up
+						ms_sleep(llmin(io_pending / 100, 100)); // give the fs some time to catch up
 					}
 
 					total_work_pending += work_pending ;
@@ -1203,9 +1204,9 @@ bool LLAppViewer::mainLoop()
 	 				
 					if(!total_work_pending) //pause texture fetching threads if nothing to process.
 					{
-					LLAppViewer::getTextureCache()->pause();
-					LLAppViewer::getImageDecodeThread()->pause();
-						LLAppViewer::getTextureFetch()->pause(); 
+						LLAppViewer::getTextureCache()->pause();
+						LLAppViewer::getImageDecodeThread()->pause();
+						LLAppViewer::getTextureFetch()->pause();
 					}
 					if(!total_io_pending) //pause file threads if nothing to process.
 					{
@@ -1583,12 +1584,12 @@ bool LLAppViewer::cleanup()
     sImageDecodeThread = NULL;
 
 	//Note:
-	//LLViewerMedia::cleanupClass() has to be put before gImageList.shutdown()
+	//LLViewerMedia::cleanupClass() has to be put before gTextureList.shutdown()
 	//because some new image might be generated during cleaning up media. --bao
 	LLViewerMediaFocus::cleanupClass();
 	LLViewerMedia::cleanupClass();
 	LLViewerParcelMedia::cleanupClass();
-	gImageList.shutdown(); // shutdown again in case a callback added something
+	gTextureList.shutdown(); // shutdown again in case a callback added something
 	LLUIImageList::getInstance()->cleanUp();
 
 	// This should eventually be done in LLAppViewer

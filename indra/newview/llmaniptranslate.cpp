@@ -84,7 +84,7 @@ const F32 PLANE_TICK_SIZE = 0.4f;
 const F32 MANIPULATOR_SCALE_HALF_LIFE = 0.07f;
 const F32 SNAP_ARROW_SCALE = 0.7f;
 
-static LLPointer<LLImageGL> sGridTex = NULL ;
+static LLPointer<LLViewerTexture> sGridTex = NULL;
 
 const LLManip::EManipPart MANIPULATOR_IDS[9] =
 {
@@ -137,10 +137,10 @@ U32 LLManipTranslate::getGridTexName()
 {
 	if(sGridTex.isNull())
 	{
-		restoreGL() ;
+		restoreGL();
 	}
 
-	return sGridTex.isNull() ? 0 : sGridTex->getTexName() ;
+	return sGridTex.isNull() ? 0 : sGridTex->getTexName();
 }
 
 //static
@@ -148,7 +148,7 @@ void LLManipTranslate::destroyGL()
 {
 	if (sGridTex)
 	{
-		sGridTex = NULL ;
+		sGridTex = NULL;
 	}
 }
 
@@ -159,17 +159,17 @@ void LLManipTranslate::restoreGL()
 	U32 rez = 512;
 	U32 mip = 0;
 
-	destroyGL() ;
-	sGridTex = new LLImageGL() ;
+	destroyGL();
+	sGridTex = LLViewerTextureManager::getLocalTexture();
 	if(!sGridTex->createGLTexture())
 	{
-		sGridTex = NULL ;
-		return ;
+		sGridTex = NULL;
+		return;
 	}
 
 	GLuint* d = new GLuint[rez*rez];
 
-	gGL.getTexUnit(0)->bindManual(LLTexUnit::TT_TEXTURE, sGridTex->getTexName());
+	gGL.getTexUnit(0)->bindManual(LLTexUnit::TT_TEXTURE, sGridTex->getTexName(), true);
 	gGL.getTexUnit(0)->setTextureFilteringOption(LLTexUnit::TFO_TRILINEAR);
 
 	while (rez >= 1)
@@ -720,7 +720,7 @@ BOOL LLManipTranslate::handleHover(S32 x, S32 y, MASK mask)
 					send_update = FALSE;
 
 					// counter-translate child objects if we are moving the root as an individual
-					object->resetChildrenPosition(old_position_local - new_position_local, TRUE) ;
+					object->resetChildrenPosition(old_position_local - new_position_local, TRUE);
 				}
 			}
 			else
@@ -776,7 +776,7 @@ BOOL LLManipTranslate::handleHover(S32 x, S32 y, MASK mask)
 				if (selectNode->mIndividualSelection)
 				{
 					// counter-translate child objects if we are moving the root as an individual
-					object->resetChildrenPosition(old_position_agent - new_position_agent, TRUE) ;
+					object->resetChildrenPosition(old_position_agent - new_position_agent, TRUE);
 					send_update = FALSE;
 				}
 				else if (old_position_global != new_position_global)
@@ -2193,7 +2193,7 @@ void LLManipTranslate::renderArrow(S32 which_arrow, S32 selected_arrow, F32 box_
 		}
 		else
 		{
-			color.mV[index] = pass == 1 ? .8f : .35f ;			// red, green, or blue
+			color.mV[index] = pass == 1 ? .8f : .35f;			// red, green, or blue
 			color.mV[VALPHA] = 0.6f;
 		}
 		gGL.color4fv( color.mV );

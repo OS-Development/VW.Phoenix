@@ -161,7 +161,7 @@
 #include "llvieweraudio.h"
 #include "llviewercamera.h"
 #include "llviewergesture.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llviewerinventory.h"
 #include "llviewerkeyboard.h"
 #include "llviewermedia.h"
@@ -1604,9 +1604,9 @@ LLViewerWindow::LLViewerWindow(
 
 	// Init the image list.  Must happen after GL is initialized and before the images that
 	// LLViewerWindow needs are requested.
-	LLImageGL::initClass(LLViewerImageBoostLevel::MAX_GL_IMAGE_CATEGORY) ;
-	gImageList.init();
-	LLViewerImage::initClass();
+	LLImageGL::initClass(LLViewerTexture::MAX_GL_IMAGE_CATEGORY);
+	gTextureList.init();
+	LLViewerTextureManager::init();
 	gBumpImageList.init();
 
 	// Create container for all sub-views
@@ -2062,7 +2062,7 @@ void LLViewerWindow::shutdownGL()
 	gSky.cleanup();
 	stop_glerror();
 
-	gImageList.shutdown();
+	gTextureList.shutdown();
 	stop_glerror();
 
 	gBumpImageList.shutdown();
@@ -2074,8 +2074,10 @@ void LLViewerWindow::shutdownGL()
 	gPipeline.cleanup();
 	stop_glerror();
 
-	LLViewerImage::cleanupClass();
-	
+	llinfos << "Cleaning up textures and GL images" << llendl;
+	LLViewerTextureManager::cleanup();
+	LLImageGL::cleanupClass();
+
 	llinfos << "Cleaning up select manager" << llendl;
 	LLSelectMgr::getInstance()->cleanup();
 
@@ -4736,7 +4738,7 @@ void LLViewerWindow::stopGL(BOOL save_state)
 	//Note: --bao
 	//if not necessary, do not change the order of the function calls in this function.
 	//if change something, make sure it will not break anything.
-	//especially be careful to put anything behind gImageList.destroyGL(save_state);
+	//especially be careful to put anything behind gTextureList.destroyGL(save_state);
 	if (!gGLManager.mIsDisabled)
 	{
 		llinfos << "Shutting down GL..." << llendl;
@@ -4761,7 +4763,7 @@ void LLViewerWindow::stopGL(BOOL save_state)
 		LLVOAvatar::destroyGL();
 		stop_glerror();
 
-		LLDynamicTexture::destroyGL();
+		LLViewerDynamicTexture::destroyGL();
 		stop_glerror();
 
 		if (gPipeline.isInit())
@@ -4779,7 +4781,7 @@ void LLViewerWindow::stopGL(BOOL save_state)
 			gPostProcess->invalidate();
 		}
 
-		gImageList.destroyGL(save_state);
+		gTextureList.destroyGL(save_state);
 		stop_glerror();
 
 		gGLManager.mIsDisabled = TRUE;
@@ -4794,7 +4796,7 @@ void LLViewerWindow::restoreGL(const std::string& progress_message)
 	//Note: --bao
 	//if not necessary, do not change the order of the function calls in this function.
 	//if change something, make sure it will not break anything. 
-	//especially, be careful to put something before gImageList.restoreGL();
+	//especially, be careful to put something before gTextureList.restoreGL();
 	if (gGLManager.mIsDisabled)
 	{
 		llinfos << "Restoring GL..." << llendl;
@@ -4802,7 +4804,7 @@ void LLViewerWindow::restoreGL(const std::string& progress_message)
 		
 		initGLDefaults();
 		LLGLState::restoreGL();
-		gImageList.restoreGL();
+		gTextureList.restoreGL();
 
 		// for future support of non-square pixels, and fonts that are properly stretched
 		//LLFontGL::destroyDefaultFonts();
@@ -4814,7 +4816,7 @@ void LLViewerWindow::restoreGL(const std::string& progress_message)
 		LLManipTranslate::restoreGL();
 		
 		gBumpImageList.restoreGL();
-		LLDynamicTexture::restoreGL();
+		LLViewerDynamicTexture::restoreGL();
 		LLVOAvatar::restoreGL();
 		
 		gResizeScreenTexture = TRUE;
@@ -5481,7 +5483,7 @@ void LLPickInfo::updateXYCoords()
 	if (mObjectFace > -1)
 	{
 		const LLTextureEntry* tep = getObject()->getTE(mObjectFace);
-		LLPointer<LLViewerImage> imagep = gImageList.getImage(tep->getID());
+		LLPointer<LLViewerTexture> imagep = LLViewerTextureManager::getFetchedTexture(tep->getID());
 		if(mUVCoords.mV[VX] >= 0.f && mUVCoords.mV[VY] >= 0.f && imagep.notNull())
 		{
 			mXYCoords.mX = llround(mUVCoords.mV[VX] * (F32)imagep->getWidth());

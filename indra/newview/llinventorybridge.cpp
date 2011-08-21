@@ -80,7 +80,7 @@
 #include "lltoolmgr.h"
 #include "llviewerassettype.h"
 #include "llviewerfoldertype.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llviewerinventory.h"
 #include "llviewerjoystick.h"
 #include "llviewerobjectlist.h"

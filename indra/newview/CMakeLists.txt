@@ -454,8 +454,6 @@ set(viewer_SOURCE_FILES
     llviewerfoldertype.cpp
     llviewergenericmessage.cpp
     llviewergesture.cpp
-    llviewerimage.cpp
-    llviewerimagelist.cpp
     llviewerinventory.cpp
     llviewerjointattachment.cpp
     llviewerjoint.cpp
@@ -486,6 +484,8 @@ set(viewer_SOURCE_FILES
     llviewerstats.cpp
     llviewertexteditor.cpp
     llviewertextureanim.cpp
+    llviewertexture.cpp
+    llviewertexturelist.cpp
     llviewerthrottle.cpp
     llviewervisualparam.cpp
     llviewerwindow.cpp
@@ -951,8 +951,6 @@ set(viewer_HEADER_FILES
     llviewerfoldertype.h
     llviewergenericmessage.h
     llviewergesture.h
-    llviewerimage.h
-    llviewerimagelist.h
     llviewerinventory.h
     llviewerjoint.h
     llviewerjointattachment.h
@@ -981,6 +979,8 @@ set(viewer_HEADER_FILES
     llviewerstats.h
     llviewertexteditor.h
     llviewertextureanim.h
+    llviewertexture.h
+    llviewertexturelist.h
     llviewerthrottle.h
     llviewervisualparam.h
     llviewerwindow.h

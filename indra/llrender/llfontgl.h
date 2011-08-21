@@ -34,13 +34,15 @@
 #ifndef LL_LLFONTGL_H
 #define LL_LLFONTGL_H
 
-#include "llfont.h"
-#include "llimagegl.h"
-#include "v2math.h"
 #include "llcoord.h"
+#include "llfont.h"
+#include "llfontregistry.h"
+#include "llimagegl.h"
+#include "llpointer.h"
 #include "llrect.h"
 
-#include "llfontregistry.h"
+#include "lltexture.h"
+#include "v2math.h"
 
 class LLColor4;
 
@@ -195,9 +197,9 @@ public:
 
 	LLImageGL *getImageGL() const;
 
-	void	   addEmbeddedChar( llwchar wc, LLImageGL* image, const std::string& label) const;
-	void	   addEmbeddedChar( llwchar wc, LLImageGL* image, const LLWString& label) const;
-	void	   removeEmbeddedChar( llwchar wc ) const;
+	void addEmbeddedChar(llwchar wc, LLTexture* image, const std::string& label) const;
+	void addEmbeddedChar(llwchar wc, LLTexture* image, const LLWString& label) const;
+	void removeEmbeddedChar(llwchar wc) const;
 
 	static std::string nameFromFont(const LLFontGL* fontp);
 
@@ -207,7 +209,7 @@ public:
 	static std::string nameFromVAlign(LLFontGL::VAlign align);
 	static LLFontGL::VAlign vAlignFromName(const std::string& name);
 
-	static void setFontDisplay(BOOL flag) { sDisplayFont = flag ; }
+	static void setFontDisplay(BOOL flag) { sDisplayFont = flag; }
 
 protected:
 	struct embedded_data_t
@@ -227,7 +229,7 @@ public:
 	static F32 sHorizDPI;
 	static F32 sScaleX;
 	static F32 sScaleY;
-	static BOOL     sDisplayFont ;
+	static BOOL     sDisplayFont;
 	static std::string sAppDir;			// For loading fonts
 		
 	static LLFontGL* getFontMonospace();

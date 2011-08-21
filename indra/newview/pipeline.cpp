@@ -76,7 +76,7 @@
 #include "lltool.h"
 #include "lltoolmgr.h"
 #include "llviewercamera.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llviewerobject.h"
 #include "llviewerobjectlist.h"
 #include "llviewerparcelmgr.h"
@@ -441,8 +441,6 @@ void LLPipeline::cleanup()
 
 	releaseGLBuffers();
 
-	mBloomImagep = NULL;
-	mBloomImage2p = NULL;
 	mFaceSelectImagep = NULL;
 
 	mMovedBridge.clear();
@@ -758,9 +756,9 @@ S32 LLPipeline::setLightingDetail(S32 level)
 class LLOctreeDirtyTexture : public LLOctreeTraveler<LLDrawable>
 {
 public:
-	const std::set<LLViewerImage*>& mTextures;
+	const std::set<LLViewerFetchedTexture*>& mTextures;
 
-	LLOctreeDirtyTexture(const std::set<LLViewerImage*>& textures) : mTextures(textures) { }
+	LLOctreeDirtyTexture(const std::set<LLViewerFetchedTexture*>& textures) : mTextures(textures) { }
 
 	virtual void visit(const LLOctreeNode<LLDrawable>* node)
 	{
@@ -773,7 +771,8 @@ public:
 				for (LLSpatialGroup::drawmap_elem_t::iterator j = i->second.begin(); j != i->second.end(); ++j) 
 				{
 					LLDrawInfo* params = *j;
-					if (mTextures.find(params->mTexture) != mTextures.end())
+					LLViewerFetchedTexture* tex = LLViewerTextureManager::staticCastToFetchedTexture(params->mTexture);
+					if (tex && mTextures.find(tex) != mTextures.end())
 					{ 
 						group->setState(LLSpatialGroup::GEOM_DIRTY);
 					}
@@ -790,7 +789,7 @@ public:
 };
 
 // Called when a texture changes # of channels (causes faces to move to alpha pool)
-void LLPipeline::dirtyPoolObjectTextures(const std::set<LLViewerImage*>& textures)
+void LLPipeline::dirtyPoolObjectTextures(const std::set<LLViewerFetchedTexture*>& textures)
 {
 	assertInitialized();
 
@@ -822,7 +821,7 @@ void LLPipeline::dirtyPoolObjectTextures(const std::set<LLViewerImage*>& texture
 	}
 }
 
-LLDrawPool *LLPipeline::findPool(const U32 type, LLViewerImage *tex0)
+LLDrawPool *LLPipeline::findPool(const U32 type, LLViewerTexture *tex0)
 {
 	assertInitialized();
 
@@ -894,7 +893,7 @@ LLDrawPool *LLPipeline::findPool(const U32 type, LLViewerImage *tex0)
 }
 
 
-LLDrawPool *LLPipeline::getPool(const U32 type,	LLViewerImage *tex0)
+LLDrawPool *LLPipeline::getPool(const U32 type,	LLViewerTexture *tex0)
 {
 	LLMemType mt(LLMemType::MTYPE_PIPELINE);
 	LLDrawPool *poolp = findPool(type, tex0);
@@ -911,7 +910,7 @@ LLDrawPool *LLPipeline::getPool(const U32 type,	LLViewerImage *tex0)
 
 
 // static
-LLDrawPool* LLPipeline::getPoolFromTE(const LLTextureEntry* te, LLViewerImage* imagep)
+LLDrawPool* LLPipeline::getPoolFromTE(const LLTextureEntry* te, LLViewerTexture* imagep)
 {
 	LLMemType mt(LLMemType::MTYPE_PIPELINE);
 	U32 type = getPoolTypeFromTE(te, imagep);
@@ -919,7 +918,7 @@ LLDrawPool* LLPipeline::getPoolFromTE(const LLTextureEntry* te, LLViewerImage* i
 }
 
 //static 
-U32 LLPipeline::getPoolTypeFromTE(const LLTextureEntry* te, LLViewerImage* imagep)
+U32 LLPipeline::getPoolTypeFromTE(const LLTextureEntry* te, LLViewerTexture* imagep)
 {
 	LLMemType mt(LLMemType::MTYPE_PIPELINE);
 	
@@ -2460,7 +2459,7 @@ void LLPipeline::renderHighlights()
 		// Make sure the selection image gets downloaded and decoded
 		if (!mFaceSelectImagep)
 		{
-			mFaceSelectImagep = gImageList.getImage(IMG_FACE_SELECT);
+			mFaceSelectImagep = LLViewerTextureManager::getFetchedTexture(IMG_FACE_SELECT);
 		}
 		mFaceSelectImagep->addTextureStats((F32)MAX_IMAGE_AREA);
 
@@ -2490,7 +2489,7 @@ void LLPipeline::renderHighlights()
 		for (S32 i = 0; i < count; i++)
 		{
 			LLFace* facep = mHighlightFaces[i];
-			facep->renderSelected(LLViewerImage::sNullImagep, color);
+			facep->renderSelected(LLViewerTexture::sNullImagep, color);
 		}
 	}
 
@@ -2581,8 +2580,8 @@ void LLPipeline::renderGeom(LLCamera& camera, BOOL forceVBOUpdate)
 		sUnderWaterRender = FALSE;
 	}
 
-	gGL.getTexUnit(0)->bind(LLViewerImage::sDefaultImagep);
-	LLViewerImage::sDefaultImagep->setAddressMode(LLTexUnit::TAM_WRAP);
+	gGL.getTexUnit(0)->bind(LLViewerFetchedTexture::sDefaultImagep);
+	LLViewerFetchedTexture::sDefaultImagep->setAddressMode(LLTexUnit::TAM_WRAP);
 	
 	//////////////////////////////////////////////
 	//
@@ -5472,6 +5471,8 @@ void LLPipeline::renderDeferredLighting()
 		return;
 	}
 
+	LLViewerCamera* camera = LLViewerCamera::getInstance();
+
 	LLGLEnable multisample(GL_MULTISAMPLE_ARB);
 
 	if (gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_HUD))
@@ -5691,7 +5692,7 @@ void LLPipeline::renderDeferredLighting()
 			F32* c = center.mV;
 			F32 s = volume->getLightRadius()*1.5f;
 
-			if (LLViewerCamera::getInstance()->AABBInFrustumNoFarClip(center, LLVector3(s,s,s)) == 0)
+			if (camera->AABBInFrustumNoFarClip(center, LLVector3(s,s,s)) == 0)
 			{
 				continue;
 			}
@@ -5717,17 +5718,17 @@ void LLPipeline::renderDeferredLighting()
 			v[18] = c[0]+s; v[19] = c[1]+s; v[20] = c[2]-s; // 6 - 0110
 			v[21] = c[0]+s; v[22] = c[1]+s; v[23] = c[2]+s; // 7 - 0111
 
-			if (LLViewerCamera::getInstance()->getOrigin().mV[0] > c[0] + s + 0.2f ||
-				LLViewerCamera::getInstance()->getOrigin().mV[0] < c[0] - s - 0.2f ||
-				LLViewerCamera::getInstance()->getOrigin().mV[1] > c[1] + s + 0.2f ||
-				LLViewerCamera::getInstance()->getOrigin().mV[1] < c[1] - s - 0.2f ||
-				LLViewerCamera::getInstance()->getOrigin().mV[2] > c[2] + s + 0.2f ||
-				LLViewerCamera::getInstance()->getOrigin().mV[2] < c[2] - s - 0.2f)
+			if (camera->getOrigin().mV[0] > c[0] + s + 0.2f ||
+				camera->getOrigin().mV[0] < c[0] - s - 0.2f ||
+				camera->getOrigin().mV[1] > c[1] + s + 0.2f ||
+				camera->getOrigin().mV[1] < c[1] - s - 0.2f ||
+				camera->getOrigin().mV[2] > c[2] + s + 0.2f ||
+				camera->getOrigin().mV[2] < c[2] - s - 0.2f)
 			{ //draw box if camera is outside box
 				glTexCoord4f(tc.v[0], tc.v[1], tc.v[2], s*s);
 				glColor4f(col.mV[0], col.mV[1], col.mV[2], volume->getLightFalloff()*0.5f);
 				glDrawRangeElements(GL_TRIANGLE_FAN, 0, 7, 8,
-					GL_UNSIGNED_BYTE, get_box_fan_indices(LLViewerCamera::getInstance(), center));
+					GL_UNSIGNED_BYTE, get_box_fan_indices(camera, center));
 			}
 			else
 			{	
@@ -5805,7 +5806,7 @@ void LLPipeline::renderDeferredLighting()
 		                   (1 << LLPipeline::RENDER_TYPE_GLOW) |
 		                   (1 << LLPipeline::RENDER_TYPE_BUMP));
 		
-		renderGeomPostDeferred(*LLViewerCamera::getInstance());
+		renderGeomPostDeferred(*camera);
 		mRenderTypeMask = render_mask;
 	}
 
@@ -6548,7 +6549,8 @@ void LLPipeline::generateImpostor(LLVOAvatar* avatar)
 	sReflectionRender = sRenderDeferred ? FALSE : TRUE;
 	sImpostorRender = TRUE;
 
-	markVisible(avatar->mDrawable, *LLViewerCamera::getInstance());
+	LLViewerCamera* viewer_camera = LLViewerCamera::getInstance();
+	markVisible(avatar->mDrawable, *viewer_camera);
 	LLVOAvatar::sUseImpostors = FALSE;
 
 	LLVOAvatar::attachment_map_t::iterator iter;
@@ -6563,19 +6565,19 @@ void LLPipeline::generateImpostor(LLVOAvatar* avatar)
 		{
 			if (LLViewerObject* attached_object = (*attachment_iter))
 			{
-				markVisible(attached_object->mDrawable->getSpatialBridge(), *LLViewerCamera::getInstance());
+				markVisible(attached_object->mDrawable->getSpatialBridge(), *viewer_camera);
 			}
 		}
 	}
 
-	stateSort(*LLViewerCamera::getInstance(), result);
+	stateSort(*viewer_camera, result);
 	
 	const LLVector3* ext = avatar->mDrawable->getSpatialExtents();
 	LLVector3 pos(avatar->getRenderPosition()+avatar->getImpostorOffset());
 
-	LLCamera camera = *LLViewerCamera::getInstance();
+	LLCamera camera = *viewer_camera;
 
-	camera.lookAt(LLViewerCamera::getInstance()->getOrigin(), pos, LLViewerCamera::getInstance()->getUpAxis());
+	camera.lookAt(viewer_camera->getOrigin(), pos, viewer_camera->getUpAxis());
 	
 	LLVector2 tdim;
 
@@ -6618,7 +6620,7 @@ void LLPipeline::generateImpostor(LLVOAvatar* avatar)
 	glClearStencil(0);
 
 	// get the number of pixels per angle
-	F32 pa = gViewerWindow->getWindowDisplayHeight() / (RAD_TO_DEG * LLViewerCamera::getInstance()->getView());
+	F32 pa = gViewerWindow->getWindowDisplayHeight() / (RAD_TO_DEG * viewer_camera->getView());
 
 	//get resolution based on angle width and height of impostor (double desired resolution to prevent aliasing)
 	U32 resY = llmin(nhpo2((U32) (fov*pa)), (U32) 512);

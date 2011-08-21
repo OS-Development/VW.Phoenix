@@ -281,29 +281,29 @@ public:
 	virtual void setArea(S32 area, S32 sim_object_limit);
 	void	setDiscountRate(F32 rate);
 
-	void	setAllowModify(BOOL b)	{ setParcelFlag(PF_CREATE_OBJECTS, b); }
-	void	setAllowGroupModify(BOOL b)	{ setParcelFlag(PF_CREATE_GROUP_OBJECTS, b); }
-	void	setAllowAllObjectEntry(BOOL b)	{ setParcelFlag(PF_ALLOW_ALL_OBJECT_ENTRY, b); }
+	void	setAllowModify(BOOL b)				{ setParcelFlag(PF_CREATE_OBJECTS, b); }
+	void	setAllowGroupModify(BOOL b)			{ setParcelFlag(PF_CREATE_GROUP_OBJECTS, b); }
+	void	setAllowAllObjectEntry(BOOL b)		{ setParcelFlag(PF_ALLOW_ALL_OBJECT_ENTRY, b); }
 	void	setAllowGroupObjectEntry(BOOL b)	{ setParcelFlag(PF_ALLOW_GROUP_OBJECT_ENTRY, b); }
-	void	setAllowTerraform(BOOL b){setParcelFlag(PF_ALLOW_TERRAFORM, b); }
-	void	setAllowDamage(BOOL b)	{ setParcelFlag(PF_ALLOW_DAMAGE, b); }
-	void	setAllowFly(BOOL b)		{ setParcelFlag(PF_ALLOW_FLY, b); }
-	void	setAllowLandmark(BOOL b){ setParcelFlag(PF_ALLOW_LANDMARK, b); }
-	void	setAllowGroupScripts(BOOL b)	{ setParcelFlag(PF_ALLOW_GROUP_SCRIPTS, b); }
-	void	setAllowOtherScripts(BOOL b)	{ setParcelFlag(PF_ALLOW_OTHER_SCRIPTS, b); }
-	void	setAllowDeedToGroup(BOOL b) { setParcelFlag(PF_ALLOW_DEED_TO_GROUP, b); }
-	void    setContributeWithDeed(BOOL b) { setParcelFlag(PF_CONTRIBUTE_WITH_DEED, b); }
-	void	setForSale(BOOL b)		{ setParcelFlag(PF_FOR_SALE, b); }
-	void	setSoundOnly(BOOL b)	{ setParcelFlag(PF_SOUND_LOCAL, b); }
-	void	setDenyAnonymous(BOOL b) { setParcelFlag(PF_DENY_ANONYMOUS, b); }
-	void	setDenyAgeUnverified(BOOL b) { setParcelFlag(PF_DENY_AGEUNVERIFIED, b); }
-	void	setRestrictPushObject(BOOL b) { setParcelFlag(PF_RESTRICT_PUSHOBJECT, b); }
-	void	setAllowGroupAVSounds(BOOL b)	{ mAllowGroupAVSounds = b;		}
-	void	setAllowAnyAVSounds(BOOL b)		{ mAllowAnyAVSounds = b;		}
+	void	setAllowTerraform(BOOL b)			{setParcelFlag(PF_ALLOW_TERRAFORM, b); }
+	void	setAllowDamage(BOOL b)				{ setParcelFlag(PF_ALLOW_DAMAGE, b); }
+	void	setAllowFly(BOOL b)					{ setParcelFlag(PF_ALLOW_FLY, b); }
+	void	setAllowLandmark(BOOL b)			{ setParcelFlag(PF_ALLOW_LANDMARK, b); }
+	void	setAllowGroupScripts(BOOL b)		{ setParcelFlag(PF_ALLOW_GROUP_SCRIPTS, b); }
+	void	setAllowOtherScripts(BOOL b)		{ setParcelFlag(PF_ALLOW_OTHER_SCRIPTS, b); }
+	void	setAllowDeedToGroup(BOOL b)			{ setParcelFlag(PF_ALLOW_DEED_TO_GROUP, b); }
+	void    setContributeWithDeed(BOOL b)		{ setParcelFlag(PF_CONTRIBUTE_WITH_DEED, b); }
+	void	setForSale(BOOL b)					{ setParcelFlag(PF_FOR_SALE, b); }
+	void	setSoundOnly(BOOL b)				{ setParcelFlag(PF_SOUND_LOCAL, b); }
+	void	setDenyAnonymous(BOOL b)			{ setParcelFlag(PF_DENY_ANONYMOUS, b); }
+	void	setDenyAgeUnverified(BOOL b)		{ setParcelFlag(PF_DENY_AGEUNVERIFIED, b); }
+	void	setRestrictPushObject(BOOL b)		{ setParcelFlag(PF_RESTRICT_PUSHOBJECT, b); }
+	void	setAllowGroupAVSounds(BOOL b)		{ mAllowGroupAVSounds = b;		}
+	void	setAllowAnyAVSounds(BOOL b)			{ mAllowAnyAVSounds = b;		}
 
-	void	setDrawDistance(F32 dist)	{ mDrawDistance = dist; }
-	void	setSalePrice(S32 price)		{ mSalePrice = price; }
-	void	setGroupID(const LLUUID& id)	{ mGroupID = id; }
+	void	setDrawDistance(F32 dist)			{ mDrawDistance = dist; }
+	void	setSalePrice(S32 price)				{ mSalePrice = price; }
+	void	setGroupID(const LLUUID& id)		{ mGroupID = id; }
 	//void	setGroupName(const std::string& s)	{ mGroupName.assign(s); }
 	void	setPassPrice(S32 price)				{ mPassPrice = price; }
 	void	setPassHours(F32 hours)				{ mPassHours = hours; }
@@ -372,9 +372,9 @@ public:
 
 	// Region-local user-specified position
 	const LLVector3& getUserLocation() const	{ return mUserLocation; }
-	const LLVector3& getUserLookAt() const	{ return mUserLookAt; }
-	ELandingType getLandingType() const	{ return mLandingType; }
-	BOOL getSeeAVs() const			{ return mSeeAVs;		}
+	const LLVector3& getUserLookAt() const		{ return mUserLookAt; }
+	ELandingType getLandingType() const			{ return mLandingType; }
+	BOOL getSeeAVs() const						{ return mSeeAVs;		}
 	BOOL getHaveNewParcelLimitData() const		{ return mHaveNewParcelLimitData;	}
 
 	// User-specified snapshot

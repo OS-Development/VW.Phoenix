@@ -32,23 +32,23 @@
 
 #include "llviewerprecompiledheaders.h"
 
-#include "indra_constants.h"
 #include "llfasttimerview.h"
-#include "llviewerwindow.h"
-#include "llrect.h"
+
+#include "indra_constants.h"
 #include "llerror.h"
-#include "llgl.h"
-#include "llrender.h"
-#include "llmath.h"
+#include "llfasttimer.h"
 #include "llfontgl.h"
+#include "llgl.h"
+#include "llrect.h"
+#include "llmath.h"
+#include "llrender.h"
+#include "llstat.h"
+#include "llui.h"
 
 #include "llappviewer.h"
-#include "llviewerimagelist.h"
-#include "llui.h"
 #include "llviewercontrol.h"
-#include "llstat.h"
-
-#include "llfasttimer.h"
+#include "llviewertexturelist.h"
+#include "llviewerwindow.h"
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -739,7 +739,7 @@ void LLFastTimerView::draw()
 		
 		// Draw MS ticks
 		{
-			U32 ms = (U32)((F64)totalticks * iclock_freq) ;
+			U32 ms = (U32)((F64)totalticks * iclock_freq);
 
 			tdesc = llformat("%.1f ms |", (F32)ms*.25f);
 			x = xleft + barw/4 - LLFontGL::getFontMonospace()->getWidth(tdesc);

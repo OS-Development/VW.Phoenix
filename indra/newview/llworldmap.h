@@ -40,7 +40,7 @@
 #include "llpointer.h"
 #include "llsingleton.h"
 #include "llviewerregion.h"
-#include "llviewerimage.h"
+#include "llviewertexture.h"
 
 // Description of objects like hubs, events, land for sale, people and more (TBD).
 // Note: we don't store a "type" in there so we need to store instances of this class in 
@@ -116,7 +116,7 @@ public:
 	const std::string getAccessString() const { return LLViewerRegion::accessToString((U8)mAccess); }
 
 	const S32 getAgentCount() const;				// Compute the total agents count
-	LLPointer<LLViewerImage> getLandForSaleImage();	// Get the overlay image, fetch it if necessary
+	LLPointer<LLViewerFetchedTexture> getLandForSaleImage();	// Get the overlay image, fetch it if necessary
 
 	//for map images on opensim.
 	const LLUUID getMapImageID() const { return mMapImageID; }
@@ -164,7 +164,7 @@ public:
 
 	// Handling the "land for sale / land for auction" overlay image
 	LLUUID mMapImageID;						// Image ID of the overlay image
-	LLPointer<LLViewerImage> mOverlayImage;	// Reference to the overlay image
+	LLPointer<LLViewerFetchedTexture> mOverlayImage;	// Reference to the overlay image
 
 	// Items for this region
 	// Those are data received through item requests (as opposed to block requests for the rest of the data)
@@ -239,7 +239,7 @@ public:
 
 	// World Mipmap delegation: currently used when drawing the mipmap
 	void	equalizeBoostLevels();
-	LLPointer<LLViewerImage> getObjectsTile(U32 grid_x, U32 grid_y, S32 level, bool load = true) { return mWorldMipmap.getObjectsTile(grid_x, grid_y, level, load); }
+	LLPointer<LLViewerFetchedTexture> getObjectsTile(U32 grid_x, U32 grid_y, S32 level, bool load = true) { return mWorldMipmap.getObjectsTile(grid_x, grid_y, level, load); }
 
 private:
 	bool clearItems(bool force = false);	// Clears the item lists

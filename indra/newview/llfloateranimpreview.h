@@ -41,11 +41,13 @@
 class LLVOAvatar;
 class LLViewerJointMesh;
 
-class LLPreviewAnimation : public LLDynamicTexture
+class LLPreviewAnimation : public LLViewerDynamicTexture
 {
 public:
 	LLPreviewAnimation(S32 width, S32 height);
 	virtual ~LLPreviewAnimation();
+
+	/*virtual*/ S8 getType() const;
 
 	BOOL	render();
 	void	requestUpdate();
@@ -109,13 +111,13 @@ public:
 									   void* user_data,
 									   S32 status, LLExtStat ext_status);
 private:
-	void setAnimCallbacks() ;
+	void setAnimCallbacks();
 	
 protected:
 	//void			draw();
 	void			resetMotion();
 
-	LLPreviewAnimation* mAnimPreview;
+	LLPointer< LLPreviewAnimation > mAnimPreview;
 	S32					mLastMouseX;
 	S32					mLastMouseY;
 	LLButton*			mPlayButton;

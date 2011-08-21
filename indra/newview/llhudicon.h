@@ -48,6 +48,7 @@
 // Renders a 2D icon billboard floating at the location specified.
 class LLDrawable;
 class LLViewerObject;
+class LLViewerTexture;
 
 class LLHUDIcon : public LLHUDObject
 {
@@ -59,7 +60,7 @@ public:
 	/*virtual*/ void markDead();
 	/*virtual*/ F32 getDistance() const { return mDistance; }
 
-	void setImage(LLViewerImage* imagep);
+	void setImage(LLViewerTexture* imagep);
 	void setScale(F32 fraction_of_fov);
 
 	void restartLifeTimer() { mLifeTimer.reset(); }
@@ -86,7 +87,7 @@ protected:
 	void renderIcon(BOOL for_select); // common render code
 
 private:
-	LLPointer<LLViewerImage> mImagep;
+	LLPointer<LLViewerTexture> mImagep;
 	LLFrameTimer	mAnimTimer;
 	LLFrameTimer	mLifeTimer;
 	F32				mDistance;

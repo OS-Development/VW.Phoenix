@@ -45,7 +45,7 @@
 
 class LLViewerMediaImpl;
 class LLUUID;
-class LLViewerImage;
+class LLViewerTexture;
 class LLPluginCookieStore;
 
 typedef LLPointer<LLViewerMediaImpl> viewer_media_t;
@@ -301,7 +301,7 @@ public:
 	std::string mTarget;
 
 private:
-	LLViewerImage *updatePlaceholderImage();
+	LLViewerTexture* updatePlaceholderImage(); // Should really return a LLViewerMediaTexture*
 };
 
 #endif	// LLVIEWERMEDIA_H

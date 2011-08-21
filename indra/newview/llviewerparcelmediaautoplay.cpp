@@ -39,12 +39,12 @@
 #include "llviewerparcelmgr.h"
 #include "lluuid.h"
 #include "message.h"
-#include "llviewerimagelist.h"         // for texture stats
+#include "llviewertexturelist.h"         // for texture stats
 #include "llagent.h"
 
-const F32 AUTOPLAY_TIME  = 5;          // how many seconds before we autoplay
-const F32 AUTOPLAY_SIZE  = 24*24;      // how big the texture must be (pixel area) before we autoplay
-const F32 AUTOPLAY_SPEED = 0.1f;        // how slow should the agent be moving to autoplay
+const F32 AUTOPLAY_TIME  = 5;			// how many seconds before we autoplay
+const F32 AUTOPLAY_SIZE  = 24 * 24;		// how big the texture must be (pixel area) before we autoplay
+const F32 AUTOPLAY_SPEED = 0.1f;		// how slow should the agent be moving to autoplay
 
 LLViewerParcelMediaAutoPlay::LLViewerParcelMediaAutoPlay() :
 	LLEventTimer(1),
@@ -113,13 +113,13 @@ BOOL LLViewerParcelMediaAutoPlay::tick()
 	{
 		if (this_media_texture_id.notNull())  // and if the media texture is good
 		{
-			/*LLViewerImage *image = gImageList.getImage(this_media_texture_id, FALSE);
+			/*LLViewerTexture *image = LLViewerTextureManager::getFetchedTexture(this_media_texture_id, FALSE);
 
 			F32 image_size = 0;
 
 			if (image)
 			{
-				image_size = image->mMaxVirtualSize;
+				image_size = image->getMaxVirtualSize;
 			}
 			llinfos << " media texture id is " << this_media_texture_id.asString().c_str() << " and the image info is"
 				<< image->getID().asString().c_str() << " so now the size is " << image_size << " weeee," << llendl;

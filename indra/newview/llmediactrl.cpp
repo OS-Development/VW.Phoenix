@@ -63,25 +63,25 @@ const S32 MAX_TEXTURE_DIMENSION = 2048;
 
 static LLRegisterWidget<LLMediaCtrl> r("web_browser");
 
-LLMediaCtrl::LLMediaCtrl( const std::string& name, const LLRect& rect ) :
-	LLUICtrl( name, rect, FALSE, NULL, NULL ),
-	mTextureDepthBytes( 4 ),
-	mWebBrowserImage( 0 ),
+LLMediaCtrl::LLMediaCtrl(const std::string& name, const LLRect& rect) :
+	LLUICtrl(name, rect, FALSE, NULL, NULL),
+	mTextureDepthBytes(4),
+	mWebBrowserImage(0),
 	mBorder(NULL),
-	mFrequentUpdates( true ),
-	mForceUpdate( false ),
-	mTrusted( false ),
-	mHomePageUrl( "" ),
-	mIgnoreUIScale( true ),
-	mAlwaysRefresh( false ),
-	mMediaSource( 0 ),
-	mTakeFocusOnClick( true ),
-	mCurrentNavUrl( "about:blank" ),
-	mLastSetCursor( UI_CURSOR_ARROW ),
-	mStretchToFill( true ),
-	mMaintainAspectRatio ( true ),
-	mHideLoading (false),
-	mHidingInitialLoad (true)
+	mFrequentUpdates(true),
+	mForceUpdate(false),
+	mTrusted(false),
+	mHomePageUrl(""),
+	mIgnoreUIScale(true),
+	mAlwaysRefresh(false),
+	mMediaSource(0),
+	mTakeFocusOnClick(true),
+	mCurrentNavUrl("about:blank"),
+	mLastSetCursor(UI_CURSOR_ARROW),
+	mStretchToFill(true),
+	mMaintainAspectRatio(true),
+	mHideLoading(false),
+	mHidingInitialLoad(true)
 {
 	S32 screen_width = mIgnoreUIScale ? 
 		llround((F32)getRect().getWidth() * LLUI::sGLScaleFactor.mV[VX]) : getRect().getWidth();
@@ -89,10 +89,10 @@ LLMediaCtrl::LLMediaCtrl( const std::string& name, const LLRect& rect ) :
 		llround((F32)getRect().getHeight() * LLUI::sGLScaleFactor.mV[VY]) : getRect().getHeight();
 
 	mMediaSource = LLViewerMedia::newMediaImpl(mHomePageUrl, LLUUID::null, screen_width, screen_height, false, false, "text/html");
-	if ( !mMediaSource )
+	if (!mMediaSource)
 	{
 		llwarns << "media source create failed " << llendl;
-		// return;
+		return;
 	}
 	else
 	{
@@ -100,13 +100,13 @@ LLMediaCtrl::LLMediaCtrl( const std::string& name, const LLRect& rect ) :
 		mWebBrowserImage = new LLWebBrowserTexture( screen_width, screen_height, this, mMediaSource );
 	}
 
-	mMediaSource->setVisible( getVisible() );
+	mMediaSource->setVisible(getVisible());
 
-	mMediaSource->addObserver( this );
+	mMediaSource->addObserver(this);
 
-	LLRect border_rect( 0, getRect().getHeight() + 2, getRect().getWidth() + 2, 0 );
-	mBorder = new LLViewBorder( std::string("web control border"), border_rect, LLViewBorder::BEVEL_IN );
-	addChild( mBorder );
+	LLRect border_rect(0, getRect().getHeight() + 2, getRect().getWidth() + 2, 0);
+	mBorder = new LLViewBorder(std::string("web control border"), border_rect, LLViewBorder::BEVEL_IN);
+	addChild(mBorder);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -116,13 +116,12 @@ LLMediaCtrl::~LLMediaCtrl()
 
 	if (mMediaSource)
 	{
-		mMediaSource->remObserver( this );
+		mMediaSource->remObserver(this);
 		mMediaSource = NULL;
 	}
 
-	if ( mWebBrowserImage )
+	if (mWebBrowserImage)
 	{
-		delete mWebBrowserImage;
 		mWebBrowserImage = NULL;
 	}
 }
@@ -131,10 +130,10 @@ LLMediaCtrl::~LLMediaCtrl()
 //
 void LLMediaCtrl::setBorderVisible( BOOL border_visible )
 {
-	if ( mBorder )
+	if (mBorder)
 	{
-		mBorder->setVisible( border_visible );
-	};
+		mBorder->setVisible(border_visible);
+	}
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -634,7 +633,7 @@ void LLMediaCtrl::draw()
 		}
 
 		// scale texture to fit the space using texture coords
-		gGL.getTexUnit(0)->bind(mWebBrowserImage->getTexture());
+		gGL.getTexUnit(0)->bind(mWebBrowserImage);
 		gGL.color4fv( LLColor4::white.mV );
 		F32 max_u = ( F32 )mWebBrowserImage->getMediaWidth() / ( F32 )mWebBrowserImage->getWidth();
 		F32 max_v = ( F32 )mWebBrowserImage->getMediaHeight() / ( F32 )mWebBrowserImage->getHeight();
@@ -907,17 +906,17 @@ void LLMediaCtrl::onClickLinkNoFollow( LLPluginClassMedia* self )
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-LLWebBrowserTexture::LLWebBrowserTexture( S32 width, S32 height, LLMediaCtrl* browserCtrl, viewer_media_t media_source ) :
-	LLDynamicTexture( 512, 512, 4, ORDER_FIRST, TRUE ),
-	mNeedsUpdate( true ),
-	mNeedsResize( false ),
-	mTextureCoordsOpenGL( true ),
-	mWebBrowserCtrl( browserCtrl ),
+LLWebBrowserTexture::LLWebBrowserTexture(S32 width, S32 height, LLMediaCtrl* browserCtrl, viewer_media_t media_source) :
+	LLViewerDynamicTexture(512, 512, 4, ORDER_FIRST, TRUE),
+	mNeedsUpdate(true),
+	mNeedsResize(false),
+	mTextureCoordsOpenGL(true),
+	mWebBrowserCtrl(browserCtrl),
 	mMediaSource(media_source)
 {
 	mElapsedTime.start();
 
-	resize( width, height );
+	resize(width, height);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -961,13 +960,13 @@ BOOL LLWebBrowserTexture::needsRender()
 //
 BOOL LLWebBrowserTexture::render()
 {	
-	if(updateBrowserTexture())
+	if (updateBrowserTexture())
 	{
 		// updateBrowserTexture already verified that the media plugin is there and the texture is valid.
 		LLPluginClassMedia* media_plugin = mMediaSource->getMediaPlugin();
 		LLRect dirty_rect;
 		
-		if(mNeedsUpdate)
+		if (mNeedsUpdate)
 		{
 			// If we need an update, use the whole rect instead of the dirty rect.
 			dirty_rect.mLeft = 0;
@@ -980,7 +979,7 @@ BOOL LLWebBrowserTexture::render()
 			mNeedsUpdate = media_plugin->getDirty(&dirty_rect);
 		}
 		
-		if ( mNeedsUpdate )
+		if (mNeedsUpdate)
 		{			
 			mNeedsUpdate = false;
 			mWebBrowserCtrl->setForceUpdate(false);
@@ -991,7 +990,7 @@ BOOL LLWebBrowserTexture::render()
 			S32 width = llmin(dirty_rect.mRight, getWidth()) - x_pos;
 			S32 height = llmin(dirty_rect.mTop, getHeight()) - y_pos;
 			
-			if(width > 0 && height > 0)
+			if (width > 0 && height > 0)
 			{
 				U8* data = media_plugin->getBitsData();
 
@@ -999,7 +998,7 @@ BOOL LLWebBrowserTexture::render()
 				data += ( x_pos * media_plugin->getTextureDepth() * media_plugin->getBitsWidth() );
 				data += ( y_pos * media_plugin->getTextureDepth() );
 				
-				mTexture->setSubImage(
+				setSubImage(
 						data, 
 						media_plugin->getBitsWidth(), 
 						media_plugin->getBitsHeight(),
@@ -1110,21 +1109,20 @@ bool LLWebBrowserTexture::updateBrowserTexture()
 		
 	LLPluginClassMedia* media = mMediaSource->getMediaPlugin();
 	
-	if(!media->textureValid())
+	if (!media->textureValid())
 		return false;
 	
-	if(mMediaSource->mNeedsNewTexture
-		|| media->getTextureWidth() != mWidth
-		|| media->getTextureHeight() != mHeight )
+	if (mMediaSource->mNeedsNewTexture
+		|| media->getTextureWidth() != getFullWidth()
+		|| media->getTextureHeight() != getFullHeight())
 	{
-		releaseGLTexture();
 		
-		mWidth = media->getTextureWidth();
-		mHeight = media->getTextureHeight();
+		mFullWidth = media->getTextureWidth();
+		mFullHeight = media->getTextureHeight();
 		mTextureCoordsOpenGL = media->getTextureCoordsOpenGL();
 
-		// will create mWidth * mHeight sized texture, using the texture params specified by the media.
-		LLDynamicTexture::generateGLTexture(
+		// will create mFullWidth * mFullHeight sized texture, using the texture params specified by the media.
+		generateGLTexture(
 				media->getTextureFormatInternal(), 
 				media->getTextureFormatPrimary(), 
 				media->getTextureFormatType(), 
@@ -1133,7 +1131,7 @@ bool LLWebBrowserTexture::updateBrowserTexture()
 
 		mMediaSource->mNeedsNewTexture = false;
 	}
-	
+
 	return true;
 }
 // virtual

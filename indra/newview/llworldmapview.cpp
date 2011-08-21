@@ -47,8 +47,7 @@
 #include "lltextureview.h"
 #include "lltracker.h"
 #include "llviewercamera.h"
-#include "llviewerimage.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llviewerregion.h"
 #include "llviewerwindow.h"
 #include "lltrans.h"
@@ -424,14 +423,14 @@ void LLWorldMapView::draw()
 		else if (gSavedSettings.getBOOL("MapShowLandForSale") && (level <= DRAW_LANDFORSALE_THRESHOLD))
 		{
 			// Draw the overlay image "Land for Sale / Land for Auction"
-			LLViewerImage* overlayimage = info->getLandForSaleImage();
+			LLViewerTexture* overlayimage = info->getLandForSaleImage();
 			if (overlayimage)
 			{
 				// Inform the fetch mechanism of the size we need
 				S32 draw_size = llround(sMapScale);
 				overlayimage->setKnownDrawSize(llround(draw_size * LLUI::sGLScaleFactor.mV[VX]), llround(draw_size * LLUI::sGLScaleFactor.mV[VY]));
 				// Draw something whenever we have enough info
-				if (overlayimage->getHasGLTexture())
+				if (overlayimage->hasGLTexture())
 				{
 					gGL.blendFunc(LLRender::BF_DEST_ALPHA, LLRender::BF_ZERO);
 					gGL.getTexUnit(0)->bind(overlayimage);
@@ -704,11 +703,11 @@ bool LLWorldMapView::drawMipmapLevel(S32 width, S32 height, S32 level, bool load
 			// Convert to the mipmap level coordinates for that point (i.e. which tile to we hit)
 			LLWorldMipmap::globalToMipmap(pos_global[VX], pos_global[VY], level, &grid_x, &grid_y);
 			// Get the tile. Note: NULL means that the image does not exist (so it's considered "complete" as far as fetching is concerned)
-			LLPointer<LLViewerImage> simimage = LLWorldMap::getInstance()->getObjectsTile(grid_x, grid_y, level, load);
+			LLPointer<LLViewerTexture> simimage = LLWorldMap::getInstance()->getObjectsTile(grid_x, grid_y, level, load);
 			if (simimage)
 			{
 				// Check the texture state
-				if (simimage->getHasGLTexture())
+				if (simimage->hasGLTexture())
 				{
 					// Increment the number of completly fetched tiles
 					completed_tiles++;

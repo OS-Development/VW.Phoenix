@@ -61,7 +61,7 @@
 #include "llviewermenu.h"
 #include "llviewerregion.h"
 #include "llviewerstats.h"
-#include "llviewerimage.h"
+#include "llviewertexture.h"
 #include "llworldmap.h"
 #include "llworldmapmessage.h"
 #include "llworldmapview.h"

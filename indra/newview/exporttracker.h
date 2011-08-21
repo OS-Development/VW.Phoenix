@@ -32,7 +32,7 @@
 
 #include "llagent.h"
 #include "llvoinventorylistener.h"
-
+#include "llviewertexture.h"
 
 class JCExportTracker : public LLVOInventoryListener
 {
@@ -53,7 +53,7 @@ public:
 								 void* data);
 	static void			onFileLoadedForSave( 
 							BOOL success,
-							LLViewerImage *src_vi,
+							LLViewerFetchedTexture *src_vi,
 							LLImageRaw* src, 
 							LLImageRaw* aux_src,
 							S32 discard_level, 
@@ -92,6 +92,8 @@ private:
 	static std::string destination;
 	static std::string asset_dir;
 	static std::set<LLUUID> requested_textures;
+
+	static LLLoadedCallbackEntry::source_callback_list_t mCallbackTextureList;
 };
 
 

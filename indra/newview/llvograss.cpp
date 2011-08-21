@@ -46,7 +46,7 @@
 #include "llsurfacepatch.h"
 #include "llvosky.h"
 #include "llviewercamera.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llviewerregion.h"
 #include "pipeline.h"
 #include "llselectmgr.h"
@@ -107,7 +107,7 @@ void LLVOGrass::updateSpecies()
 		SpeciesMap::const_iterator it = sSpeciesTable.begin();
 		mSpecies = (*it).first;
 	}
-	setTEImage(0, gImageList.getImage(sSpeciesTable[mSpecies]->mTextureID));
+	setTEImage(0, LLViewerTextureManager::getFetchedTexture(sSpeciesTable[mSpecies]->mTextureID, TRUE, LLViewerTexture::BOOST_NONE, LLViewerTexture::LOD_TEXTURE));
 }
 
 
@@ -172,7 +172,7 @@ void LLVOGrass::initClass()
 
 			static LLStdStringHandle texture_name_string = LLXmlTree::addAttributeString("texture_name");
 			success &= grass_def->getFastAttributeString(texture_name_string, textureName);
-			LLViewerImage* grass_image = gImageList.getImageFromFile(textureName);
+			LLViewerTexture* grass_image = LLViewerTextureManager::getFetchedTextureFromFile(textureName);
 			newGrass->mTextureID = grass_image->getID();
 		}
 

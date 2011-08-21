@@ -46,8 +46,8 @@
 #include "llface.h"
 #include "llsky.h"
 #include "llviewercamera.h" // to get OGL_TO_CFR_ROTATION
-#include "llviewerimagelist.h"
 #include "llviewerregion.h"
+#include "llviewertexturelist.h"
 #include "llvosky.h"
 #include "llvowater.h"
 #include "llworld.h"
@@ -55,7 +55,7 @@
 #include "llviewershadermgr.h"
 #include "llwaterparammanager.h"
 
-const LLUUID WATER_TEST("2bfd3884-7e27-69b9-ba3a-3e673f680004");
+const LLUUID TRANSPARENT_WATER_TEXTURE("2bfd3884-7e27-69b9-ba3a-3e673f680004");
 
 static float sTime;
 
@@ -70,18 +70,20 @@ LLVector3 LLDrawPoolWater::sLightDir;
 LLDrawPoolWater::LLDrawPoolWater() :
 	LLFacePool(POOL_WATER)
 {
-	mHBTex[0] = gImageList.getImage(gSunTextureID, TRUE, TRUE);
-	gGL.getTexUnit(0)->bind(mHBTex[0].get());
+	mHBTex[0] = LLViewerTextureManager::getFetchedTexture(gSunTextureID, TRUE, LLViewerTexture::BOOST_UI);
+	gGL.getTexUnit(0)->bind(mHBTex[0]);
 	mHBTex[0]->setAddressMode(LLTexUnit::TAM_CLAMP);
 
-	mHBTex[1] = gImageList.getImage(gMoonTextureID, TRUE, TRUE);
-	gGL.getTexUnit(0)->bind(mHBTex[1].get());
+	mHBTex[1] = LLViewerTextureManager::getFetchedTexture(gMoonTextureID, TRUE, LLViewerTexture::BOOST_UI);
+	gGL.getTexUnit(0)->bind(mHBTex[1]);
 	mHBTex[1]->setAddressMode(LLTexUnit::TAM_CLAMP);
 
-	mWaterImagep = gImageList.getImage(WATER_TEST);
-	mWaterImagep->setNoDelete() ;
-	mWaterNormp = gImageList.getImage(DEFAULT_WATER_NORMAL);
-	mWaterNormp->setNoDelete() ;
+	mWaterImagep = LLViewerTextureManager::getFetchedTexture(TRANSPARENT_WATER_TEXTURE);
+	llassert(mWaterImagep);
+	mWaterImagep->setNoDelete();
+	mWaterNormp = LLViewerTextureManager::getFetchedTexture(DEFAULT_WATER_NORMAL);
+	llassert(mWaterNormp);
+	mWaterNormp->setNoDelete();
 
 	restoreGL();
 }
@@ -185,7 +187,7 @@ void LLDrawPoolWater::render(S32 pass)
 	mWaterImagep->addTextureStats(1024.f*1024.f);
 	gGL.getTexUnit(1)->activate();
 	gGL.getTexUnit(1)->enable(LLTexUnit::TT_TEXTURE);
-	gGL.getTexUnit(1)->bind(mWaterImagep.get());
+	gGL.getTexUnit(1)->bind(mWaterImagep);
 
 	LLVector3 camera_up = LLViewerCamera::getInstance()->getUpAxis();
 	F32 up_dot = camera_up * LLVector3::z_axis;
@@ -330,7 +332,7 @@ void LLDrawPoolWater::renderReflection(LLFace* face)
 
 	LLGLSNoFog noFog;
 
-	gGL.getTexUnit(0)->bind(mHBTex[dr].get());
+	gGL.getTexUnit(0)->bind(mHBTex[dr]);
 
 	LLOverrideFaceColor override(this, face->getFaceColor().mV);
 	face->renderIndexed();
@@ -420,11 +422,11 @@ void LLDrawPoolWater::shade()
 	// change mWaterNormp if needed
 	if (mWaterNormp->getID() != param_mgr->getNormalMapID())
 	{
-		mWaterNormp = gImageList.getImage(param_mgr->getNormalMapID());
+		mWaterNormp = LLViewerTextureManager::getFetchedTexture(param_mgr->getNormalMapID());
 	}
 
 	mWaterNormp->addTextureStats(1024.f*1024.f);
-	gGL.getTexUnit(bumpTex)->bind(mWaterNormp.get());
+	gGL.getTexUnit(bumpTex)->bind(mWaterNormp);
 	if (gSavedSettings.getBOOL("RenderWaterMipNormal"))
 	{
 		mWaterNormp->setFilteringOption(LLTexUnit::TFO_ANISOTROPIC);
@@ -587,7 +589,7 @@ void LLDrawPoolWater::renderForSelect()
 
 
 void LLDrawPoolWater::renderFaceSelected(LLFace *facep, 
-									LLImageGL *image, 
+									LLViewerTexture *image, 
 									const LLColor4 &color,
 									const S32 index_offset, const S32 index_count)
 {
@@ -596,9 +598,9 @@ void LLDrawPoolWater::renderFaceSelected(LLFace *facep,
 }
 
 
-LLViewerImage *LLDrawPoolWater::getDebugTexture()
+LLViewerTexture *LLDrawPoolWater::getDebugTexture()
 {
-	return LLViewerImage::sSmokeImagep;
+	return LLViewerFetchedTexture::sSmokeImagep;
 }
 
 LLColor3 LLDrawPoolWater::getDebugColor() const

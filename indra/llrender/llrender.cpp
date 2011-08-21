@@ -38,6 +38,7 @@
 #include "llcubemap.h"
 #include "llimagegl.h"
 #include "llrendertarget.h"
+#include "lltexture.h"
 
 LLRender gGL;
 
@@ -47,7 +48,7 @@ F64	gGLLastModelView[16];
 F64 gGLProjection[16];
 S32	gGLViewport[4];
 
-static const U32 LL_NUM_TEXTURE_LAYERS = 8; 
+static const U32 LL_NUM_TEXTURE_LAYERS = 8; // Increase to 32 for multiple clothing layers
 
 static GLenum sGLTextureType[] =
 {
@@ -88,16 +89,18 @@ static GLenum sGLBlendFactor[] =
 	GL_DST_ALPHA,
 	GL_SRC_ALPHA,
 	GL_ONE_MINUS_DST_ALPHA,
-	GL_ONE_MINUS_SRC_ALPHA
+	GL_ONE_MINUS_SRC_ALPHA,
+
+	GL_ZERO // 'BF_UNDEF'
 };
 
 LLTexUnit::LLTexUnit(S32 index)
-: mCurrTexType(TT_NONE), mCurrBlendType(TB_MULT), 
-mCurrColorOp(TBO_MULT), mCurrAlphaOp(TBO_MULT),
-mCurrColorSrc1(TBS_TEX_COLOR), mCurrColorSrc2(TBS_PREV_COLOR),
-mCurrAlphaSrc1(TBS_TEX_ALPHA), mCurrAlphaSrc2(TBS_PREV_ALPHA),
-mCurrColorScale(1), mCurrAlphaScale(1), mCurrTexture(0),
-mHasMipMaps(false)
+:	mCurrTexType(TT_NONE), mCurrBlendType(TB_MULT), 
+	mCurrColorOp(TBO_MULT), mCurrAlphaOp(TBO_MULT),
+	mCurrColorSrc1(TBS_TEX_COLOR), mCurrColorSrc2(TBS_PREV_COLOR),
+	mCurrAlphaSrc1(TBS_TEX_ALPHA), mCurrAlphaSrc2(TBS_PREV_ALPHA),
+	mCurrColorScale(1), mCurrAlphaScale(1), mCurrTexture(0),
+	mHasMipMaps(false)
 {
 	llassert_always(index < LL_NUM_TEXTURE_LAYERS);
 	mIndex = index;
@@ -114,15 +117,32 @@ void LLTexUnit::refreshState(void)
 	// We set dirty to true so that the tex unit knows to ignore caching
 	// and we reset the cached tex unit state
 
+	gGL.flush();
+
 	glActiveTextureARB(GL_TEXTURE0_ARB + mIndex);
+
+	//
+	// Per apple spec, don't call glEnable/glDisable when index exceeds max texture units
+	// http://www.mailinglistarchive.com/html/mac-opengl@lists.apple.com/2008-07/msg00653.html
+	//
+	bool enableDisable = (mIndex < gGLManager.mNumTextureUnits);
+		
 	if (mCurrTexType != TT_NONE)
 	{
-		glEnable(sGLTextureType[mCurrTexType]);
+		if (enableDisable)
+		{
+			glEnable(sGLTextureType[mCurrTexType]);
+		}
+
 		glBindTexture(sGLTextureType[mCurrTexType], mCurrTexture);
 	}
 	else
 	{
-		glDisable(GL_TEXTURE_2D);
+		if (enableDisable)
+		{
+			glDisable(GL_TEXTURE_2D);
+		}
+
 		glBindTexture(GL_TEXTURE_2D, 0);	
 	}
 
@@ -141,8 +161,9 @@ void LLTexUnit::activate(void)
 {
 	if (mIndex < 0) return;
 
-	if (gGL.mCurrTextureUnitIndex != mIndex || gGL.mDirty)
+	if ((S32)gGL.mCurrTextureUnitIndex != mIndex || gGL.mDirty)
 	{
+		gGL.flush();
 		glActiveTextureARB(GL_TEXTURE0_ARB + mIndex);
 		gGL.mCurrTextureUnitIndex = mIndex;
 	}
@@ -152,7 +173,7 @@ void LLTexUnit::enable(eTextureType type)
 {
 	if (mIndex < 0) return;
 
-	if ( (mCurrTexType != type || gGL.mDirty) && (type != TT_NONE) )
+	if (type != TT_NONE && (mCurrTexType != type || gGL.mDirty))
 	{
 		activate();
 		if (mCurrTexType != TT_NONE && !gGL.mDirty)
@@ -160,7 +181,13 @@ void LLTexUnit::enable(eTextureType type)
 			disable(); // Force a disable of a previous texture type if it's enabled.
 		}
 		mCurrTexType = type;
-		glEnable(sGLTextureType[type]);
+
+		gGL.flush();
+
+		if (mIndex < gGLManager.mNumTextureUnits)
+		{
+			glEnable(sGLTextureType[type]);
+		}
 	}
 }
 
@@ -172,9 +199,69 @@ void LLTexUnit::disable(void)
 	{
 		activate();
 		unbind(mCurrTexType);
-		glDisable(sGLTextureType[mCurrTexType]);
+		gGL.flush();
+		if (mIndex < gGLManager.mNumTextureUnits)
+		{
+			glDisable(sGLTextureType[mCurrTexType]);
+		}
 		mCurrTexType = TT_NONE;
 	}
+}
+
+bool LLTexUnit::bind(LLTexture* texture, bool for_rendering, bool forceBind)
+{
+	stop_glerror();
+	if (mIndex < 0) return false;
+
+	gGL.flush();
+
+	LLImageGL* gl_tex = NULL;
+	if (texture == NULL || !(gl_tex = texture->getGLTexture()))
+	{
+		llwarns << "NULL LLTexUnit::bind texture" << llendl;
+		return false;
+	}
+
+	if (!gl_tex->getTexName()) //if texture does not exist
+	{
+		//if deleted, will re-generate it immediately
+		texture->forceImmediateUpdate();
+
+		gl_tex->forceUpdateBindStats();
+		return texture->bindDefaultImage(mIndex);
+	}
+
+	//in audit, replace the selected texture by the default one.
+	if (gAuditTexture && for_rendering && LLImageGL::sCurTexPickSize > 0)
+	{
+		if (texture->getWidth() * texture->getHeight() == LLImageGL::sCurTexPickSize)
+		{
+			// This will re-generate the texture immediately.
+			gl_tex->updateBindStats(gl_tex->mTextureMemory);
+			return bind(LLImageGL::sHighlightTexturep.get());
+		}
+	}
+
+	if (forceBind || mCurrTexture != gl_tex->getTexName())
+	{
+		activate();
+		enable(gl_tex->getTarget());
+		mCurrTexture = gl_tex->getTexName();
+		glBindTexture(sGLTextureType[gl_tex->getTarget()], mCurrTexture);
+		if (gl_tex->updateBindStats(gl_tex->mTextureMemory))
+		{
+			texture->setActive();
+		}
+		mHasMipMaps = gl_tex->mHasMipMaps;
+		if (gl_tex->mTexOptionsDirty)
+		{
+			gl_tex->mTexOptionsDirty = false;
+			setTextureAddressMode(gl_tex->mAddressMode);
+			setTextureFilteringOption(gl_tex->mFilterOption);
+		}
+	}
+
+	return true;
 }
 
 bool LLTexUnit::bind(LLImageGL* texture, bool for_rendering, bool forceBind)
@@ -182,43 +269,29 @@ bool LLTexUnit::bind(LLImageGL* texture, bool for_rendering, bool forceBind)
 	stop_glerror();
 	if (mIndex < 0) return false;
 
-	gGL.flush();
-
-	if (texture == NULL)
+	if (!texture)
 	{
 		llwarns << "NULL LLTexUnit::bind texture" << llendl;
 		return false;
 	}
-	
-	if (!texture->getTexName()) //if texture does not exist
-	{
-		if (texture->isDeleted())
-		{
-			// This will re-generate the texture immediately.
-			texture->forceImmediateUpdate() ;
-		}
 
-		texture->forceUpdateBindStats() ;
-		return texture->bindDefaultImage(mIndex);
+	if (!texture->getTexName())
+	{
+		if (LLImageGL::sDefaultGLTexture && LLImageGL::sDefaultGLTexture->getTexName())
+		{
+			return bind(LLImageGL::sDefaultGLTexture);
+		}
+		return false;
 	}
 
-	if(gAuditTexture && for_rendering && LLImageGL::sCurTexPickSize > 0)
+	if (forceBind || mCurrTexture != texture->getTexName())
 	{
-		if(texture->getWidth() * texture->getHeight() == LLImageGL::sCurTexPickSize)
-		{
-			texture->updateBindStats();
-			return bind(LLImageGL::sDefaultTexturep.get());
-		}
-	}
-
-	if ((mCurrTexture != texture->getTexName()) || forceBind)
-	{
+		gGL.flush();
 		activate();
 		enable(texture->getTarget());
 		mCurrTexture = texture->getTexName();
 		glBindTexture(sGLTextureType[texture->getTarget()], mCurrTexture);
-		texture->updateBindStats();
-		texture->setActive() ;
+		texture->updateBindStats(texture->mTextureMemory);		
 		mHasMipMaps = texture->mHasMipMaps;
 		if (texture->mTexOptionsDirty)
 		{
@@ -252,7 +325,7 @@ bool LLTexUnit::bind(LLCubeMap* cubeMap)
 			mCurrTexture = cubeMap->mImages[0]->getTexName();
 			glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, mCurrTexture);
 			mHasMipMaps = cubeMap->mImages[0]->mHasMipMaps;
-			cubeMap->mImages[0]->updateBindStats();
+			cubeMap->mImages[0]->updateBindStats(cubeMap->mImages[0]->mTextureMemory);
 			if (cubeMap->mImages[0]->mTexOptionsDirty)
 			{
 				cubeMap->mImages[0]->mTexOptionsDirty = false;
@@ -293,15 +366,21 @@ bool LLTexUnit::bind(LLRenderTarget* renderTarget, bool bindDepth)
 
 bool LLTexUnit::bindManual(eTextureType type, U32 texture, bool hasMips)
 {
-	if (mIndex < 0 || mCurrTexture == texture) return false;
+	if (mIndex < 0)  
+	{
+		return false;
+	}
 
-	gGL.flush();
-	
-	activate();
-	enable(type);
-	mCurrTexture = texture;
-	glBindTexture(sGLTextureType[type], texture);
-	mHasMipMaps = hasMips;
+	if (mCurrTexture != texture)
+	{
+		gGL.flush();
+
+		activate();
+		enable(type);
+		mCurrTexture = texture;
+		glBindTexture(sGLTextureType[type], texture);
+		mHasMipMaps = hasMips;
+	}
 	return true;
 }
 
@@ -319,6 +398,7 @@ void LLTexUnit::unbind(eTextureType type)
 		activate();
 		mCurrTexture = 0;
 		glBindTexture(sGLTextureType[type], 0);
+		stop_glerror();
 	}
 }
 
@@ -326,10 +406,12 @@ void LLTexUnit::setTextureAddressMode(eTextureAddressMode mode)
 {
 	if (mIndex < 0 || mCurrTexture == 0) return;
 
+	gGL.flush();
+
 	activate();
 
-	glTexParameteri (sGLTextureType[mCurrTexType], GL_TEXTURE_WRAP_S, sGLAddressMode[mode]);
-	glTexParameteri (sGLTextureType[mCurrTexType], GL_TEXTURE_WRAP_T, sGLAddressMode[mode]);
+	glTexParameteri(sGLTextureType[mCurrTexType], GL_TEXTURE_WRAP_S, sGLAddressMode[mode]);
+	glTexParameteri(sGLTextureType[mCurrTexType], GL_TEXTURE_WRAP_T, sGLAddressMode[mode]);
 	if (mCurrTexType == TT_CUBE_MAP)
 	{
 		glTexParameteri (GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_R, sGLAddressMode[mode]);
@@ -339,6 +421,8 @@ void LLTexUnit::setTextureAddressMode(eTextureAddressMode mode)
 void LLTexUnit::setTextureFilteringOption(LLTexUnit::eTextureFilterOptions option)
 {
 	if (mIndex < 0 || mCurrTexture == 0) return;
+
+	gGL.flush();
 
 	if (option == TFO_POINT)
 	{
@@ -369,6 +453,9 @@ void LLTexUnit::setTextureFilteringOption(LLTexUnit::eTextureFilterOptions optio
 			if (gGL.mMaxAnisotropy < 1.f)
 			{
 				glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gGL.mMaxAnisotropy);
+
+				llinfos << "gGL.mMaxAnisotropy: " << gGL.mMaxAnisotropy << llendl;
+				gGL.mMaxAnisotropy = llmax(1.f, gGL.mMaxAnisotropy);
 			}
 			glTexParameterf(sGLTextureType[mCurrTexType], GL_TEXTURE_MAX_ANISOTROPY_EXT, gGL.mMaxAnisotropy);
 		}
@@ -388,6 +475,8 @@ void LLTexUnit::setTextureBlendType(eTextureBlendType type)
 	{
 		return;
 	}
+
+	gGL.flush();
 
 	activate();
 	mCurrBlendType = type;
@@ -423,7 +512,7 @@ void LLTexUnit::setTextureBlendType(eTextureBlendType type)
 
 GLint LLTexUnit::getTextureSource(eTextureBlendSrc src)
 {
-	switch(src)
+	switch (src)
 	{
 		// All four cases should return the same value.
 		case TBS_PREV_COLOR:
@@ -461,7 +550,7 @@ GLint LLTexUnit::getTextureSource(eTextureBlendSrc src)
 
 GLint LLTexUnit::getTextureSourceType(eTextureBlendSrc src, bool isAlpha)
 {
-	switch(src)
+	switch (src)
 	{
 		// All four cases should return the same value.
 		case TBS_PREV_COLOR:
@@ -505,15 +594,19 @@ void LLTexUnit::setTextureCombiner(eTextureBlendOp op, eTextureBlendSrc src1, eT
 	if (mCurrBlendType != TB_COMBINE || gGL.mDirty)
 	{
 		mCurrBlendType = TB_COMBINE;
+		gGL.flush();
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
 	}
 
 	// We want an early out, because this function does a LOT of stuff.
-	if ( ( (isAlpha && (mCurrAlphaOp == op) && (mCurrAlphaSrc1 == src1) && (mCurrAlphaSrc2 == src2))
-			|| (!isAlpha && (mCurrColorOp == op) && (mCurrColorSrc1 == src1) && (mCurrColorSrc2 == src2)) ) && !gGL.mDirty)
+	if (!gGL.mDirty &&
+		 ((isAlpha && mCurrAlphaOp == op && mCurrAlphaSrc1 == src1 && mCurrAlphaSrc2 == src2) ||
+		  (!isAlpha && mCurrColorOp == op && mCurrColorSrc1 == src1 && mCurrColorSrc2 == src2)))
 	{
 		return;
 	}
+
+	gGL.flush();
 
 	// Get the gl source enums according to the eTextureBlendSrc sources passed in
 	GLint source1 = getTextureSource(src1);
@@ -647,6 +740,7 @@ void LLTexUnit::setColorScale(S32 scale)
 	if (mCurrColorScale != scale || gGL.mDirty)
 	{
 		mCurrColorScale = scale;
+		gGL.flush();
 		glTexEnvi( GL_TEXTURE_ENV, GL_RGB_SCALE, scale );
 	}
 }
@@ -656,6 +750,7 @@ void LLTexUnit::setAlphaScale(S32 scale)
 	if (mCurrAlphaScale != scale || gGL.mDirty)
 	{
 		mCurrAlphaScale = scale;
+		gGL.flush();
 		glTexEnvi( GL_TEXTURE_ENV, GL_ALPHA_SCALE, scale );
 	}
 }
@@ -677,7 +772,10 @@ void LLTexUnit::debugTextureUnit(void)
 
 
 LLRender::LLRender()
-: mDirty(false), mCount(0), mMode(LLRender::TRIANGLES),
+:	mDirty(false),
+	mCount(0),
+	mMode(LLRender::TRIANGLES),
+    mCurrTextureUnitIndex(0),
 	mMaxAnisotropy(0.f) 
 {
 	mBuffer = new LLVertexBuffer(immediate_mask, 0);
@@ -700,6 +798,10 @@ LLRender::LLRender()
 
 	mCurrAlphaFunc = CF_DEFAULT;
 	mCurrAlphaFuncVal = 0.01f;
+	mCurrBlendColorSFactor = BF_UNDEF;
+	mCurrBlendAlphaSFactor = BF_UNDEF;
+	mCurrBlendColorDFactor = BF_UNDEF;
+	mCurrBlendAlphaDFactor = BF_UNDEF;
 }
 
 LLRender::~LLRender()
@@ -728,11 +830,11 @@ void LLRender::refreshState(void)
 	{
 		mTexUnits[i]->refreshState();
 	}
-	
+
 	mTexUnits[active_unit]->activate();
 
 	setColorMask(mCurrColorMask[0], mCurrColorMask[1], mCurrColorMask[2], mCurrColorMask[3]);
-	
+
 	setAlphaRejectSettings(mCurrAlphaFunc, mCurrAlphaFuncVal);
 
 	mDirty = false;
@@ -771,42 +873,47 @@ void LLRender::setColorMask(bool writeColorR, bool writeColorG, bool writeColorB
 {
 	flush();
 
-	mCurrColorMask[0] = writeColorR;
-	mCurrColorMask[1] = writeColorG;
-	mCurrColorMask[2] = writeColorB;
-	mCurrColorMask[3] = writeAlpha;
+	if (mCurrColorMask[0] != writeColorR ||
+		mCurrColorMask[1] != writeColorG ||
+		mCurrColorMask[2] != writeColorB ||
+		mCurrColorMask[3] != writeAlpha)
+	{
+		mCurrColorMask[0] = writeColorR;
+		mCurrColorMask[1] = writeColorG;
+		mCurrColorMask[2] = writeColorB;
+		mCurrColorMask[3] = writeAlpha;
 
-	glColorMask(writeColorR ? GL_TRUE : GL_FALSE, 
-				writeColorG ? GL_TRUE : GL_FALSE,
-				writeColorB ? GL_TRUE : GL_FALSE,
-				writeAlpha ? GL_TRUE : GL_FALSE);
+		glColorMask(writeColorR ? GL_TRUE : GL_FALSE, 
+					writeColorG ? GL_TRUE : GL_FALSE,
+					writeColorB ? GL_TRUE : GL_FALSE,
+					writeAlpha ? GL_TRUE : GL_FALSE);
+	}
 }
 
 void LLRender::setSceneBlendType(eBlendType type)
 {
-	flush();
 	switch (type) 
 	{
 		case BT_ALPHA:
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			blendFunc(BF_SOURCE_ALPHA, BF_ONE_MINUS_SOURCE_ALPHA);
 			break;
 		case BT_ADD:
-			glBlendFunc(GL_ONE, GL_ONE);
+			blendFunc(BF_ONE, BF_ONE);
 			break;
 		case BT_ADD_WITH_ALPHA:
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+			blendFunc(BF_SOURCE_ALPHA, BF_ONE);
 			break;
 		case BT_MULT:
-			glBlendFunc(GL_DST_COLOR, GL_ZERO);
+			blendFunc(BF_DEST_COLOR, BF_ZERO);
 			break;
 		case BT_MULT_ALPHA:
-			glBlendFunc(GL_DST_ALPHA, GL_ZERO);
+			blendFunc(BF_DEST_ALPHA, BF_ZERO);
 			break;
 		case BT_MULT_X2:
-			glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+			blendFunc(BF_DEST_COLOR, BF_SOURCE_COLOR);
 			break;
 		case BT_REPLACE:
-			glBlendFunc(GL_ONE, GL_ZERO);
+			blendFunc(BF_ONE, BF_ZERO);
 			break;
 		default:
 			llerrs << "Unknown Scene Blend Type: " << type << llendl;
@@ -818,22 +925,35 @@ void LLRender::setAlphaRejectSettings(eCompareFunc func, F32 value)
 {
 	flush();
 
-	mCurrAlphaFunc = func;
-	mCurrAlphaFuncVal = value;
-	if (func == CF_DEFAULT)
+	if (mCurrAlphaFunc != func || mCurrAlphaFuncVal != value)
 	{
-		glAlphaFunc(GL_GREATER, 0.01f);
-	} 
-	else
-	{
-		glAlphaFunc(sGLCompareFunc[func], value);
+		mCurrAlphaFunc = func;
+		mCurrAlphaFuncVal = value;
+		if (func == CF_DEFAULT)
+		{
+			glAlphaFunc(GL_GREATER, 0.01f);
+		} 
+		else
+		{
+			glAlphaFunc(sGLCompareFunc[func], value);
+		}
 	}
 }
 
 void LLRender::blendFunc(eBlendFactor sfactor, eBlendFactor dfactor)
 {
-	flush();
-	glBlendFunc(sGLBlendFactor[sfactor], sGLBlendFactor[dfactor]);
+	llassert(sfactor < BF_UNDEF);
+	llassert(dfactor < BF_UNDEF);
+	if (mCurrBlendColorSFactor != sfactor || mCurrBlendColorDFactor != dfactor ||
+	    mCurrBlendAlphaSFactor != sfactor || mCurrBlendAlphaDFactor != dfactor)
+	{
+		mCurrBlendColorSFactor = sfactor;
+		mCurrBlendAlphaSFactor = sfactor;
+		mCurrBlendColorDFactor = dfactor;
+		mCurrBlendAlphaDFactor = dfactor;
+		flush();
+		glBlendFunc(sGLBlendFactor[sfactor], sGLBlendFactor[dfactor]);
+	}
 }
 
 LLTexUnit* LLRender::getTexUnit(U32 index)
@@ -1058,7 +1178,7 @@ void LLRender::debugTexUnits(void)
 		{
 			if (i == mCurrTextureUnitIndex) active_enabled = "true";
 			LL_INFOS("TextureUnit") << "TexUnit: " << i << " Enabled" << LL_ENDL;
-			LL_INFOS("TextureUnit") << "Enabled As: " ;
+			LL_INFOS("TextureUnit") << "Enabled As: ";
 			switch (getTexUnit(i)->mCurrTexType)
 			{
 				case LLTexUnit::TT_TEXTURE:

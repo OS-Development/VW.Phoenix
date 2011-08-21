@@ -1,10 +1,9 @@
 /** 
- * @file llvoground.h
- * @brief LLVOGround class header file
+ * @file lltexture.cpp
  *
  * $LicenseInfo:firstyear=2001&license=viewergpl$
  * 
- * Copyright (c) 2001-2009, Linden Research, Inc.
+ * Copyright (c) 2010, Linden Research, Inc.
  * 
  * Second Life Viewer Source Code
  * The source code in this file ("Source Code") is provided by Linden Lab
@@ -30,32 +29,10 @@
  * $/LicenseInfo$
  */
 
-#ifndef LL_LLVOGROUND_H
-#define LL_LLVOGROUND_H
+#include "linden_common.h"
+#include "lltexture.h"
 
-#include "stdtypes.h"
-#include "v3color.h"
-#include "v4coloru.h"
-#include "llviewertexture.h"
-#include "llviewerobject.h"
-
-class LLVOGround : public LLStaticViewerObject
+//virtual 
+LLTexture::~LLTexture()
 {
-protected:
-	~LLVOGround();
-
-public:
-	LLVOGround(const LLUUID &id, const LLPCode pcode, LLViewerRegion *regionp);
-
-	/*virtual*/ BOOL idleUpdate(LLAgent &agent, LLWorld &world, const F64 &time);
-	
-	// Graphical stuff for objects - maybe broken out into render class
-	// later?
-	/*virtual*/ void updateTextures();
-	/*virtual*/ LLDrawable* createDrawable(LLPipeline *pipeline);
-	/*virtual*/ BOOL		updateGeometry(LLDrawable *drawable);
-
-	void cleanupGL();
-};
-
-#endif // LL_LLVOGROUND_H
+}

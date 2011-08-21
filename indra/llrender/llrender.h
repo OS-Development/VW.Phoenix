@@ -51,6 +51,7 @@ class LLVertexBuffer;
 class LLCubeMap;
 class LLImageGL;
 class LLRenderTarget;
+class LLTexture;
 
 class LLTexUnit
 {
@@ -58,10 +59,10 @@ class LLTexUnit
 public:
 	typedef enum
 	{
-		TT_TEXTURE = 0,			// Standard 2D Texture
+		TT_TEXTURE = 0,		// Standard 2D Texture
 		TT_RECT_TEXTURE,	// Non power of 2 texture
 		TT_CUBE_MAP,		// 6-sided cube map texture
-		TT_NONE 		// No texture type is currently enabled
+		TT_NONE 			// No texture type is currently enabled
 	} eTextureType;
 
 	typedef enum
@@ -149,6 +150,7 @@ public:
 	// Binds the LLImageGL to this texture unit 
 	// (automatically enables the unit for the LLImageGL's texture type)
 	bool bind(LLImageGL* texture, bool for_rendering = false, bool forceBind = false);
+	bool bind(LLTexture* texture, bool for_rendering = false, bool forceBind = false);
 
 	// Binds a cubemap to this texture unit 
 	// (automatically enables the texture unit for cubemaps)
@@ -268,7 +270,9 @@ public:
 		BF_DEST_ALPHA,
 		BF_SOURCE_ALPHA,
 		BF_ONE_MINUS_DEST_ALPHA,
-		BF_ONE_MINUS_SOURCE_ALPHA
+		BF_ONE_MINUS_SOURCE_ALPHA,
+
+		BF_UNDEF
 	} eBlendFactor;
 
 	LLRender();
@@ -333,12 +337,12 @@ public:
 public:
 
 private:
-	bool				mDirty;
+	bool			mDirty;
 	U32				mCount;
 	U32				mMode;
 	U32				mCurrTextureUnitIndex;
-	bool				mCurrColorMask[4];
-	eCompareFunc			mCurrAlphaFunc;
+	bool			mCurrColorMask[4];
+	eCompareFunc	mCurrAlphaFunc;
 	F32				mCurrAlphaFuncVal;
 
 	LLPointer<LLVertexBuffer>	mBuffer;
@@ -346,7 +350,12 @@ private:
 	LLStrider<LLVector2>		mTexcoordsp;
 	LLStrider<LLColor4U>		mColorsp;
 	std::vector<LLTexUnit*>		mTexUnits;
-	LLTexUnit*			mDummyTexUnit;
+	LLTexUnit*					mDummyTexUnit;
+
+	eBlendFactor mCurrBlendColorSFactor;
+	eBlendFactor mCurrBlendColorDFactor;
+	eBlendFactor mCurrBlendAlphaSFactor;
+	eBlendFactor mCurrBlendAlphaDFactor;
 
 	F32				mMaxAnisotropy;
 };

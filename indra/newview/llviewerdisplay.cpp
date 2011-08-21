@@ -73,7 +73,7 @@
 #include "llviewershadermgr.h"
 #include "llfasttimer.h"
 #include "llfloatertools.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llfocusmgr.h"
 #include "llcubemap.h"
 #include "llviewerregion.h"
@@ -87,9 +87,7 @@
 #include "rlvhandler.h"
 // [/RLVa:KB]
 
-extern LLPointer<LLImageGL> gStartImageGL;
-
-LLPointer<LLImageGL> gDisconnectedImagep = NULL;
+LLPointer<LLViewerTexture> gDisconnectedImagep = NULL;
 
 // used to toggle renderer back on after teleport
 const F32 TELEPORT_RENDER_DELAY = 20.f; // Max time a teleport is allowed to take before we raise the curtain
@@ -141,7 +139,7 @@ void display_startup()
 
 	if (frame_count++ > 1) // make sure we have rendered a frame first
 	{
-		LLDynamicTexture::updateAllInstances();
+		LLViewerDynamicTexture::updateAllInstances();
 	}
 
 	LLGLState::checkStates();
@@ -169,7 +167,7 @@ void display_startup()
 
 void display_update_camera()
 {
-	llpushcallstacks ;
+	llpushcallstacks;
 	// TODO: cut draw distance down if customizing avatar?
 	// TODO: cut draw distance on per-parcel basis?
 
@@ -378,9 +376,8 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			gViewerWindow->setProgressCancelButtonVisible(FALSE, std::string("Cancel")); //TODO: Translate
 			gViewerWindow->setProgressPercent(75.f);
 			gAgent.setTeleportState( LLAgent::TELEPORT_ARRIVING );
-			gAgent.setTeleportMessage(
-				LLAgent::sTeleportProgressMessages["arriving"]);
-			gImageList.mForceResetTextureStats = TRUE;
+			gAgent.setTeleportMessage(LLAgent::sTeleportProgressMessages["arriving"]);
+			gTextureList.mForceResetTextureStats = TRUE;
 			if(!gSavedSettings.getBOOL("PhoenixDisableTeleportScreens"))gAgent.resetView(TRUE, TRUE);
 			break;
 
@@ -544,7 +541,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 	{
 		LLAppViewer::instance()->pingMainloopTimeout("Display:DynamicTextures");
 		LLFastTimer t(LLFastTimer::FTM_UPDATE_TEXTURES);
-		if (LLDynamicTexture::updateAllInstances())
+		if (LLViewerDynamicTexture::updateAllInstances())
 		{
 			gGL.setColorMask(true, true);
 			glClear(GL_DEPTH_BUFFER_BIT);
@@ -682,7 +679,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 				glh::matrix4f proj = glh_get_current_projection();
 				glh::matrix4f mod = glh_get_current_modelview();
 				glViewport(0,0,512,512);
-				LLVOAvatar::updateFreezeCounter() ;
+				LLVOAvatar::updateFreezeCounter();
 				LLVOAvatar::updateImpostors();
 
 				glh_set_current_projection(proj);
@@ -715,24 +712,28 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 		//
 		// Doing this here gives hardware occlusion queries extra time to complete
 		LLAppViewer::instance()->pingMainloopTimeout("Display:UpdateImages");
-		LLError::LLCallStacks::clear() ;
-		llpushcallstacks ;
+		LLError::LLCallStacks::clear();
+		llpushcallstacks;
 		gFrameStats.start(LLFrameStats::IMAGE_UPDATE);
 
 		{
 			LLFastTimer t(LLFastTimer::FTM_IMAGE_UPDATE);
 			
-			LLViewerImage::updateClass(LLViewerCamera::getInstance()->getVelocityStat()->getMean(),
-										LLViewerCamera::getInstance()->getAngularVelocityStat()->getMean());
+			LLViewerCamera* camera = LLViewerCamera::getInstance();
+			LLViewerTexture::updateClass(camera->getVelocityStat()->getMean(),
+										 camera->getAngularVelocityStat()->getMean());
 
-			gBumpImageList.updateImages();  // must be called before gImageList version so that it's textures are thrown out first.
+			gBumpImageList.updateImages();  // must be called before gTextureList version so that it's textures are thrown out first.
 
 			F32 max_image_decode_time = 0.050f*gFrameIntervalSeconds; // 50 ms/second decode time
 			max_image_decode_time = llclamp(max_image_decode_time, 0.001f, 0.005f ); // min 1ms/frame, max 5ms/frame)
-			gImageList.updateImages(max_image_decode_time);
+			gTextureList.updateImages(max_image_decode_time);
+
+			//remove dead textures from GL
+			LLImageGL::deleteDeadTextures();
 			stop_glerror();
 		}
-		llpushcallstacks ;
+		llpushcallstacks;
 		///////////////////////////////////
 		//
 		// StateSort
@@ -1317,7 +1318,6 @@ void render_disconnected_background()
 			return;
 		}
 
-		gDisconnectedImagep = new LLImageGL( FALSE );
 		LLPointer<LLImageRaw> raw = new LLImageRaw;
 		if (!image_bmp->decode(raw, 0.0f))
 		{
@@ -1343,8 +1343,8 @@ void render_disconnected_background()
 
 		
 		raw->expandToPowerOfTwo();
-		gDisconnectedImagep->createGLTexture(0, raw, 0, TRUE, LLViewerImageBoostLevel::OTHER);
-		gStartImageGL = gDisconnectedImagep;
+		gDisconnectedImagep = LLViewerTextureManager::getLocalTexture(raw.get(), FALSE);
+		gStartTexture = gDisconnectedImagep;
 		gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
 	}
 

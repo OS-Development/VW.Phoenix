@@ -73,7 +73,7 @@
 #include "llimview.h"
 #include "lltooldraganddrop.h"
 #include "llviewerassettype.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llviewerinventory.h"
 #include "llviewerobjectlist.h"
 #include "llviewerwindow.h"

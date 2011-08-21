@@ -45,16 +45,15 @@
 #include "xform.h"
 #include "lldarrayptr.h"
 #include "llvertexbuffer.h"
-#include "llviewerimage.h"
+#include "llviewertexture.h"
 #include "llstat.h"
 #include "lldrawable.h"
 
 class LLFacePool;
 class LLVolume;
-class LLViewerImage;
 class LLTextureEntry;
 class LLVertexProgram;
-class LLViewerImage;
+class LLViewerTexture;
 class LLGeometryManager;
 
 const F32 MIN_ALPHA_SIZE = 1024.f;
@@ -82,13 +81,13 @@ public:
 
 	const LLMatrix4& getWorldMatrix()	const	{ return mVObjp->getWorldMatrix(mXform); }
 	const LLMatrix4& getRenderMatrix() const;
-	U32				getIndicesCount()	const	{ return mIndicesCount; };
-	S32				getIndicesStart()	const	{ return mIndicesIndex; };
+	U32				getIndicesCount()	const	{ return mIndicesCount; }
+	S32				getIndicesStart()	const	{ return mIndicesIndex; }
 	U16				getGeomCount()		const	{ return mGeomCount; }		// vertex count for this face
 	U16				getGeomIndex()		const	{ return mGeomIndex; }		// index into draw pool
 	U16				getGeomStart()		const	{ return mGeomIndex; }		// index into draw pool
-	LLViewerImage*	getTexture()		const	{ return mTexture; }
-	void			setTexture(LLViewerImage* tex) ;
+	void			setTexture(LLViewerTexture* tex);
+	void            dirtyTexture();
 	LLXformMatrix*	getXform()			const	{ return mXform; }
 	BOOL			hasGeometry()		const	{ return mGeomCount > 0; }
 	LLVector3		getPositionAgent()	const;
@@ -105,6 +104,9 @@ public:
 	void			setPixelArea(F32 area)	{ mPixelArea = area; }
 	F32				getVirtualSize() const { return mVSize; }
 	F32				getPixelArea() const { return mPixelArea; }
+
+	S32				getIndexInTex() const		{ return mIndexInTex; }
+	void			setIndexInTex(S32 index)	{ mIndexInTex = index ; }
 
 	void			renderSetColor() const;
 	S32				renderElements(const U16 *index_array) const;
@@ -123,10 +125,10 @@ public:
 	LLVertexBuffer* getVertexBuffer()	const	{ return mVertexBuffer; }
 	void			setPoolType(U32 type)		{ mPoolType = type; }
 	S32				getTEOffset()				{ return mTEOffset; }
-	LLViewerImage*	getTexture()				{ return mTexture; }
+	LLViewerTexture*	getTexture() const;
 
 	void			setViewerObject(LLViewerObject* object);
-	void			setPool(LLFacePool *pool, LLViewerImage *texturep);
+	void			setPool(LLFacePool *pool, LLViewerTexture *texturep);
 	
 	void			setDrawable(LLDrawable *drawable);
 	void			setTEOffset(const S32 te_offset);
@@ -175,7 +177,7 @@ public:
 	void		renderSelectedUV();
 
 	void		renderForSelect(U32 data_mask = LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0);
-	void		renderSelected(LLImageGL *image, const LLColor4 &color);
+	void		renderSelected(LLViewerTexture *image, const LLColor4 &color);
 
 	F32			getKey()					const	{ return mDistance; }
 
@@ -189,8 +191,8 @@ public:
 	void		setIndicesIndex(S32 idx) { mIndicesIndex = idx; }
 	void		setDrawInfo(LLDrawInfo* draw_info);
 
-	F32         getTextureVirtualSize() ;
-	F32         getImportanceToCamera()const {return mImportanceToCamera ;}
+	F32         getTextureVirtualSize();
+	F32         getImportanceToCamera()const {return mImportanceToCamera;}
 
 private:	
 	F32         adjustPartialOverlapPixelArea(F32 cos_angle_to_view_dir, F32 radius );
@@ -226,6 +228,7 @@ private:
 	U16			mGeomIndex;			// index into draw pool
 	U32			mIndicesCount;
 	U32			mIndicesIndex;		// index into draw pool for indices (yeah, I know!)
+	S32			mIndexInTex;
 
 	//previous rebuild's geometry info
 	U16			mLastGeomCount;
@@ -234,7 +237,7 @@ private:
 	U32			mLastIndicesIndex;
 
 	LLXformMatrix* mXform;
-	LLPointer<LLViewerImage> mTexture;
+	LLPointer<LLViewerTexture> mTexture;
 	LLPointer<LLDrawable> mDrawablep;
 	LLPointer<LLViewerObject> mVObjp;
 	S32			mTEOffset;
@@ -246,8 +249,8 @@ private:
 	//importance factor, in the range [0, 1.0].
 	//1.0: the most important.
 	//based on the distance from the face to the view point and the angle from the face center to the view direction.
-	F32         mImportanceToCamera ; 
-	F32         mBoundingSphereRadius ;
+	F32         mImportanceToCamera; 
+	F32         mBoundingSphereRadius;
 
 protected:
 	static BOOL	sSafeRenderSelect;

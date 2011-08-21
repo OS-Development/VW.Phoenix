@@ -47,7 +47,7 @@
 #include "llfloaterperms.h"
 #include "llstatusbar.h"
 #include "llviewercontrol.h"	// gSavedSettings
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "lluictrlfactory.h"
 #include "llviewermenu.h"	// gMenuHolder
 #include "llviewerregion.h"
@@ -563,7 +563,7 @@ void handle_compress_image(void*)
 
 			BOOL success;
 
-			success = LLViewerImageList::createUploadFile(infile, outfile, IMG_CODEC_TGA);
+			success = LLViewerTextureList::createUploadFile(infile, outfile, IMG_CODEC_TGA);
 
 			if (success)
 			{
@@ -617,12 +617,10 @@ void upload_new_resource(const std::string& src_filename,
  		upload_error(error_message, "NofileExtension", filename, args);
 		return;
 	}
-	else if( exten == "bmp")
+	else if (exten == "bmp")
 	{
 		asset_type = LLAssetType::AT_TEXTURE;
-		if (!LLViewerImageList::createUploadFile(src_filename,
-												 filename,
-												 IMG_CODEC_BMP ))
+		if (!LLViewerTextureList::createUploadFile(src_filename, filename, IMG_CODEC_BMP))
 		{
 			error_message = llformat( "Problem with file %s:\n\n%s\n",
 					src_filename.c_str(), LLImage::getLastError().c_str());
@@ -632,12 +630,10 @@ void upload_new_resource(const std::string& src_filename,
 			return;
 		}
 	}
-	else if( exten == "tga")
+	else if (exten == "tga")
 	{
 		asset_type = LLAssetType::AT_TEXTURE;
-		if (!LLViewerImageList::createUploadFile(src_filename,
-												 filename,
-												 IMG_CODEC_TGA ))
+		if (!LLViewerTextureList::createUploadFile(src_filename, filename, IMG_CODEC_TGA))
 		{
 			error_message = llformat("Problem with file %s:\n\n%s\n",
 					src_filename.c_str(), LLImage::getLastError().c_str());
@@ -647,12 +643,10 @@ void upload_new_resource(const std::string& src_filename,
 			return;
 		}
 	}
-	else if( exten == "jpg" || exten == "jpeg")
+	else if (exten == "jpg" || exten == "jpeg")
 	{
 		asset_type = LLAssetType::AT_TEXTURE;
-		if (!LLViewerImageList::createUploadFile(src_filename,
-												 filename,
-												 IMG_CODEC_JPEG ))
+		if (!LLViewerTextureList::createUploadFile(src_filename, filename, IMG_CODEC_JPEG))
 		{
 			error_message = llformat("Problem with file %s:\n\n%s\n",
 					src_filename.c_str(), LLImage::getLastError().c_str());
@@ -662,12 +656,10 @@ void upload_new_resource(const std::string& src_filename,
 			return;
 		}
 	}
- 	else if( exten == "png")
+ 	else if (exten == "png")
  	{
  		asset_type = LLAssetType::AT_TEXTURE;
- 		if (!LLViewerImageList::createUploadFile(src_filename,
- 												 filename,
- 												 IMG_CODEC_PNG ))
+ 		if (!LLViewerTextureList::createUploadFile(src_filename, filename, IMG_CODEC_PNG))
  		{
  			error_message = llformat("Problem with file %s:\n\n%s\n",
  					src_filename.c_str(), LLImage::getLastError().c_str());
@@ -678,11 +670,10 @@ void upload_new_resource(const std::string& src_filename,
  		}
  	}
 #ifdef LL_DARWIN
-	else if(exten == "psd")
+	else if (exten == "psd")
 	{
 		asset_type = LLAssetType::AT_TEXTURE;
-		if (!LLViewerImageList::createUploadFile(src_filename,
-			filename,IMG_CODEC_PSD ))
+		if (!LLViewerTextureList::createUploadFile(src_filename, filename, IMG_CODEC_PSD))
 		{
 			error_message = llformat("Problem with file %s:\n\n%s\n",
 			src_filename.c_str(), LLImage::getLastError().c_str());
@@ -692,11 +683,10 @@ void upload_new_resource(const std::string& src_filename,
 			return;
 		}
 	}
-	else if(exten == "tif" || exten == "tiff")
+	else if (exten == "tif" || exten == "tiff")
 	{
 		asset_type = LLAssetType::AT_TEXTURE;
-		if (!LLViewerImageList::createUploadFile(src_filename,
-			filename,IMG_CODEC_TIFF ))
+		if (!LLViewerTextureList::createUploadFile(src_filename, filename, IMG_CODEC_TIFF))
 		{
 			error_message = llformat("Problem with file %s:\n\n%s\n",
 			src_filename.c_str(), LLImage::getLastError().c_str());
@@ -707,7 +697,7 @@ void upload_new_resource(const std::string& src_filename,
 		}
 	}
 #endif
-	else if(exten == "wav")
+	else if (exten == "wav")
 	{
 		asset_type = LLAssetType::AT_SOUND;  // tag it as audio
 		S32 encode_result = 0;
@@ -735,7 +725,7 @@ void upload_new_resource(const std::string& src_filename,
 			return;
 		}
 	}
-	else if(exten == "tmp")	 	
+	else if (exten == "tmp")	 	
 	{	 	
 		// This is a generic .lin resource file
 		asset_type = LLAssetType::AT_OBJECT;

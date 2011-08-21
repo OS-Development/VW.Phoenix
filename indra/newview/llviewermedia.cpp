@@ -37,10 +37,9 @@
 #include "llhoverview.h"
 #include "llmimetypes.h"
 #include "llviewercontrol.h"
-#include "llviewerimage.h"
 #include "llviewerwindow.h"
 #include "llversionviewer.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llpluginclassmedia.h"
 #include "llplugincookiestore.h"
 
@@ -1461,23 +1460,27 @@ void LLViewerMediaImpl::updateMovieImage(const LLUUID& uuid, BOOL active)
 	// If we have changed media uuid, restore the old one
 	if (!mTextureId.isNull())
 	{
-		LLViewerImage* oldImage = LLViewerImage::getImage( mTextureId );
+		LLViewerTexture* oldImage = LLViewerTextureManager::findTexture(mTextureId);
 		if (oldImage)
 		{
-			oldImage->reinit(mMovieImageHasMips);
+			// HACK: downcast to LLViewerMediaTexture. *TODO: fully implement LLViewerMediaTexture
+			LLViewerMediaTexture* media_tex = (LLViewerMediaTexture*)oldImage;
+			media_tex->reinit(mMovieImageHasMips);
 			oldImage->mIsMediaTexture = FALSE;
 		}
 	}
 	// If the movie is playing, set the new media image
 	if (active && !uuid.isNull())
 	{
-		LLViewerImage* viewerImage = LLViewerImage::getImage( uuid );
-		if( viewerImage )
+		LLViewerTexture* viewerImage = LLViewerTextureManager::findTexture(uuid);
+		if (viewerImage)
 		{
 			mTextureId = uuid;
 			// Can't use mipmaps for movies because they don't update the full image
-			mMovieImageHasMips = viewerImage->getUseMipMaps();
-			viewerImage->reinit(FALSE);
+			// HACK: downcast to LLViewerMediaTexture. *TODO: fully implement LLViewerMediaTexture
+			LLViewerMediaTexture* media_tex = (LLViewerMediaTexture*)viewerImage;
+			mMovieImageHasMips = media_tex->getUseMipMaps();
+			media_tex->reinit(FALSE);
 			viewerImage->mIsMediaTexture = TRUE;
 		}
 	}
@@ -1519,7 +1522,7 @@ void LLViewerMediaImpl::update()
 		return;
 	}
 	
-	LLViewerImage* placeholder_image = updatePlaceholderImage();
+	LLViewerTexture* placeholder_image = updatePlaceholderImage();
 		
 	if(placeholder_image)
 	{
@@ -1566,7 +1569,8 @@ void LLViewerMediaImpl::updateImagesMediaStreams()
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-LLViewerImage* LLViewerMediaImpl::updatePlaceholderImage()
+// *TODO: Should return a LLViewerMediaTexture*
+LLViewerTexture* LLViewerMediaImpl::updatePlaceholderImage()
 {
 	if(mTextureId.isNull())
 	{
@@ -1574,11 +1578,11 @@ LLViewerImage* LLViewerMediaImpl::updatePlaceholderImage()
 		return NULL;
 	}
 	
-	LLViewerImage* placeholder_image = gImageList.getImage( mTextureId );
+	LLViewerMediaTexture* placeholder_image = (LLViewerMediaTexture*)LLViewerTextureManager::getFetchedTexture(mTextureId);
 	
 	if (mNeedsNewTexture 
 		|| placeholder_image->getUseMipMaps()
-		|| ! placeholder_image->mIsMediaTexture
+		|| !placeholder_image->mIsMediaTexture
 		|| (placeholder_image->getWidth() != mMediaSource->getTextureWidth())
 		|| (placeholder_image->getHeight() != mMediaSource->getTextureHeight())
 		|| (mTextureUsedWidth != mMediaSource->getWidth())

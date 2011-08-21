@@ -54,7 +54,7 @@ public:
 	virtual void draw();
 	virtual void refresh();
 	virtual void updateDimensions();
-	static void drawTextureEntry(const LLViewerImage* img, const U8 i);
+	static void drawTextureEntry(const LLViewerTexture* tex, const U8 i);
 	static BOOL isVisible();
 	virtual void onFocusReceived();
 	static void onClickCreatorProfile(void* ctrl);

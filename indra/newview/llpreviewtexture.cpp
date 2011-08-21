@@ -35,6 +35,7 @@
 #include "llpreviewtexture.h"
 
 #include "llagent.h"
+#include "llappviewer.h"
 #include "llbutton.h"
 #include "llcombobox.h"
 #include "llfilepicker.h"
@@ -43,10 +44,10 @@
 #include "llinventory.h"
 #include "llresmgr.h"
 #include "lltextbox.h"
+#include "lltexturecache.h"
 #include "lltextureview.h"
 #include "llui.h"
-#include "llviewerimage.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "lluictrlfactory.h"
 #include "llviewerwindow.h"
 #include "lllineeditor.h"
@@ -78,19 +79,21 @@ LLPreviewTexture::LLPreviewTexture(const std::string& name,
 	mIsCopyable(FALSE),
 	mLastHeight(0),
 	mLastWidth(0),
-	mAspectRatio(0.f)
+	mAspectRatio(0.f),
+	mImage(NULL),
+	mImageOldBoostLevel(LLViewerTexture::BOOST_NONE)
 {
 	const LLInventoryItem *item = getItem();
-	if(item)
+	if (item)
 	{
 		mImageID = item->getAssetUUID();
 		const LLPermissions& perm = item->getPermissions();
 		U32 mask = PERM_NONE;
-		if(perm.getOwner() == gAgent.getID())
+		if (perm.getOwner() == gAgent.getID())
 		{
 			mask = perm.getMaskBase();
 		}
-		else if(gAgent.isInGroup(perm.getGroup()))
+		else if (gAgent.isInGroup(perm.getGroup()))
 		{
 			mask = perm.getMaskGroup();
 		}
@@ -98,7 +101,7 @@ LLPreviewTexture::LLPreviewTexture(const std::string& name,
 		{
 			mask = perm.getMaskEveryone();
 		}
-		if((mask & PERM_ITEM_UNRESTRICTED) == PERM_ITEM_UNRESTRICTED)
+		if ((mask & PERM_ITEM_UNRESTRICTED) == PERM_ITEM_UNRESTRICTED)
 		{
 			mIsCopyable = TRUE;
 		}
@@ -117,23 +120,13 @@ LLPreviewTexture::LLPreviewTexture(const std::string& name,
 
 
 // Note: uses asset_id as a dummy item id.
-LLPreviewTexture::LLPreviewTexture(
-	const std::string& name,
-	const LLRect& rect,
-	const std::string& title,
-	const LLUUID& asset_id,
-	BOOL copy_to_inv,
-	BOOL copyable)
-	:
-	LLPreview(
-		name,
-		rect,
-		title,
-		asset_id,
-		LLUUID::null,
-		TRUE,
-		PREVIEW_TEXTURE_MIN_WIDTH,
-		PREVIEW_TEXTURE_MIN_HEIGHT ),
+LLPreviewTexture::LLPreviewTexture(const std::string& name,
+								   const LLRect& rect,
+								   const std::string& title,
+								   const LLUUID& asset_id,
+								   BOOL copy_to_inv,
+								   BOOL copyable)
+:	LLPreview(name, rect, title, asset_id, LLUUID::null, TRUE, PREVIEW_TEXTURE_MIN_WIDTH, PREVIEW_TEXTURE_MIN_HEIGHT ),
 	mImageID(asset_id),
 	mLoadingFullImage( FALSE ),
 	mShowKeepDiscard(FALSE),
@@ -141,7 +134,9 @@ LLPreviewTexture::LLPreviewTexture(
 	mIsCopyable(copyable),
 	mLastHeight(0),
 	mLastWidth(0),
-	mAspectRatio(0.f)
+	mAspectRatio(0.f),
+	mImage(NULL),
+	mImageOldBoostLevel(LLViewerTexture::BOOST_NONE)
 {
 
 	init();
@@ -155,15 +150,14 @@ LLPreviewTexture::LLPreviewTexture(
 
 LLPreviewTexture::~LLPreviewTexture()
 {
-	if( mLoadingFullImage )
+	LLLoadedCallbackEntry::cleanUpCallbackList(&mCallbackTextureList);
+
+	if (mLoadingFullImage)
 	{
 		getWindow()->decBusyCount();
 	}
 
-	if(mImage.notNull())
-	{
-		mImage->destroySavedRawImage() ;
-	}
+	mImage->setBoostLevel(mImageOldBoostLevel);
 	mImage = NULL;
 	sInstance = NULL;
 }
@@ -183,16 +177,15 @@ void LLPreviewTexture::init()
 
 	if (mCopyToInv) 
 	{
-		childSetAction("Copy To Inventory",LLPreview::onBtnCopyToInv,this);
+		childSetAction("Copy To Inventory",LLPreview::onBtnCopyToInv, this);
 	}
 
 	else if (mShowKeepDiscard)
 	{
-		childSetAction("Keep",onKeepBtn,this);
-		childSetAction("Discard",onDiscardBtn,this);
+		childSetAction("Keep",onKeepBtn, this);
+		childSetAction("Discard",onDiscardBtn, this);
 	}
-
-	else 
+	else
 	{
 		// If the buttons are hidden move stuff down to use the space.
 		
@@ -267,13 +260,13 @@ void LLPreviewTexture::draw()
 		
 		const LLRect& border = mClientRect;
 		LLRect interior = mClientRect;
-		interior.stretch( -PREVIEW_BORDER_WIDTH );
+		interior.stretch(-PREVIEW_BORDER_WIDTH );
 
 		// ...border
 		gl_rect_2d( border, LLColor4(0.f, 0.f, 0.f, 1.f));
-		gl_rect_2d_checkerboard( interior );
+		gl_rect_2d_checkerboard(interior);
 
-		if ( mImage.notNull() )
+		if (mImage.notNull())
 		{
 			// Draw the texture
 			glColor3f( 1.f, 1.f, 1.f );
@@ -284,12 +277,12 @@ void LLPreviewTexture::draw()
 								mImage);
 
 			// Pump the texture priority
-			F32 pixel_area = mLoadingFullImage ? (F32)MAX_IMAGE_AREA  : (F32)(interior.getWidth() * interior.getHeight() );
-			mImage->addTextureStats( pixel_area );
-			if(pixel_area > 0.f)
+			F32 pixel_area = mLoadingFullImage ? (F32)MAX_IMAGE_AREA  : (F32)(interior.getWidth() * interior.getHeight());
+			mImage->addTextureStats(pixel_area);
+			if (pixel_area > 0.f)
 			{
 				//boost the previewed image priority to the highest to make it to get loaded first.
-				mImage->setAdditionalDecodePriority(1.0f) ;
+				mImage->setAdditionalDecodePriority(1.0f);
 			}
 
 
@@ -338,7 +331,7 @@ void LLPreviewTexture::draw()
 				mImage->setKnownDrawSize(0, 0);
 			}
 
-			if( mLoadingFullImage )
+			if (mLoadingFullImage)
 			{
 				// *TODO: Translate
 				LLFontGL::getFontSansSerif()->renderUTF8(std::string("Receiving:"), 0,
@@ -346,9 +339,9 @@ void LLPreviewTexture::draw()
 					interior.mBottom + 4,
 					LLColor4::white, LLFontGL::LEFT, LLFontGL::BOTTOM,
 					LLFontGL::DROP_SHADOW);
-				
-				F32 data_progress = mImage->mDownloadProgress;
-				
+
+				F32 data_progress = mImage->getDownloadProgress();
+
 				// Draw the progress bar.
 				const S32 BAR_HEIGHT = 12;
 				const S32 BAR_LEFT_PAD = 80;
@@ -375,7 +368,7 @@ void LLPreviewTexture::draw()
 				}
 			}
 			else
-			if( !mSavedFileTimer.hasExpired() )
+			if (!mSavedFileTimer.hasExpired())
 			{
 				// *TODO: Translate
 				LLFontGL::getFontSansSerif()->renderUTF8(std::string("File Saved"), 0,
@@ -387,7 +380,6 @@ void LLPreviewTexture::draw()
 		}
 	} 
 }
-
 
 // virtual
 BOOL LLPreviewTexture::canSaveAs() const
@@ -408,10 +400,10 @@ void LLPreviewTexture::saveAs(bool is_png)
 	LLFilePicker& file_picker = LLFilePicker::instance();
 	const LLViewerInventoryItem* item = getItem() ;
 	loaded_callback_func callback = LLPreviewTexture::onFileLoadedForSaveTGA;
-	if(is_png)
+	if (is_png)
 	{
 		callback = LLPreviewTexture::onFileLoadedForSavePNG;
-		if( !file_picker.getSaveFile( LLFilePicker::FFSAVE_PNG, item ? LLDir::getScrubbedFileName(item->getName()) : LLStringUtil::null) )
+		if (!file_picker.getSaveFile( LLFilePicker::FFSAVE_PNG, item ? LLDir::getScrubbedFileName(item->getName()) : LLStringUtil::null))
 		{
 			// User canceled or we failed to acquire save file.
 			return;
@@ -420,7 +412,7 @@ void LLPreviewTexture::saveAs(bool is_png)
 	else
 	{
 		callback = LLPreviewTexture::onFileLoadedForSaveTGA;
-		if( !file_picker.getSaveFile( LLFilePicker::FFSAVE_TGA, item ? LLDir::getScrubbedFileName(item->getName()) : LLStringUtil::null) )
+		if (!file_picker.getSaveFile( LLFilePicker::FFSAVE_TGA, item ? LLDir::getScrubbedFileName(item->getName()) : LLStringUtil::null))
 		{
 			// User canceled or we failed to acquire save file.
 			return;
@@ -430,14 +422,13 @@ void LLPreviewTexture::saveAs(bool is_png)
 	mSaveFileName = file_picker.getFirstFile();
 	mLoadingFullImage = TRUE;
 	getWindow()->incBusyCount();
-	mImage->setLoadedCallback( callback, 
-								0, TRUE, FALSE, new LLUUID( mItemUUID ) );
+	mImage->forceToSaveRawImage(0) ;//re-fetch the raw image if the old one is removed.
+	mImage->setLoadedCallback(callback, 0, TRUE, FALSE, new LLUUID(mItemUUID), &mCallbackTextureList);
 }
-
 
 // static
 void LLPreviewTexture::onFileLoadedForSaveTGA(BOOL success, 
-											LLViewerImage *src_vi,
+											LLViewerFetchedTexture *src_vi,
 											LLImageRaw* src, 
 											LLImageRaw* aux_src, 
 											S32 discard_level,
@@ -447,16 +438,16 @@ void LLPreviewTexture::onFileLoadedForSaveTGA(BOOL success,
 	LLUUID* item_uuid = (LLUUID*) userdata;
 	LLPreviewTexture* self = NULL;
 	preview_map_t::iterator found_it = LLPreview::sInstances.find(*item_uuid);
-	if(found_it != LLPreview::sInstances.end())
+	if (found_it != LLPreview::sInstances.end())
 	{
 		self = (LLPreviewTexture*) found_it->second;
 	}
 
-	if( final || !success )
+	if (final || !success)
 	{
 		delete item_uuid;
 
-		if( self )
+		if (self)
 		{
 			self->getWindow()->decBusyCount();
 			self->mLoadingFullImage = FALSE;
@@ -466,13 +457,13 @@ void LLPreviewTexture::onFileLoadedForSaveTGA(BOOL success,
 	if( self && final && success )
 	{
 		LLPointer<LLImageTGA> image_tga = new LLImageTGA;
-		if( !image_tga->encode( src ) )
+		if (!image_tga->encode(src))
 		{
 			LLSD args;
 			args["FILE"] = self->mSaveFileName;
 			LLNotifications::instance().add("CannotEncodeFile", args);
 		}
-		else if( !image_tga->save( self->mSaveFileName ) )
+		else if (!image_tga->save(self->mSaveFileName))
 		{
 			LLSD args;
 			args["FILE"] = self->mSaveFileName;
@@ -481,20 +472,20 @@ void LLPreviewTexture::onFileLoadedForSaveTGA(BOOL success,
 		else
 		{
 			self->mSavedFileTimer.reset();
-			self->mSavedFileTimer.setTimerExpirySec( SECONDS_TO_SHOW_FILE_SAVED_MSG );
+			self->mSavedFileTimer.setTimerExpirySec(SECONDS_TO_SHOW_FILE_SAVED_MSG);
 		}
 
 		self->mSaveFileName.clear();
 	}
 
-	if( self && !success )
+	if (self && !success)
 	{
 		LLNotifications::instance().add("CannotDownloadFile");
 	}
 }
 
 void LLPreviewTexture::onFileLoadedForSavePNG(BOOL success, 
-											LLViewerImage *src_vi,
+											LLViewerFetchedTexture *src_vi,
 											LLImageRaw* src, 
 											LLImageRaw* aux_src, 
 											S32 discard_level,
@@ -504,32 +495,32 @@ void LLPreviewTexture::onFileLoadedForSavePNG(BOOL success,
 	LLUUID* item_uuid = (LLUUID*) userdata;
 	LLPreviewTexture* self = NULL;
 	preview_map_t::iterator found_it = LLPreview::sInstances.find(*item_uuid);
-	if(found_it != LLPreview::sInstances.end())
+	if (found_it != LLPreview::sInstances.end())
 	{
 		self = (LLPreviewTexture*) found_it->second;
 	}
 
-	if( final || !success )
+	if (final || !success)
 	{
 		delete item_uuid;
 
-		if( self )
+		if (self)
 		{
 			self->getWindow()->decBusyCount();
 			self->mLoadingFullImage = FALSE;
 		}
 	}
 
-	if( self && final && success )
+	if (self && final && success)
 	{
 		LLPointer<LLImagePNG> image_png = new LLImagePNG;
-		if( !image_png->encode( src, 0.0 ) )
+		if (!image_png->encode(src, 0.0))
 		{
 			LLSD args;
 			args["FILE"] = self->mSaveFileName;
 			LLNotifications::instance().add("CannotEncodeFile", args);
 		}
-		else if( !image_png->save( self->mSaveFileName ) )
+		else if (!image_png->save(self->mSaveFileName))
 		{
 			LLSD args;
 			args["FILE"] = self->mSaveFileName;
@@ -538,24 +529,23 @@ void LLPreviewTexture::onFileLoadedForSavePNG(BOOL success,
 		else
 		{
 			self->mSavedFileTimer.reset();
-			self->mSavedFileTimer.setTimerExpirySec( SECONDS_TO_SHOW_FILE_SAVED_MSG );
+			self->mSavedFileTimer.setTimerExpirySec(SECONDS_TO_SHOW_FILE_SAVED_MSG);
 		}
 
 		self->mSaveFileName.clear();
 	}
 
-	if( self && !success )
+	if (self && !success)
 	{
 		LLNotifications::instance().add("CannotDownloadFile");
 	}
 }
 
-
 // It takes a while until we get height and width information.
 // When we receive it, reshape the window accordingly.
 void LLPreviewTexture::updateDimensions()
 {
-	if (!mImage) return;
+	if (!mImage || mImage->getFullWidth() * mImage->getFullHeight() == 0) return;
 
 	S32 image_height = llmax(1, mImage->getHeight(0));
 	S32 image_width = llmax(1, mImage->getWidth(0));
@@ -570,8 +560,7 @@ void LLPreviewTexture::updateDimensions()
 
 	if (mAspectRatio > 0.f) client_height = llceil((F32)client_width / mAspectRatio);
 
-	while ((client_width > max_client_width) ||
-	       (client_height > max_client_height ))
+	while (client_width > max_client_width || client_height > max_client_height)
 	{
 		client_width /= 2;
 		client_height /= 2;
@@ -581,8 +570,8 @@ void LLPreviewTexture::updateDimensions()
 	S32 view_height = client_height + vert_pad;
 	
 	// set text on dimensions display (should be moved out of here and into a callback of some sort)
-	childSetTextArg("dimensions", "[WIDTH]", llformat("%d", mImage->mFullWidth));
-	childSetTextArg("dimensions", "[HEIGHT]", llformat("%d", mImage->mFullHeight));
+	childSetTextArg("dimensions", "[WIDTH]", llformat("%d", mImage->getFullWidth()));
+	childSetTextArg("dimensions", "[HEIGHT]", llformat("%d", mImage->getFullHeight()));
 	
 	// add space for dimensions and aspect ratio
 	S32 info_height = 0;
@@ -591,7 +580,7 @@ void LLPreviewTexture::updateDimensions()
 	S32 aspect_height = aspect_rect.getHeight();
 	info_height += aspect_height + CLIENT_RECT_VPAD;
 	view_height += info_height;
-	
+
 	S32 button_height = 0;
 	if (mShowKeepDiscard || mCopyToInv) {  //mCopyToInvBtn
 
@@ -624,15 +613,12 @@ void LLPreviewTexture::updateDimensions()
 		}
 	}
 
-	
 	if (!mUserResized)
 	{
 		// clamp texture size to fit within actual size of floater after attempting resize
 		client_width = llmin(client_width, getRect().getWidth() - horiz_pad);
 		client_height = llmin(client_height, getRect().getHeight() - PREVIEW_HEADER_SIZE 
 						- (2 * CLIENT_RECT_VPAD) - LLPANEL_BORDER_WIDTH - info_height);
-
-		
 	}
 	else
 	{
@@ -673,7 +659,7 @@ void LLPreviewTexture::updateDimensions()
 	window_rect.mBottom += PREVIEW_BORDER + button_height + CLIENT_RECT_VPAD + info_height + CLIENT_RECT_VPAD;
 
 	mClientRect.setLeftTopAndSize(window_rect.getCenterX() - (client_width / 2), window_rect.mTop, client_width, client_height);	
-	
+
 	// Hide the aspect ratio label if the window is too narrow
 	// Assumes the label should be to the right of the dimensions
 	LLRect dim_rect, aspect_label_rect;
@@ -692,9 +678,11 @@ bool LLPreviewTexture::setAspectRatio(const F32 width, const F32 height)
 		mAspectRatio = 0.f;
 		return false;
 	}
+
 	// Compute and store the ratio
 	F32 ratio = width / height;
 	mAspectRatio = llclamp(ratio, PREVIEW_TEXTURE_MIN_ASPECT, PREVIEW_TEXTURE_MAX_ASPECT);
+
 	// Return false if we clamped the value, true otherwise
 	return (ratio == mAspectRatio);
 }
@@ -731,15 +719,15 @@ void LLPreviewTexture::onAspectRatioCommit(LLUICtrl* ctrl, void* userdata)
 
 void LLPreviewTexture::loadAsset()
 {
-	mImage = gImageList.getImage(mImageID, MIPMAP_TRUE, FALSE);
-	mImage->setBoostLevel(LLViewerImageBoostLevel::BOOST_PREVIEW);
-	mImage->forceToSaveRawImage(0) ;
-	mAssetStatus = PREVIEW_ASSET_LOADING;
+	mImage = LLViewerTextureManager::getFetchedTexture(mImageID, MIPMAP_TRUE, LLViewerTexture::BOOST_NONE, LLViewerTexture::LOD_TEXTURE);
+	mImageOldBoostLevel = mImage->getBoostLevel();
+	mImage->setBoostLevel(LLViewerTexture::BOOST_PREVIEW);
+	mImage->forceToSaveRawImage(0);
 }
 
 LLPreview::EAssetStatus LLPreviewTexture::getAssetStatus()
 {
-	if (mImage.notNull() && (mImage->mFullWidth * mImage->mFullHeight > 0))
+	if (mImage.notNull() && (mImage->getFullWidth() * mImage->getFullHeight() > 0))
 	{
 		mAssetStatus = PREVIEW_ASSET_LOADED;
 	}
