@@ -83,6 +83,7 @@ public:
 	ESpeakerStatus	mStatus;			// current activity status in speech group
 	F32				mLastSpokeTime;		// timestamp when this speaker last spoke
 	F32				mSpeechVolume;		// current speech amplitude (timea average rms amplitude?)
+	std::string		mLegacyName;		// cache legacy name for this speaker
 	std::string		mDisplayName;		// cache user name for this speaker
 	LLFrameTimer	mActivityTimer;	// time out speakers when they are not part of current voice channel
 	BOOL			mHasSpoken;			// has this speaker said anything this session?
@@ -94,7 +95,6 @@ public:
 	BOOL			mIsModerator;
 	BOOL			mModeratorMutedVoice;
 	BOOL			mModeratorMutedText;
-	std::string     mLegacyName;
 };
 
 class LLSpeakerTextModerationEvent : public LLEvent

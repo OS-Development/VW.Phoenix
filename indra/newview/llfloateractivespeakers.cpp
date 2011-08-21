@@ -182,13 +182,13 @@ bool LLSortRecentSpeakers::operator()(const LLPointer<LLSpeaker> lhs, const LLPo
 	}
 
 	// and then on last speaking time
-	if(lhs->mLastSpokeTime != rhs->mLastSpokeTime)
+	if (lhs->mLastSpokeTime != rhs->mLastSpokeTime)
 	{
 		return (lhs->mLastSpokeTime > rhs->mLastSpokeTime);
 	}
 	
 	// and finally (only if those are both equal), on name.
-	return(	lhs->mDisplayName.compare(rhs->mDisplayName) < 0 );
+	return (lhs->mDisplayName.compare(rhs->mDisplayName) < 0);
 }
 
 //
@@ -682,7 +682,7 @@ void LLPanelActiveSpeakers::onClickMuteTextCommit(LLUICtrl* ctrl, void* user_dat
 		return;
 	}
 	
-	name = speakerp->mDisplayName;
+	name = speakerp->mLegacyName;
 
 	LLMute mute(speaker_id, name, speakerp->mType == LLSpeaker::SPEAKER_AGENT ? LLMute::AGENT : LLMute::OBJECT);
 
