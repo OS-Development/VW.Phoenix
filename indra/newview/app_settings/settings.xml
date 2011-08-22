@@ -304,17 +304,6 @@
 			<key>Value</key>
 			<integer>0</integer>
 		</map>
-		<key>PhoenixShowCommentsForAll</key>
-		<map>
-			<key>Comment</key>
-			<string>Decodes comments for all textures.</string>
-			<key>Persist</key>
-			<integer>1</integer>
-			<key>Type</key>
-			<string>Boolean</string>
-			<key>Value</key>
-			<integer>0</integer>
-		</map>
 		<key>PhoenixSaveLoginInfoOnLogin</key>
 		<map>
 			<key>Comment</key>
