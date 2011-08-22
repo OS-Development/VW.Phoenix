@@ -74,7 +74,7 @@
 
 // [RLVa:KB]
 #include "rlvhandler.h"
-#include "lggfriendsgroups.h"
+#include "lggcontactsets.h"
 // [/RLVa:KB]
 
 const F32 MAP_SCALE_MIN = 32;
@@ -377,7 +377,7 @@ void LLNetMap::draw()
 		std::vector<LLVector3d> positions;
 		LLWorld::getInstance()->getAvatars(&avatar_ids, &positions);
 		U32 a;
-		static LLCachedControl<bool> friendsGroupsOnMinimap(gSavedSettings, "PhoenixFriendsGroupsColorizeMiniMap");
+		static LLCachedControl<bool> friendsGroupsOnMinimap(gSavedSettings, "PhoenixContactSetsColorizeMiniMap");
 		for(U32 i=0; i<avatar_ids.size(); i++)
 		{
 			avatar_color = standard_color;
@@ -390,12 +390,12 @@ void LLNetMap::draw()
 					gCacheName->getName(avatar_ids[i], first, last);
 
 			if(LLMuteList::getInstance()->isMuted(avatar_ids[i])) avatar_color = muted_color;
-			if(is_agent_friend(avatar_ids[i])||LGGFriendsGroups::getInstance()->isNonFriend(avatar_ids[i]))
+			if(is_agent_friend(avatar_ids[i])||LGGContactSets::getInstance()->isNonFriend(avatar_ids[i]))
 			{
 				if(friendsGroupsOnMinimap)
 				{
-					LLColor4 fgColor = LGGFriendsGroups::getInstance()->getFriendColor(avatar_ids[i]);
-					if(fgColor!=LGGFriendsGroups::getInstance()->getDefaultColor())
+					LLColor4 fgColor = LGGContactSets::getInstance()->getFriendColor(avatar_ids[i]);
+					if(fgColor!=LGGContactSets::getInstance()->getDefaultColor())
 						avatar_color=fgColor;
 				}else
 				avatar_color = friend_color;

@@ -90,7 +90,7 @@
 
 // [RLVa:KB]
 #include "rlvhandler.h"
-#include "lggfriendsgroups.h"
+#include "lggcontactsets.h"
 // [/RLVa:KB]
 
 //
@@ -580,10 +580,9 @@ LLColor4 get_text_color(const LLChat& chat)
 				//Phoenix:KC - color chat from friends. taking care not to color when RLV hide names is in effect, lol
 				static LLCachedControl<bool> sPhoenixColorFriendsChat(gSavedSettings, "PhoenixColorFriendsChat");
 				static LLCachedControl<bool> sPhoenixColorLindensChat(gSavedSettings, "PhoenixColorLindensChat");
-				static LLCachedControl<bool> sPhoenixColorFriendsGroupsChat(gSavedSettings, "PhoenixFriendsGroupsColorizeChat");
-
-				if ( (sPhoenixColorFriendsChat || sPhoenixColorFriendsGroupsChat)
-				&& LLAvatarTracker::instance().isBuddy(chat.mFromID)
+				static LLCachedControl<bool> sPhoenixColorContactSetsChat(gSavedSettings, "PhoenixContactSetsColorizeChat");
+				if ( (sPhoenixColorFriendsChat || sPhoenixColorContactSetsChat)
+					&& (LLAvatarTracker::instance().isBuddy(chat.mFromID)||(LGGContactSets::getInstance()->isNonFriend(chat.mFromID)))
 				&& (!rlv_handler_t::isEnabled()
 				|| !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES)))
 				{
@@ -591,10 +590,10 @@ LLColor4 get_text_color(const LLChat& chat)
 					{
 						text_color = gSavedSettings.getColor4("PhoenixFriendChatColor");
 					}
-					if (sPhoenixColorFriendsGroupsChat)
+					if (sPhoenixColorContactSetsChat)
 					{
-						LLColor4 fgColor = LGGFriendsGroups::getInstance()->getFriendColor(chat.mFromID);
-						if (fgColor!=LGGFriendsGroups::getInstance()->getDefaultColor())
+						LLColor4 fgColor = LGGContactSets::getInstance()->getFriendColor(chat.mFromID);
+						if (fgColor!=LGGContactSets::getInstance()->getDefaultColor())
 						{
 							text_color=fgColor;
 						}

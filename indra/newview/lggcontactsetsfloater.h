@@ -15,8 +15,18 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
    02111-1307, USA.  */
 
-class LggBeamMap
+#ifndef LGG_FRIENDS_GROUPS_FLOATER_H
+#define LGG_FRIENDS_GROUPS_FLOATER_H
+#include "llview.h"
+#include "llviewerinventory.h"
+
+
+class lggContactSetsFloaterStart
 {
-	public:
-	static void show( BOOL showw , void* data);
+public:
+	static void show( BOOL showw , void * data);
+	static void showSettings( BOOL showw );
 };
+
+
+#endif 

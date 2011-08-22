@@ -78,7 +78,7 @@
 
 // [RLVa:KB]
 #include "rlvhandler.h"
-#include "lggfriendsgroups.h"
+#include "lggcontactsets.h"
 // [/RLVa:KB]
 
 //
@@ -654,7 +654,7 @@ void LLIMMgr::addMessage(
 	//Phoenix:KC - color chat from friends. taking care not to color when RLV hide names is in effect, lol
 	static LLCachedControl<bool> sPhoenixColorFriendsChat(gSavedSettings, "PhoenixColorFriendsChat");
 	static LLCachedControl<bool> sPhoenixColorLindensChat(gSavedSettings, "PhoenixColorLindensChat");
-	static LLCachedControl<bool> sPhoenixColorFriendsGroupsChat(gSavedSettings, "PhoenixFriendsGroupsColorizeChat");
+	static LLCachedControl<bool> sPhoenixColorContactSetsChat(gSavedSettings, "PhoenixContactSetsColorizeChat");
 
 	if (is_from_system)
 	{
@@ -668,8 +668,8 @@ void LLIMMgr::addMessage(
 	{
 		color = gSavedSettings.getColor("UserChatColor");
 	}
-	else if ((sPhoenixColorFriendsChat||sPhoenixColorFriendsGroupsChat)
-		&& (LLAvatarTracker::instance().isBuddy(other_participant_id)||(LGGFriendsGroups::getInstance()->isNonFriend(other_participant_id)))
+	else if ((sPhoenixColorFriendsChat||sPhoenixColorContactSetsChat)
+		&& (LLAvatarTracker::instance().isBuddy(other_participant_id)||(LGGContactSets::getInstance()->isNonFriend(other_participant_id)))
 	&& (!rlv_handler_t::isEnabled()
 	|| !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES)))
 	{
@@ -677,10 +677,11 @@ void LLIMMgr::addMessage(
 		{
 			color = gSavedSettings.getColor4("PhoenixFriendChatColor");
 		}
-		LLColor4 fgColor = LGGFriendsGroups::getInstance()->getFriendColor(other_participant_id);
-		if (fgColor != LGGFriendsGroups::getInstance()->getDefaultColor())
+		if(sPhoenixColorContactSetsChat)
 		{
-			color = fgColor;
+			LLColor4 fgColor = LGGContactSets::getInstance()->getFriendColor(other_participant_id);
+			if(fgColor!=LGGContactSets::getInstance()->getDefaultColor())
+				color=fgColor;
 		}
 	}
 	else if (sPhoenixColorLindensChat && is_linden)

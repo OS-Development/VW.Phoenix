@@ -66,7 +66,7 @@
 #include "llcombobox.h"
 #include "llfloateractivespeakers.h"
 #include "llimpanel.h" // for LLVoiceChannel
-#include "lggfriendsgroups.h"
+#include "lggcontactsets.h"
 
 void cmdline_printchat(std::string message);
 void send_chat_from_viewer(std::string utf8_out_text, EChatType type, S32 channel);
@@ -1356,7 +1356,7 @@ void LLFloaterAvatarList::refreshAvatarList()
 	LLColor4 av_color;
 	static LLCachedControl<LLColor4U> sDefaultListText(gColors, "DefaultListText");
 	LLColor4 DefaultListText = (LLColor4)sDefaultListText;
-	static LLCachedControl<bool> sfriendsGroupsOnRadar(gSavedSettings, "PhoenixFriendsGroupsColorizeRadar");
+	static LLCachedControl<bool> sfriendsGroupsOnRadar(gSavedSettings, "PhoenixContactSetsColorizeRadar");
 
 	const std::string icon_image_0 = "icn_active-speakers-dot-lvl0.tga";
 	const std::string icon_image_1 = "icn_active-speakers-dot-lvl1.tga";
@@ -1427,10 +1427,10 @@ void LLFloaterAvatarList::refreshAvatarList()
 		{
 			av_color = (LLColor4)sDefaultListText;
 		}
-		if(sfriendsGroupsOnRadar&&is_agent_friend(av_id))
+		if (sfriendsGroupsOnRadar && (is_agent_friend(av_id) ||LGGContactSets::getInstance()->isNonFriend(av_id)))
 		{
-			LLColor4 fgColor = LGGFriendsGroups::getInstance()->getFriendColor(av_id);
-			if(fgColor!=LGGFriendsGroups::getInstance()->getDefaultColor())
+			LLColor4 fgColor = LGGContactSets::getInstance()->getFriendColor(av_id);
+			if(fgColor!=LGGContactSets::getInstance()->getDefaultColor())
 				av_color=fgColor;
 		}
 		
