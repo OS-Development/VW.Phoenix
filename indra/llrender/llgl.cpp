@@ -59,7 +59,10 @@
 BOOL gDebugGL = FALSE;
 BOOL gClothRipple = FALSE;
 BOOL gNoRender = FALSE;
+BOOL gGLActive = FALSE;
+
 LLMatrix4 gGLObliqueProjectionInverse;
+std::list<LLGLUpdate*> LLGLUpdate::sGLQ;
 
 #define LL_GL_NAME_POOLING 0
 
@@ -138,6 +141,9 @@ PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC glRenderbufferStorageMultisampleEXT =
 
 // GL_EXT_framebuffer_blit
 PFNGLBLITFRAMEBUFFEREXTPROC glBlitFramebufferEXT = NULL;
+
+// GL_EXT_blend_func_separate
+PFNGLBLENDFUNCSEPARATEEXTPROC glBlendFuncSeparateEXT = NULL;
 
 // GL_ARB_draw_buffers
 PFNGLDRAWBUFFERSARBPROC glDrawBuffersARB = NULL;
@@ -273,11 +279,14 @@ LLGLManager::LLGLManager() :
 	mIsDisabled(FALSE),
 
 	mHasMultitexture(FALSE),
+	mHasATIMemInfo(FALSE),
+	mHasNVXMemInfo(FALSE),
 	mNumTextureUnits(1),
 	mHasMipMapGeneration(FALSE),
 	mHasCompressedTextures(FALSE),
 	mHasFramebufferObject(FALSE),
 	mHasFramebufferMultisample(FALSE),
+	mHasBlendFuncSeparate(FALSE),
 
 	mHasVertexBufferObject(FALSE),
 	mHasPBuffer(FALSE),
@@ -452,6 +461,19 @@ bool LLGLManager::initGL()
 	// This is called here because it depends on the setting of mIsGF2or4MX, and sets up mHasMultitexture.
 	initExtensions();
 
+	if (mHasATIMemInfo)
+	{ //ask the gl how much vram is free at startup and attempt to use no more than half of that
+		S32 meminfo[4];
+		glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, meminfo);
+		mVRAM = meminfo[0] / 1024;
+	}
+	else if (mHasNVXMemInfo)
+	{
+		S32 dedicated_memory;
+		glGetIntegerv(GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, &dedicated_memory);
+		mVRAM = dedicated_memory / 1024;
+	}
+
 	if (mHasMultitexture)
 	{
 		GLint num_tex_units;		
@@ -592,6 +614,11 @@ void LLGLManager::initExtensions()
 #else
 	mHasDepthClamp = FALSE;
 #endif
+# if GL_EXT_blend_func_separate
+	mHasBlendFuncSeparate = TRUE;
+#else
+	mHasBlendFuncSeparate = FALSE;
+# endif
 	mHasMipMapGeneration = FALSE;
 	mHasSeparateSpecularColor = FALSE;
 	mHasAnisotropic = FALSE;
@@ -603,6 +630,8 @@ void LLGLManager::initExtensions()
 	mHasFragmentShader = FALSE;
 #else // LL_MESA_HEADLESS
 	mHasMultitexture = glh_init_extensions("GL_ARB_multitexture");
+	mHasATIMemInfo = ExtensionExists("GL_ATI_meminfo", gGLHExts.mSysExts);
+	mHasNVXMemInfo = ExtensionExists("GL_NVX_gpu_memory_info", gGLHExts.mSysExts);
 	mHasMipMapGeneration = glh_init_extensions("GL_SGIS_generate_mipmap");
 	mHasSeparateSpecularColor = glh_init_extensions("GL_EXT_separate_specular_color");
 	mHasAnisotropic = glh_init_extensions("GL_EXT_texture_filter_anisotropic");
@@ -617,6 +646,7 @@ void LLGLManager::initExtensions()
 		&& ExtensionExists("GL_EXT_packed_depth_stencil", gGLHExts.mSysExts);
 	mHasFramebufferMultisample = mHasFramebufferObject && ExtensionExists("GL_EXT_framebuffer_multisample", gGLHExts.mSysExts);
 	mHasDrawBuffers = ExtensionExists("GL_ARB_draw_buffers", gGLHExts.mSysExts);
+	mHasBlendFuncSeparate = ExtensionExists("GL_EXT_blend_func_separate", gGLHExts.mSysExts);
 	mHasDepthClamp = ExtensionExists("GL_ARB_depth_clamp", gGLHExts.mSysExts) || ExtensionExists("GL_NV_depth_clamp", gGLHExts.mSysExts);
 #if !LL_DARWIN
 	mHasPointParameters = !mIsATI && ExtensionExists("GL_ARB_point_parameters", gGLHExts.mSysExts);
@@ -640,6 +670,7 @@ void LLGLManager::initExtensions()
 		mHasFramebufferObject = FALSE;
 		mHasFramebufferMultisample = FALSE;
 		mHasDrawBuffers = FALSE;
+		mHasBlendFuncSeparate = FALSE;
 		mHasDepthClamp = FALSE;
 		mHasMipMapGeneration = FALSE;
 		mHasSeparateSpecularColor = FALSE;
@@ -650,6 +681,7 @@ void LLGLManager::initExtensions()
 		mHasShaderObjects = FALSE;
 		mHasVertexShader = FALSE;
 		mHasFragmentShader = FALSE;
+		mHasBlendFuncSeparate = FALSE;
 		LL_WARNS("RenderInit") << "GL extension support DISABLED via LL_GL_NOEXT" << LL_ENDL;
 	}
 	else if (getenv("LL_GL_BASICEXT"))	/* Flawfinder: ignore */
@@ -693,6 +725,7 @@ void LLGLManager::initExtensions()
 		if (strchr(blacklist,'r')) mHasDrawBuffers = FALSE;//S
 		if (strchr(blacklist,'s')) mHasFramebufferMultisample = FALSE;
 		if (strchr(blacklist,'t')) mHasDepthClamp = FALSE;
+		if (strchr(blacklist,'u')) mHasBlendFuncSeparate = FALSE;//S
 
 	}
 #endif // LL_LINUX || LL_SOLARIS
@@ -740,6 +773,10 @@ void LLGLManager::initExtensions()
 	if (!mHasFragmentShader)
 	{
 		LL_INFOS("RenderInit") << "Couldn't initialize GL_ARB_fragment_shader" << LL_ENDL;
+	}
+	if (!mHasBlendFuncSeparate)
+	{
+		LL_INFOS("RenderInit") << "Couldn't initialize GL_EXT_blend_func_separate" << LL_ENDL;
 	}
 
 	// Disable certain things due to known bugs
@@ -813,6 +850,10 @@ void LLGLManager::initExtensions()
 	if (mHasDrawBuffers)
 	{
 		glDrawBuffersARB = (PFNGLDRAWBUFFERSARBPROC) GLH_EXT_GET_PROC_ADDRESS("glDrawBuffersARB");
+	}
+	if (mHasBlendFuncSeparate)
+	{
+		glBlendFuncSeparateEXT = (PFNGLBLENDFUNCSEPARATEEXTPROC) GLH_EXT_GET_PROC_ADDRESS("glBlendFuncSeparateEXT");
 	}
 #if (!LL_LINUX && !LL_SOLARIS) || LL_LINUX_NV_GL_HEADERS
 	// This is expected to be a static symbol on Linux GL implementations, except if we use the nvidia headers - bah

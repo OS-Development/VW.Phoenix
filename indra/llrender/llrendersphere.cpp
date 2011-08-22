@@ -181,3 +181,49 @@ void LLRenderSphere::render()
 {
 	glCallList(mDList[0]);
 }
+
+inline LLVector3 polar_to_cart(F32 latitude, F32 longitude)
+{
+	return LLVector3(sin(F_TWO_PI * latitude) * cos(F_TWO_PI * longitude),
+					 sin(F_TWO_PI * latitude) * sin(F_TWO_PI * longitude),
+					 cos(F_TWO_PI * latitude));
+}
+
+void LLRenderSphere::renderGGL()
+{
+	S32 const LATITUDE_SLICES = 20;
+	S32 const LONGITUDE_SLICES = 30;
+
+	if (mSpherePoints.empty())
+	{
+		mSpherePoints.resize(LATITUDE_SLICES + 1);
+		for (S32 lat_i = 0; lat_i < LATITUDE_SLICES + 1; lat_i++)
+		{
+			mSpherePoints[lat_i].resize(LONGITUDE_SLICES + 1);
+			for (S32 lon_i = 0; lon_i < LONGITUDE_SLICES + 1; lon_i++)
+			{
+				F32 lat = (F32)lat_i / LATITUDE_SLICES;
+				F32 lon = (F32)lon_i / LONGITUDE_SLICES;
+
+				mSpherePoints[lat_i][lon_i] = polar_to_cart(lat, lon);
+			}
+		}
+	}
+
+	gGL.begin(LLRender::TRIANGLES);
+
+	for (S32 lat_i = 0; lat_i < LATITUDE_SLICES; lat_i++)
+	{
+		for (S32 lon_i = 0; lon_i < LONGITUDE_SLICES; lon_i++)
+		{
+			gGL.vertex3fv(mSpherePoints[lat_i][lon_i].mV);
+			gGL.vertex3fv(mSpherePoints[lat_i][lon_i+1].mV);
+			gGL.vertex3fv(mSpherePoints[lat_i+1][lon_i].mV);
+
+			gGL.vertex3fv(mSpherePoints[lat_i+1][lon_i].mV);
+			gGL.vertex3fv(mSpherePoints[lat_i][lon_i+1].mV);
+			gGL.vertex3fv(mSpherePoints[lat_i+1][lon_i+1].mV);
+		}
+	}
+	gGL.end();
+}

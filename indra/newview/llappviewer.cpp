@@ -851,6 +851,7 @@ bool LLAppViewer::init()
 	//
 	// Initialize the window
 	//
+	gGLActive = TRUE;
 	initWindow();
 
 	// call all self-registered classes
@@ -974,6 +975,8 @@ bool LLAppViewer::init()
     chatSpamCount = gSavedSettings.getF32("PhoenixChatSpamCount");
 	gSavedSettings.getControl("PhoenixRenderHighlightSelections")->getSignal()->connect(boost::bind(&setHighlights, _2));
 
+	gGLActive = FALSE;
+
 	return true;
 }
 
@@ -1016,6 +1019,7 @@ bool LLAppViewer::mainLoop()
 			LLFastTimer t(LLFastTimer::FTM_FRAME);
 			pingMainloopTimeout("Main:MiscNativeWindowEvents");
 
+			if (gViewerWindow)
 			{
 				LLFastTimer t2(LLFastTimer::FTM_MESSAGES);
 				gViewerWindow->mWindow->processMiscNativeEvents();
@@ -1023,6 +1027,7 @@ bool LLAppViewer::mainLoop()
 
 			pingMainloopTimeout("Main:GatherInput");
 
+			if (gViewerWindow)
 			{
 				LLFastTimer t2(LLFastTimer::FTM_MESSAGES);
 				if (!restoreErrorTrap())
@@ -1042,7 +1047,7 @@ bool LLAppViewer::mainLoop()
 
 #endif
 			//memory leaking simulation
-			if(LLFloaterMemLeak::getInstance())
+			if (LLFloaterMemLeak::getInstance())
 			{
 				LLFloaterMemLeak::getInstance()->idle() ;
 			}
@@ -1051,10 +1056,10 @@ bool LLAppViewer::mainLoop()
 			{
 				pingMainloopTimeout("Main:JoystickKeyboard");
 
-				// Scan keyboard for movement keys.  Command keys and typing
-				// are handled by windows callbacks.  Don't do this until we're
+				// Scan keyboard for movement keys. Command keys and typing
+				// are handled by windows callbacks. Don't do this until we're
 				// done initializing.  JC
-				if (gViewerWindow->mWindow->getVisible()
+				if (gViewerWindow && gViewerWindow->mWindow->getVisible()
 					&& gViewerWindow->getActive()
 					&& !gViewerWindow->mWindow->getMinimized()
 					&& LLStartUp::getStartupState() == STATE_STARTED
@@ -1100,11 +1105,13 @@ bool LLAppViewer::mainLoop()
 				if (!LLApp::isExiting())
 				{
 					pingMainloopTimeout("Main:Display");
+					gGLActive = TRUE;
 					display();
 
 					pingMainloopTimeout("Main:Snapshot");
 					LLFloaterSnapshot::update(); // take snapshots
 
+					gGLActive = FALSE;
 #if LL_LCD_COMPILE
 					// update LCD Screen
 					pingMainloopTimeout("Main:LCD");
@@ -1131,9 +1138,8 @@ bool LLAppViewer::mainLoop()
 				}
 
 				// yield cooperatively when not running as foreground window
-				if (   gNoRender
-						|| !gViewerWindow->mWindow->getVisible()
-						|| !gFocusMgr.getAppHasFocus())
+				if (gNoRender || !gFocusMgr.getAppHasFocus() ||
+					(gViewerWindow && !gViewerWindow->mWindow->getVisible()))
 				{
 					// Sleep if we're not rendering, or the window is minimized.
 					static LLCachedControl<S32> background_yield_time(gSavedSettings, "BackgroundYieldTime");
@@ -1323,7 +1329,6 @@ bool LLAppViewer::cleanup()
 	// Note: this is where gHUDManager used to be deleted.
 	LLHUDManager::getInstance()->shutdownClass();
 
-
 	delete gAssetStorage;
 	gAssetStorage = NULL;
 
@@ -1408,21 +1413,27 @@ bool LLAppViewer::cleanup()
 	llinfos << "Shutting down." << llendflush;
 
 	// Destroy the UI
-	gViewerWindow->shutdownViews();
+	if (gViewerWindow)
+	{
+		gViewerWindow->shutdownViews();
+	}
 
 	// Clean up selection managers after UI is destroyed, as UI may be observing them.
 	// Clean up before GL is shut down because we might be holding on to objects with texture references
 	LLSelectMgr::cleanupGlobals();
 
 	// Shut down OpenGL
-	gViewerWindow->shutdownGL();
+	if (gViewerWindow)
+	{
+		gViewerWindow->shutdownGL();
 
-	// Destroy window, and make sure we're not fullscreen
-	// This may generate window reshape and activation events.
-	// Therefore must do this before destroying the message system.
-	delete gViewerWindow;
-	gViewerWindow = NULL;
-	llinfos << "ViewerWindow deleted" << llendflush;
+		// Destroy window, and make sure we're not fullscreen
+		// This may generate window reshape and activation events.
+		// Therefore must do this before destroying the message system.
+		delete gViewerWindow;
+		gViewerWindow = NULL;
+		llinfos << "ViewerWindow deleted" << llendflush;
+	}
 
 	// viewer UI relies on keyboard so keep it aound until viewer UI isa gone
 	delete gKeyboard;
@@ -1544,6 +1555,9 @@ bool LLAppViewer::cleanup()
 
 	LLViewerMedia::saveCookieFile();
 
+	// Stop the plugin read thread if it's running.
+	LLPluginProcessParent::setUseReadThread(false);
+
 	// Let threads finish
 	LLTimer idleTimer;
 	idleTimer.reset();
@@ -1601,7 +1615,10 @@ bool LLAppViewer::cleanup()
 
 #ifndef LL_RELEASE_FOR_DOWNLOAD
 	llinfos << "Auditing VFS" << llendl;
-	gVFS->audit();
+	if (gVFS)
+	{
+		gVFS->audit();
+	}
 #endif
 
 	// For safety, the LLVFS has to be deleted *after* LLVFSThread. This should be cleaned up.
@@ -2440,7 +2457,7 @@ bool LLAppViewer::initWindow()
 	}
 
 	//If we have a startup crash, it's usually near GL initialization, so simulate that.
-	if(gCrashOnStartup)
+	if (gCrashOnStartup)
 	{
 		LLAppViewer::instance()->forceErrorLLError();
 	}
@@ -2501,16 +2518,19 @@ void LLAppViewer::cleanupSavedSettings()
 
 	// save window position if not fullscreen
 	// as we don't track it in callbacks
-	BOOL fullscreen = gViewerWindow->mWindow->getFullscreen();
-	BOOL maximized = gViewerWindow->mWindow->getMaximized();
-	if (!fullscreen && !maximized)
+	if (gViewerWindow)
 	{
-		LLCoordScreen window_pos;
-
-		if (gViewerWindow->mWindow->getPosition(&window_pos))
+		BOOL fullscreen = gViewerWindow->mWindow->getFullscreen();
+		BOOL maximized = gViewerWindow->mWindow->getMaximized();
+		if (!fullscreen && !maximized)
 		{
-			gSavedSettings.setS32("WindowX", window_pos.mX);
-			gSavedSettings.setS32("WindowY", window_pos.mY);
+			LLCoordScreen window_pos;
+
+			if (gViewerWindow->mWindow->getPosition(&window_pos))
+			{
+				gSavedSettings.setS32("WindowX", window_pos.mX);
+				gSavedSettings.setS32("WindowY", window_pos.mY);
+			}
 		}
 	}
 
@@ -2894,8 +2914,15 @@ void LLAppViewer::requestQuit()
 
 	LLViewerRegion* region = gAgent.getRegion();
 
-	if( (LLStartUp::getStartupState() < STATE_STARTED) || !region )
+	if (!region || LLStartUp::getStartupState() < STATE_STARTED)
 	{
+		// If we have a region, make some attempt to send a logout request first.
+		// This prevents the halfway-logged-in avatar from hanging around inworld for a couple minutes.
+		if (region)
+		{
+			sendLogoutRequest();
+		}
+
 		// Quit immediately
 		forceQuit();
 		return;
@@ -2935,7 +2962,15 @@ static LLNotificationFunctorRegistration finish_quit_reg("ConfirmQuit", finish_q
 
 void LLAppViewer::userQuit()
 {
-	LLNotifications::instance().add("ConfirmQuit");
+	if (gDisconnected || (gViewerWindow	//paranoia
+						  && gViewerWindow->getProgressView()->getVisible()))
+	{
+		requestQuit();
+	}
+	else
+	{
+		LLNotifications::instance().add("ConfirmQuit");
+	}
 }
 
 static bool finish_early_exit(const LLSD& notification, const LLSD& response)
@@ -3395,7 +3430,7 @@ void LLAppViewer::badNetworkHandler()
 // is destroyed.
 void LLAppViewer::saveFinalSnapshot()
 {
-	if (!mSavedFinalSnapshot && !gNoRender)
+	if (gViewerWindow && !mSavedFinalSnapshot && !gNoRender)
 	{
 		gSavedSettings.setVector3d("FocusPosOnLogout", gAgent.calcFocusPositionTargetGlobal());
 		gSavedSettings.setVector3d("CameraPosOnLogout", gAgent.calcCameraPositionTargetGlobal());
@@ -3540,12 +3575,14 @@ void LLAppViewer::idle()
 	if (LLStartUp::getStartupState() < STATE_STARTED)
 	{
 		// Skip rest if idle startup returns false (essentially, no world yet)
+		gGLActive = TRUE;
 		if (!idle_startup())
 		{
+			gGLActive = FALSE;
 			return;
 		}
+		gGLActive = FALSE;
 	}
-
 
     F32 yaw = 0.f;				// radians
 
@@ -3690,7 +3727,7 @@ void LLAppViewer::idle()
 	///////////////////////////////////////
 	// Agent and camera movement
 	//
-		LLCoordGL current_mouse = gViewerWindow->getCurrentMouse();
+	LLCoordGL current_mouse = gViewerWindow->getCurrentMouse();
 
 	{
 		// After agent and camera moved, figure out if we need to
@@ -3869,6 +3906,7 @@ void LLAppViewer::idle()
 	// forcibly quit if it has taken too long
 	if (mQuitRequested)
 	{
+		gGLActive = TRUE;
 		idleShutdown();
 	}
 
@@ -3884,14 +3922,13 @@ void LLAppViewer::idleShutdown()
 	}
 
 	// close IM interface
-	if(gIMMgr)
+	if (gIMMgr)
 	{
 		gIMMgr->disconnectAllSessions();
 	}
 
 	// Wait for all floaters to get resolved
-	if (gFloaterView
-		&& !gFloaterView->allChildrenClosed())
+	if (gFloaterView && !gFloaterView->allChildrenClosed())
 	{
 		return;
 	}
@@ -3923,7 +3960,7 @@ void LLAppViewer::idleShutdown()
 	}
 
 	// All floaters are closed.  Tell server we want to quit.
-	if( !logoutRequestSent() )
+	if (!logoutRequestSent())
 	{
 		sendLogoutRequest();
 
@@ -3935,8 +3972,8 @@ void LLAppViewer::idleShutdown()
 	}
 
 	// Make sure that we quit if we haven't received a reply from the server.
-	if( logoutRequestSent()
-		&& gLogoutTimer.getElapsedTimeF32() > gLogoutMaxTime )
+	if (logoutRequestSent() &&
+		gLogoutTimer.getElapsedTimeF32() > gLogoutMaxTime)
 	{
 		forceQuit();
 		return;

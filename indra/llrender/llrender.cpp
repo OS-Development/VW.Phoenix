@@ -956,6 +956,32 @@ void LLRender::blendFunc(eBlendFactor sfactor, eBlendFactor dfactor)
 	}
 }
 
+void LLRender::blendFunc(eBlendFactor color_sfactor, eBlendFactor color_dfactor,
+						 eBlendFactor alpha_sfactor, eBlendFactor alpha_dfactor)
+{
+	llassert(color_sfactor < BF_UNDEF);
+	llassert(color_dfactor < BF_UNDEF);
+	llassert(alpha_sfactor < BF_UNDEF);
+	llassert(alpha_dfactor < BF_UNDEF);
+	if (!gGLManager.mHasBlendFuncSeparate)
+	{
+		LL_WARNS_ONCE("render") << "no glBlendFuncSeparateEXT(), using color-only blend func" << llendl;
+		blendFunc(color_sfactor, color_dfactor);
+		return;
+	}
+	if (mCurrBlendColorSFactor != color_sfactor || mCurrBlendColorDFactor != color_dfactor ||
+	    mCurrBlendAlphaSFactor != alpha_sfactor || mCurrBlendAlphaDFactor != alpha_dfactor)
+	{
+		mCurrBlendColorSFactor = color_sfactor;
+		mCurrBlendAlphaSFactor = alpha_sfactor;
+		mCurrBlendColorDFactor = color_dfactor;
+		mCurrBlendAlphaDFactor = alpha_dfactor;
+		flush();
+		glBlendFuncSeparateEXT(sGLBlendFactor[color_sfactor], sGLBlendFactor[color_dfactor],
+							   sGLBlendFactor[alpha_sfactor], sGLBlendFactor[alpha_dfactor]);
+	}
+}
+
 LLTexUnit* LLRender::getTexUnit(U32 index)
 {
 	if ((index >= 0) && (index < mTexUnits.size()))
@@ -1027,6 +1053,7 @@ void LLRender::end()
 		flush();
 	}
 }
+
 void LLRender::flush()
 {
 	if (mCount > 0)
@@ -1094,13 +1121,11 @@ void LLRender::vertex3f(const GLfloat& x, const GLfloat& y, const GLfloat& z)
 
 	mVerticesp[mCount] = LLVector3(x,y,z);
 	mCount++;
-	if (mCount < 4096)
-	{
-		mVerticesp[mCount] = mVerticesp[mCount-1];
-		mColorsp[mCount] = mColorsp[mCount-1];
-		mTexcoordsp[mCount] = mTexcoordsp[mCount-1];
-	}
+	mVerticesp[mCount] = mVerticesp[mCount-1];
+	mColorsp[mCount] = mColorsp[mCount-1];
+	mTexcoordsp[mCount] = mTexcoordsp[mCount-1];
 }
+
 void LLRender::vertex2i(const GLint& x, const GLint& y)
 {
 	vertex3f((GLfloat) x, (GLfloat) y, 0);	
@@ -1140,6 +1165,7 @@ void LLRender::color4ub(const GLubyte& r, const GLubyte& g, const GLubyte& b, co
 {
 	mColorsp[mCount] = LLColor4U(r,g,b,a);
 }
+
 void LLRender::color4ubv(const GLubyte* c)
 {
 	color4ub(c[0], c[1], c[2], c[3]);
@@ -1199,4 +1225,3 @@ void LLRender::debugTexUnits(void)
 	}
 	LL_INFOS("TextureUnit") << "Active TexUnit Enabled : " << active_enabled << LL_ENDL;
 }
-

@@ -257,7 +257,9 @@ int APIENTRY WINMAIN(HINSTANCE hInstance,
 		llinfos << " No corruption detected." << llendflush;
 	}
 #endif
-	
+
+	gGLActive = TRUE;
+
 	viewer_app_ptr->cleanup();
 	
 #if WINDOWS_CRT_MEM_CHECKS

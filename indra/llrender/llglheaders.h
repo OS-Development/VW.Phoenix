@@ -218,6 +218,9 @@ extern PFNGLGETCOMPRESSEDTEXIMAGEARBPROC glGetCompressedTexImageARB;
 
 extern PFNGLCOLORTABLEEXTPROC glColorTableEXT;
 
+//GL_EXT_blend_func_separate
+extern PFNGLBLENDFUNCSEPARATEEXTPROC glBlendFuncSeparateEXT;
+
 //GL_EXT_framebuffer_object
 extern PFNGLISRENDERBUFFEREXTPROC glIsRenderbufferEXT;
 extern PFNGLBINDRENDERBUFFEREXTPROC glBindRenderbufferEXT;
@@ -449,6 +452,9 @@ extern PFNGLGETATTRIBLOCATIONARBPROC glGetAttribLocationARB;
 extern PFNGLCOMPRESSEDTEXIMAGE2DARBPROC glCompressedTexImage2DARB;
 extern PFNGLGETCOMPRESSEDTEXIMAGEARBPROC glGetCompressedTexImageARB;
 
+//GL_EXT_blend_func_separate
+extern PFNGLBLENDFUNCSEPARATEEXTPROC glBlendFuncSeparateEXT;
+
 //GL_EXT_framebuffer_object
 extern PFNGLISRENDERBUFFEREXTPROC glIsRenderbufferEXT;
 extern PFNGLBINDRENDERBUFFEREXTPROC glBindRenderbufferEXT;
@@ -645,6 +651,9 @@ extern PFNGLBINDATTRIBLOCATIONARBPROC glBindAttribLocationARB;
 extern PFNGLGETACTIVEATTRIBARBPROC glGetActiveAttribARB;
 extern PFNGLGETATTRIBLOCATIONARBPROC glGetAttribLocationARB;
 
+//GL_EXT_blend_func_separate
+extern PFNGLBLENDFUNCSEPARATEEXTPROC glBlendFuncSeparateEXT;
+
 //GL_EXT_framebuffer_object
 extern PFNGLISRENDERBUFFEREXTPROC glIsRenderbufferEXT;
 extern PFNGLBINDRENDERBUFFEREXTPROC glBindRenderbufferEXT;
@@ -688,6 +697,9 @@ extern PFNGLDRAWBUFFERSARBPROC glDrawBuffersARB;
 // These symbols don't exist on 10.3.9, so they have to be declared weak.  Redeclaring them here fixes the problem.
 // Note that they also must not be called on 10.3.9.  This should be taken care of by a runtime check for the existence of the GL extension.
 #include <AvailabilityMacros.h>
+
+//GL_EXT_blend_func_separate
+extern void glBlendFuncSeparateEXT(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha) AVAILABLE_MAC_OS_X_VERSION_10_4_AND_LATER;
 
 // GL_EXT_framebuffer_object
 extern GLboolean glIsRenderbufferEXT(GLuint renderbuffer) AVAILABLE_MAC_OS_X_VERSION_10_4_AND_LATER;
@@ -828,6 +840,24 @@ extern void glGetBufferPointervARB (GLenum, GLenum, GLvoid* *);
 #ifndef GL_DEPTH_CLAMP
 // Probably (still) called GL_DEPTH_CLAMP_NV.
 #define GL_DEPTH_CLAMP 0x864F
+#endif
+
+//GL_NVX_gpu_memory_info constants
+#ifndef GL_NVX_gpu_memory_info
+#define GL_NVX_gpu_memory_info
+#define	GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX          0x9047
+#define	GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX    0x9048
+#define	GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX  0x9049
+#define	GL_GPU_MEMORY_INFO_EVICTION_COUNT_NVX            0x904A
+#define	GL_GPU_MEMORY_INFO_EVICTED_MEMORY_NVX            0x904B
+#endif
+
+//GL_ATI_meminfo constants
+#ifndef GL_ATI_meminfo
+#define GL_ATI_meminfo
+#define GL_VBO_FREE_MEMORY_ATI                     0x87FB
+#define GL_TEXTURE_FREE_MEMORY_ATI                 0x87FC
+#define GL_RENDERBUFFER_FREE_MEMORY_ATI            0x87FD
 #endif
 
 #endif // LL_LLGLHEADERS_H

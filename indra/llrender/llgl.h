@@ -74,11 +74,14 @@ public:
 
 	// Extensions used by everyone
 	BOOL mHasMultitexture;
+	BOOL mHasATIMemInfo;
+	BOOL mHasNVXMemInfo;
 	S32	 mNumTextureUnits;
 	BOOL mHasMipMapGeneration;
 	BOOL mHasCompressedTextures;
 	BOOL mHasFramebufferObject;
 	BOOL mHasFramebufferMultisample;
+	BOOL mHasBlendFuncSeparate;
 	
 	// ARB Extensions
 	BOOL mHasVertexBufferObject;
@@ -360,6 +363,35 @@ protected:
 	virtual void releaseName(GLuint name) = 0;
 };
 
+/*
+	Interface for objects that need periodic GL updates applied to them.
+	Used to synchronize GL updates with GL thread.
+*/
+class LLGLUpdate
+{
+public:
+
+	static std::list<LLGLUpdate*> sGLQ;
+
+	BOOL mInQ;
+	LLGLUpdate()
+		: mInQ(FALSE)
+	{
+	}
+	virtual ~LLGLUpdate()
+	{
+		if (mInQ)
+		{
+			std::list<LLGLUpdate*>::iterator iter = std::find(sGLQ.begin(), sGLQ.end(), this);
+			if (iter != sGLQ.end())
+			{
+				sGLQ.erase(iter);
+			}
+		}
+	}
+	virtual void updateGL() = 0;
+};
+
 extern LLMatrix4 gGLObliqueProjectionInverse;
 
 #include "llglstates.h"
@@ -374,8 +406,10 @@ void disable_cloth_weights(const S32 index);
 void set_vertex_weights(const S32 index, const U32 stride, const F32 *weights);
 void set_vertex_clothing_weights(const S32 index, const U32 stride, const LLVector4 *weights);
 void set_binormals(const S32 index, const U32 stride, const LLVector3 *binormals);
-void parse_gl_version( S32* major, S32* minor, S32* release, std::string* vendor_specific );
+void parse_gl_version(S32* major, S32* minor, S32* release, std::string* vendor_specific);
 
 extern BOOL gClothRipple;
 extern BOOL gNoRender;
+extern BOOL gGLActive;
+
 #endif // LL_LLGL_H

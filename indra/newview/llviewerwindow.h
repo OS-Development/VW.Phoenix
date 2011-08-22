@@ -49,11 +49,11 @@
 #include "llstat.h"
 #include "llalertdialog.h"
 #include "llnotifications.h"
+#include "llprogressview.h"
 
 class LLView;
 class LLViewerObject;
 class LLUUID;
-class LLProgressView;
 class LLTool;
 class LLVelocityBar;
 class LLTextBox;
