@@ -52,12 +52,16 @@ LLAgentLanguage::LLAgentLanguage()
 // static
 bool LLAgentLanguage::update()
 {
-	LLSD body;
-	std::string url = gAgent.getRegion()->getCapability("UpdateAgentLanguage");
+	std::string url;
+	if (gAgent.getRegion())
+	{
+		url = gAgent.getRegion()->getCapability("UpdateAgentLanguage");
+	}
 	if (!url.empty())
 	{
 		std::string language = LLUI::getLanguage();
-		
+
+		LLSD body;
 		body["language"] = language;
 		body["language_is_public"] = gSavedSettings.getBOOL("LanguageIsPublic");
 		
