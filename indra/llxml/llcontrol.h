@@ -371,9 +371,8 @@ private:
 		mCachedValue = convert_from_llsd<T>(controlp->get(), mType, name);
 
 		// Add a listener to the controls signal...
-		mConnection = controlp->getSignal()->connect(
-			boost::bind(&LLControlCache<T>::handleValueChange, this, _2)
-			);
+		mConnection = controlp->getSignal()->connect(boost::bind(&LLControlCache<T>::handleValueChange, this, _2),
+													 boost::signals2::at_front);
 		mType = controlp->type();
 	}
 	bool declareTypedControl(LLControlGroup& group,
