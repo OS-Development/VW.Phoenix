@@ -130,6 +130,8 @@ private:
 	std::string currentRightClickText;
 	std::vector<LLUUID> selected;
 	std::vector<LLUUID> currentList;
+	std::vector<std::string> allFolders;
+	std::vector<std::string> openedFolders;
 	S32 scrollLoc;
 	BOOL showRightClick;
 	BOOL justClicked;
@@ -151,6 +153,8 @@ currentRightClickText("")
 	sInstance = this;
 	selected.clear();
 	currentList.clear();
+	allFolders.clear();
+	openedFolders.clear();
 	LLAvatarTracker::instance().addObserver(this);
 	
 	if (getRect().mLeft == 0 
@@ -221,6 +225,27 @@ void lggContactSetsFloater::onPickAvatar(const std::vector<std::string>& names,
 	sInstance->updateGroupsList();
 	LLFirstUse::usePhoenixFriendsNonFriend();
 }
+void lggContactSetsFloater::updateGroupsList()
+{
+	std::string currentGroup = gSavedSettings.getString("PhoenixContactSetsSelectedGroup");
+	LLComboBox * cb = groupsList;
+	//if(	sInstance->groupsList != NULL) cb = sInstance->groupsList;
+
+	cb->clear();
+	cb->removeall();
+	std::vector<std::string> groups = LGGContactSets::getInstance()->getAllGroups();
+	for(int i =0;i<groups.size();i++)
+	{
+		cb->add(groups[i],groups[i],ADD_BOTTOM,TRUE);
+	}
+	if((currentGroup=="")&&(groups.size()>0))
+	{
+		gSavedSettings.setString("PhoenixContactSetsSelectedGroup",groups[0]);
+		updateGroupGUIs();
+		generateCurrentList();
+	}else
+	cb->setSimple(currentGroup);
+}
 void lggContactSetsFloater::hitSpaceBar(LLUICtrl* ctrl, void* userdata)
 {
 	LLCheckBoxCtrl* cctrl = (LLCheckBoxCtrl*)ctrl;
@@ -242,27 +267,6 @@ void lggContactSetsFloater::hitSpaceBar(LLUICtrl* ctrl, void* userdata)
 			}
 		}
 	}
-}
-void lggContactSetsFloater::updateGroupsList()
-{
-	std::string currentGroup = gSavedSettings.getString("PhoenixContactSetsSelectedGroup");
-	LLComboBox * cb = groupsList;
-	//if(	sInstance->groupsList != NULL) cb = sInstance->groupsList;
-
-	cb->clear();
-	cb->removeall();
-	std::vector<std::string> groups = LGGContactSets::getInstance()->getAllGroups();
-	for(int i =0;i<groups.size();i++)
-	{
-		cb->add(groups[i],groups[i],ADD_BOTTOM,TRUE);
-	}
-	if((currentGroup=="")&&(groups.size()>0))
-	{
-		gSavedSettings.setString("PhoenixContactSetsSelectedGroup",groups[0]);
-		updateGroupGUIs();
-		generateCurrentList();
-	}else
-	cb->setSimple(currentGroup);
 }
 void lggContactSetsFloater::updateGroupGUIs()
 {
@@ -343,7 +347,7 @@ void lggContactSetsFloater::drawRightClick()
 		return;
 	}
 	int heightPer = 17;
-	int width = 200;
+	int width = 208;
 	BOOL drawRemove=FALSE;
 
 	int extras = 5;//make sure we have room for the extra options
@@ -525,18 +529,26 @@ void lggContactSetsFloater::drawRightClick()
 		//draw text block background after the :rename text
 		int remWidth = LLFontGL::getFontSansSerif()->getWidth("Set Alias:");
 		LLRect inTextBox;
-		inTextBox.setLeftTopAndSize(remBackGround.mLeft+8+remWidth,remBackGround.mTop,
-			remBackGround.getWidth()-8-remWidth,remBackGround.getHeight());
+		inTextBox.setLeftTopAndSize(remBackGround.mLeft+2+remWidth,remBackGround.mTop,
+			remBackGround.getWidth()-2-remWidth,remBackGround.getHeight()-2);
 		gGL.color4fv(LLColor4::white.mV);
 		gl_rect_2d(inTextBox);
 
 		//draw text in black of rightclicktext
+		//if nothing set, give hints
+		std::string textToDrawInRightClickBox = sInstance->currentRightClickText;
+		LLColor4 textColor = LLColor4::black;
+		if(textToDrawInRightClickBox=="")
+		{
+			textToDrawInRightClickBox="Start Typing, then click here";
+			textColor=LLColor4::grey;
+		}
 		LLFontGL::getFontSansSerif()->renderUTF8(
-		sInstance->currentRightClickText
+		textToDrawInRightClickBox
 			, 0,
 			inTextBox.mLeft,
-			inTextBox.mBottom+6,
-			LLColor4::black, LLFontGL::LEFT,
+			inTextBox.mBottom+4,
+			textColor, LLFontGL::LEFT,
 			LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
 
 		if(remBackGround.pointInRect(mouse_x,mouse_y))
@@ -846,13 +858,13 @@ void lggContactSetsFloater::drawRightClick()
 		gl_rect_2d(remBackGround,FALSE);
 		if(justClicked)
 		{
-			std::vector<LLUUID> newSelected;
+			/*std::vector<LLUUID> newSelected;
 			newSelected.clear();
 			for(int pp=0;pp<currentList.size();pp++)//dont use snapshot, get anyhting new
 			{
 				newSelected.push_back(currentList[pp]);
-			}
-			selected=newSelected;
+			}*/
+			sInstance->selected=sInstance->currentList;
 		}
 	}
 	LLFontGL::getFontSansSerif()->renderUTF8(
@@ -960,10 +972,14 @@ void lggContactSetsFloater::draw()
 	static LLCachedControl<bool> barNotBg(gSavedSettings, "PhoenixContactSetsColorizeBar");
 	static LLCachedControl<bool> requireCTRL(gSavedSettings, "PhoenixContactSetsRequireCTRL");
 	static LLCachedControl<bool> doZoom(gSavedSettings, "PhoenixContactSetsDoZoom");
+	static LLCachedControl<bool> doColorChange(gSavedSettings, "PhoenixContactSetsUseColorHighlight");
 		
 	std::vector<LLUUID> workingList;
 	workingList= currentList;
 	int numberOfPanels = workingList.size();//45;
+	//see if we are guna draw some folders
+	allFolders=LGGContactSets::getInstance()->getInnerGroups(currentGroup);
+	numberOfPanels+=allFolders.size();
 
 	LLRect topScroll = getChild<LLPanel>("top_region")->getRect();
 	LLRect bottomScroll = getChild<LLPanel>("bottom_region")->getRect();
@@ -981,17 +997,18 @@ void lggContactSetsFloater::draw()
 	gGL.pushMatrix();
 	gl_circle_2d(rec.getCenterX(),rec.getCenterY(),2.0f,(S32)30,false);
 	int bMag = 35;
-	if (!doZoom) bMag=1;
+	if (!doZoom) bMag=0;
 	//kinda magic numbers to compensate for max bloom effect and stuff
 	float sizeV = (F32)((rec.getHeight()-143)-(((F32)numberOfPanels)*1.07f)-0)/(F32)(numberOfPanels);
-	if (!doZoom) sizeV= (F32)((rec.getHeight()-0-(numberOfPanels*2)))/(F32)(numberOfPanels);
+	if(!doZoom)sizeV= (F32)((rec.getHeight()-0-(numberOfPanels*2)))/(F32)(numberOfPanels);
 	maxSize=sizeV+bMag;
 	int minSize = 10;
-	if (!doZoom) minSize=27;
+	if(!doZoom)minSize=24;
 	if (sizeV < minSize)
 	{
 		//need scroll bars
 		sizeV = minSize;
+//#pragma region ScrollBars
 		if (this->hasFocus())
 		{
 			LLUIImage *arrowUpImage = LLUI::getUIImage("map_avatar_above_32.tga");
@@ -1049,6 +1066,8 @@ void lggContactSetsFloater::draw()
 				}
 			scrollLoc = llclamp(scrollLoc,0,maxS);
 		}
+//#pragma endregion ScrollBars
+
 	}
 	else
 	{
@@ -1056,25 +1075,118 @@ void lggContactSetsFloater::draw()
 	}
 	float top = rec.mTop+scrollLoc;//sizeV+12;
 	if (mouse_y < 15) mouse_y = 15;
-	for (int p = 0; p < numberOfPanels; p++)
+	for(int f=0; f< allFolders.size();f++)
 	{
 		float thisSize = sizeV;
 		float pi = 3.1415f;
 		float piOver2Centered = pi / 2 + ( (top - ((F32)(sizeV + (40)) / 2.0f) - mouse_y) * .01);
-		float bubble = sin((float)llclamp(piOver2Centered, 0.0f, pi)) * bMag;
-		thisSize += bubble;
+		float bubble =sin((float)llclamp(piOver2Centered,0.0f,pi));//*bMag;
+		thisSize+=(bubble*bMag);
 
 		if ((top - thisSize) < rec.mBottom) continue; 
 		if ((top - thisSize) > rec.mTop){}
 		else
 		{
-			if ((top) > rec.mTop)
-			{
-				top = rec.mTop; //draw as much as the top one as we can
-			}
+			//draw folder stuff
+			if((top)>rec.mTop){top=rec.mTop;}//draw as much as the top one as we can
 
 			LLRect box;
-			box.setLeftTopAndSize(rec.mLeft+(bMag/2)+5-(bubble/2),llceil(top+.00001),(rec.getWidth()-bMag-10)+(bubble/1),(int)llfloor(thisSize+.00001f));
+			box.setLeftTopAndSize(rec.mLeft+(bMag/2)+5-((bubble*bMag)/2),llceil(top+.00001),(rec.getWidth()-bMag-10)+((bubble*bMag)/1),(int)llfloor(thisSize+.00001f));
+
+
+			std::string folder= allFolders[f];
+
+			LLColor4 color = LGGContactSets::getInstance()->getGroupColor(folder);
+			
+			if(doColorChange)
+				color = LGGContactSets::toneDownColor(color,((F32)bubble+.001)/(1.0f));
+
+			gGL.color4fv(color.mV);			
+			if(!barNotBg && !textNotBg)
+			{
+				gl_rect_2d(box);
+			}else
+			{
+				LLRect smallBox = box;
+				smallBox.setLeftTopAndSize(box.mLeft,box.mTop,10+(bubble/2),box.getHeight());
+				gl_rect_2d(smallBox);
+				smallBox.setLeftTopAndSize(box.mLeft+10+(bubble/2),box.mTop,box.getWidth()-(10+(bubble/2)),box.getHeight());
+				gGL.color4fv(LGGContactSets::toneDownColor(LGGContactSets::getInstance()->getDefaultColor(),doColorChange?(((F32)bubble)/(1)):1).mV);
+				gl_rect_2d(smallBox);
+			}
+			if(box.pointInRect(mouse_x,mouse_y))
+			{
+				gGL.color4fv(LLColor4::white.mV);
+				gl_rect_2d(box,FALSE);
+				if(justClicked)
+				{
+					justClicked=FALSE;
+					gSavedSettings.setString("PhoenixContactSetsSelectedGroup",folder);
+					sInstance->updateGroupGUIs();
+					sInstance->selected.clear();
+					sInstance->generateCurrentList();
+				}
+			}
+
+			LLFontGL* useFont = font;
+			if(thisSize>25)useFont = bigFont;
+			if(thisSize>36)useFont = hugeFont;
+			if(doZoom)
+			{
+				if(thisSize>14)useFont = bigFont;
+				if(thisSize>25)useFont = hugeFont;
+			}
+
+			int roomForBar = 0;
+			if(barNotBg||textNotBg)roomForBar=10+(bubble/2);
+
+			int size =llclamp(thisSize+(bubble*bMag/2),
+				llmax(10.0f,llmin((((F32)box.getHeight())/1.0f),20.0f)),
+				llmin(20+(bubble*bMag/2),thisSize+(bubble*bMag/2)));
+
+			int xLoc = box.mLeft+roomForBar;//size;
+			LLUIImage *selectedImage = LLUI::getUIImage("inv_folder_plain_closed.tga");
+			LLRect imageBox;
+			imageBox.setLeftTopAndSize(xLoc,(box.getHeight()/2)+0+box.mBottom+(size/2),size,size);			
+			gl_draw_scaled_image_with_border(imageBox.mLeft,imageBox.mBottom,
+				imageBox.getWidth(),imageBox.getHeight(),
+				selectedImage->getImage(),
+				LLColor4::white,
+				FALSE);
+
+			LLColor4 groupTextColor = LLColor4::white;
+			if(textNotBg)groupTextColor=LGGContactSets::toneDownColor(color,1.0f);
+
+			useFont->renderUTF8(
+				folder
+				, 0,
+				box.mLeft+roomForBar+size+2,
+				top-(thisSize/2)+(doZoom?-2:2),
+				groupTextColor, LLFontGL::LEFT,
+				LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
+
+		}
+
+		top-=(thisSize+1);
+	}
+	
+	for(int p=0; p < (numberOfPanels-allFolders.size()) ; p++)
+	{
+		float thisSize = sizeV;
+		float pi = 3.1415f;
+		float piOver2Centered = pi/2+( (top-((F32)(sizeV+(40))/2.0f)-mouse_y)*.01);
+		float bubble =sin((float)llclamp(piOver2Centered,0.0f,pi));//*bMag;
+		thisSize+=(bubble*bMag);
+
+		if((top-thisSize)<rec.mBottom)continue; 
+		if((top-thisSize)>rec.mTop){}
+		else
+		{
+//#pragma region DrawListItem
+			if((top)>rec.mTop){top=rec.mTop;}//draw as much as the top one as we can
+
+			LLRect box;
+			box.setLeftTopAndSize(rec.mLeft+(bMag/2)+5-((bubble*bMag)/2),llceil(top+.00001),(rec.getWidth()-bMag-10)+((bubble*bMag)/1),(int)llfloor(thisSize+.00001f));
 
 			BOOL hoveringThis = FALSE;
 			if (top > mouse_y && (top - thisSize) < mouse_y)
@@ -1105,8 +1217,8 @@ void lggContactSetsFloater::draw()
 			if(showOtherGroups)color = LGGContactSets::getInstance()->
 				getFriendColor(agent_id,cg);
 
-			if(!iAMSelected)
-				color = LGGContactSets::toneDownColor(color,((F32)bubble)/((F32)bMag));
+			if(!iAMSelected&&doColorChange)
+				color = LGGContactSets::toneDownColor(color,((F32)bubble+.001)/(1.0f));
 			
 			gGL.color4fv(color.mV);			
 			if(!barNotBg && !textNotBg)
@@ -1118,12 +1230,12 @@ void lggContactSetsFloater::draw()
 				smallBox.setLeftTopAndSize(box.mLeft,box.mTop,10+(bubble/2),box.getHeight());
 				gl_rect_2d(smallBox);
 				smallBox.setLeftTopAndSize(box.mLeft+10+(bubble/2),box.mTop,box.getWidth()-(10+(bubble/2)),box.getHeight());
-				gGL.color4fv(LGGContactSets::toneDownColor(LGGContactSets::getInstance()->getDefaultColor(),((F32)bubble)/((F32)bMag)).mV);
+				gGL.color4fv(LGGContactSets::toneDownColor(LGGContactSets::getInstance()->getDefaultColor(),doColorChange?(((F32)bubble)/(1)):1).mV);
 				gl_rect_2d(smallBox);
 			}
 
 			//draw over lays (other group names)
-			if(box.getHeight()>25)
+			if(box.getHeight()>(doZoom?25:0))
 			{
 				int breathingRoom = 0;
 				if(box.getHeight()>35)breathingRoom=4;
@@ -1149,15 +1261,28 @@ void lggContactSetsFloater::draw()
 						box.mBottom+breathingRoom,
 						LLColor4::white, LLFontGL::LEFT,
 						LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
+					if(oGroupArea.pointInRect(mouse_x,mouse_y))
+					{
+						gGL.color4fv(LLColor4(1,1,1,1.0).mV);			
+						gl_rect_2d(oGroupArea,FALSE);
+						if(justClicked)
+						{
+							justClicked=FALSE;
+							gSavedSettings.setString("PhoenixContactSetsSelectedGroup",oGroupName);
+							sInstance->updateGroupGUIs();
+							sInstance->selected.clear();
+							sInstance->generateCurrentList();
+						}
+					}
 					w+=sizePerOGroup+5;
 
 				}
 			}
 			//draw icons
 			//not to small if we can, but not to big, but still have a good zoom effect
-			int size =llclamp(thisSize+(bubble/2),
+			int size =llclamp(thisSize+(bubble*bMag/2),
 				llmax(10.0f,llmin((((F32)box.getHeight())/1.0f),20.0f)),
-				llmin(20+(bubble/2),thisSize+(bubble/2)));
+				llmin(20+(bubble*bMag/2),thisSize+(bubble*bMag/2)));
 
 			std::string toolTipText="Friend is Unselected";
 			std::string toDisplayToolTipText="";
@@ -1353,8 +1478,13 @@ void lggContactSetsFloater::draw()
 					text+="" +fullname;
 				}
 				LLFontGL* useFont = font;
-				if(thisSize>14)useFont = bigFont;
-				if(thisSize>25)useFont = hugeFont;
+				if(thisSize>25)useFont = bigFont;
+				if(thisSize>36)useFont = hugeFont;
+				if(doZoom)
+				{
+					if(thisSize>14)useFont = bigFont;
+					if(thisSize>25)useFont = hugeFont;
+				}
 				
 				int roomForBar = 0;
 				if(barNotBg||textNotBg)roomForBar=10+(bubble/2);
@@ -1366,7 +1496,7 @@ void lggContactSetsFloater::draw()
 					text
 					, 0,
 					box.mLeft+roomForBar,
-					top-(thisSize/2),
+					top-(thisSize/2)+(doZoom?-2:2),
 					nameTextColor, LLFontGL::LEFT,
 					LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
 
@@ -1374,6 +1504,7 @@ void lggContactSetsFloater::draw()
 				//	LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
 			}
 
+//#pragma endregion DrawListItem
 		}
 
 		top-=(thisSize+1);
@@ -1449,12 +1580,12 @@ BOOL lggContactSetsFloater::handleScrollWheel(S32 x, S32 y, S32 clicks)
 {
 	LLRect rec  = sInstance->getChild<LLPanel>("draw_region")->getRect();
 
-	int maxS =(((sInstance->currentList.size())*11)+200-(rec.getHeight()));
+	int maxS =(((sInstance->currentList.size()+sInstance->allFolders.size())*11)+200-(rec.getHeight()));
 	static LLCachedControl<bool> doZoom(gSavedSettings, "PhoenixContactSetsDoZoom");
-	if (!doZoom) maxS = ((sInstance->currentList.size()*(29))+10-(rec.getHeight()));
+	if(!doZoom)maxS=(((sInstance->currentList.size()+sInstance->allFolders.size())*(26))+10-(rec.getHeight()));
 
 	int moveAmt=12;
-	if (!doZoom) moveAmt = 29;
+	if(!doZoom)moveAmt=26;
 	
 
 	sInstance->scrollLoc=llclamp(sInstance->scrollLoc+(clicks*moveAmt),0,maxS);
@@ -1510,9 +1641,9 @@ BOOL lggContactSetsFloater::handleKeyHere( KEY key, MASK mask )
 {
 	LLRect rec  = sInstance->getChild<LLPanel>("draw_region")->getRect();
 	
-	int maxS =(((sInstance->currentList.size())*11)+200-(rec.getHeight()));
+	int maxS =(((sInstance->currentList.size()+sInstance->allFolders.size())*11)+200-(rec.getHeight()));
 	static LLCachedControl<bool> doZoom(gSavedSettings, "PhoenixContactSetsDoZoom");
-	if (!doZoom) maxS = ((sInstance->currentList.size()*(29))+10-(rec.getHeight()));
+	if(!doZoom)maxS=(((sInstance->currentList.size()+sInstance->allFolders.size())*(26))+10-(rec.getHeight()));
 	std::string localFilter = sInstance->currentFilter;
 	if(sInstance->showRightClick)localFilter=sInstance->currentRightClickText;
 
@@ -1525,6 +1656,7 @@ BOOL lggContactSetsFloater::handleKeyHere( KEY key, MASK mask )
 	else if (key == KEY_UP)
 	{
 		if (!doZoom) curLoc -= 29;
+		if(!doZoom)curLoc-=26;
 		else curLoc -= 12;
 	}
 	else if(key == KEY_PAGE_DOWN)
@@ -1533,7 +1665,7 @@ BOOL lggContactSetsFloater::handleKeyHere( KEY key, MASK mask )
 	}
 	else if(key == KEY_DOWN)
 	{
-		if (!doZoom) curLoc += 29;
+		if(!doZoom)curLoc+=26;
 		else curLoc += 12;
 	}
 	if (key == KEY_ESCAPE)
@@ -1582,9 +1714,9 @@ BOOL lggContactSetsFloater::handleDoubleClick(S32 x, S32 y, MASK mask)
 	LLRect topScroll = sInstance->getChild<LLPanel>("top_region")->getRect();
 	LLRect bottomScroll = sInstance->getChild<LLPanel>("bottom_region")->getRect();
 
-	int maxS =(((sInstance->currentList.size())*11)+200-(rec.getHeight()));
+	int maxS =(((sInstance->currentList.size()+sInstance->allFolders.size())*11)+200-(rec.getHeight()));
 	static LLCachedControl<bool> doZoom(gSavedSettings, "PhoenixContactSetsDoZoom");
-	if (!doZoom) maxS = ((sInstance->currentList.size()*(29))+10-(rec.getHeight()));
+	if(!doZoom)maxS=(((sInstance->currentList.size()+sInstance->allFolders.size())*(26))+10-(rec.getHeight()));
 	
 	if (bottomScroll.pointInRect(x, y))
 	{

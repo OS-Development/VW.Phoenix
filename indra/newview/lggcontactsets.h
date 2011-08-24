@@ -33,8 +33,10 @@ public:
 	LLSD getContactSets();
 	LLColor4 getGroupColor(std::string groupName);
 	LLColor4 getFriendColor(LLUUID friend_id, std::string ignoredGroupName="");
+	BOOL hasFriendColorThatShouldShow(LLUUID friend_id);
 	LLColor4 getDefaultColor();
 	void setDefaultColor(LLColor4 dColor);
+	std::vector<std::string> getInnerGroups(std::string groupName);
 	std::vector<std::string> getFriendGroups(LLUUID friend_id);
 	std::vector<std::string> getAllGroups(BOOL extraGroups=TRUE);
 	std::vector<LLUUID> getFriendsInGroup(std::string groupName);
