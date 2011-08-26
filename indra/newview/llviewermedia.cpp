@@ -925,6 +925,7 @@ LLPluginClassMedia* LLViewerMediaImpl::newSourceFromMediaType(std::string media_
 		else
 		{
 			LLPluginClassMedia* media_source = new LLPluginClassMedia(owner);
+			media_source->setOwner(owner);
 			media_source->setSize(default_width, default_height);
 			media_source->setUserDataPath(user_data_path);
 			media_source->setLanguageCode(LLUI::getLanguage());
@@ -941,9 +942,10 @@ LLPluginClassMedia* LLViewerMediaImpl::newSourceFromMediaType(std::string media_
 			bool javascript_enabled = gSavedSettings.getBOOL( "BrowserJavascriptEnabled" );
 			media_source->setJavascriptEnabled( javascript_enabled );
 
-			media_source->setTarget(target);
+			media_source->setTarget(LLStringUtil::null); //media_source->setTarget(target)
 
-			if (media_source->init(launcher_name, plugin_name, false)) //No more user_data_path
+			const std::string plugin_dir = gDirUtilp->getLLPluginDir();
+			if (media_source->init(launcher_name, plugin_dir, plugin_name, false))
 			{
 				return media_source;
 			}
@@ -954,7 +956,12 @@ LLPluginClassMedia* LLViewerMediaImpl::newSourceFromMediaType(std::string media_
 			}
 		}
 	}
-	
+
+	LL_WARNS("Media") << "Plugin intialization failed for mime type: " << media_type << LL_ENDL;
+	LLSD args;
+	args["MIME_TYPE"] = media_type;
+	LLNotifications::instance().add("NoPlugin", args);
+
 	return NULL;
 }							
 

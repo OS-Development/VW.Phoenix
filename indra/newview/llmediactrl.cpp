@@ -72,6 +72,7 @@ LLMediaCtrl::LLMediaCtrl(const std::string& name, const LLRect& rect) :
 	mForceUpdate(false),
 	mTrusted(false),
 	mHomePageUrl(""),
+	mErrorPageURL(""),
 	mIgnoreUIScale(true),
 	mAlwaysRefresh(false),
 	mMediaSource(0),
@@ -463,16 +464,7 @@ bool LLMediaCtrl::canNavigateForward()
 //
 void LLMediaCtrl::set404RedirectUrl( std::string redirect_url )
 {
-	if(mMediaSource && mMediaSource->hasMedia())
-		mMediaSource->getMediaPlugin()->set_status_redirect( 404, redirect_url );
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//
-void LLMediaCtrl::clr404RedirectUrl()
-{
-	if(mMediaSource && mMediaSource->hasMedia())
-		mMediaSource->getMediaPlugin()->set_status_redirect(404, "");
+	mErrorPageURL = redirect_url;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -828,6 +820,16 @@ void LLMediaCtrl::handleMediaEvent(LLPluginClassMedia* self, EMediaEvent event)
 		};
 		break;
 
+		case MEDIA_EVENT_NAVIGATE_ERROR_PAGE:
+		{
+			LL_DEBUGS("Media") <<  "Media event:  MEDIA_EVENT_NAVIGATE_ERROR_PAGE" << LL_ENDL;
+			if (mErrorPageURL.length() > 0)
+			{
+				navigateTo(mErrorPageURL, "text/html");
+			};
+		};
+		break;
+
 		case MEDIA_EVENT_CLICK_LINK_HREF:
 		{
 			LL_DEBUGS("Media") <<  "Media event:  MEDIA_EVENT_CLICK_LINK_HREF, target is \"" << self->getClickTarget() << "\", uri is " << self->getClickURL() << LL_ENDL;
@@ -881,6 +883,18 @@ void LLMediaCtrl::handleMediaEvent(LLPluginClassMedia* self, EMediaEvent event)
 		{
 			LL_DEBUGS("Media") << "Media event:  MEDIA_EVENT_STATUS_CHANGED" << LL_ENDL;
 		}
+		break;
+
+		case MEDIA_EVENT_AUTH_REQUEST:
+		{
+			LL_WARNS("Media") <<  "Unimplemented Media event:  MEDIA_EVENT_AUTH_REQUEST" << LL_ENDL;
+		};
+		break;
+
+		case MEDIA_EVENT_LINK_HOVERED:
+		{
+			LL_WARNS("Media") <<  "Unimplemented Media event:  MEDIA_EVENT_LINK_HOVERED" << LL_ENDL;
+		};
 		break;
 	};
 

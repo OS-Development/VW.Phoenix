@@ -98,9 +98,8 @@ class LLMediaCtrl :
 		
 		void setTarget(const std::string& target);
 
-		// set/clear URL to visit when a 404 page is reached
-		void set404RedirectUrl( std::string redirect_url );
-		void clr404RedirectUrl();
+		// set URL to visit when a 404 page is reached
+		void set404RedirectUrl(std::string redirect_url);
 
 		// accessor/mutator for flag that indicates if frequent updates to texture happen
 		bool getFrequentUpdates() { return mFrequentUpdates; };
@@ -152,6 +151,7 @@ class LLMediaCtrl :
 		std::string mHomePageUrl;
 		std::string mCurrentNavUrl;
 		std::string mTarget;
+		std::string mErrorPageURL;
 		bool mIgnoreUIScale;
 		bool mAlwaysRefresh;
 		viewer_media_t mMediaSource;
