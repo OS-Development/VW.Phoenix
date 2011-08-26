@@ -6,7 +6,7 @@
 	<tab_container bottom="-570" follows="left|top|right|bottom" height="550" left="0"
 	     mouse_opaque="false" name="Directory Tabs" tab_position="top" width="780">
 		<panel border="true" bottom="-549" follows="left|top|right|bottom" height="533"
-		     label="All" left="1" mouse_opaque="false" name="find_all_panel" width="778">
+		     label="All (web)" left="1" mouse_opaque="false" name="find_all_panel" width="778">
 			<string name="searching_text">
 				Searching...
 			</string>
@@ -33,7 +33,7 @@
 			<button bottom="-48" follows="top|right" font="SansSerif" height="20"
 			     label="Search" left="121" name="search_btn" width="95" />
 			<combo_box allow_text_entry="false" bottom="-46" follows="right|top" height="18"
-			     left="230" max_chars="20" mouse_opaque="true" name="Category"
+			     left="230" max_chars="20" mouse_opaque="true" name="OldCategory"
 			     width="158">
 				<combo_item name="AnyCategory" value="All">
 					Any Category
@@ -54,6 +54,34 @@
 					Wiki
 				</combo_item>
 			</combo_box>
+			<combo_box allow_text_entry="false" bottom="-46" follows="right|top" height="18"
+			     left="230" max_chars="20" mouse_opaque="true" name="Category" visible="false"
+			     width="158">
+				<combo_item name="All" value="search">
+					All
+				</combo_item>
+				<combo_item name="People" value="search/people">
+					People
+				</combo_item>
+				<combo_item name="Places" value="search/places">
+					Places
+				</combo_item>
+				<combo_item name="Events" value="search/events">
+					Events
+				</combo_item>
+				<combo_item name="Groups" value="search/groups">
+					Groups
+				</combo_item>
+				<combo_item name="Wiki" value="search/wiki">
+					Wiki
+				</combo_item>
+				<combo_item name="Destinations" value="destinations">
+					Destinations
+				</combo_item>
+				<combo_item name="Classifieds" value="classifieds">
+					Classifieds
+				</combo_item>
+			</combo_box>
 			<check_box bottom="-22" control_name="ShowPGSearchAll" follows="right|top"
 			     font="SansSerifSmall" height="16" initial_value="true"
 			     label="PG content" left="420" mouse_opaque="true"
@@ -66,9 +94,13 @@
 			     font="SansSerifSmall" height="16" initial_value="false"
 			     label="Adult content" left="420" mouse_opaque="true"
 			     name="incadult" width="156" />
-	                <button bottom="-22" enabled="true" follows="right|top" font="SansSerif"
-                             halign="center" height="18" label="?" label_selected="?" left="-25"
-                             mouse_opaque="true" name="?" width="18" />
+			<check_box bottom="-40" control_name="UseNewSearch" follows="right|top"
+			     font="SansSerifSmall" height="16" initial_value="true"
+			     label="Use New Search" left="580" mouse_opaque="true"
+			     name="new_search" width="156" />
+			<button bottom="-22" enabled="true" follows="right|top" font="SansSerif"
+			     halign="center" height="18" label="?" label_selected="?" left="-25"
+			     mouse_opaque="true" name="?" width="18" />
 			<web_browser bottom="25" follows="top|left|bottom|right" font="SansSerifSmall" left="10"
 			     name="find_browser" right="-10" top="-60" />
 			<text bottom="5" follows="bottom|left" halign="left" height="16" left="10"
@@ -82,7 +114,6 @@
 			<string name="redirect_404_url">
 				http://secondlife.com/app/search/notfound.html
 			</string>
-      <string name="default_search_page">"http://secondlife.com/app/search/index.php?"</string>
     </panel>
 		<panel border="true" bottom="-549" follows="left|top|right|bottom" height="533"
 		     label="Classifieds" left="1" left_delta="68" mouse_opaque="false"

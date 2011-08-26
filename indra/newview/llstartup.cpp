@@ -127,6 +127,7 @@
 #include "llnotify.h"
 #include "llpanelavatar.h"
 #include "llpaneldirbrowser.h"
+#include "llpaneldirfind.h"
 #include "llpaneldirland.h"
 #include "llpanelevent.h"
 #include "llpanelclassified.h"
@@ -1604,6 +1605,14 @@ bool idle_startup()
 				gAgent.setMaturity(text[0]);
 			}
 
+			// This token is used by the new style web search in SL
+			std::string search_token = LLUserAuth::getInstance()->getResponse("search_token");
+			if (search_token.empty())
+			{
+				search_token = LLUserAuth::getInstance()->getResponse("auth_token");
+			}
+
+			LLPanelDirFind::setSearchToken(search_token);
 			// this is the value of their preference setting for that content
 			// which will always be <= agent_access_max
 			text = LLUserAuth::getInstance()->getResponse("agent_region_access");
