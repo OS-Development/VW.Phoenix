@@ -148,6 +148,10 @@ void LLMediaCtrl::setTakeFocusOnClick( bool take_focus )
 void LLMediaCtrl::setTrusted( bool valIn )
 {
 	mTrusted = valIn;
+	if (mMediaSource)
+	{
+		mMediaSource->setTrustedBrowser(mTrusted);
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -183,7 +187,7 @@ BOOL LLMediaCtrl::handleMouseUp( S32 x, S32 y, MASK mask )
 	if (mMediaSource)
 	{
 		mMediaSource->mouseUp(x, y, mask);
-
+#if 0	// Now using Qt Webkit...
 		// *HACK: LLMediaImplLLMozLib automatically takes focus on mouseup,
 		// in addition to the onFocusReceived() call below.  Undo this. JC
 		if (!mTakeFocusOnClick)
@@ -191,6 +195,7 @@ BOOL LLMediaCtrl::handleMouseUp( S32 x, S32 y, MASK mask )
 			mMediaSource->focus(false);
 			gViewerWindow->focusClient();
 		}
+#endif
 	}
 	
 	gFocusMgr.setMouseCapture( NULL );
@@ -227,7 +232,7 @@ BOOL LLMediaCtrl::handleRightMouseUp( S32 x, S32 y, MASK mask )
 	if (mMediaSource)
 	{
 		mMediaSource->mouseUp(x, y, mask, 1);
-
+#if 0	// Now using Qt Webkit...
 		// *HACK: LLMediaImplLLMozLib automatically takes focus on mouseup,
 		// in addition to the onFocusReceived() call below.  Undo this. JC
 		if (!mTakeFocusOnClick)
@@ -235,6 +240,7 @@ BOOL LLMediaCtrl::handleRightMouseUp( S32 x, S32 y, MASK mask )
 			mMediaSource->focus(false);
 			gViewerWindow->focusClient();
 		}
+#endif
 	}
 	
 	gFocusMgr.setMouseCapture( NULL );

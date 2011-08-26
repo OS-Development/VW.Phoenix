@@ -46,6 +46,7 @@
 #include "llagent.h"
 #include "llcallingcard.h"
 #include "llchat.h"
+#include "llcommandhandler.h"
 #include "llresmgr.h"
 #include "llfloaterchat.h"
 #include "llfloaterchatterbox.h"
@@ -98,6 +99,49 @@ static LLUIString sInviteMessage;
 std::map<std::string,std::string> LLFloaterIM::sEventStringsMap;
 std::map<std::string,std::string> LLFloaterIM::sErrorStringsMap;
 std::map<std::string,std::string> LLFloaterIM::sForceCloseSessionMap;
+
+// Global command handler
+
+class LLVoiceCallAvatarHandler : public LLCommandHandler
+{
+public: 
+	// requires trusted browser to trigger
+	LLVoiceCallAvatarHandler() : LLCommandHandler("voicecallavatar", true) 
+	{ 
+	}
+
+	bool handle(const LLSD& params, const LLSD& query_map, LLMediaCtrl* web)
+	{
+		//Make sure we have some parameters
+		if (params.size() == 0)
+		{
+			return false;
+		}
+
+		//Get the ID
+		LLUUID id;
+		if (!id.set(params[0], FALSE))
+		{
+			return false;
+		}
+
+		std::string name;
+		if (gIMMgr && gCacheName->getFullName(id, name))
+		{
+			// Once the IM panel will be opened, and provided that both
+			// the caller and the recipient are voice-enabled, the user
+			// will be only one click away from an actual voice call...
+			// When no voice is available, this action is still consistent
+			// With the "Call" link it is associated with in web profiles.
+			gIMMgr->setFloaterOpen(TRUE);
+			gIMMgr->addSession(name, IM_NOTHING_SPECIAL, id);
+			make_ui_sound("UISndStartIM");
+		}
+
+		return true;
+	}
+};
+LLVoiceCallAvatarHandler gVoiceCallAvatarHandler;
 
 //
 // Helper Functions

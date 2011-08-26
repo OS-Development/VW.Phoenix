@@ -45,6 +45,7 @@
 #include "llbutton.h"
 #include "llcallingcard.h"
 #include "llcolorscheme.h"
+#include "llcommandhandler.h"
 #include "llcombobox.h"
 #include "llviewercontrol.h"
 #include "lldraghandle.h"
@@ -112,6 +113,75 @@ static const F64 MAX_FLY_DISTANCE_SQUARED = MAX_FLY_DISTANCE * MAX_FLY_DISTANCE;
 //---------------------------------------------------------------------------
 
 LLFloaterWorldMap* gFloaterWorldMap = NULL;
+
+// handle secondlife:///app/worldmap/{NAME}/{COORDS} URLs
+class LLWorldMapHandler : public LLCommandHandler
+{
+public:
+	// requires trusted browser to trigger
+	LLWorldMapHandler() : LLCommandHandler("worldmap", true) { }
+
+	bool handle(const LLSD& params, const LLSD& query_map, LLMediaCtrl* web)
+	{
+		if (params.size() == 0)
+		{
+			// support the secondlife:///app/worldmap SLapp
+			LLFloaterWorldMap::show(NULL, TRUE);
+			return true;
+		}
+
+		// support the secondlife:///app/worldmap/{LOCATION}/{COORDS} SLapp
+		const std::string region_name = LLURI::unescape(params[0].asString());
+		S32 x = (params.size() > 1) ? params[1].asInteger() : 128;
+		S32 y = (params.size() > 2) ? params[2].asInteger() : 128;
+		S32 z = (params.size() > 3) ? params[3].asInteger() : 0;
+
+		if (gFloaterWorldMap)
+		{
+			gFloaterWorldMap->trackURL(region_name, x, y, z);
+		}
+		LLFloaterWorldMap::show(NULL, TRUE);
+
+		return true;
+	}
+};
+LLWorldMapHandler gWorldMapHandler;
+
+// SocialMap handler secondlife:///app/maptrackavatar/id
+class LLMapTrackAvatarHandler : public LLCommandHandler
+{
+public:
+	// requires trusted browser to trigger
+	LLMapTrackAvatarHandler() : LLCommandHandler("maptrackavatar", true) 
+	{ 
+	}
+
+	bool handle(const LLSD& params, const LLSD& query_map, LLMediaCtrl* web)
+	{
+		//Make sure we have some parameters
+		if (params.size() == 0)
+		{
+			return false;
+		}
+
+		//Get the ID
+		LLUUID id;
+		if (!id.set(params[0], FALSE))
+		{
+			return false;
+		}
+
+		if (gFloaterWorldMap)
+		{
+			std::string name;
+			(void)gCacheName->getFullName(id, name);
+			gFloaterWorldMap->trackAvatar(id, name);
+			LLFloaterWorldMap::show(NULL, TRUE);
+		}
+		return true;
+	}
+};
+LLMapTrackAvatarHandler gMapTrackAvatar;
 
 class LLMapInventoryObserver : public LLInventoryObserver
 {

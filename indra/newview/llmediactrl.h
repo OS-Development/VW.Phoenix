@@ -91,7 +91,8 @@ class LLMediaCtrl :
 		// Javascript or some other mechanism.  However, we need the search
 		// floater and login page to handle these URLs.  Those are safe
 		// because we control the page content.  See DEV-9530.  JC.
-		void setTrusted( bool valIn );
+		void setTrusted(bool valIn);
+		bool isTrusted() { return mTrusted; }
 
 		void setHomePageUrl( const std::string urlIn );
 		std::string getHomePageUrl();

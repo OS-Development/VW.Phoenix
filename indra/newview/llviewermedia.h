@@ -244,7 +244,10 @@ public:
 	/*virtual*/ BOOL	canPaste() const;
 	 
 	void setBackgroundColor(LLColor4 color);
-	
+
+	bool isTrustedBrowser() { return mTrustedBrowser; }
+	void setTrustedBrowser(bool trusted) { mTrustedBrowser = trusted; }
+
 	typedef enum 
 	{
 		MEDIANAVSTATE_NONE,										// State is outside what we need to track for navigation.
