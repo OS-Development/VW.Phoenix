@@ -774,7 +774,7 @@ void JCAssetExportCallback(LLVFS *vfs, const LLUUID& uuid, LLAssetType::EType ty
 			}//else //cmdline_printchat("Failed to decode notecard");
 		}
 		LLAPRFile infile;
-		infile.open(info->path.c_str(), LL_APR_WB,LLAPRFile::global);
+		infile.open(info->path.c_str(), LL_APR_WB);
 		apr_file_t *fp = infile.getFileHandle();
 		if(fp)infile.write(buffer, size);
 		infile.close();

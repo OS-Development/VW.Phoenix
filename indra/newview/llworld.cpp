@@ -192,6 +192,7 @@ LLViewerRegion* LLWorld::addRegion(const U64 &region_handle, const LLHost &host)
 
 	mRegionList.push_back(regionp);
 	mActiveRegionList.push_back(regionp);
+	mActiveRegionOrderedList.push_back(regionp);
 	mCulledRegionList.push_back(regionp);
 
 
@@ -272,6 +273,7 @@ void LLWorld::removeRegion(const LLHost &host)
 
 	mRegionList.remove(regionp);
 	mActiveRegionList.remove(regionp);
+	mActiveRegionOrderedList.remove(regionp);
 	mCulledRegionList.remove(regionp);
 	mVisibleRegionList.remove(regionp);
 	
@@ -651,20 +653,40 @@ void LLWorld::updateVisibilities()
 void LLWorld::updateRegions(F32 max_update_time)
 {
 	LLTimer update_timer;
-	BOOL did_one = FALSE;
-
-	if (mActiveRegionList.size())
+	static LLCachedControl<U32> region_update_fraction(gSavedSettings, "RegionUpdateFraction");
+	F32 fraction = (F32)llclamp((S32)region_update_fraction, 2, 20);
+	F32 max_time = max_update_time / fraction;
+	LLViewerRegion* agent_region = gAgent.getRegion();
+	if (agent_region)
 	{
-		// Perform idle time updates for the regions (and associated surfaces)
-		for (region_list_t::iterator iter = mActiveRegionList.begin();
-			 iter != mActiveRegionList.end(); ++iter)
+		// Always perform an update on the agent region first.
+		agent_region->idleUpdate(max_time);
+	}
+	if (mActiveRegionOrderedList.size())
+	{
+		// Perform idle time updates for the other active regions
+		// (and associated surfaces)
+		for (region_list_t::iterator iter = mActiveRegionOrderedList.begin();
+			 iter != mActiveRegionOrderedList.end(); ++iter)
 		{
 			LLViewerRegion* regionp = *iter;
-			F32 max_time = max_update_time - update_timer.getElapsedTimeF32();
-			if (did_one && max_time <= 0.f)
-				break;
-			max_time = llmin(max_time, max_update_time * .1f);
-			did_one |= regionp->idleUpdate(max_time);
+			if (regionp == agent_region) continue;	// Already dealt with.
+			if (max_time > 0.f)
+			{
+				max_time = llmin(max_time, max_update_time / fraction);
+				regionp->idleUpdate(max_time);
+			}
+			max_time = max_update_time - update_timer.getElapsedTimeF32();
+		}
+		if (mActiveRegionOrderedList.size() > 1)
+		{
+			// Give the highest priority for the next pass to the region which
+			// was updated the longest time ago.
+			// Note that this reordering is the reason why we use a duplicate
+			// active region list: reordering the main list would make the
+			// mini-map flicker badly...
+			mActiveRegionOrderedList.push_front(mActiveRegionOrderedList.back());
+			mActiveRegionOrderedList.pop_back();
 		}
 	}
 }

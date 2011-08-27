@@ -161,8 +161,8 @@ void LLConsole::draw()
 	F32 skip_time = cur_time - mLinePersistTime;
 	F32 fade_time = cur_time - mFadeTime;
 
-	U32 max_lines = gSavedSettings.getS32("ConsoleMaxLines");
-	U32 num_lines=0;
+	static LLCachedControl<S32> max_lines(gSavedSettings, "ConsoleMaxLines");
+	U32 num_lines = 0;
 
 	paragraph_t::reverse_iterator paragraph_it;
 	paragraph_it = mParagraphs.rbegin();
@@ -199,8 +199,10 @@ void LLConsole::draw()
 
 	LLUIImagePtr imagep = LLUI::getUIImage("rounded_square.tga");
 
-	F32 console_opacity = llclamp(gSavedSettings.getF32("ConsoleBackgroundOpacity"), 0.f, 1.f);
-	LLColor4 color = gColors.getColor("ConsoleBackground");
+	static LLCachedControl<F32> console_background_opacity(gSavedSettings, "ConsoleBackgroundOpacity");
+	F32 console_opacity = llclamp((F32)console_background_opacity, 0.f, 1.f);
+	static LLCachedControl<LLColor4U> console_background(gColors, "ConsoleBackground");
+	LLColor4 color = LLColor4(console_background);
 	color.mV[VALPHA] *= console_opacity;
 
 	F32 line_height = mFont->getLineHeight();

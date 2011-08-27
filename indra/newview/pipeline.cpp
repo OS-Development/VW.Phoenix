@@ -4867,6 +4867,7 @@ void LLPipeline::resetVertexBuffers(LLDrawable* drawable)
 
 void LLPipeline::resetVertexBuffers()
 {
+	sFastAlpha = gSavedSettings.getBOOL("RenderFastAlpha");
 	sRenderBump = gSavedSettings.getBOOL("RenderObjectBump");
 	LLVertexBuffer::sUseStreamDraw = gSavedSettings.getBOOL("RenderUseStreamVBO2");
 

@@ -1909,7 +1909,7 @@ bool LLViewerFetchedTexture::updateFetch()
 
 	if (make_request)
 	{
-		LLCachedControl<bool> texture_progressive_load(gSavedSettings, "TextureProgressiveLoad");
+		static LLCachedControl<bool> texture_progressive_load(gSavedSettings, "TextureProgressiveLoad");
 		if (texture_progressive_load)
 		{
 			// Load the texture progressively.
@@ -1950,7 +1950,7 @@ bool LLViewerFetchedTexture::updateFetch()
 			c = mComponents;
 		}
 
-//		LLCachedControl<U32> override_tex_discard_level(gSavedSettings, "TextureDiscardLevel");
+//		static LLCachedControl<U32> override_tex_discard_level(gSavedSettings, "TextureDiscardLevel");
 //		if (override_tex_discard_level != 0)
 //		{
 //			desired_discard = override_tex_discard_level;

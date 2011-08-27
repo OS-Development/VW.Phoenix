@@ -320,7 +320,7 @@ void LLStatusBar::refresh()
 	S32 x = MENU_RIGHT + MENU_PARCEL_SPACING;
 	S32 y = 0;
 
-	bool search_visible = gSavedSettings.getBOOL("ShowSearchBar");
+	static LLCachedControl<bool> search_visible(gSavedSettings, "ShowSearchBar");
 
 	// reshape menu bar to its content's width
 	if (MENU_RIGHT != gMenuBarView->getRect().getWidth())

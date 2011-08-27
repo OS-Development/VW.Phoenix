@@ -44,7 +44,7 @@
 #include "llquaternion.h"
 #include "xform.h"
 #include "llmemtype.h"
-#include "lldarray.h"
+#include "lldarrayptr.h"
 #include "llviewerobject.h"
 #include "llrect.h"
 #include "llappviewer.h" // for gFrameTimeSeconds

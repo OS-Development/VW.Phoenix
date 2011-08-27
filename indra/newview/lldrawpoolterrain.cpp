@@ -55,7 +55,7 @@
 #include "llviewershadermgr.h"
 #include "llrender.h"
 
-const F32 DETAIL_SCALE = 1.f/16.f;
+const F32 DETAIL_SCALE = 1.f / 16.f;
 int DebugDetailMap = 0;
 
 S32 LLDrawPoolTerrain::sDetailMode = 1;
@@ -125,7 +125,8 @@ void LLDrawPoolTerrain::prerender()
 	}
 	else
 	{
-		sDetailMode = gSavedSettings.getS32("RenderTerrainDetail");
+		static LLCachedControl<bool> render_terrain_detail(gSavedSettings, "RenderTerrainDetail");
+		sDetailMode = render_terrain_detail;
 	}
 }
 
@@ -203,11 +204,16 @@ void LLDrawPoolTerrain::render(S32 pass)
 	{
 		gPipeline.enableLightsStatic();
 
-		if (sDetailMode == 0){
+		if (sDetailMode == 0)
+		{
 			renderSimple();
-		} else if (gGLManager.mNumTextureUnits < 4){
+		}
+		else if(gGLManager.mNumTextureUnits < 4)
+		{
 			renderFull2TU();
-		} else {
+		}
+		else
+		{
 			renderFull4TU();
 		}
 	}

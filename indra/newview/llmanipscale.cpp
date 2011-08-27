@@ -57,6 +57,7 @@
 #include "llui.h"
 #include "llviewercamera.h"
 #include "llviewerobject.h"
+#include "llviewerregion.h"
 #include "llviewerwindow.h"
 #include "llhudrender.h"
 #include "llworld.h"
@@ -90,8 +91,6 @@ const LLManip::EManipPart MANIPULATOR_IDS[NUM_MANIPULATORS] =
 	LLManip::LL_FACE_NEGY,
 	LLManip::LL_FACE_NEGZ
 };
-
-
 
 // static
 void LLManipScale::setUniform(BOOL b)

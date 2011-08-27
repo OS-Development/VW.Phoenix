@@ -34,12 +34,14 @@
 
 #include "linden_common.h"
 #include "llapr.h"
+#include "apr_dso.h"
 
 apr_pool_t *gAPRPoolp = NULL; // Global APR memory pool
+LLVolatileAPRPool *LLAPRFile::sAPRFilePoolp = NULL; //global volatile APR memory pool.
 apr_thread_mutex_t *gLogMutexp = NULL;
 apr_thread_mutex_t *gCallStacksLogMutexp = NULL;
 
-const S32 FULL_VOLATILE_APR_POOL = 1024 ; //number of references to LLVolatileAPRPool
+const S32 FULL_VOLATILE_APR_POOL = 1024; //number of references to LLVolatileAPRPool
 
 void ll_init_apr()
 {
@@ -48,13 +50,15 @@ void ll_init_apr()
 		// Initialize APR and create the global pool
 		apr_initialize();
 		apr_pool_create(&gAPRPoolp, NULL);
-		
+
 		// Initialize the logging mutex
 		apr_thread_mutex_create(&gLogMutexp, APR_THREAD_MUTEX_UNNESTED, gAPRPoolp);
 		apr_thread_mutex_create(&gCallStacksLogMutexp, APR_THREAD_MUTEX_UNNESTED, gAPRPoolp);
+	}
 
-		// Initialize thread-local APR pool support.
-		LLVolatileAPRPool::initLocalAPRFilePool();
+	if (!LLAPRFile::sAPRFilePoolp)
+	{
+		LLAPRFile::sAPRFilePoolp = new LLVolatileAPRPool(FALSE);
 	}
 }
 
@@ -84,6 +88,11 @@ void ll_cleanup_apr()
 		apr_pool_destroy(gAPRPoolp);
 		gAPRPoolp = NULL;
 	}
+	if (LLAPRFile::sAPRFilePoolp)
+	{
+		delete LLAPRFile::sAPRFilePoolp;
+		LLAPRFile::sAPRFilePoolp = NULL;
+	}
 	apr_terminate();
 }
 
@@ -92,161 +101,196 @@ void ll_cleanup_apr()
 //LLAPRPool
 //
 LLAPRPool::LLAPRPool(apr_pool_t *parent, apr_size_t size, BOOL releasePoolFlag) 
+	: mParent(parent),
+	mReleasePoolFlag(releasePoolFlag),
+	mMaxSize(size),
+	mPool(NULL)
 {
-	mParent = parent ;
-	mReleasePoolFlag = releasePoolFlag ;
-	mMaxSize = size ;
-	mPool = NULL ;
-
-	createAPRPool() ;
+	createAPRPool();
 }
 
 LLAPRPool::~LLAPRPool() 
 {
-	releaseAPRPool() ;
+	releaseAPRPool();
 }
 
 void LLAPRPool::createAPRPool()
 {
-	if(mPool)
+	if (mPool)
 	{
-		return ;
+		return;
 	}
 
 	mStatus = apr_pool_create(&mPool, mParent);
-	ll_apr_warn_status(mStatus) ;
+	ll_apr_warn_status(mStatus);
 
-	if(mMaxSize > 0) //size is the number of blocks (which is usually 4K), NOT bytes.
+	if (mMaxSize > 0) //size is the number of blocks (which is usually 4K), NOT bytes.
 	{
 		apr_allocator_t *allocator = apr_pool_allocator_get(mPool); 
 		if (allocator) 
 		{ 
-			apr_allocator_max_free_set(allocator, mMaxSize) ;
+			apr_allocator_max_free_set(allocator, mMaxSize);
 		}
 	}
 }
 
 void LLAPRPool::releaseAPRPool()
 {
-	if(!mPool)
+	if (!mPool)
 	{
-		return ;
+		return;
 	}
 
-	if(!mParent || mReleasePoolFlag)
+	if (!mParent || mReleasePoolFlag)
 	{
-		apr_pool_destroy(mPool) ;
-		mPool = NULL ;
+		apr_pool_destroy(mPool);
+		mPool = NULL;
 	}
 }
 
+//virtual
 apr_pool_t* LLAPRPool::getAPRPool() 
 {
-	if(!mPool)
-	{
-		createAPRPool() ;
-	}
-	
-	return mPool ; 
+	return mPool; 
 }
-LLVolatileAPRPool::LLVolatileAPRPool(apr_pool_t *parent, apr_size_t size, BOOL releasePoolFlag) 
-				  : LLAPRPool(parent, size, releasePoolFlag)
+
+LLVolatileAPRPool::LLVolatileAPRPool(BOOL is_local, apr_pool_t *parent, apr_size_t size, BOOL releasePoolFlag) 
+				  : LLAPRPool(parent, size, releasePoolFlag),
+				  mNumActiveRef(0),
+				  mNumTotalRef(0),
+				  mMutexPool(NULL),
+				  mMutexp(NULL)
 {
-	mNumActiveRef = 0 ;
-	mNumTotalRef = 0 ;
+	//create mutex
+	if (!is_local) //not a local apr_pool, that is: shared by multiple threads.
+	{
+		apr_pool_create(&mMutexPool, NULL); // Create a pool for mutex
+		apr_thread_mutex_create(&mMutexp, APR_THREAD_MUTEX_UNNESTED, mMutexPool);
+	}
+}
+
+LLVolatileAPRPool::~LLVolatileAPRPool()
+{
+	//delete mutex
+	if (mMutexp)
+	{
+		apr_thread_mutex_destroy(mMutexp);
+		apr_pool_destroy(mMutexPool);
+	}
+}
+
+//
+//define this virtual function to avoid any mistakenly calling LLAPRPool::getAPRPool().
+//
+//virtual 
+apr_pool_t* LLVolatileAPRPool::getAPRPool() 
+{
+	return LLVolatileAPRPool::getVolatileAPRPool();
 }
 
 apr_pool_t* LLVolatileAPRPool::getVolatileAPRPool() 
 {
-	mNumTotalRef++ ;
-	mNumActiveRef++ ;
-	return getAPRPool() ;
+	LLScopedLock lock(mMutexp);
+
+	mNumTotalRef++;
+	mNumActiveRef++;
+
+	if (!mPool)
+	{
+		createAPRPool();
+	}
+
+	return mPool;
 }
 
 void LLVolatileAPRPool::clearVolatileAPRPool() 
 {
-	if(mNumActiveRef > 0)
+	LLScopedLock lock(mMutexp);
+
+	bool global = (mPool == (apr_pool_t*)LLAPRFile::sAPRFilePoolp);
+	if (mNumActiveRef > 0)
 	{
 		mNumActiveRef--;
-		if(mNumActiveRef < 1)
+		if (mNumActiveRef < 1)
 		{
-			if(isFull()) 
+			if (isFull()) 
 			{
-				mNumTotalRef = 0 ;
+				if (global)
+				{
+					LL_DEBUGS("APR") << "Releasing global volatile pool after "
+									 << mNumTotalRef
+									 << " references, to free memory."
+									 << LL_ENDL;
+				}
+				else
+				{
+					LL_DEBUGS("APR") << "Releasing local volatile pool ("
+									 << mPool
+									 << ") after " << mNumTotalRef
+									 << " references, to free memory."
+									 << LL_ENDL;
+				}
+				mNumTotalRef = 0;
 
-				//destroy the apr_pool.
-				releaseAPRPool() ;
+				// Destroy the apr_pool.
+				releaseAPRPool();
 			}
 			else 
 			{
-				//This does not actually free the memory, 
-				//it just allows the pool to re-use this memory for the next allocation. 
-				apr_pool_clear(mPool) ;
+				if (global)
+				{
+					LL_DEBUGS("APR") << "Clearing global volatile pool after "
+									 << mNumTotalRef
+									 << " references, to reuse memory."
+									 << LL_ENDL;
+				}
+				else
+				{
+					LL_DEBUGS("APR") << "Clearing local volatile pool ("
+									 << mPool
+									 << ") after " << mNumTotalRef
+									 << " references, to reuse memory."
+									 << LL_ENDL;
+				}
+
+				// This does not actually free the memory, it just allows the
+				// pool to re-use this memory for the next allocation. 
+				apr_pool_clear(mPool);
 			}
 		}
-	}
-	else
-	{
-		llassert_always(mNumActiveRef > 0) ;
 	}
 
 	//paranoia check if the pool is jammed.
 	//will remove the check before going to release.
-	llassert_always(mNumTotalRef < (FULL_VOLATILE_APR_POOL << 2)) ;
+	//llassert_always(mNumTotalRef < (FULL_VOLATILE_APR_POOL << 2));
+	const S32 REF_LIMIT = FULL_VOLATILE_APR_POOL << 2;
+	if (mNumTotalRef > REF_LIMIT)
+	{
+		static S32 global_num_ref = 0;
+		static S32 local_num_ref = 0;	// Common to all local pools
+
+		if (global && mNumTotalRef >= global_num_ref + REF_LIMIT / 2)
+		{
+			LL_WARNS("APR") << "Reached  " << mNumTotalRef
+							<< " references with " << mNumActiveRef
+							<< " still active for the global pool !"
+							<< LL_ENDL;
+			global_num_ref = mNumTotalRef;
+		}
+		else if (!global && mNumTotalRef >= local_num_ref + REF_LIMIT / 2)
+		{
+			LL_WARNS("APR") << "Reached  " << mNumTotalRef
+							<< " references with " << mNumActiveRef
+							<< " still active for this local pool ("
+							<< mPool << ") !" << LL_ENDL;
+			local_num_ref = mNumTotalRef;
+		}
+	}
 }
 
 BOOL LLVolatileAPRPool::isFull()
 {
-	return mNumTotalRef > FULL_VOLATILE_APR_POOL ;
-}
-
-#ifdef SHOW_ASSERT
-// This allows the use of llassert(is_main_thread()) to assure the current thread is the main thread.
-static void* gIsMainThread;
-bool is_main_thread() { return gIsMainThread == LLVolatileAPRPool::getLocalAPRFilePool(); }
-#endif
-
-// The thread private handle to access the LocalAPRFilePool.
-apr_threadkey_t* LLVolatileAPRPool::sLocalAPRFilePoolKey;
-
-// This should be called exactly once, before the first call to createLocalAPRFilePool.
-// static
-void LLVolatileAPRPool::initLocalAPRFilePool()
-{
-	apr_status_t status = apr_threadkey_private_create(&sLocalAPRFilePoolKey, &destroyLocalAPRFilePool, gAPRPoolp);
-	ll_apr_assert_status(status);			// Or out of memory, or system-imposed limit on the
-							// total number of keys per process {PTHREAD_KEYS_MAX}
-							// has been exceeded.
-	// Create the thread-local pool for the main thread (this function is called by the main thread).
-	createLocalAPRFilePool();
-#ifdef SHOW_ASSERT
-	gIsMainThread = getLocalAPRFilePool();
-#endif
-}
-
-// This should be called once for every thread, before it uses getLocalAPRFilePool.
-// static
-void LLVolatileAPRPool::createLocalAPRFilePool()
-{
-	void* thread_local_data = new LLVolatileAPRPool;
-	apr_status_t status = apr_threadkey_private_set(thread_local_data, sLocalAPRFilePoolKey);
-	llassert_always(status == APR_SUCCESS);
-}
-
-// This is called once for every thread when the thread is destructed.
-// static
-void LLVolatileAPRPool::destroyLocalAPRFilePool(void* thread_local_data)
-{
-	delete reinterpret_cast<LLVolatileAPRPool*>(thread_local_data);
-}
-
-// static
-LLVolatileAPRPool* LLVolatileAPRPool::getLocalAPRFilePool()
-{
-	void* thread_local_data;
-	apr_status_t status = apr_threadkey_private_get(&thread_local_data, sLocalAPRFilePoolKey);
-	llassert_always(status == APR_SUCCESS);
-	return reinterpret_cast<LLVolatileAPRPool*>(thread_local_data);
+	return mNumTotalRef > FULL_VOLATILE_APR_POOL;
 }
 
 //---------------------------------------------------------------------
@@ -255,9 +299,9 @@ LLVolatileAPRPool* LLVolatileAPRPool::getLocalAPRFilePool()
 //
 LLScopedLock::LLScopedLock(apr_thread_mutex_t* mutex) : mMutex(mutex)
 {
-	if(mutex)
+	if (mutex)
 	{
-		if(ll_apr_warn_status(apr_thread_mutex_lock(mMutex)))
+		if (ll_apr_warn_status(apr_thread_mutex_lock(mMutex)))
 		{
 			mLocked = false;
 		}
@@ -279,9 +323,9 @@ LLScopedLock::~LLScopedLock()
 
 void LLScopedLock::unlock()
 {
-	if(mLocked)
+	if (mLocked)
 	{
-		if(!ll_apr_warn_status(apr_thread_mutex_unlock(mMutex)))
+		if (!ll_apr_warn_status(apr_thread_mutex_unlock(mMutex)))
 		{
 			mLocked = false;
 		}
@@ -292,16 +336,33 @@ void LLScopedLock::unlock()
 
 bool ll_apr_warn_status(apr_status_t status)
 {
-	if(APR_SUCCESS == status) return false;
+	if (APR_SUCCESS == status) return false;
 	char buf[MAX_STRING];	/* Flawfinder: ignore */
-	apr_strerror(status, buf, MAX_STRING);
+	apr_strerror(status, buf, sizeof(buf));
 	LL_WARNS("APR") << "APR: " << buf << " (" << status << ")" << LL_ENDL;
 	return true;
 }
 
+bool ll_apr_warn_status(apr_status_t status, apr_dso_handle_t *handle)
+{
+    bool result = ll_apr_warn_status(status);
+    // Despite observed truncation of actual Mac dylib load errors, increasing
+    // this buffer to more than MAX_STRING doesn't help: it appears that APR
+    // stores the output in a fixed 255-character internal buffer. (*sigh*)
+    char buf[MAX_STRING];           /* Flawfinder: ignore */
+    apr_dso_error(handle, buf, sizeof(buf));
+    LL_WARNS("APR") << "APR: " << buf << LL_ENDL;
+    return result;
+}
+
 void ll_apr_assert_status(apr_status_t status)
 {
-	llassert(ll_apr_warn_status(status) == false);
+	llassert(!ll_apr_warn_status(status));
+}
+
+void ll_apr_assert_status(apr_status_t status, apr_dso_handle_t *handle)
+{
+    llassert(!ll_apr_warn_status(status, handle));
 }
 
 //---------------------------------------------------------------------
@@ -314,69 +375,57 @@ LLAPRFile::LLAPRFile()
 {
 }
 
-LLAPRFile::LLAPRFile(const std::string& filename, apr_int32_t flags, access_t access_type)
+LLAPRFile::LLAPRFile(const std::string& filename, apr_int32_t flags, LLVolatileAPRPool* pool)
 	: mFile(NULL),
 	  mCurrentFilePoolp(NULL)
 {
-	open(filename, flags, access_type);
+	open(filename, flags, pool);
 }
 
 LLAPRFile::~LLAPRFile()
 {
-	close() ;
+	close();
 }
 
 apr_status_t LLAPRFile::close() 
 {
-	apr_status_t ret = APR_SUCCESS ;
-	if(mFile)
+	apr_status_t ret = APR_SUCCESS;
+	if (mFile)
 	{
 		ret = apr_file_close(mFile);
-		mFile = NULL ;
+		mFile = NULL;
 	}
 
-	if(mCurrentFilePoolp)
+	if (mCurrentFilePoolp)
 	{
-		mCurrentFilePoolp->clearVolatileAPRPool() ;
-		mCurrentFilePoolp = NULL ;
+		mCurrentFilePoolp->clearVolatileAPRPool();
+		mCurrentFilePoolp = NULL;
 	}
 
-	return ret ;
+	return ret;
 }
 
-apr_status_t LLAPRFile::open(std::string const& filename, apr_int32_t flags, access_t access_type, S32* sizep)
+apr_status_t LLAPRFile::open(const std::string& filename, apr_int32_t flags, LLVolatileAPRPool* pool, S32* sizep)
 {
+	apr_status_t s;
+
+	//check if already open some file
 	llassert_always(!mFile);
 	llassert_always(!mCurrentFilePoolp);
 
-	// Access the pool and increment it's reference count.
-	// The reference count of LLVolatileAPRPool objects will be decremented
-	// again in LLAPRFile::close by calling mCurrentFilePoolp->clearVolatileAPRPool().
-	apr_pool_t* pool;
-	if (access_type == local)
-	{
-	  	// Use a "volatile" thread-local pool.
-		mCurrentFilePoolp = LLVolatileAPRPool::getLocalAPRFilePool();
-		pool = mCurrentFilePoolp->getVolatileAPRPool();
-	}
-	else
-	{
-	  	llassert(is_main_thread());
-		pool = gAPRPoolp;
-	}
-	apr_status_t s = apr_file_open(&mFile, filename.c_str(), flags, APR_OS_DEFAULT, pool);
+	apr_pool_t* apr_pool = pool ? pool->getVolatileAPRPool() : NULL;
+	s = apr_file_open(&mFile, filename.c_str(), flags, APR_OS_DEFAULT, getAPRFilePool(apr_pool));
+
 	if (s != APR_SUCCESS || !mFile)
 	{
-		mFile = NULL ;
-		close() ;
+		mFile = NULL;
+
 		if (sizep)
 		{
 			*sizep = 0;
 		}
-		return s;
 	}
-
-	if (sizep)
+	else if (sizep)
 	{
 		S32 file_size = 0;
 		apr_off_t offset = 0;
@@ -390,15 +439,57 @@ apr_status_t LLAPRFile::open(std::string const& filename, apr_int32_t flags, acc
 		*sizep = file_size;
 	}
 
+	if (!mCurrentFilePoolp)
+	{
+		mCurrentFilePoolp = pool;
+
+		if (!mFile)
+		{
+			close();
+		}
+	}
+
 	return s;
+}
+
+//use gAPRPoolp.
+apr_status_t LLAPRFile::open(const std::string& filename, apr_int32_t flags, BOOL use_global_pool)
+{
+	apr_status_t s;
+
+	//check if already open some file
+	llassert_always(!mFile);
+	llassert_always(!mCurrentFilePoolp);
+	llassert_always(use_global_pool); //be aware of using gAPRPoolp.
+
+	s = apr_file_open(&mFile, filename.c_str(), flags, APR_OS_DEFAULT, gAPRPoolp);
+	if (s != APR_SUCCESS || !mFile)
+	{
+		mFile = NULL;
+		close();
+		return s;
+	}
+
+	return s;
+}
+
+apr_pool_t* LLAPRFile::getAPRFilePool(apr_pool_t* pool)
+{
+	if (!pool)
+	{
+		mCurrentFilePoolp = sAPRFilePoolp;
+		return mCurrentFilePoolp->getVolatileAPRPool();
+	}
+
+	return pool;
 }
 
 // File I/O
 S32 LLAPRFile::read(void *buf, S32 nbytes)
 {
-	if(!mFile) 
+	if (!mFile) 
 	{
-		llwarns << "apr mFile is removed by somebody else. Can not read." << llendl ;
+		llwarns << "apr mFile is removed by somebody else. Can not read." << llendl;
 		return 0;
 	}
 
@@ -418,9 +509,9 @@ S32 LLAPRFile::read(void *buf, S32 nbytes)
 
 S32 LLAPRFile::write(const void *buf, S32 nbytes)
 {
-	if(!mFile) 
+	if (!mFile) 
 	{
-		llwarns << "apr mFile is removed by somebody else. Can not read." << llendl ;
+		llwarns << "apr mFile is removed by somebody else. Can not read." << llendl;
 		return 0;
 	}
 	
@@ -440,7 +531,7 @@ S32 LLAPRFile::write(const void *buf, S32 nbytes)
 
 S32 LLAPRFile::seek(apr_seek_where_t where, S32 offset)
 {
-	return LLAPRFile::seek(mFile, where, offset) ;
+	return LLAPRFile::seek(mFile, where, offset);
 }
 
 //
@@ -448,23 +539,51 @@ S32 LLAPRFile::seek(apr_seek_where_t where, S32 offset)
 //static components of LLAPRFile
 //
 
-// Used in the static functions below.
-class LLScopedVolatileAPRFilePool {
-private:
-  	LLVolatileAPRPool* mPool;
-	apr_pool_t* apr_pool;
-public:
-	LLScopedVolatileAPRFilePool() : mPool(LLVolatileAPRPool::getLocalAPRFilePool()), apr_pool(mPool->getVolatileAPRPool()) { }
-	~LLScopedVolatileAPRFilePool() { mPool->clearVolatileAPRPool(); }
-	operator apr_pool_t*() const { return apr_pool; }
-};
+//static
+apr_status_t LLAPRFile::close(apr_file_t* file_handle, LLVolatileAPRPool* pool) 
+{
+	apr_status_t ret = APR_SUCCESS;
+	if (file_handle)
+	{
+		ret = apr_file_close(file_handle);
+		file_handle = NULL;
+	}
+
+	if (pool)
+	{
+		pool->clearVolatileAPRPool();
+	}
+
+	return ret;
+}
+
+//static
+apr_file_t* LLAPRFile::open(const std::string& filename, LLVolatileAPRPool* pool, apr_int32_t flags)
+{
+	apr_status_t s;
+	apr_file_t* file_handle;
+
+	pool = pool ? pool : LLAPRFile::sAPRFilePoolp;
+
+	s = apr_file_open(&file_handle, filename.c_str(), flags, APR_OS_DEFAULT, pool->getVolatileAPRPool());
+	if (s != APR_SUCCESS || !file_handle)
+	{
+		ll_apr_warn_status(s);
+		LL_WARNS("APR") << " Attempting to open filename: " << filename << LL_ENDL;
+		file_handle = NULL;
+		close(file_handle, pool);
+		return NULL;
+	}
+
+	return file_handle;
+}
 
 //static
 S32 LLAPRFile::seek(apr_file_t* file_handle, apr_seek_where_t where, S32 offset)
 {
-	if(!file_handle)
+	if (!file_handle)
 	{
-		return -1 ;
+		return -1;
 	}
 
 	apr_status_t s;
@@ -492,32 +611,29 @@ S32 LLAPRFile::seek(apr_file_t* file_handle, apr_seek_where_t where, S32 offset)
 }
 
 //static
-S32 LLAPRFile::readEx(const std::string& filename, void *buf, S32 offset, S32 nbytes)
+S32 LLAPRFile::readEx(const std::string& filename, void *buf, S32 offset, S32 nbytes, LLVolatileAPRPool* pool)
 {
-	apr_file_t* file_handle;
-	LLScopedVolatileAPRFilePool pool;
-	apr_status_t s = apr_file_open(&file_handle, filename.c_str(), APR_READ|APR_BINARY, APR_OS_DEFAULT, pool);
-	if (s != APR_SUCCESS || !file_handle)
+	//*****************************************
+	apr_file_t* file_handle = open(filename, pool, APR_READ|APR_BINARY); 
+	//*****************************************
+	if (!file_handle)
 	{
-		ll_apr_warn_status(s);
-		LL_WARNS("APR") << " while attempting to open file \"" << filename << '"' << LL_ENDL;
 		return 0;
 	}
 
-	S32 off;
-	if (offset < 0)
-		off = LLAPRFile::seek(file_handle, APR_END, 0);
-	else
-		off = LLAPRFile::seek(file_handle, APR_SET, offset);
+	llassert(offset >= 0);
+
+	if (offset > 0)
+		offset = LLAPRFile::seek(file_handle, APR_SET, offset);
 	
 	apr_size_t bytes_read;
-	if (off < 0)
+	if (offset < 0)
 	{
 		bytes_read = 0;
 	}
 	else
 	{
-		bytes_read = nbytes ;		
+		bytes_read = nbytes;		
 		apr_status_t s = apr_file_read(file_handle, buf, &bytes_read);
 		if (s != APR_SUCCESS)
 		{
@@ -527,17 +643,18 @@ S32 LLAPRFile::readEx(const std::string& filename, void *buf, S32 offset, S32 nb
 		}
 		else
 		{
-			llassert_always(bytes_read <= 0x7fffffff);		
+			llassert_always(bytes_read <= 0x7fffffff);
 		}
 	}
-	
-	apr_file_close(file_handle);
 
+	//*****************************************
+	close(file_handle, pool); 
+	//*****************************************
 	return (S32)bytes_read;
 }
 
 //static
-S32 LLAPRFile::writeEx(const std::string& filename, void *buf, S32 offset, S32 nbytes)
+S32 LLAPRFile::writeEx(const std::string& filename, void *buf, S32 offset, S32 nbytes, LLVolatileAPRPool* pool)
 {
 	apr_int32_t flags = APR_CREATE|APR_WRITE|APR_BINARY;
 	if (offset < 0)
@@ -545,14 +662,12 @@ S32 LLAPRFile::writeEx(const std::string& filename, void *buf, S32 offset, S32 n
 		flags |= APR_APPEND;
 		offset = 0;
 	}
-	
-	apr_file_t* file_handle;
-	LLScopedVolatileAPRFilePool pool;
-	apr_status_t s = apr_file_open(&file_handle, filename.c_str(), flags, APR_OS_DEFAULT, pool);
-	if (s != APR_SUCCESS || !file_handle)
+
+	//*****************************************
+	apr_file_t* file_handle = open(filename, pool, flags);
+	//*****************************************
+	if (!file_handle)
 	{
-		ll_apr_warn_status(s);
-		LL_WARNS("APR") << " while attempting to open file \"" << filename << '"' << LL_ENDL;
 		return 0;
 	}
 
@@ -560,7 +675,7 @@ S32 LLAPRFile::writeEx(const std::string& filename, void *buf, S32 offset, S32 n
 	{
 		offset = LLAPRFile::seek(file_handle, APR_SET, offset);
 	}
-	
+
 	apr_size_t bytes_written;
 	if (offset < 0)
 	{
@@ -568,7 +683,7 @@ S32 LLAPRFile::writeEx(const std::string& filename, void *buf, S32 offset, S32 n
 	}
 	else
 	{
-		bytes_written = nbytes ;		
+		bytes_written = nbytes;		
 		apr_status_t s = apr_file_write(file_handle, buf, &bytes_written);
 		if (s != APR_SUCCESS)
 		{
@@ -582,18 +697,21 @@ S32 LLAPRFile::writeEx(const std::string& filename, void *buf, S32 offset, S32 n
 		}
 	}
 
-	apr_file_close(file_handle);
+	//*****************************************
+	LLAPRFile::close(file_handle, pool);
+	//*****************************************
 
 	return (S32)bytes_written;
 }
 
 //static
-bool LLAPRFile::remove(const std::string& filename)
+bool LLAPRFile::remove(const std::string& filename, LLVolatileAPRPool* pool)
 {
 	apr_status_t s;
 
-	LLScopedVolatileAPRFilePool pool;
-	s = apr_file_remove(filename.c_str(), pool);
+	pool = pool ? pool : LLAPRFile::sAPRFilePoolp;
+	s = apr_file_remove(filename.c_str(), pool->getVolatileAPRPool());
+	pool->clearVolatileAPRPool();
 
 	if (s != APR_SUCCESS)
 	{
@@ -611,13 +729,14 @@ bool LLAPRFile::remove(const std::string& filename)
 }
 
 //static
-bool LLAPRFile::rename(const std::string& filename, const std::string& newname)
+bool LLAPRFile::rename(const std::string& filename, const std::string& newname, LLVolatileAPRPool* pool)
 {
 	apr_status_t s;
 
-	LLScopedVolatileAPRFilePool pool;
-	s = apr_file_rename(filename.c_str(), newname.c_str(), pool);
-	
+	pool = pool ? pool : LLAPRFile::sAPRFilePoolp;
+	s = apr_file_rename(filename.c_str(), newname.c_str(), pool->getVolatileAPRPool());
+	pool->clearVolatileAPRPool();
+
 	if (s != APR_SUCCESS)
 	{
 		ll_apr_warn_status(s);
@@ -628,45 +747,50 @@ bool LLAPRFile::rename(const std::string& filename, const std::string& newname)
 }
 
 //static
-bool LLAPRFile::isExist(const std::string& filename, apr_int32_t flags)
+bool LLAPRFile::isExist(const std::string& filename, LLVolatileAPRPool* pool, apr_int32_t flags)
 {
-	apr_file_t* file_handle;
+	apr_file_t* apr_file;
 	apr_status_t s;
 
-	LLScopedVolatileAPRFilePool pool;
-	s = apr_file_open(&file_handle, filename.c_str(), flags, APR_OS_DEFAULT, pool);
+	pool = pool ? pool : LLAPRFile::sAPRFilePoolp;
+	s = apr_file_open(&apr_file, filename.c_str(), flags, APR_OS_DEFAULT, pool->getVolatileAPRPool());
 
-	if (s != APR_SUCCESS || !file_handle)
+	if (s != APR_SUCCESS || !apr_file)
 	{
+		pool->clearVolatileAPRPool();
 		return false;
 	}
 	else
 	{
-		apr_file_close(file_handle);
+		apr_file_close(apr_file);
+		pool->clearVolatileAPRPool();
 		return true;
 	}
 }
 
 //static
-S32 LLAPRFile::size(const std::string& filename)
+S32 LLAPRFile::size(const std::string& filename, LLVolatileAPRPool* pool)
 {
-	apr_file_t* file_handle;
+	apr_file_t* apr_file;
 	apr_finfo_t info;
 	apr_status_t s;
-	
-	LLScopedVolatileAPRFilePool pool;
-	s = apr_file_open(&file_handle, filename.c_str(), APR_READ, APR_OS_DEFAULT, pool);
-	
-	if (s != APR_SUCCESS || !file_handle)
-	{		
+
+	pool = pool ? pool : LLAPRFile::sAPRFilePoolp;
+	s = apr_file_open(&apr_file, filename.c_str(), APR_READ, APR_OS_DEFAULT, pool->getVolatileAPRPool());
+
+	if (s != APR_SUCCESS || !apr_file)
+	{
+		pool->clearVolatileAPRPool();
+
 		return 0;
 	}
 	else
 	{
-		apr_status_t s = apr_file_info_get(&info, APR_FINFO_SIZE, file_handle);
+		apr_status_t s = apr_file_info_get(&info, APR_FINFO_SIZE, apr_file);
 
-		apr_file_close(file_handle) ;
-		
+		apr_file_close(apr_file);
+		pool->clearVolatileAPRPool();
+
 		if (s == APR_SUCCESS)
 		{
 			return (S32)info.size;
@@ -679,29 +803,31 @@ S32 LLAPRFile::size(const std::string& filename)
 }
 
 //static
-bool LLAPRFile::makeDir(const std::string& dirname)
+bool LLAPRFile::makeDir(const std::string& dirname, LLVolatileAPRPool* pool)
 {
 	apr_status_t s;
 
-	LLScopedVolatileAPRFilePool pool;
-	s = apr_dir_make(dirname.c_str(), APR_FPROT_OS_DEFAULT, pool);
-		
+	pool = pool ? pool : LLAPRFile::sAPRFilePoolp;
+	s = apr_dir_make(dirname.c_str(), APR_FPROT_OS_DEFAULT, pool->getVolatileAPRPool());
+	pool->clearVolatileAPRPool();
+
 	if (s != APR_SUCCESS)
 	{
 		ll_apr_warn_status(s);
-		LL_WARNS("APR") << " while attempting to make directory: " << dirname << LL_ENDL;
+		LL_WARNS("APR") << " Attempting to make directory: " << dirname << LL_ENDL;
 		return false;
 	}
 	return true;
 }
 
 //static
-bool LLAPRFile::removeDir(const std::string& dirname)
+bool LLAPRFile::removeDir(const std::string& dirname, LLVolatileAPRPool* pool)
 {
 	apr_status_t s;
 
-	LLScopedVolatileAPRFilePool pool;
-	s = apr_file_remove(dirname.c_str(), pool);
+	pool = pool ? pool : LLAPRFile::sAPRFilePoolp;
+	s = apr_file_remove(dirname.c_str(), pool->getVolatileAPRPool());
+	pool->clearVolatileAPRPool();
 	
 	if (s != APR_SUCCESS)
 	{

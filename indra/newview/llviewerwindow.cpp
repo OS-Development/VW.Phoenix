@@ -2951,13 +2951,14 @@ BOOL LLViewerWindow::handlePerFrameHover()
 	BOOL tool_tip_handled = FALSE;
 	std::string tool_tip_msg;
 	static LLCachedControl<F32> sToolTipDelay(gSavedSettings, "ToolTipDelay");
+	static LLCachedControl<F32> dad_tool_tip_delay(gSavedSettings, "DragAndDropToolTipDelay");
 
 	F32 tooltip_delay = sToolTipDelay;
 	//HACK: hack for tool-based tooltips which need to pop up more quickly
 	//Also for show xui names as tooltips debug mode
 	if ((mouse_captor && !mouse_captor->isView()) || LLUI::sShowXUINames)
 	{
-		tooltip_delay = gSavedSettings.getF32( "DragAndDropToolTipDelay" );
+		tooltip_delay = dad_tool_tip_delay;
 	}
 	if( handled && 
 	    gMouseIdleTimer.getElapsedTimeF32() > tooltip_delay &&
@@ -3147,7 +3148,8 @@ BOOL LLViewerWindow::handlePerFrameHover()
 		gFloaterView->syncFloaterTabOrder();
 	}
 
-	if (gSavedSettings.getBOOL("ChatBarStealsFocus") 
+	static LLCachedControl<bool> chat_bar_steals_focus(gSavedSettings, "ChatBarStealsFocus");
+	if (chat_bar_steals_focus
 		&& gChatBar 
 		&& gFocusMgr.getKeyboardFocus() == NULL 
 		&& gChatBar->isInVisibleChain())
@@ -3181,39 +3183,40 @@ BOOL LLViewerWindow::handlePerFrameHover()
 	// per frame picking - for tooltips and changing cursor over interactive objects
 	static S32 previous_x = -1;
 	static S32 previous_y = -1;
-	static BOOL mouse_moved_since_pick = FALSE;
+	static bool mouse_moved_since_pick = false;
 
-	if ((previous_x != x) || (previous_y != y))
-		mouse_moved_since_pick = TRUE;
+	mouse_moved_since_pick = (previous_x != x || previous_y != y);
 
-	BOOL do_pick = FALSE;
+	bool do_pick = false;
 
-	F32 picks_moving = gSavedSettings.getF32("PicksPerSecondMouseMoving");
-	if ((mouse_moved_since_pick) && (picks_moving > 0.0) && (mPickTimer.getElapsedTimeF32() > 1.0f / picks_moving))
+	static LLCachedControl<F32> picks_moving(gSavedSettings, "PicksPerSecondMouseMoving");
+	if (mouse_moved_since_pick && picks_moving > 0.0 &&
+		mPickTimer.getElapsedTimeF32() > 1.0f / picks_moving)
 	{
-		do_pick = TRUE;
+		do_pick = true;
 	}
 
-	F32 picks_stationary = gSavedSettings.getF32("PicksPerSecondMouseStationary");
-	if ((!mouse_moved_since_pick) && (picks_stationary > 0.0) && (mPickTimer.getElapsedTimeF32() > 1.0f / picks_stationary))
+	static LLCachedControl<F32> picks_stationary(gSavedSettings, "PicksPerSecondMouseStationary");
+	if (!mouse_moved_since_pick && picks_stationary > 0.0 &&
+		mPickTimer.getElapsedTimeF32() > 1.0f / picks_stationary)
 	{
-		do_pick = TRUE;
+		do_pick = true;
 	}
 
 	if (getCursorHidden())
 	{
-		do_pick = FALSE;
+		do_pick = false;
 	}
 	
 	if(LLViewerMediaFocus::getInstance()->getFocus())
 	{
 		// When in-world media is in focus, pick every frame so that browser mouse-overs, dragging scrollbars, etc. work properly.
-		do_pick = TRUE;
+		do_pick = true;
 	}
 
 	if (do_pick)
 	{
-		mouse_moved_since_pick = FALSE;
+		mouse_moved_since_pick = false;
 		mPickTimer.reset();
 		pickAsync(getCurrentMouseX(), getCurrentMouseY(), mask, hoverPickCallback, TRUE, TRUE);
 	}
@@ -3384,7 +3387,7 @@ void LLViewerWindow::renderSelections( BOOL for_gl_pick, BOOL pick_parcel_walls,
 					BOOL moveable_object_selected = FALSE;
 					BOOL all_selected_objects_move = TRUE;
 					BOOL all_selected_objects_modify = TRUE;
-					BOOL selecting_linked_set = !gSavedSettings.getBOOL("EditLinkedParts");
+					static LLCachedControl<bool> edit_linked_parts(gSavedSettings, "EditLinkedParts");
 
 					for (LLObjectSelection::iterator iter = LLSelectMgr::getInstance()->getSelection()->begin();
 						 iter != LLSelectMgr::getInstance()->getSelection()->end(); iter++)
@@ -3392,7 +3395,7 @@ void LLViewerWindow::renderSelections( BOOL for_gl_pick, BOOL pick_parcel_walls,
 						LLSelectNode* nodep = *iter;
 						LLViewerObject* object = nodep->getObject();
 						BOOL this_object_movable = FALSE;
-						if (object->permMove() && (object->permModify() || selecting_linked_set))
+						if (object->permMove() && (object->permModify() || !edit_linked_parts))
 						{
 							moveable_object_selected = TRUE;
 							this_object_movable = TRUE;
@@ -5200,7 +5203,8 @@ LLRect LLViewerWindow::getChatConsoleRect()
 
 	console_rect.mLeft   += CONSOLE_PADDING_LEFT; 
 
-	if (gSavedSettings.getBOOL("ChatFullWidth"))
+	static LLCachedControl<bool> chat_full_width(gSavedSettings, "ChatFullWidth");
+	if (chat_full_width)
 	{
 		console_rect.mRight -= CONSOLE_PADDING_RIGHT;
 	}

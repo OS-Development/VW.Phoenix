@@ -561,7 +561,11 @@ void LLViewerObject::removeChild(LLViewerObject *childp)
 			}
 
 			mChildList.erase(i);
-			childp->setParent(NULL);			
+
+			if (childp->getParent() == this)
+			{
+				childp->setParent(NULL);
+			}
 			break;
 		}
 	}
@@ -574,9 +578,9 @@ void LLViewerObject::removeChild(LLViewerObject *childp)
 	}
 }
 
-void LLViewerObject::addThisAndAllChildren(LLDynamicArray<LLViewerObject*>& objects)
+void LLViewerObject::addThisAndAllChildren(std::vector<LLViewerObject*>& objects)
 {
-	objects.put(this);
+	objects.push_back(this);
 	for (child_list_t::iterator iter = mChildList.begin();
 		 iter != mChildList.end(); iter++)
 	{
@@ -588,9 +592,9 @@ void LLViewerObject::addThisAndAllChildren(LLDynamicArray<LLViewerObject*>& obje
 	}
 }
 
-void LLViewerObject::addThisAndNonJointChildren(LLDynamicArray<LLViewerObject*>& objects)
+void LLViewerObject::addThisAndNonJointChildren(std::vector<LLViewerObject*>& objects)
 {
-	objects.put(this);
+	objects.push_back(this);
 	// don't add any attachments when temporarily selecting avatar
 	if (isAvatar())
 	{
@@ -706,7 +710,23 @@ U32 LLViewerObject::processUpdateMessage(LLMessageSystem *mesgsys,
 	// Coordinates of objects on simulators are region-local.
 	U64 region_handle;
 	mesgsys->getU64Fast(_PREHASH_RegionData, _PREHASH_RegionHandle, region_handle);
-	mRegionp = LLWorld::getInstance()->getRegionFromHandle(region_handle);
+	//mRegionp = LLWorld::getInstance()->getRegionFromHandle(region_handle);
+	{
+		LLViewerRegion* regionp = LLWorld::getInstance()->getRegionFromHandle(region_handle);
+		if (regionp != mRegionp && regionp && mRegionp)	//region cross
+		{
+			//this is the redundant position and region update, but it is necessary in case the viewer misses the following 
+			//position and region update messages from sim.
+			//this redundant update should not cause any problems.
+			LLVector3 delta_pos =  mRegionp->getOriginAgent() - regionp->getOriginAgent();
+			setPositionParent(getPosition() + delta_pos); //update to the new region position immediately.
+			setRegion(regionp); //change the region.
+		}
+		else
+		{
+			mRegionp = regionp;
+		}
+	}
 	if (!mRegionp)
 	{
 		U32 x, y;

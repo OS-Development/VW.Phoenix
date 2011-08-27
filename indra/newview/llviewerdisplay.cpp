@@ -192,7 +192,7 @@ void display_update_camera()
 // Write some stats to llinfos
 void display_stats()
 {
-	F32 fps_log_freq = gSavedSettings.getF32("FPSLogFrequency");
+	static LLCachedControl<F32> fps_log_freq(gSavedSettings, "FPSLogFrequency");
 	if (fps_log_freq > 0.f && gRecentFPSTime.getElapsedTimeF32() >= fps_log_freq)
 	{
 		F32 fps = gRecentFrameCount / fps_log_freq;
@@ -200,7 +200,7 @@ void display_stats()
 		gRecentFrameCount = 0;
 		gRecentFPSTime.reset();
 	}
-	F32 mem_log_freq = gSavedSettings.getF32("MemoryLogFrequency");
+	static LLCachedControl<F32> mem_log_freq(gSavedSettings, "MemoryLogFrequency");
 	if (mem_log_freq > 0.f && gRecentMemoryTime.getElapsedTimeF32() >= mem_log_freq)
 	{
 		gMemoryAllocated = LLMemory::getCurrentRSS();
@@ -308,8 +308,10 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 
 	LLImageGL::updateStats(gFrameTimeSeconds);
 	
-	LLVOAvatar::sRenderName = gSavedSettings.getS32("RenderName");
-	LLVOAvatar::sRenderGroupTitles = !gSavedSettings.getBOOL("RenderHideGroupTitleAll");
+	static LLCachedControl<S32> render_name(gSavedSettings, "RenderName");
+	static LLCachedControl<bool> render_hide_group_title_all(gSavedSettings, "RenderHideGroupTitleAll");
+	LLVOAvatar::sRenderName = render_name;
+	LLVOAvatar::sRenderGroupTitles = !render_hide_group_title_all;
 	
 	gPipeline.mBackfaceCull = TRUE;
 	gFrameCount++;
@@ -344,6 +346,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			gAgent.setTeleportMessage(std::string());
 		}
 
+		static LLCachedControl<bool> PhoenixDisableTeleportScreens(gSavedSettings, "PhoenixDisableTeleportScreens");
 		const std::string& message = gAgent.getTeleportMessage();
 		switch( gAgent.getTeleportState() )
 		{
@@ -351,7 +354,8 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			// Transition to REQUESTED.  Viewer has sent some kind
 			// of TeleportRequest to the source simulator
 			gTeleportDisplayTimer.reset();
-			if(!gSavedSettings.getBOOL("PhoenixDisableTeleportScreens"))gViewerWindow->setShowProgress(TRUE);
+			//if(!gSavedSettings.getBOOL("PhoenixDisableTeleportScreens"))gViewerWindow->setShowProgress(TRUE);
+			if (!PhoenixDisableTeleportScreens) gViewerWindow->setShowProgress(TRUE);
 			gViewerWindow->setProgressPercent(0);
 			gAgent.setTeleportState( LLAgent::TELEPORT_REQUESTED );
 			gAgent.setTeleportMessage(
@@ -378,14 +382,15 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			gAgent.setTeleportState( LLAgent::TELEPORT_ARRIVING );
 			gAgent.setTeleportMessage(LLAgent::sTeleportProgressMessages["arriving"]);
 			gTextureList.mForceResetTextureStats = TRUE;
-			if(!gSavedSettings.getBOOL("PhoenixDisableTeleportScreens"))gAgent.resetView(TRUE, TRUE);
+			//if(!gSavedSettings.getBOOL("PhoenixDisableTeleportScreens"))gAgent.resetView(TRUE, TRUE);
+			if (!PhoenixDisableTeleportScreens) gAgent.resetView(TRUE, TRUE);
 			break;
 
 		case LLAgent::TELEPORT_ARRIVING:
 			// Make the user wait while content "pre-caches"
 			{
 				F32 arrival_fraction = (gTeleportArrivalTimer.getElapsedTimeF32() / TELEPORT_ARRIVAL_DELAY);
-				if( arrival_fraction > 1.f || gSavedSettings.getBOOL("PhoenixDisableTeleportScreens"))
+				if( arrival_fraction > 1.f || PhoenixDisableTeleportScreens)
 				{
 					arrival_fraction = 1.f;
 					LLFirstUse::useTeleport();
@@ -615,10 +620,15 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			LLPipeline::sUseOcclusion = 3;
 		}
 
-		LLPipeline::sFastAlpha = gSavedSettings.getBOOL("RenderFastAlpha");
-		LLPipeline::sUseFarClip = gSavedSettings.getBOOL("RenderUseFarClip");
-		LLVOAvatar::sMaxVisible = gSavedSettings.getS32("RenderAvatarMaxVisible");
-		LLPipeline::sDelayVBUpdate = gSavedSettings.getBOOL("RenderDelayVBUpdate");
+		static LLCachedControl<bool> RenderFastAlpha(gSavedSettings, "RenderFastAlpha");
+		static LLCachedControl<bool> RenderUseFarClip(gSavedSettings, "RenderUseFarClip");
+		static LLCachedControl<S32> RenderAvatarMaxVisible(gSavedSettings, "RenderAvatarMaxVisible");
+		static LLCachedControl<bool> RenderDelayVBUpdate(gSavedSettings, "RenderDelayVBUpdate");
+
+		LLPipeline::sFastAlpha = RenderFastAlpha;
+		LLPipeline::sUseFarClip = RenderUseFarClip;
+		LLVOAvatar::sMaxVisible = RenderAvatarMaxVisible;
+		LLPipeline::sDelayVBUpdate = RenderDelayVBUpdate;
 
 		S32 occlusion = LLPipeline::sUseOcclusion;
 		if (gDepthDirty)
@@ -1235,7 +1245,8 @@ void render_ui_3d()
 	// Debugging stuff goes before the UI.
 
 	// Coordinate axes
-	if (gSavedSettings.getBOOL("ShowAxes"))
+	static LLCachedControl<bool> show_axes(gSavedSettings, "ShowAxes");
+	if (show_axes)
 	{
 		draw_axes();
 	}

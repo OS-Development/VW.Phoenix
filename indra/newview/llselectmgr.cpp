@@ -104,7 +104,6 @@ LLViewerObject* getSelectedParentObject(LLViewerObject *object) ;
 
 const S32 NUM_SELECTION_UNDO_ENTRIES = 200;
 const F32 SILHOUETTE_UPDATE_THRESHOLD_SQUARED = 0.02f;
-const S32 OWNERSHIP_COST_PER_OBJECT = 10; // Must be the same as economy_constants.price_object_claim in the database.
 const S32 MAX_ACTION_QUEUE_SIZE = 20;
 const S32 MAX_SILS_PER_FRAME = 50;
 const S32 MAX_OBJECTS_PER_PACKET = 254;
@@ -399,7 +398,7 @@ LLObjectSelectionHandle LLSelectMgr::selectObjectAndFamily(LLViewerObject* obj, 
 	}
 
 	// Collect all of the objects
-	LLDynamicArray<LLViewerObject*> objects;
+	std::vector<LLViewerObject*> objects;
 
 	root->addThisAndNonJointChildren(objects);
 	addAsFamily(objects, add_to_end);
@@ -445,7 +444,7 @@ LLObjectSelectionHandle LLSelectMgr::selectObjectAndFamily(const std::vector<LLV
 														   BOOL send_to_sim)
 {
 	// Collect all of the objects, children included
-	LLDynamicArray<LLViewerObject*> objects;
+	std::vector<LLViewerObject*> objects;
 
 	//clear primary object (no primary object)
 	mSelectedObjects->mPrimaryObject = NULL;
@@ -570,7 +569,7 @@ void LLSelectMgr::deselectObjectAndFamily(LLViewerObject* object, BOOL send_to_s
 	if(!object->isSelected()) return;
 
 	// Collect all of the objects, and remove them
-	LLDynamicArray<LLViewerObject*> objects;
+	std::vector<LLViewerObject*> objects;
 
 	if (include_entire_object)
 	{
@@ -811,7 +810,7 @@ LLObjectSelectionHandle LLSelectMgr::setHoverObject(LLViewerObject *objectp, S32
 	}
 
 	// Collect all of the objects
-	LLDynamicArray<LLViewerObject*> objects;
+	std::vector<LLViewerObject*> objects;
 	objectp = objectp->getRootEdit();
 	objectp->addThisAndNonJointChildren(objects);
 
@@ -1313,7 +1312,7 @@ void LLSelectMgr::promoteSelectionToRoot()
 //-----------------------------------------------------------------------------
 void LLSelectMgr::demoteSelectionToIndividuals()
 {
-	LLDynamicArray<LLViewerObject*> objects;
+	std::vector<LLViewerObject*> objects;
 
 	for (LLObjectSelection::root_iterator iter = getSelection()->root_begin();
 		 iter != getSelection()->root_end(); iter++)
@@ -1322,7 +1321,7 @@ void LLSelectMgr::demoteSelectionToIndividuals()
 		object->addThisAndNonJointChildren(objects);
 	}
 
-	if (objects.getLength())
+	if (!objects.empty())
 	{
 		deselectAll();
 		for (std::vector<LLViewerObject*>::iterator iter = objects.begin();
@@ -2652,13 +2651,6 @@ BOOL LLSelectMgr::selectGetPerm(U8 which_perm, U32* mask_on, U32* mask_off)
 		*mask_off = 0;
 		return FALSE;
 	}
-}
-
-
-
-BOOL LLSelectMgr::selectGetOwnershipCost(S32* out_cost)
-{
-	return mSelectedObjects->getOwnershipCost(*out_cost);
 }
 
 BOOL LLSelectMgr::selectGetPermissions(LLPermissions& result_perm)
@@ -4811,6 +4803,8 @@ void LLSelectMgr::updateSilhouettes()
 
 		num_sils_genned	= 0;
 
+		LLViewerCamera* camera = LLViewerCamera::getInstance();
+
 		// render silhouettes for highlighted objects
 		//BOOL subtracting_from_selection = (gKeyboard->currentMask(TRUE) == MASK_CONTROL);
 		for (S32 pass = 0; pass < 2; pass++)
@@ -4837,7 +4831,7 @@ void LLSelectMgr::updateSilhouettes()
 				{
 					if (num_sils_genned++ < MAX_SILS_PER_FRAME)
 					{
-						generateSilhouette(node, LLViewerCamera::getInstance()->getOrigin());
+						generateSilhouette(node, camera->getOrigin());
 						changed_objects.push_back(objectp);			
 					}
 					else if (objectp->isAttachment() && objectp->getRootEdit()->mDrawable.notNull())
@@ -4891,6 +4885,8 @@ void LLSelectMgr::updateSelectionSilhouette(LLObjectSelectionHandle object_handl
 		//mSilhouetteImagep->bindTexture();
 		//glAlphaFunc(GL_GREATER, sHighlightAlphaTest);
 
+		LLViewerCamera* camera = LLViewerCamera::getInstance();
+
 		for (S32 pass = 0; pass < 2; pass++)
 		{
 			for (LLObjectSelection::iterator iter = object_handle->begin();
@@ -4914,7 +4910,7 @@ void LLSelectMgr::updateSelectionSilhouette(LLObjectSelectionHandle object_handl
 				{
 					if (num_sils_genned++ < MAX_SILS_PER_FRAME)// && objectp->mDrawable->isVisible())
 					{
-						generateSilhouette(node, LLViewerCamera::getInstance()->getOrigin());
+						generateSilhouette(node, camera->getOrigin());
 						changed_objects.push_back(objectp);
 					}
 					else if (objectp->isAttachment())
@@ -5406,6 +5402,8 @@ void LLSelectNode::renderOneSilhouette(const LLColor4 &color)
 		glMultMatrixf((F32*) objectp->getRenderMatrix().mMatrix);
 	}
 
+	LLViewerCamera* camera = LLViewerCamera::getInstance();
+
 	// we used to only call this for volumes.  but let's render silhouettes for any node that has them.
 	if (1)
 	{
@@ -5416,8 +5414,8 @@ void LLSelectNode::renderOneSilhouette(const LLColor4 &color)
 		}
 		else
 		{
-			LLVector3 view_vector = LLViewerCamera::getInstance()->getOrigin() - objectp->getRenderPosition();
-			silhouette_thickness = view_vector.magVec() * LLSelectMgr::sHighlightThickness * (LLViewerCamera::getInstance()->getView() / LLViewerCamera::getInstance()->getDefaultFOV());
+			LLVector3 view_vector = camera->getOrigin() - objectp->getRenderPosition();
+			silhouette_thickness = view_vector.magVec() * LLSelectMgr::sHighlightThickness * (camera->getView() / camera->getDefaultFOV());
 		}		
 		F32 animationTime = (F32)LLFrameTimer::getElapsedSeconds();
 
@@ -5431,10 +5429,10 @@ void LLSelectNode::renderOneSilhouette(const LLColor4 &color)
 			gGL.blendFunc(LLRender::BF_SOURCE_COLOR, LLRender::BF_ONE);
 			LLGLEnable fog(GL_FOG);
 			glFogi(GL_FOG_MODE, GL_LINEAR);
-			float d = (LLViewerCamera::getInstance()->getPointOfInterest()-LLViewerCamera::getInstance()->getOrigin()).magVec();
+			float d = (camera->getPointOfInterest()-camera->getOrigin()).magVec();
 			LLColor4 fogCol = color * (F32)llclamp((LLSelectMgr::getInstance()->getSelectionCenterGlobal()-gAgent.getCameraPositionGlobal()).magVec()/(LLSelectMgr::getInstance()->getBBoxOfSelection().getExtentLocal().magVec()*4), 0.0, 1.0);
 			glFogf(GL_FOG_START, d);
-			glFogf(GL_FOG_END, d*(1 + (LLViewerCamera::getInstance()->getView() / LLViewerCamera::getInstance()->getDefaultFOV())));
+			glFogf(GL_FOG_END, d*(1 + (camera->getView() / camera->getDefaultFOV())));
 			glFogfv(GL_FOG_COLOR, fogCol.mV);
 
 			LLGLDepthTest gls_depth(GL_TRUE, GL_FALSE, GL_GEQUAL);
@@ -5628,10 +5626,6 @@ void LLSelectMgr::updateSelectionCenter()
 		LLVector3d select_center;
 		// keep a list of jointed objects for showing the joint HUDEffects
 
-		// Initialize the bounding box to the root prim, so the BBox orientation
-		// matches the root prim's (affecting the orientation of the manipulators).
-		bbox.addBBoxAgent( (mSelectedObjects->getFirstRootObject(TRUE))->getBoundingBoxAgent() );
-		
 		std::vector < LLViewerObject *> jointed_objects;
 
 		for (LLObjectSelection::iterator iter = mSelectedObjects->begin();
@@ -6014,16 +6008,6 @@ LLSelectNode* LLObjectSelection::findNode(LLViewerObject* objectp)
 BOOL LLObjectSelection::isEmpty() const
 {
 	return (mList.size() == 0);
-}
-
-//-----------------------------------------------------------------------------
-// getOwnershipCost()
-//-----------------------------------------------------------------------------
-BOOL LLObjectSelection::getOwnershipCost(S32 &cost)
-{
-	S32 count = getObjectCount();
-	cost = count * OWNERSHIP_COST_PER_OBJECT;
-	return (count > 0);
 }
 
 
@@ -6423,6 +6407,8 @@ bool LLSelectMgr::selectionMove(const LLVector3& displ,
 	bool update_rotation = update_type & UPD_ROTATION;
 	const bool noedit_linked_parts = !gSavedSettings.getBOOL("EditLinkedParts");
 	
+	LLViewerCamera* camera = LLViewerCamera::getInstance();
+
 	if (update_position)
 	{
 		// calculate the distance of the object closest to the camera origin
@@ -6433,7 +6419,7 @@ bool LLSelectMgr::selectionMove(const LLVector3& displ,
 		{
 			obj_pos = (*it)->getObject()->getPositionEdit();
 			
-			F32 obj_dist = dist_vec(obj_pos, LLViewerCamera::getInstance()->getOrigin());
+			F32 obj_dist = dist_vec(obj_pos, camera->getOrigin());
 			if (obj_dist < min_dist)
 			{
 				min_dist = obj_dist;
@@ -6448,16 +6434,16 @@ bool LLSelectMgr::selectionMove(const LLVector3& displ,
 							displ.mV[2]*min_dist);
 
 		// equates to: Displ_global = Displ * M_cam_axes_in_global_frame
-		displ_global = LLViewerCamera::getInstance()->rotateToAbsolute(displ_global);
+		displ_global = camera->rotateToAbsolute(displ_global);
 	}
 
 	LLQuaternion new_rot;
 	if (update_rotation)
 	{
 		// let's calculate the rotation around each camera axes 
-		LLQuaternion qx(roll, LLViewerCamera::getInstance()->getAtAxis());
-		LLQuaternion qy(pitch, LLViewerCamera::getInstance()->getLeftAxis());
-		LLQuaternion qz(yaw, LLViewerCamera::getInstance()->getUpAxis());
+		LLQuaternion qx(roll, camera->getAtAxis());
+		LLQuaternion qy(pitch, camera->getLeftAxis());
+		LLQuaternion qz(yaw, camera->getUpAxis());
 		new_rot.setQuat(qx * qy * qz);
 	}
 	

@@ -168,7 +168,7 @@ LLBVHLoader::~LLBVHLoader()
 //------------------------------------------------------------------------
 // LLBVHLoader::loadTranslationTable()
 //------------------------------------------------------------------------
-LLBVHLoader::Status LLBVHLoader::loadTranslationTable(const char *fileName)
+LLBVHLoader::status_t LLBVHLoader::loadTranslationTable(const char *fileName)
 {
 	mLineNumber = 0;
 	mTranslations.clear();
@@ -180,7 +180,7 @@ LLBVHLoader::Status LLBVHLoader::loadTranslationTable(const char *fileName)
 	std::string path = gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS,fileName);
 
 	LLAPRFile infile ;
-	infile.open(path, LL_APR_R, LLAPRFile::global);
+	infile.open(path, LL_APR_R);
 	apr_file_t *fp = infile.getFileHandle();
 	if (!fp)
 		return ST_NO_XLT_FILE;
@@ -629,7 +629,7 @@ LLBVHLoader::Status LLBVHLoader::loadTranslationTable(const char *fileName)
 //------------------------------------------------------------------------
 // LLBVHLoader::loadBVHFile()
 //------------------------------------------------------------------------
-LLBVHLoader::Status LLBVHLoader::loadBVHFile(const char *buffer, char* error_text, S32 &err_line)
+LLBVHLoader::status_t LLBVHLoader::loadBVHFile(const char *buffer, char* error_text, S32 &err_line)
 {
 	std::string line;
 

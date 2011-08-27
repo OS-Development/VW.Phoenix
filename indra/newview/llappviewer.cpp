@@ -432,6 +432,7 @@ static void settings_to_globals()
 	LLSelectMgr::sRectSelectInclusive	= gSavedSettings.getBOOL("RectangleSelectInclusive");
 	LLSelectMgr::sRenderHiddenSelections = gSavedSettings.getBOOL("RenderHiddenSelections");
 	LLSelectMgr::sRenderLightRadius = gSavedSettings.getBOOL("RenderLightRadius");
+	LLPipeline::sFastAlpha				= gSavedSettings.getBOOL("RenderFastAlpha");
 
 	gFrameStats.setTrackStats(gSavedSettings.getBOOL("StatsSessionTrackFrameStats"));
 	gAgentPilot.mNumRuns		= gSavedSettings.getS32("StatsNumRuns");
@@ -2717,8 +2718,8 @@ void LLAppViewer::handleViewerCrash()
 		else crash_file_name = gDirUtilp->getExpandedFilename(LL_PATH_LOGS,ERROR_MARKER_FILE_NAME);
 		llinfos << "Creating crash marker file " << crash_file_name << llendl;
 
-		LLAPRFile crash_file ;
-		crash_file.open(crash_file_name, LL_APR_W, LLAPRFile::local);
+		LLAPRFile crash_file;
+		crash_file.open(crash_file_name, LL_APR_W);
 		if (crash_file.getFileHandle())
 		{
 			LL_INFOS("MarkerFile") << "Created crash marker file " << crash_file_name << LL_ENDL;
@@ -2786,12 +2787,12 @@ bool LLAppViewer::anotherInstanceRunning()
 	LL_DEBUGS("MarkerFile") << "Checking marker file for lock..." << LL_ENDL;
 
 	//Freeze case checks
-	if (LLAPRFile::isExist(marker_file, LL_APR_RB))
+	if (LLAPRFile::isExist(marker_file, NULL, LL_APR_RB))
 	{
 		// File exists, try opening with write permissions
 		LLAPRFile outfile ;
-		outfile.open(marker_file, LL_APR_WB, LLAPRFile::global);
-		apr_file_t* fMarker = outfile.getFileHandle() ;
+		outfile.open(marker_file, LL_APR_WB);
+		apr_file_t* fMarker = outfile.getFileHandle(); 
 		if (!fMarker)
 		{
 			// Another instance is running. Skip the rest of these operations.
@@ -2830,24 +2831,24 @@ void LLAppViewer::initMarkerFile()
 	std::string error_marker_file = gDirUtilp->getExpandedFilename(LL_PATH_LOGS, ERROR_MARKER_FILE_NAME);
 
 
-	if (LLAPRFile::isExist(mMarkerFileName, LL_APR_RB) && !anotherInstanceRunning())
+	if (LLAPRFile::isExist(mMarkerFileName, NULL, LL_APR_RB) && !anotherInstanceRunning())
 	{
 		gLastExecEvent = LAST_EXEC_FROZE;
 		LL_INFOS("MarkerFile") << "Exec marker found: program froze on previous execution" << LL_ENDL;
 	}
 
-	if(LLAPRFile::isExist(logout_marker_file, LL_APR_RB))
+	if (LLAPRFile::isExist(logout_marker_file, NULL, LL_APR_RB))
 	{
 		LL_INFOS("MarkerFile") << "Last exec LLError crashed, setting LastExecEvent to " << LAST_EXEC_LLERROR_CRASH << LL_ENDL;
 		gLastExecEvent = LAST_EXEC_LOGOUT_FROZE;
 	}
-	if(LLAPRFile::isExist(llerror_marker_file, LL_APR_RB))
+	if (LLAPRFile::isExist(llerror_marker_file, NULL, LL_APR_RB))
 	{
 		llinfos << "Last exec LLError crashed, setting LastExecEvent to " << LAST_EXEC_LLERROR_CRASH << llendl;
 		if(gLastExecEvent == LAST_EXEC_LOGOUT_FROZE) gLastExecEvent = LAST_EXEC_LOGOUT_CRASH;
 		else gLastExecEvent = LAST_EXEC_LLERROR_CRASH;
 	}
-	if(LLAPRFile::isExist(error_marker_file, LL_APR_RB))
+	if (LLAPRFile::isExist(error_marker_file, NULL, LL_APR_RB))
 	{
 		LL_INFOS("MarkerFile") << "Last exec crashed, setting LastExecEvent to " << LAST_EXEC_OTHER_CRASH << LL_ENDL;
 		if(gLastExecEvent == LAST_EXEC_LOGOUT_FROZE) gLastExecEvent = LAST_EXEC_LOGOUT_CRASH;
@@ -2866,7 +2867,7 @@ void LLAppViewer::initMarkerFile()
 
 	// Create the marker file for this execution & lock it
 	apr_status_t s;
-	s = mMarkerFile.open(mMarkerFileName, LL_APR_W, LLAPRFile::global);
+	s = mMarkerFile.open(mMarkerFileName, LL_APR_W, TRUE);
 
 	if (s == APR_SUCCESS && mMarkerFile.getFileHandle())
 	{
@@ -3554,7 +3555,7 @@ void LLAppViewer::idle()
 	// Smoothly weight toward current frame
 	gFPSClamped = (frame_rate_clamped + (4.f * gFPSClamped)) / 5.f;
 
-	F32 qas = gSavedSettings.getF32("QuitAfterSeconds");
+	static LLCachedControl<F32> qas(gSavedSettings, "QuitAfterSeconds");
 	if (qas > 0.f)
 	{
 		if (gRenderStartTime.getElapsedTimeF32() > qas)
@@ -3598,7 +3599,8 @@ void LLAppViewer::idle()
 	    // Update simulator agent state
 	    //
 
-		if (gSavedSettings.getBOOL("RotateRight"))
+		static LLCachedControl<bool> rotate_right(gSavedSettings, "RotateRight");
+		if (rotate_right)
 		{
 			gAgent.moveYaw(-1.f);
 		}
@@ -4058,7 +4060,7 @@ void LLAppViewer::sendLogoutRequest()
 		mLogoutMarkerFileName = gDirUtilp->getExpandedFilename(LL_PATH_LOGS,LOGOUT_MARKER_FILE_NAME);
 
 		LLAPRFile outfile ;
-		outfile.open(mLogoutMarkerFileName, LL_APR_W, LLAPRFile::global);
+		outfile.open(mLogoutMarkerFileName, LL_APR_W);
 		mLogoutMarkerFile =  outfile.getFileHandle() ;
 		if (mLogoutMarkerFile)
 		{
@@ -4092,7 +4094,8 @@ void LLAppViewer::idleNetwork()
 	gObjectList.mNumNewObjects = 0;
 	S32 total_decoded = 0;
 
-	if (!gSavedSettings.getBOOL("SpeedTest"))
+	static LLCachedControl<bool> speed_test(gSavedSettings, "SpeedTest");
+	if (!speed_test)
 	{
 		LLFastTimer t(LLFastTimer::FTM_IDLE_NETWORK); // decode
 

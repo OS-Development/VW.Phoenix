@@ -165,6 +165,7 @@ public:
 
 private:
 	region_list_t	mActiveRegionList;
+	region_list_t	mActiveRegionOrderedList;
 	region_list_t	mRegionList;
 	region_list_t	mVisibleRegionList;
 	region_list_t	mCulledRegionList;

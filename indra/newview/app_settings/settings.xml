@@ -10211,6 +10211,17 @@
 			<key>Value</key>
 			<integer>0</integer>
 		</map>
+		<key>RegionUpdateFraction</key>
+		<map>
+			<key>Comment</key>
+			<string>Fraction of the total update time per frame to affect to each region update (between 2 and 20: the smaller the number, the higher the time spent updating regions, and the higher the number, the longer it takes to load all the regions terrain textures)</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>U32</string>
+			<key>Value</key>
+			<integer>5</integer>
+		</map>
 		<key>LandBrushForce</key>
 		<map>
 			<key>Comment</key>

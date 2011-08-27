@@ -231,12 +231,12 @@ void LLViewerParcelOverlay::updateOverlayTexture()
 		return;
 	}
 	// Can do this because gColors are actually stored as LLColor4U
-	LLCachedControl<LLColor4U> property_color_avail(gColors, "PropertyColorAvail");
-	LLCachedControl<LLColor4U> property_color_other(gColors, "PropertyColorOther");
-	LLCachedControl<LLColor4U> property_color_group(gColors, "PropertyColorGroup");
-	LLCachedControl<LLColor4U> property_color_self(gColors, "PropertyColorSelf");
-	LLCachedControl<LLColor4U> property_color_for_sale(gColors, "PropertyColorForSale");
-	LLCachedControl<LLColor4U> property_color_auction(gColors, "PropertyColorAuction");
+	static LLCachedControl<LLColor4U> property_color_avail(gColors, "PropertyColorAvail");
+	static LLCachedControl<LLColor4U> property_color_other(gColors, "PropertyColorOther");
+	static LLCachedControl<LLColor4U> property_color_group(gColors, "PropertyColorGroup");
+	static LLCachedControl<LLColor4U> property_color_self(gColors, "PropertyColorSelf");
+	static LLCachedControl<LLColor4U> property_color_for_sale(gColors, "PropertyColorForSale");
+	static LLCachedControl<LLColor4U> property_color_auction(gColors, "PropertyColorAuction");
 
 	// Create the base texture.
 	LLColor4U color;

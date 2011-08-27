@@ -136,7 +136,6 @@ set(viewer_SOURCE_FILES
     llassetuploadqueue.cpp
     llattachmentsmgr.cpp
     llaudiosourcevo.cpp
-    llbbox.cpp
     llbox.cpp
     llcallbacklist.cpp
     llcallingcard.cpp
@@ -629,7 +628,6 @@ set(viewer_HEADER_FILES
     llassetuploadqueue.h
     llassetuploadqueue.h
     llattachmentsmgr.h
-    llbbox.h
     llbox.h
     llcallbacklist.h
     llcallingcard.h

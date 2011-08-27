@@ -111,7 +111,7 @@ void LLStandardBumpmap::addstandard()
 	// which populates this list already, THEN we explicitly init the list as
 	// part of *normal* startup.  Sigh.  So clear the list every time before we
 	// (re-)add the standard bumpmaps.
-	//llassert( LLStandardBumpmap::sStandardBumpmapCount == 0 );
+	//llassert(LLStandardBumpmap::sStandardBumpmapCount == 0);
 	clear();
 	llinfos << "Adding standard bumpmaps." << llendl;
 	gStandardBumpmapList[LLStandardBumpmap::sStandardBumpmapCount++] = LLStandardBumpmap("None");		// BE_NO_BUMP
@@ -119,7 +119,7 @@ void LLStandardBumpmap::addstandard()
 	gStandardBumpmapList[LLStandardBumpmap::sStandardBumpmapCount++] = LLStandardBumpmap("Darkness");	// BE_DARKNESS
 
 	std::string file_name = gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "std_bump.ini");
-	LLFILE* file = LLFile::fopen( file_name, "rt" );	 /*Flawfinder: ignore*/
+	LLFILE* file = LLFile::fopen(file_name, "rt");	 /*Flawfinder: ignore*/
 	if (!file)
 	{
 		llwarns << "Could not open std_bump <" << file_name << ">" << llendl;
@@ -161,7 +161,7 @@ void LLStandardBumpmap::addstandard()
 // 		llinfos << "Loading bumpmap: " << bump_image_id << " from viewerart" << llendl;
 		gStandardBumpmapList[LLStandardBumpmap::sStandardBumpmapCount].mLabel = label;
 		gStandardBumpmapList[LLStandardBumpmap::sStandardBumpmapCount].mImage = 
-			LLViewerTextureManager::getFetchedTexture(LLUUID(bump_image_id));	
+			LLViewerTextureManager::getFetchedTexture(LLUUID(bump_image_id));
 		gStandardBumpmapList[LLStandardBumpmap::sStandardBumpmapCount].mImage->setBoostLevel(LLViewerTexture::BOOST_BUMP) ;
 		gStandardBumpmapList[LLStandardBumpmap::sStandardBumpmapCount].mImage->setLoadedCallback(LLBumpImageList::onSourceStandardLoaded, 0, TRUE, FALSE, NULL, NULL);
 		LLStandardBumpmap::sStandardBumpmapCount++;
@@ -1038,7 +1038,7 @@ void LLBumpImageList::generateNormalMapFromAlpha(LLImageRaw* src, LLImageRaw* nr
 
 	S32 src_cmp = src->getComponents();
 
-	F32 norm_scale = gSavedSettings.getF32("RenderNormalMapScale");
+	static LLCachedControl<F32> norm_scale(gSavedSettings, "RenderNormalMapScale");
 
 	U32 idx = 0;
 	//generate normal map from pseudo-heightfield

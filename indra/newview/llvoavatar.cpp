@@ -4194,35 +4194,31 @@ BOOL LLVOAvatar::updateCharacter(LLAgent &agent)
 	{
 		F32 impostor_area = 256.f*512.f*(8.125f - LLVOAvatar::sLODFactor*8.f);
 		if (LLMuteList::getInstance()->isMuted(getID()))
-		{ // muted avatars update at 16 hz
+		{ // muted avatars update REALLY slow
 			mUpdatePeriod = 16;
 		}
-		else if (visible && mVisibilityRank <= LLVOAvatar::sMaxVisible * 0.25f)
-		{ //first 25% of max visible avatars are not impostored
+		else if (mVisibilityRank <= LLVOAvatar::sMaxVisible)
+		{	//max visible avatars are not impostored
 			mUpdatePeriod = 1;
 		}
-		else if (visible && mVisibilityRank > LLVOAvatar::sMaxVisible * 0.75f)
-		{ //back 25% of max visible avatars are slow updating impostors
-			mUpdatePeriod = 8;
-		}
-		else if (visible && mVisibilityRank > (U32) LLVOAvatar::sMaxVisible)
+		else if (mVisibilityRank > LLVOAvatar::sMaxVisible * 4)
 		{ //background avatars are REALLY slow updating impostors
 			mUpdatePeriod = 16;
 		}
-		else if (visible && mImpostorPixelArea <= impostor_area)
-		{  // stuff in between gets an update period based on pixel area
-			mUpdatePeriod = llclamp((S32) sqrtf(impostor_area*4.f/mImpostorPixelArea), 2, 8);
+		else if (mVisibilityRank > LLVOAvatar::sMaxVisible * 3)
+		{	//back 25% of max visible avatars are slow updating impostors
+			mUpdatePeriod = 8;
 		}
-		else if (visible && mVisibilityRank > LLVOAvatar::sMaxVisible * 0.25f)
-		{ // force nearby impostors in ultra crowded areas
-			mUpdatePeriod = 2;
+		else if (mImpostorPixelArea <= impostor_area)
+		{  // stuff in between gets an update period based on pixel area
+			mUpdatePeriod = llclamp((S32)sqrtf(impostor_area * 4.f / mImpostorPixelArea), 2, 8);
 		}
 		else
-		{ // not impostored
-			mUpdatePeriod = 1;
+		{	//nearby avatars, update the impostors more frequently.
+			mUpdatePeriod = 4;
 		}
 
-		visible = (LLDrawable::getCurrentFrame()+mID.mData[0])%mUpdatePeriod == 0 ? TRUE : FALSE;
+		visible = (LLDrawable::getCurrentFrame() + mID.mData[0]) % mUpdatePeriod == 0;
 	}
 
 	// don't early out for your own avatar, as we rely on your animations playing reliably
@@ -9444,7 +9440,7 @@ void LLVOAvatar::dumpArchetypeXML( void* )
 {
 	LLVOAvatar* avatar = gAgent.getAvatarObject();
 	LLAPRFile outfile;
-	outfile.open(gDirUtilp->getExpandedFilename(LL_PATH_CHARACTER,"new archetype.xml"), LL_APR_WB, LLAPRFile::global);
+	outfile.open(gDirUtilp->getExpandedFilename(LL_PATH_CHARACTER, "new archetype.xml"), LL_APR_WB);
 	apr_file_t* file = outfile.getFileHandle();
 	if( !file )
 	{

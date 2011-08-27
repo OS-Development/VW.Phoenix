@@ -70,7 +70,7 @@ if (WINDOWS)
       /D_UNICODE 
       /GS
       /TP
-      /W3
+      /W2
       /c
       /Zc:forScope
       /nologo

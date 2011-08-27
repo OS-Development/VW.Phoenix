@@ -59,8 +59,6 @@
 #include "llstl.h"
 #include "lltimer.h"
 
-extern apr_thread_mutex_t* gCallStacksLogMutexp;
-
 namespace {
 #if !LL_WINDOWS
 	class RecordToSyslog : public LLError::Recorder
@@ -1249,17 +1247,31 @@ namespace LLError
 	char** LLCallStacks::sBuffer = NULL ;
 	S32    LLCallStacks::sIndex  = 0 ;
 
+#define SINGLE_THREADED 1
+
 	class CallStacksLogLock
 	{
 	public:
 		CallStacksLogLock();
 		~CallStacksLogLock();
+#if SINGLE_THREADED
+		bool ok() const { return true; }
+#else
 		bool ok() const { return mOK; }
 	private:
 		bool mLocked;
 		bool mOK;
+#endif
 	};
 	
+#if SINGLE_THREADED
+	CallStacksLogLock::CallStacksLogLock()
+	{
+	}
+	CallStacksLogLock::~CallStacksLogLock()
+	{
+	}
+#else
 	CallStacksLogLock::CallStacksLogLock()
 		: mLocked(false), mOK(false)
 	{
@@ -1295,6 +1307,7 @@ namespace LLError
 			apr_thread_mutex_unlock(gCallStacksLogMutexp);
 		}
 	}
+#endif
 
 	//static
    void LLCallStacks::push(const char* function, const int line)

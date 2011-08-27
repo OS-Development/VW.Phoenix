@@ -832,7 +832,7 @@ void LLVOSky::calcSkyColorWLVert(LLVector3 & Pn, LLColor3 & vary_HazeColor, LLCo
 	componentMultBy(vary_HazeColor, LLColor3::white - temp1);
 
 	sunlight = sunlight_color;
-	temp2.mV[1] = llmax(0.f, lightnorm[1] * 2.f);
+	temp2.mV[1] = llmax(F_APPROXIMATELY_ZERO, lightnorm[1] * 2.f);
 	temp2.mV[1] = 1.f / temp2.mV[1];
 	componentMultBy(sunlight, componentExp((light_atten * -1.f) * temp2.mV[1]));
 
@@ -970,7 +970,7 @@ void LLVOSky::calcAtmospherics(void)
 			lighty = -lighty;
 		}
 
-		temp2.mV[1] = llmax(0.f, lighty);
+		temp2.mV[1] = llmax(F_APPROXIMATELY_ZERO, lighty);
 		temp2.mV[1] = 1.f / temp2.mV[1];
 		componentMultBy(sunlight, componentExp((light_atten * -1.f) * temp2.mV[1]));
 
