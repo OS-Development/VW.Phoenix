@@ -78,6 +78,8 @@ const S32 LSL_PRIM_NAME     	= 27;
 const S32 LSL_PRIM_DESC     	= 28;
 const S32 LSL_PRIM_ROT_LOCAL	= 29;
 const S32 LSL_PRIM_OMEGA		= 32;
+const S32 LSL_PRIM_POS_LOCAL	= 33;
+const S32 LSL_PRIM_LINK_TARGET	= 34;
 
 const S32 LSL_PRIM_TYPE_BOX		= 0;
 const S32 LSL_PRIM_TYPE_CYLINDER= 1;
@@ -193,23 +195,25 @@ const S32 OBJECT_CREATOR = 8;
 const S32 OBJECT_RUNNING_SCRIPT_COUNT = 9;
 const S32 OBJECT_TOTAL_SCRIPT_COUNT = 10;
 const S32 OBJECT_SCRIPT_MEMORY = 11;
+const S32 OBJECT_SCRIPT_TIME = 12;
+
 // llTextBox() magic token string - yes this is a hack.  sue me.
 const std::string TEXTBOX_MAGIC_TOKEN = "!!llTextBox!!";
 
 // changed() event flags
-const U32	CHANGED_NONE = 0x0;
-const U32	CHANGED_INVENTORY = 0x1;
-const U32	CHANGED_COLOR = 0x2;
-const U32	CHANGED_SHAPE = 0x4;
-const U32	CHANGED_SCALE = 0x8;
-const U32	CHANGED_TEXTURE = 0x10;
-const U32	CHANGED_LINK = 0x20;
-const U32	CHANGED_ALLOWED_DROP = 0x40;
-const U32	CHANGED_OWNER = 0x80;
-const U32	CHANGED_REGION = 0x100;
-const U32	CHANGED_TELEPORT = 0x200;
-const U32	CHANGED_REGION_START = 0x400;
-const U32   CHANGED_MEDIA = 0x800;
+const U32 CHANGED_NONE = 0x0;
+const U32 CHANGED_INVENTORY = 0x1;
+const U32 CHANGED_COLOR = 0x2;
+const U32 CHANGED_SHAPE = 0x4;
+const U32 CHANGED_SCALE = 0x8;
+const U32 CHANGED_TEXTURE = 0x10;
+const U32 CHANGED_LINK = 0x20;
+const U32 CHANGED_ALLOWED_DROP = 0x40;
+const U32 CHANGED_OWNER = 0x80;
+const U32 CHANGED_REGION = 0x100;
+const U32 CHANGED_TELEPORT = 0x200;
+const U32 CHANGED_REGION_START = 0x400;
+const U32 CHANGED_MEDIA = 0x800;
 
 // Possible error results
 const U32 LSL_STATUS_OK                 = 0;
@@ -222,5 +226,9 @@ const U32 LSL_STATUS_INTERNAL_ERROR     = 1999;
 
 // Start per-function errors below, starting at 2000:
 const U32 LSL_STATUS_WHITELIST_FAILED   = 2001;
+
+// HTTP responses contents type
+const S32 LSL_CONTENT_TYPE_TEXT = 0;
+const S32 LSL_CONTENT_TYPE_HTML = 1;
 
 #endif

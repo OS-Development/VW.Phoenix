@@ -10143,6 +10143,7 @@ llApplyRotationalImpulse
 llAsin
 llAtan2
 llAttachToAvatar
+llAvatarOnLinkSitTarget
 llAvatarOnSitTarget
 llAxes2Rot
 llAxisAngle2Rot
@@ -10152,6 +10153,7 @@ llBreakAllLinks
 llBreakLink
 llCeil
 llClearCameraParams
+llClearLinkMedia
 llCloseRemoteDataChannel
 llCloud
 llCollisionFilter
@@ -10217,6 +10219,7 @@ llGetInventoryType
 llGetKey
 llGetLandOwnerAt
 llGetLinkKey
+llGetLinkMedia
 llGetLinkName
 llGetLinkNumber
 llGetLinkNumberOfSides
@@ -10226,6 +10229,7 @@ llGetListLength
 llGetLocalPos
 llGetLocalRot
 llGetMass
+llGetMemoryLimit
 llGetNextEmail
 llGetNotecardLine
 llGetNumberOfNotecardLines
@@ -10290,6 +10294,7 @@ llInstantMessage
 llIntegerToBase64
 llKey2Name
 llLinkParticleSystem
+llLinkSitTarget
 llList2CSV
 llList2Float
 llList2Integer
@@ -10387,16 +10392,20 @@ llSetCameraAtOffset
 llSetCameraEyeOffset
 llSetCameraParams
 llSetColor
+llSetContentType
 llSetDamage
 llSetForce
 llSetForceAndTorque
 llSetHoverHeight
 llSetLinkAlpha
+llSetLinkCamera
 llSetLinkColor
+llSetLinkMedia
 llSetLinkPrimitiveParams
 llSetLinkPrimitiveParamsFast
 llSetLinkTextureAnim
 llSetLocalRot
+llSetMemoryLimit
 llSetObjectDesc
 llSetObjectName
 llSetParcelMusicURL
@@ -10421,6 +10430,7 @@ llSetVehicleFloatParam
 llSetVehicleRotationParam
 llSetVehicleType
 llSetVehicleVectorParam
+llSetVelocity
 llShout
 llSin
 llSitTarget
@@ -10590,6 +10600,8 @@ CLICK_ACTION_PAY
 CLICK_ACTION_PLAY
 CLICK_ACTION_SIT
 CLICK_ACTION_TOUCH
+CONTENT_TYPE_TEXT
+CONTENT_TYPE_HTML
 CONTROL_BACK
 CONTROL_DOWN
 CONTROL_FWD
@@ -10663,6 +10675,10 @@ OBJECT_NAME
 OBJECT_OWNER
 OBJECT_POS
 OBJECT_ROT
+OBJECT_RUNNING_SCRIPT_COUNT
+OBJECT_SCRIPT_MEMORY
+OBJECT_SCRIPT_TIME
+OBJECT_TOTAL_SCRIPT_COUNT
 OBJECT_UNKNOWN_DETAIL
 OBJECT_VELOCITY
 PARCEL_DETAILS_AREA
@@ -10743,6 +10759,7 @@ PRIM_HOLE_CIRCLE
 PRIM_HOLE_DEFAULT
 PRIM_HOLE_SQUARE
 PRIM_HOLE_TRIANGLE
+PRIM_LINK_TARGET
 PRIM_MATERIAL
 PRIM_MATERIAL_FLESH
 PRIM_MATERIAL_GLASS
@@ -10755,6 +10772,7 @@ PRIM_OMEGA
 PRIM_PHANTOM
 PRIM_PHYSICS
 PRIM_POINT_LIGHT
+PRIM_POS_LOCAL
 PRIM_POSITION
 PRIM_ROT_LOCAL
 PRIM_ROTATION

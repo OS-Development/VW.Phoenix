@@ -4242,6 +4242,10 @@ version 2.0
 		Buttons	Variable
 		{	ButtonLabel		Variable	1	}
 	}
+	{
+		OwnerData Variable
+		{	OwnerID		LLUUID	}
+	}
 }
 
 

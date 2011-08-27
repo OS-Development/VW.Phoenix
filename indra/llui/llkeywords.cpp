@@ -42,21 +42,31 @@
 
 const U32 KEYWORD_FILE_CURRENT_VERSION = 2;
 
-inline BOOL LLKeywordToken::isHead(const llwchar* s) const
+inline BOOL LLKeywordToken::isHead(const llwchar* s, bool search_end_c_comment) const
 {
 	// strncmp is much faster than string compare
-	BOOL res = TRUE;
 	const llwchar* t = mToken.c_str();
 	S32 len = mToken.size();
-	for (S32 i=0; i<len; i++)
+	if (search_end_c_comment && len == 2 && t[0] == '/' && t[1] == '*')
+	{
+		// Special case for C-like */ end comment token
+		if (s[0] == '*' && s[1] == '/')
+		{
+			return TRUE;
+		}
+		else
+		{
+			return FALSE;
+		}
+	}
+	for (S32 i = 0; i < len; i++)
 	{
 		if (s[i] != t[i])
 		{
-			res = FALSE;
-			break;
+			return FALSE;
 		}
 	}
-	return res;
+	return TRUE;
 }
 
 inline BOOL LLKeywordToken::isTail(const llwchar* s) const

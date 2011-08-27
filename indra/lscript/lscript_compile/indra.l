@@ -251,6 +251,10 @@ extern "C" { int yyerror(const char *fmt, ...); }
 "OBJECT_OWNER"			{ count(); yylval.ival = OBJECT_OWNER; return(INTEGER_CONSTANT); }
 "OBJECT_GROUP"			{ count(); yylval.ival = OBJECT_GROUP; return(INTEGER_CONSTANT); }
 "OBJECT_CREATOR"		{ count(); yylval.ival = OBJECT_CREATOR; return(INTEGER_CONSTANT); }
+"OBJECT_RUNNING_SCRIPT_COUNT"	{ count(); yylval.ival = OBJECT_RUNNING_SCRIPT_COUNT; return(INTEGER_CONSTANT); }
+"OBJECT_RUNNING_SCRIPT_COUNT"	{ count(); yylval.ival = OBJECT_RUNNING_SCRIPT_COUNT; return(INTEGER_CONSTANT); }
+"OBJECT_SCRIPT_MEMORY"	{ count(); yylval.ival = OBJECT_SCRIPT_MEMORY; return(INTEGER_CONSTANT); }
+"OBJECT_SCRIPT_TIME"	{ count(); yylval.ival = OBJECT_SCRIPT_TIME; return(INTEGER_CONSTANT); }
 
 "TYPE_INTEGER"			{ count(); yylval.ival = LST_INTEGER; return(INTEGER_CONSTANT); }	
 "TYPE_FLOAT"			{ count(); yylval.ival = LST_FLOATINGPOINT; return(INTEGER_CONSTANT); }	
@@ -465,6 +469,8 @@ extern "C" { int yyerror(const char *fmt, ...); }
 "PRIM_DESC"	     		{ count(); yylval.ival = LSL_PRIM_DESC; return(INTEGER_CONSTANT); }
 "PRIM_OMEGA"			{ count(); yylval.ival = LSL_PRIM_OMEGA; return(INTEGER_CONSTANT); }
 "PRIM_ROT_LOCAL"		{ count(); yylval.ival = LSL_PRIM_ROT_LOCAL; return(INTEGER_CONSTANT); }
+"PRIM_POS_LOCAL"		{ count(); yylval.ival = LSL_PRIM_POS_LOCAL; return(INTEGER_CONSTANT); }
+"PRIM_LINK_TARGET"		{ count(); yylval.ival = LSL_PRIM_LINK_TARGET; return(INTEGER_CONSTANT); }
 
 "PRIM_TYPE_BOX"			{ count(); yylval.ival = LSL_PRIM_TYPE_BOX; return(INTEGER_CONSTANT); }
 "PRIM_TYPE_CYLINDER"	{ count(); yylval.ival = LSL_PRIM_TYPE_CYLINDER; return(INTEGER_CONSTANT); }
@@ -677,6 +683,9 @@ extern "C" { int yyerror(const char *fmt, ...); }
 "STATUS_NOT_SUPPORTED"               { count(); yylval.ival = LSL_STATUS_NOT_SUPPORTED; return(INTEGER_CONSTANT); }
 "STATUS_INTERNAL_ERROR"              { count(); yylval.ival = LSL_STATUS_INTERNAL_ERROR; return(INTEGER_CONSTANT); }
 "STATUS_WHITELIST_FAILED"            { count(); yylval.ival = LSL_STATUS_WHITELIST_FAILED; return(INTEGER_CONSTANT); }
+
+"CONTENT_TYPE_TEXT"                  { count(); yylval.ival = LSL_CONTENT_TYPE_TEXT; return(INTEGER_CONSTANT); }
+"CONTENT_TYPE_HTML"                  { count(); yylval.ival = LSL_CONTENT_TYPE_HTML; return(INTEGER_CONSTANT); }
 
 {L}({L}|{N})*		{ count(); yylval.sval = new char[strlen(yytext) + 1]; strcpy(yylval.sval, yytext); return(IDENTIFIER); }
 
