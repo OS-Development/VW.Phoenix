@@ -113,9 +113,9 @@ BOOL LLHandMotion::onActivate()
 		// Note: 0 is the default
 		for (S32 i = 1; i < LLHandMotion::NUM_HAND_POSES; i++)
 		{
-			mCharacter->setVisualParamWeight(getHandPoseName((eHandPose)i).c_str(), 0.f);
+			mCharacter->setVisualParamWeight(gHandPoseNames[i], 0.f);
 		}
-		mCharacter->setVisualParamWeight(getHandPoseName(mCurrentPose).c_str(), 1.f);
+		mCharacter->setVisualParamWeight(gHandPoseNames[mCurrentPose], 1.f);
 		mCharacter->updateVisualParams();
 	}
 	return TRUE;
@@ -138,7 +138,7 @@ BOOL LLHandMotion::onUpdate(F32 time, U8* joint_mask)
 	{
 		if (mNewPose != HAND_POSE_RELAXED && mNewPose != mCurrentPose)
 		{
-			mCharacter->setVisualParamWeight(getHandPoseName(mNewPose).c_str(), 0.f);
+			mCharacter->setVisualParamWeight(gHandPoseNames[mNewPose], 0.f);
 		}
 		mNewPose = HAND_POSE_RELAXED;
 	}
@@ -173,18 +173,18 @@ BOOL LLHandMotion::onUpdate(F32 time, U8* joint_mask)
 
 		if (mNewPose != HAND_POSE_SPREAD)
 		{
-			incomingWeight = mCharacter->getVisualParamWeight(getHandPoseName(mNewPose).c_str());
+			incomingWeight = mCharacter->getVisualParamWeight(gHandPoseNames[mNewPose]);
 			incomingWeight += (timeDelta / HAND_MORPH_BLEND_TIME);
 			incomingWeight = llclamp(incomingWeight, 0.f, 1.f);
-			mCharacter->setVisualParamWeight(getHandPoseName(mNewPose).c_str(), incomingWeight);
+			mCharacter->setVisualParamWeight(gHandPoseNames[mNewPose], incomingWeight);
 		}
 
 		if (mCurrentPose != HAND_POSE_SPREAD)
 		{
-			outgoingWeight = mCharacter->getVisualParamWeight(getHandPoseName(mCurrentPose).c_str());
+			outgoingWeight = mCharacter->getVisualParamWeight(gHandPoseNames[mCurrentPose]);
 			outgoingWeight -= (timeDelta / HAND_MORPH_BLEND_TIME);
 			outgoingWeight = llclamp(outgoingWeight, 0.f, 1.f);
-			mCharacter->setVisualParamWeight(getHandPoseName(mCurrentPose).c_str(), outgoingWeight);
+			mCharacter->setVisualParamWeight(gHandPoseNames[mCurrentPose], outgoingWeight);
 		}
 
 		mCharacter->updateVisualParams();
