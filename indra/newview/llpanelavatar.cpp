@@ -1491,8 +1491,21 @@ void LLPanelAvatar::setOnlineStatus(EOnlineStatus online_status)
 
 void LLPanelAvatar::on_avatar_name_response(const LLUUID& agent_id, const LLAvatarName& av_name, void *userdata){
 	LLPanelAvatar* self = (LLPanelAvatar*)userdata;
-	LLLineEditor* dnname_edit = self->getChild<LLLineEditor>("dnname");
-	if(LLAvatarNameCache::useDisplayNames() && agent_id==self->mAvatarID) dnname_edit->setText(av_name.getCompleteName());
+	std::list<LLPanelAvatar*>::iterator it;
+	bool hit = false;
+	for ( it=sAllPanels.begin() ; it != sAllPanels.end(); it++ )
+	{
+		if(self == *it)
+		{
+			hit = true;
+			break;
+		}
+	}
+	if(hit)
+	{
+		LLLineEditor* dnname_edit = self->getChild<LLLineEditor>("dnname");
+		if(LLAvatarNameCache::useDisplayNames() && agent_id==self->mAvatarID) dnname_edit->setText(av_name.getCompleteName());
+	}
 }
 
 void LLPanelAvatar::setAvatarID(const LLUUID &avatar_id, const std::string &name,
