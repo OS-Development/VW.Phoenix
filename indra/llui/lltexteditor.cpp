@@ -255,8 +255,10 @@ public:
 	}
 	virtual BOOL execute( LLTextEditor* editor, S32* delta )
 	{ 
-		mWString = editor->getWSubString(getPosition(), mLen);
-		*delta = remove(editor, getPosition(), mLen );
+		S32 pos = llclamp(getPosition(),0,editor->getLength());
+		S32 len = llclamp(mLen,0,editor->getLength()-pos);
+		mWString = editor->getWSubString(pos,len);
+		*delta = remove(editor, pos, len );
 		return (*delta != 0);
 	}
 	virtual S32 undo( LLTextEditor* editor )
