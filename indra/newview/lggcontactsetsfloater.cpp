@@ -1805,7 +1805,7 @@ BOOL lggContactSetsFloater::generateCurrentList()
 	for (int i = 0; i < nonFriends.size(); i++)
 	{
 		if (!showOffline) continue;
-		if (yshowAllFriends && !LGGContactSets::getInstance()->isFriendInGroup(nonFriends[i], currentGroup)) continue;
+		if (!yshowAllFriends && !LGGContactSets::getInstance()->isFriendInGroup(nonFriends[i], currentGroup)) continue;
 
 		currentList.push_back(nonFriends[i]);
 	}
