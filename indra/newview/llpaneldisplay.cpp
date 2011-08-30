@@ -260,6 +260,10 @@ BOOL LLPanelDisplay::postBuild()
 	mCtrlShaderEnable->setCommitCallback(&LLPanelDisplay::onVertexShaderEnable);
 	mCtrlShaderEnable->setCallbackUserData(this);
 	
+	//----------------------------------------------------------------------------
+	// Deferred Rendering Enable
+	mCtrlDeferredEnable = getChild<LLCheckBoxCtrl>("RenderDeferred");
+
 	//============================================================================
 
 	// Object detail slider
@@ -411,6 +415,8 @@ void LLPanelDisplay::refresh()
 	
 	// lighting and terrain radios
 	mLightingDetail = gSavedSettings.getS32("RenderLightingDetail");
+	mRenderDeferred = gSavedSettings.getBOOL("RenderDeferred");
+	mCtrlDeferredEnable->setValue(mRenderDeferred);
 	mTerrainDetail =  gSavedSettings.getS32("RenderTerrainDetail");
 
 	// slider text boxes
@@ -499,6 +505,14 @@ void LLPanelDisplay::refreshEnabledState()
 		mRadioTerrainDetail->setEnabled(TRUE);
 	}
 
+	// Deferred rendering
+	BOOL enabled = shaders && gGLManager.mHasFramebufferObject &&
+				   gSavedSettings.getBOOL("RenderAvatarVP") &&
+				   LLFeatureManager::getInstance()->isFeatureAvailable("RenderDeferred") && 
+				   gSavedSettings.getBOOL("RenderAvatarVP") &&
+				   mCtrlWindLight->get();
+	mCtrlDeferredEnable->setEnabled(enabled);
+
 	// *HACK just checks to see if we can use shaders... 
 	// maybe some cards that use shaders, but don't support windlight
 //	mCtrlWindLight->setEnabled(mCtrlShaderEnable->getEnabled() && shaders);
@@ -535,6 +549,8 @@ void LLPanelDisplay::disableUnavailableSettings()
 
 		mCtrlAvatarCloth->setEnabled(FALSE);
 		mCtrlAvatarCloth->setValue(FALSE);
+
+		mCtrlDeferredEnable->setEnabled(false);
 	}
 
 	// disabled windlight
@@ -542,6 +558,8 @@ void LLPanelDisplay::disableUnavailableSettings()
 	{
 		mCtrlWindLight->setEnabled(FALSE);
 		mCtrlWindLight->setValue(FALSE);
+
+		mCtrlDeferredEnable->setEnabled(false);
 	}
 
 	// disabled reflections
@@ -559,6 +577,8 @@ void LLPanelDisplay::disableUnavailableSettings()
 
 		mCtrlAvatarCloth->setEnabled(FALSE);
 		mCtrlAvatarCloth->setValue(FALSE);
+
+		mCtrlDeferredEnable->setEnabled(false);
 	}
 	// disabled cloth
 	if(!LLFeatureManager::getInstance()->isFeatureAvailable("RenderAvatarCloth"))
@@ -571,6 +591,13 @@ void LLPanelDisplay::disableUnavailableSettings()
 	{
 		mCtrlAvatarImpostors->setEnabled(FALSE);
 		mCtrlAvatarImpostors->setValue(FALSE);
+	}
+
+	// disabled deferred rendering
+	if (!LLFeatureManager::getInstance()->isFeatureAvailable("RenderDeferred") ||
+		!gGLManager.mHasFramebufferObject)
+	{
+		mCtrlDeferredEnable->setEnabled(false);
 	}
 }
 
@@ -651,8 +678,9 @@ void LLPanelDisplay::setHiddenGraphicsState(bool isHidden)
 	mCtrlShaderEnable->setVisible(!isHidden);
 	mCtrlAvatarImpostors->setVisible(!isHidden);
 	mCtrlAvatarCloth->setVisible(!isHidden);
-	mRadioLightingDetail2->setVisible(!isHidden);
+	mCtrlDeferredEnable->setVisible(!isHidden);
 
+	mRadioLightingDetail2->setVisible(!isHidden);
 	mRadioTerrainDetail->setVisible(!isHidden);
 	mRadioReflectionDetail->setVisible(!isHidden);
 
@@ -695,6 +723,7 @@ void LLPanelDisplay::cancel()
 	gSavedSettings.setBOOL("RenderAvatarCloth", mAvatarCloth);
 
 	gSavedSettings.setS32("RenderLightingDetail", mLightingDetail);
+	gSavedSettings.setBOOL("RenderDeferred", mRenderDeferred);
 	gSavedSettings.setS32("RenderTerrainDetail", mTerrainDetail);
 
 	gSavedSettings.setF32("RenderFarClip", mRenderFarClip);
@@ -710,6 +739,7 @@ void LLPanelDisplay::cancel()
 
 void LLPanelDisplay::apply()
 {
+	gSavedSettings.setBOOL("RenderDeferred", childGetValue("RenderDeferred").asBoolean());
 	applyResolution();
 	
 	// Only set window size if we're not in fullscreen mode

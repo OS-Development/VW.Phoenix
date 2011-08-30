@@ -64,6 +64,7 @@
 #include "llhudmanager.h"
 #include "llinventorymodel.h"
 #include "llmenugl.h"
+#include "llmeshrepository.h"
 #include "llmutelist.h"
 #include "llstatusbar.h"
 #include "llsurface.h"
@@ -107,18 +108,13 @@ const F32 SILHOUETTE_UPDATE_THRESHOLD_SQUARED = 0.02f;
 const S32 MAX_ACTION_QUEUE_SIZE = 20;
 const S32 MAX_SILS_PER_FRAME = 50;
 const S32 MAX_OBJECTS_PER_PACKET = 254;
+const S32 TE_SELECT_MASK_ALL = 0xFFFFFFFF;
 
 //
 // Globals
 //
 
-BOOL gDebugSelectMgr = FALSE;
-
-BOOL gHideSelectedObjects = FALSE;
-BOOL gAllowSelectAvatar = FALSE;
-
 BOOL LLSelectMgr::sRectSelectInclusive = TRUE;
-BOOL LLSelectMgr::sRenderSelectionHighlights = TRUE;
 BOOL LLSelectMgr::sRenderHiddenSelections = TRUE;
 BOOL LLSelectMgr::sRenderLightRadius = FALSE;
 F32	LLSelectMgr::sHighlightThickness = 0.f;
@@ -186,6 +182,10 @@ LLObjectSelection *get_null_object_selection()
 // LLSelectMgr()
 //-----------------------------------------------------------------------------
 LLSelectMgr::LLSelectMgr()
+:	mHideSelectedObjects(LLCachedControl<bool>(gSavedSettings, "HideSelectedObjects", FALSE)),
+	mRenderHighlightSelections(LLCachedControl<bool>(gSavedSettings, "PhoenixRenderHighlightSelections", TRUE)),
+	mAllowSelectAvatar(LLCachedControl<bool>(gSavedSettings, "AllowSelectAvatar", FALSE)),
+	mDebugSelectMgr(LLCachedControl<bool>(gSavedSettings, "DebugSelectMgr", FALSE))
 {
 	mTEMode = FALSE;
 	mLastCameraPos.clearVec();
@@ -216,6 +216,9 @@ LLSelectMgr::LLSelectMgr()
 	mSelectedObjects = new LLObjectSelection();
 	mHoverObjects = new LLObjectSelection();
 	mHighlightedObjects = new LLObjectSelection();
+
+	mForceSelection = FALSE;
+	mShowSelection = FALSE;
 }
 
 
@@ -692,7 +695,7 @@ void LLSelectMgr::addAsFamily(std::vector<LLViewerObject*>& objects, BOOL add_to
 		
 		// Can't select yourself
 		if (objectp->mID == gAgentID
-			&& !gAllowSelectAvatar)
+			&& !LLSelectMgr::getInstance()->mAllowSelectAvatar)
 		{
 			continue;
 		}
@@ -789,47 +792,63 @@ void LLSelectMgr::addAsIndividual(LLViewerObject *objectp, S32 face, BOOL undoab
 
 LLObjectSelectionHandle LLSelectMgr::setHoverObject(LLViewerObject *objectp, S32 face)
 {
-	// Always blitz hover list when setting
-	mHoverObjects->deleteAllNodes();
-
 	if (!objectp)
 	{
+		mHoverObjects->deleteAllNodes();
 		return NULL;
 	}
 
 	// Can't select yourself
 	if (objectp->mID == gAgentID)
 	{
+		mHoverObjects->deleteAllNodes();
 		return NULL;
 	}
 
 	// Can't select land
 	if (objectp->getPCode() == LLViewerObject::LL_VO_SURFACE_PATCH)
 	{
+		mHoverObjects->deleteAllNodes();
 		return NULL;
 	}
 
-	// Collect all of the objects
-	std::vector<LLViewerObject*> objects;
-	objectp = objectp->getRootEdit();
-	objectp->addThisAndNonJointChildren(objects);
+	mHoverObjects->mPrimaryObject = objectp; 
 
-	for (std::vector<LLViewerObject*>::iterator iter = objects.begin();
-		 iter != objects.end(); ++iter)
+	objectp = objectp->getRootEdit();
+
+	// is the requested object the same as the existing hover object root?
+	// NOTE: there is only ever one linked set in mHoverObjects
+	if (mHoverObjects->getFirstRootObject() != objectp) 
 	{
-		LLViewerObject* cur_objectp = *iter;
-		LLSelectNode* nodep = new LLSelectNode(cur_objectp, FALSE);
-		nodep->selectTE(face, TRUE);
-		mHoverObjects->addNodeAtEnd(nodep);
+		// Collect all of the objects
+		std::vector<LLViewerObject*> objects;
+		objectp = objectp->getRootEdit();
+		objectp->addThisAndNonJointChildren(objects);
+
+		mHoverObjects->deleteAllNodes();
+		for (std::vector<LLViewerObject*>::iterator iter = objects.begin();
+			 iter != objects.end(); ++iter)
+		{
+			LLViewerObject* cur_objectp = *iter;
+			LLSelectNode* nodep = new LLSelectNode(cur_objectp, FALSE);
+			nodep->selectTE(face, TRUE);
+			mHoverObjects->addNodeAtEnd(nodep);
+		}
+
+		requestObjectPropertiesFamily(objectp);
 	}
 
-	requestObjectPropertiesFamily(objectp);
 	return mHoverObjects;
 }
 
 LLSelectNode *LLSelectMgr::getHoverNode()
 {
-	return getHoverObjects()->getFirstRootNode();
+	return mHoverObjects->getFirstRootNode();
+}
+
+LLSelectNode *LLSelectMgr::getPrimaryHoverNode()
+{
+	return mHoverObjects->mSelectNodeMap[mHoverObjects->mPrimaryObject];
 }
 
 void LLSelectMgr::highlightObjectOnly(LLViewerObject* objectp)
@@ -839,10 +858,12 @@ void LLSelectMgr::highlightObjectOnly(LLViewerObject* objectp)
 		return;
 	}
 
-	if ((objectp->getPCode() != LL_PCODE_VOLUME) &&
-		(objectp->getPCode() != LL_PCODE_LEGACY_TREE) &&
-		(objectp->getPCode() != LL_PCODE_LEGACY_GRASS))
-		
+	if (objectp->getPCode() != LL_PCODE_VOLUME
+#ifdef HIGHLIGHT_GRASS_AND_TREES	// Broken for now
+		&& objectp->getPCode() != LL_PCODE_LEGACY_TREE
+		&& objectp->getPCode() != LL_PCODE_LEGACY_GRASS
+#endif
+	   )
 	{
 		return;
 	}
@@ -891,9 +912,12 @@ void LLSelectMgr::highlightObjectAndFamily(const std::vector<LLViewerObject*>& o
 			continue;
 		}
 		
-		if ((object->getPCode() != LL_PCODE_VOLUME) &&
-			(object->getPCode() != LL_PCODE_LEGACY_TREE) &&
-			(object->getPCode() != LL_PCODE_LEGACY_GRASS))
+		if (object->getPCode() != LL_PCODE_VOLUME
+#ifdef HIGHLIGHT_GRASS_AND_TREES	// Broken for now
+			&& object->getPCode() != LL_PCODE_LEGACY_TREE
+			&& object->getPCode() != LL_PCODE_LEGACY_GRASS
+#endif
+		   )
 		{
 			continue;
 		}
@@ -918,9 +942,12 @@ void LLSelectMgr::unhighlightObjectOnly(LLViewerObject* objectp)
 		return;
 	}
 
-	if ((objectp->getPCode() != LL_PCODE_VOLUME) &&
-		(objectp->getPCode() != LL_PCODE_LEGACY_TREE) &&
-		(objectp->getPCode() != LL_PCODE_LEGACY_GRASS))
+	if (objectp->getPCode() != LL_PCODE_VOLUME
+#ifdef HIGHLIGHT_GRASS_AND_TREES	// Broken for now
+		&& objectp->getPCode() != LL_PCODE_LEGACY_TREE
+		&& objectp->getPCode() != LL_PCODE_LEGACY_GRASS
+#endif
+	   )
 	{
 		return;
 	}
@@ -1095,8 +1122,8 @@ void LLSelectMgr::getGrid(LLVector3& origin, LLQuaternion &rotation, LLVector3 &
 		mGridRotation = first_grid_object->getRenderRotation();
 		LLVector3 first_grid_obj_pos = first_grid_object->getRenderPosition();
 
-		LLVector3 min_extents(F32_MAX, F32_MAX, F32_MAX);
-		LLVector3 max_extents(-F32_MAX, -F32_MAX, -F32_MAX);
+		LLVector4a min_extents(F32_MAX);
+		LLVector4a max_extents(-F32_MAX);
 		BOOL grid_changed = FALSE;
 		for (LLObjectSelection::iterator iter = mGridObjects.begin();
 			 iter != mGridObjects.end(); ++iter)
@@ -1105,7 +1132,7 @@ void LLSelectMgr::getGrid(LLVector3& origin, LLQuaternion &rotation, LLVector3 &
 			LLDrawable* drawable = object->mDrawable;
 			if (drawable)
 			{
-				const LLVector3* ext = drawable->getSpatialExtents();
+				const LLVector4a* ext = drawable->getSpatialExtents();
 				update_min_max(min_extents, max_extents, ext[0]);
 				update_min_max(min_extents, max_extents, ext[1]);
 				grid_changed = TRUE;
@@ -1113,13 +1140,19 @@ void LLSelectMgr::getGrid(LLVector3& origin, LLQuaternion &rotation, LLVector3 &
 		}
 		if (grid_changed)
 		{
-			mGridOrigin = lerp(min_extents, max_extents, 0.5f);
+			LLVector4a center, size;
+			center.setAdd(min_extents, max_extents);
+			center.mul(0.5f);
+			size.setSub(max_extents, min_extents);
+			size.mul(0.5f);
+
+			mGridOrigin.set(center.getF32ptr());
 			LLDrawable* drawable = first_grid_object->mDrawable;
 			if (drawable && drawable->isActive())
 			{
 				mGridOrigin = mGridOrigin * first_grid_object->getRenderMatrix();
 			}
-			mGridScale = (max_extents - min_extents) * 0.5f;
+			mGridScale.set(size.getF32ptr());
 		}
 	}
 	else // GRID_MODE_WORLD or just plain default
@@ -1852,6 +1885,101 @@ BOOL LLSelectMgr::selectionGetGlow(F32 *glow)
 
 	*glow = lglow;
 	return identical;
+}
+
+void LLSelectMgr::selectionSetPhysicsType(U8 type)
+{
+	struct f : public LLSelectedObjectFunctor
+	{
+		U8 mType;
+		f(const U8& t) : mType(t) {}
+		virtual bool apply(LLViewerObject* object)
+		{
+			if (object->permModify())
+			{
+				object->setPhysicsShapeType(mType);
+				object->updateFlags();
+			}
+			return true;
+		}
+	} sendfunc(type);
+	getSelection()->applyToObjects(&sendfunc);
+}
+
+void LLSelectMgr::selectionSetFriction(F32 friction)
+{
+	struct f : public LLSelectedObjectFunctor
+	{
+		F32 mFriction;
+		f(const F32& friction) : mFriction(friction) {}
+		virtual bool apply(LLViewerObject* object)
+		{
+			if (object->permModify())
+			{
+				object->setPhysicsFriction(mFriction);
+				object->updateFlags();
+			}
+			return true;
+		}
+	} sendfunc(friction);
+	getSelection()->applyToObjects(&sendfunc);
+}
+
+void LLSelectMgr::selectionSetGravity(F32 gravity)
+{
+	struct f : public LLSelectedObjectFunctor
+	{
+		F32 mGravity;
+		f(const F32& gravity) : mGravity(gravity) {}
+		virtual bool apply(LLViewerObject* object)
+		{
+			if (object->permModify())
+			{
+				object->setPhysicsGravity(mGravity);
+				object->updateFlags();
+			}
+			return true;
+		}
+	} sendfunc(gravity);
+	getSelection()->applyToObjects(&sendfunc);
+}
+
+void LLSelectMgr::selectionSetDensity(F32 density)
+{
+	struct f : public LLSelectedObjectFunctor
+	{
+		F32 mDensity;
+		f(const F32& density) : mDensity(density) {}
+		virtual bool apply(LLViewerObject* object)
+		{
+			if (object->permModify())
+			{
+				object->setPhysicsDensity(mDensity);
+				object->updateFlags();
+			}
+			return true;
+		}
+	} sendfunc(density);
+	getSelection()->applyToObjects(&sendfunc);
+}
+
+void LLSelectMgr::selectionSetRestitution(F32 restitution)
+{
+	struct f : public LLSelectedObjectFunctor
+	{
+		F32 mRestitution;
+		f(const F32& restitution) : mRestitution(restitution) {}
+		virtual bool apply(LLViewerObject* object)
+		{
+			if (object->permModify())
+			{
+				object->setPhysicsRestitution(mRestitution);
+				object->updateFlags();
+			}
+			return true;
+		}
+	} sendfunc(restitution);
+	getSelection()->applyToObjects(&sendfunc);
 }
 
 //-----------------------------------------------------------------------------
@@ -3510,9 +3638,9 @@ void LLSelectMgr::deselectAllIfTooFar()
 
 		if (select_dist_sq > deselect_dist_sq)
 		{
-			if (gDebugSelectMgr)
+			if (mDebugSelectMgr)
 			{
-				llinfos << "Selection manager: auto-deselecting, select_dist = " << fsqrtf(select_dist_sq) << llendl;
+				llinfos << "Selection manager: auto-deselecting, select_dist = " << (F32)sqrt(select_dist_sq) << llendl;
 				llinfos << "agent pos global = " << gAgent.getPositionGlobal() << llendl;
 				llinfos << "selection pos global = " << selectionCenter << llendl;
 			}
@@ -3681,14 +3809,29 @@ void LLSelectMgr::sendDelink()
 		return;
 	}
 
+	struct f : public LLSelectedObjectFunctor
+	{ //on delink, any modifyable object should
+		f() {}
+
+		virtual bool apply(LLViewerObject* object)
+		{
+			if (object->permModify())
+			{
+				if (object->getPhysicsShapeType() == LLViewerObject::PHYSICS_SHAPE_NONE)
+				{
+					object->setPhysicsShapeType(LLViewerObject::PHYSICS_SHAPE_CONVEX_HULL);
+					object->updateFlags();
+				}
+			}
+			return true;
+		}
+	} sendfunc;
+	getSelection()->applyToObjects(&sendfunc);
+
 	// Delink needs to send individuals so you can unlink a single object from
 	// a linked set.
-	sendListToRegions(
-		"ObjectDelink",
-		packAgentAndSessionID,
-		packObjectLocalID,
-		NULL,
-		SEND_INDIVIDUALS);
+	sendListToRegions("ObjectDelink", packAgentAndSessionID, packObjectLocalID,
+					  NULL, SEND_INDIVIDUALS);
 }
 
 
@@ -4315,7 +4458,11 @@ void LLSelectMgr::requestObjectPropertiesFamily(LLViewerObject* object)
 	// Remember that we asked the properties of this object.
 	registerObjectPropertiesFamilyRequest(object->mID);
 
-	//llinfos << "Registered an ObjectPropertiesFamily request for object " << object->mID << llendl;
+	if (LLSelectMgr::getInstance()->mDebugSelectMgr)
+	{
+		llinfos << "LLSelectMgr::requestObjectPropertiesFamily(): Registered an ObjectPropertiesFamily request for object: "
+				<< object->mID << llendl;
+	}
 
 	LLMessageSystem* msg = gMessageSystem;
 
@@ -4394,7 +4541,7 @@ void LLSelectMgr::processObjectProperties(LLMessageSystem* msg, void** user_data
 		msg->getStringFast(_PREHASH_ObjectData, _PREHASH_SitName, sit_name, i);
 
 		//unpack TE IDs
-		std::vector<LLUUID> texture_ids;
+		uuid_vec_t texture_ids;
 		S32 size = msg->getSizeFast(_PREHASH_ObjectData, i, _PREHASH_TextureID);
 		if (size > 0)
 		{
@@ -4516,7 +4663,11 @@ void LLSelectMgr::processObjectPropertiesFamily(LLMessageSystem* msg, void** use
 	}
 	// We got the reply, so remove the object from the list of pending requests
 	sObjectPropertiesFamilyRequests.erase(id);
-	//llinfos << "Got ObjectPropertiesFamily reply for object " << id << llendl;
+	if (LLSelectMgr::getInstance()->mDebugSelectMgr)
+	{
+		llinfos << "LLSelectMgr::processObjectPropertiesFamily(): Got ObjectPropertiesFamily reply for object: "
+				<< id << llendl;
+	}
 
 	U32 request_flags;
 	LLUUID creator_id;
@@ -4576,7 +4727,7 @@ void LLSelectMgr::processObjectPropertiesFamily(LLMessageSystem* msg, void** use
 			return (node->getObject() && node->getObject()->mID == mID);
 		}
 	} func(id);
-	LLSelectNode* node = LLSelectMgr::getInstance()->getHoverObjects()->getFirstNode(&func);
+	LLSelectNode* node = LLSelectMgr::getInstance()->mHoverObjects->getFirstNode(&func);
 
 	if (node)
 	{
@@ -4630,6 +4781,7 @@ void LLSelectMgr::processForceObjectSelect(LLMessageSystem* msg, void**)
 	// Don't select, just highlight
 	LLSelectMgr::getInstance()->highlightObjectAndFamily(objects);
 }
+
 //Banana:KC - I'll just put this back so it will work again
 void LLSelectMgr::enableSilhouette(BOOL enable)
 {
@@ -4928,14 +5080,15 @@ void LLSelectMgr::updateSelectionSilhouette(LLObjectSelectionHandle object_handl
 		}
 	}
 }
+
 void LLSelectMgr::renderSilhouettes(BOOL for_hud)
 {
-	if (!mRenderSilhouettes || !LLSelectMgr::sRenderSelectionHighlights)
+	if (!mRenderSilhouettes || !mRenderHighlightSelections)
 	{
 		return;
 	}
 
-	gGL.getTexUnit(0)->bind(mSilhouetteImagep.get());
+	gGL.getTexUnit(0)->bind(mSilhouetteImagep);
 	LLGLSPipelineSelection gls_select;
 	gGL.setAlphaRejectSettings(LLRender::CF_GREATER, 0.f);
 	LLGLEnable blend(GL_BLEND);
@@ -4950,13 +5103,13 @@ void LLSelectMgr::renderSilhouettes(BOOL for_hud)
 
 		// set up transform to encompass bounding box of HUD
 		glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
+		gGL.pushMatrix();
 		glLoadIdentity();
 		F32 depth = llmax(1.f, hud_bbox.getExtentLocal().mV[VX] * 1.1f);
 		glOrtho(-0.5f * LLViewerCamera::getInstance()->getAspect(), 0.5f * LLViewerCamera::getInstance()->getAspect(), -0.5f, 0.5f, 0.f, depth);
 
 		glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
+		gGL.pushMatrix();
 		glLoadIdentity();
 		glLoadMatrixf(OGL_TO_CFR_ROTATION);		// Load Cory's favorite reference frame
 		glTranslatef(-hud_bbox.getCenterLocal().mV[VX] + (depth *0.5f), 0.f, 0.f);
@@ -5040,10 +5193,10 @@ void LLSelectMgr::renderSilhouettes(BOOL for_hud)
 	if (for_hud && avatar)
 	{
 		glMatrixMode(GL_PROJECTION);
-		glPopMatrix();
+		gGL.popMatrix();
 
 		glMatrixMode(GL_MODELVIEW);
-		glPopMatrix();
+		gGL.popMatrix();
 		stop_glerror();
 	}
 
@@ -5059,6 +5212,7 @@ void LLSelectMgr::generateSilhouette(LLSelectNode* nodep, const LLVector3& view_
 	{
 		((LLVOVolume*)objectp)->generateSilhouette(nodep, view_point);
 	}
+#ifdef HIGHLIGHT_GRASS_AND_TREES	// Broken for now
 	else if (objectp && objectp->getPCode() == LL_PCODE_LEGACY_GRASS)
 	{
 		((LLVOGrass*)objectp)->generateSilhouette(nodep, view_point);
@@ -5067,6 +5221,7 @@ void LLSelectMgr::generateSilhouette(LLSelectNode* nodep, const LLVector3& view_
 	{
 		((LLVOTree*)objectp)->generateSilhouette(nodep, view_point);
 	}
+#endif
 }
 
 //
@@ -5110,6 +5265,7 @@ LLSelectNode::LLSelectNode(const LLSelectNode& nodep)
 	mName = nodep.mName;
 	mDescription = nodep.mDescription;
 	mCategory = nodep.mCategory;
+	mInventorySerial = 0;
 	mSavedPositionLocal = nodep.mSavedPositionLocal;
 	mSavedPositionGlobal = nodep.mSavedPositionGlobal;
 	mSavedScale = nodep.mSavedScale;
@@ -5126,7 +5282,6 @@ LLSelectNode::LLSelectNode(const LLSelectNode& nodep)
 
 	mSilhouetteVertices = nodep.mSilhouetteVertices;
 	mSilhouetteNormals = nodep.mSilhouetteNormals;
-	mSilhouetteSegments = nodep.mSilhouetteSegments;
 	mSilhouetteExists = nodep.mSilhouetteExists;
 	mObject = nodep.mObject;
 
@@ -5148,7 +5303,7 @@ LLSelectNode::~LLSelectNode()
 
 void LLSelectNode::selectAllTEs(BOOL b)
 {
-	mTESelectMask = b ? 0xFFFFFFFF : 0x0;
+	mTESelectMask = b ? TE_SELECT_MASK_ALL : 0x0;
 	mLastTESelected = 0;
 }
 
@@ -5158,13 +5313,14 @@ void LLSelectNode::selectTE(S32 te_index, BOOL selected)
 	{
 		return;
 	}
+	S32 mask = 0x1 << te_index;
 	if (selected)
 	{
-		mTESelectMask |= (0x1 << te_index);
+		mTESelectMask |= mask;
 	}
 	else
 	{
-		mTESelectMask &= ~(0x1 << te_index);
+		mTESelectMask &= ~mask;
 	}
 	mLastTESelected = te_index;
 }
@@ -5218,13 +5374,13 @@ void LLSelectNode::saveColors()
 	}
 }
 
-void LLSelectNode::saveTextures(const std::vector<LLUUID>& textures)
+void LLSelectNode::saveTextures(const uuid_vec_t& textures)
 {
 	if (mObject.notNull())
 	{
 		mSavedTextures.clear();
 
-		for (std::vector<LLUUID>::const_iterator texture_it = textures.begin();
+		for (uuid_vec_t::const_iterator texture_it = textures.begin();
 			 texture_it != textures.end(); ++texture_it)
 		{
 			mSavedTextures.push_back(*texture_it);
@@ -5359,6 +5515,111 @@ BOOL LLSelectNode::allowOperationOnNode(PermissionBit op, U64 group_proxy_power)
 	return (mPermissions->allowOperationBy(op, proxy_agent_id, group_id));
 }
 
+//helper function for pushing relevant vertices from drawable to GL
+void pushWireframe(LLDrawable* drawable)
+{
+	if (drawable->isState(LLDrawable::RIGGED))
+	{	//render straight from rigged volume if this is a rigged attachment
+		LLVOVolume* vobj = drawable->getVOVolume();
+		if (vobj)
+		{
+			vobj->updateRiggedVolume();
+			LLRiggedVolume* rigged_volume = vobj->getRiggedVolume();
+			if (rigged_volume)
+			{
+				LLVertexBuffer::unbind();
+				gGL.pushMatrix();
+				glMultMatrixf((F32*) vobj->getRelativeXform().mMatrix);
+				for (S32 i = 0; i < rigged_volume->getNumVolumeFaces(); ++i)
+				{
+					const LLVolumeFace& face = rigged_volume->getVolumeFace(i);
+					glVertexPointer(3, GL_FLOAT, 16, face.mPositions);
+					glDrawElements(GL_TRIANGLES, face.mNumIndices, GL_UNSIGNED_SHORT, face.mIndices);
+				}
+				gGL.popMatrix();
+			}
+		}
+	}
+	else
+	{
+		for (S32 i = 0; i < drawable->getNumFaces(); ++i)
+		{
+			LLFace* face = drawable->getFace(i);
+			if (face->verify())
+			{
+				pushVerts(face, LLVertexBuffer::MAP_VERTEX);
+			}
+		}
+	}
+}
+
+void LLSelectNode::renderOneWireframe(const LLColor4& color)
+{
+	LLViewerObject* objectp = getObject();
+	if (!objectp)
+	{
+		return;
+	}
+
+	LLDrawable* drawable = objectp->mDrawable;
+	if (!drawable)
+	{
+		return;
+	}
+
+	glMatrixMode(GL_MODELVIEW);
+	gGL.pushMatrix();
+
+	BOOL is_hud_object = objectp->isHUDAttachment();
+
+	if (drawable->isActive())
+	{
+		glLoadMatrixd(gGLModelView);
+		glMultMatrixf((F32*) objectp->getRenderMatrix().mMatrix);
+	}
+	else if (!is_hud_object)
+	{
+		glLoadIdentity();
+		glMultMatrixd(gGLModelView);
+		LLVector3 trans = objectp->getRegion()->getOriginAgent();
+		glTranslatef(trans.mV[0], trans.mV[1], trans.mV[2]);
+	}
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	if (LLSelectMgr::sRenderHiddenSelections) // && gFloaterTools && gFloaterTools->getVisible())
+	{
+		gGL.blendFunc(LLRender::BF_SOURCE_COLOR, LLRender::BF_ONE);
+		LLGLEnable fog(GL_FOG);
+		glFogi(GL_FOG_MODE, GL_LINEAR);
+		LLViewerCamera* camera = LLViewerCamera::getInstance();
+		float d = (camera->getPointOfInterest()-camera->getOrigin()).magVec();
+		LLColor4 fogCol = color * (F32)llclamp((LLSelectMgr::getInstance()->getSelectionCenterGlobal()-gAgent.getCameraPositionGlobal()).magVec()/(LLSelectMgr::getInstance()->getBBoxOfSelection().getExtentLocal().magVec()*4), 0.0, 1.0);
+		glFogf(GL_FOG_START, d);
+		glFogf(GL_FOG_END, d*(1 + (camera->getView() / camera->getDefaultFOV())));
+		glFogfv(GL_FOG_COLOR, fogCol.mV);
+
+		LLGLDepthTest gls_depth(GL_TRUE, GL_FALSE, GL_GEQUAL);
+		gGL.setAlphaRejectSettings(LLRender::CF_DEFAULT);
+		{
+			glColor4f(color.mV[VRED], color.mV[VGREEN], color.mV[VBLUE], 0.4f);
+			pushWireframe(drawable);
+		}
+	}
+
+	gGL.flush();
+	gGL.setSceneBlendType(LLRender::BT_ALPHA);
+
+	glColor4f(color.mV[VRED]*2, color.mV[VGREEN]*2, color.mV[VBLUE]*2, LLSelectMgr::sHighlightAlpha*2);
+	LLGLEnable offset(GL_POLYGON_OFFSET_LINE);
+	glPolygonOffset(3.f, 3.f);
+	glLineWidth(3.f);
+	pushWireframe(drawable);
+	glLineWidth(1.f);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	gGL.popMatrix();
+}
+
 //-----------------------------------------------------------------------------
 // renderOneSilhouette()
 //-----------------------------------------------------------------------------
@@ -5376,6 +5637,13 @@ void LLSelectNode::renderOneSilhouette(const LLColor4 &color)
 		return;
 	}
 
+	LLVOVolume* vobj = drawable->getVOVolume();
+	if (vobj && vobj->isMesh())
+	{
+		renderOneWireframe(color);
+		return;
+	}
+
 	if (!mSilhouetteExists)
 	{
 		return;
@@ -5389,7 +5657,8 @@ void LLSelectNode::renderOneSilhouette(const LLColor4 &color)
 	}
 
 	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
+	gGL.pushMatrix();
+
 	if (!is_hud_object)
 	{
 		glLoadIdentity();
@@ -5404,8 +5673,10 @@ void LLSelectNode::renderOneSilhouette(const LLColor4 &color)
 
 	LLViewerCamera* camera = LLViewerCamera::getInstance();
 
-	// we used to only call this for volumes.  but let's render silhouettes for any node that has them.
-	if (1)
+#ifndef HIGHLIGHT_GRASS_AND_TREES	// Broken for now
+	LLVolume *volume = objectp->getVolume();
+	if (volume)
+#endif
 	{
 		F32 silhouette_thickness;
 		if (is_hud_object && gAgent.getAvatarObject())
@@ -5439,17 +5710,16 @@ void LLSelectNode::renderOneSilhouette(const LLColor4 &color)
 			gGL.setAlphaRejectSettings(LLRender::CF_DEFAULT);
 			gGL.begin(LLRender::LINES);
 			{
-				S32 i = 0;
-				for (S32 seg_num = 0; seg_num < (S32)mSilhouetteSegments.size(); seg_num++)
+				for (S32 i = 0; i < mSilhouetteVertices.size(); i += 2)
 				{
-					for(; i < mSilhouetteSegments[seg_num]; i++)
-					{
-						u_coord += u_divisor * LLSelectMgr::sHighlightUScale;
+					u_coord += u_divisor * LLSelectMgr::sHighlightUScale;
+					gGL.color4f(color.mV[VRED], color.mV[VGREEN], color.mV[VBLUE], 0.4f);
+					gGL.texCoord2f( u_coord, v_coord );
+					gGL.vertex3fv( mSilhouetteVertices[i].mV );
 
-						gGL.color4f(color.mV[VRED], color.mV[VGREEN], color.mV[VBLUE], 0.4f);
-						gGL.texCoord2f( u_coord, v_coord );
-						gGL.vertex3fv( mSilhouetteVertices[i].mV );
-					}
+					u_coord += u_divisor * LLSelectMgr::sHighlightUScale;
+					gGL.texCoord2f(u_coord, v_coord);
+					gGL.vertex3fv(mSilhouetteVertices[i+1].mV);
 				}
 			}
             gGL.end();
@@ -5460,57 +5730,56 @@ void LLSelectNode::renderOneSilhouette(const LLColor4 &color)
 		gGL.setSceneBlendType(LLRender::BT_ALPHA);
 		gGL.begin(LLRender::TRIANGLES);
 		{
-			S32 i = 0;
-			for (S32 seg_num = 0; seg_num < (S32)mSilhouetteSegments.size(); seg_num++)
+			for (S32 i = 0; i < mSilhouetteVertices.size(); i += 2)
 			{
-				S32 first_i = i;
-				LLVector3 v;
-				LLVector2 t;
-
-				for(; i < mSilhouetteSegments[seg_num]; i++)
-				{
-
-					if (i == first_i) {
-					    LLVector3 vert = (mSilhouetteNormals[i]) * silhouette_thickness;
-						vert += mSilhouetteVertices[i];
-
-						gGL.color4f(color.mV[VRED], color.mV[VGREEN], color.mV[VBLUE], 0.0f); //LLSelectMgr::sHighlightAlpha);
-						gGL.texCoord2f( u_coord, v_coord + LLSelectMgr::sHighlightVScale );
-						gGL.vertex3fv( vert.mV ); 
-						
-						u_coord += u_divisor * LLSelectMgr::sHighlightUScale;
-
-						gGL.color4f(color.mV[VRED]*2, color.mV[VGREEN]*2, color.mV[VBLUE]*2, LLSelectMgr::sHighlightAlpha*2);
-						gGL.texCoord2f( u_coord, v_coord );
-						gGL.vertex3fv( mSilhouetteVertices[i].mV );
-
-						v = mSilhouetteVertices[i];
-						t = LLVector2(u_coord, v_coord);
-					}
-					else {
-                        LLVector3 vert = (mSilhouetteNormals[i]) * silhouette_thickness;
-						vert += mSilhouetteVertices[i];
-
-						gGL.color4f(color.mV[VRED], color.mV[VGREEN], color.mV[VBLUE], 0.0f); //LLSelectMgr::sHighlightAlpha);
-						gGL.texCoord2f( u_coord, v_coord + LLSelectMgr::sHighlightVScale );
-						gGL.vertex3fv( vert.mV ); 
-						gGL.vertex3fv( vert.mV ); 
-						
-						gGL.texCoord2fv(t.mV);
-						u_coord += u_divisor * LLSelectMgr::sHighlightUScale;
-						gGL.color4f(color.mV[VRED]*2, color.mV[VGREEN]*2, color.mV[VBLUE]*2, LLSelectMgr::sHighlightAlpha*2);
-						gGL.vertex3fv(v.mV);
-						gGL.texCoord2f( u_coord, v_coord );
-						gGL.vertex3fv( mSilhouetteVertices[i].mV );
-
-					}
+				if (!mSilhouetteNormals[i].isFinite() ||
+					!mSilhouetteNormals[i+1].isFinite())
+				{ //skip skewed segments
+					continue;
 				}
+
+				LLVector3 v[4];
+				LLVector2 tc[4];
+				v[0] = mSilhouetteVertices[i] + (mSilhouetteNormals[i] * silhouette_thickness);
+				tc[0].set(u_coord, v_coord + LLSelectMgr::sHighlightVScale);
+
+				v[1] = mSilhouetteVertices[i];
+				tc[1].set(u_coord, v_coord);
+						
+				u_coord += u_divisor * LLSelectMgr::sHighlightUScale;
+
+				v[2] = mSilhouetteVertices[i+1] + (mSilhouetteNormals[i+1] * silhouette_thickness);
+				tc[2].set(u_coord, v_coord + LLSelectMgr::sHighlightVScale);
+
+				v[3] = mSilhouetteVertices[i+1];
+				tc[3].set(u_coord,v_coord);
+
+				gGL.color4f(color.mV[VRED], color.mV[VGREEN], color.mV[VBLUE], 0.0f); //LLSelectMgr::sHighlightAlpha);
+				gGL.texCoord2fv(tc[0].mV);
+				gGL.vertex3fv(v[0].mV); 
+						
+				gGL.color4f(color.mV[VRED]*2, color.mV[VGREEN]*2, color.mV[VBLUE]*2, LLSelectMgr::sHighlightAlpha*2);
+				gGL.texCoord2fv(tc[1].mV);
+				gGL.vertex3fv(v[1].mV);
+
+				gGL.color4f(color.mV[VRED], color.mV[VGREEN], color.mV[VBLUE], 0.0f); //LLSelectMgr::sHighlightAlpha);
+				gGL.texCoord2fv(tc[2].mV);
+				gGL.vertex3fv(v[2].mV);
+
+				gGL.vertex3fv(v[2].mV);
+
+				gGL.color4f(color.mV[VRED]*2, color.mV[VGREEN]*2, color.mV[VBLUE]*2, LLSelectMgr::sHighlightAlpha*2);
+				gGL.texCoord2fv(tc[1].mV);
+				gGL.vertex3fv(v[1].mV);
+
+				gGL.texCoord2fv(tc[3].mV);
+				gGL.vertex3fv(v[3].mV);
 			}
 		}
 		gGL.end();
 		gGL.flush();
 	}
-	glPopMatrix();
+	gGL.popMatrix();
 }
 
 //
@@ -5626,6 +5895,10 @@ void LLSelectMgr::updateSelectionCenter()
 		LLVector3d select_center;
 		// keep a list of jointed objects for showing the joint HUDEffects
 
+		// Initialize the bounding box to the root prim, so the BBox orientation
+		// matches the root prim's (affecting the orientation of the manipulators).
+		bbox.addBBoxAgent((mSelectedObjects->getFirstRootObject(TRUE))->getBoundingBoxAgent());
+
 		std::vector < LLViewerObject *> jointed_objects;
 
 		for (LLObjectSelection::iterator iter = mSelectedObjects->begin();
@@ -5658,7 +5931,7 @@ void LLSelectMgr::updateSelectionCenter()
 
 	}
 	
-	if ( !(gAgentID == LLUUID::null)) 
+	if (gAgentID != LLUUID::null)
 	{
 		LLTool		*tool = LLToolMgr::getInstance()->getCurrentTool();
 		if (mShowSelection)
@@ -6021,6 +6294,148 @@ S32 LLObjectSelection::getObjectCount()
 	return count;
 }
 
+F32 LLObjectSelection::getSelectedObjectCost()
+{
+	cleanupNodes();
+	F32 cost = 0.f;
+
+	for (list_t::iterator iter = mList.begin(); iter != mList.end(); ++iter)
+	{
+		LLSelectNode* node = *iter;
+		LLViewerObject* object = node->getObject();
+
+		if (object)
+		{
+			cost += object->getObjectCost();
+		}
+	}
+
+	return cost;
+}
+
+F32 LLObjectSelection::getSelectedLinksetCost()
+{
+	cleanupNodes();
+	F32 cost = 0.f;
+
+	std::set<LLViewerObject*> me_roots;
+
+	for (list_t::iterator iter = mList.begin(); iter != mList.end(); ++iter)
+	{
+		LLSelectNode* node = *iter;
+		LLViewerObject* object = node->getObject();
+
+		if (object)
+		{
+			LLViewerObject* root = static_cast<LLViewerObject*>(object->getRoot());
+			if (root)
+			{
+				if (me_roots.find(root) == me_roots.end())
+				{
+					me_roots.insert(root);
+					cost += root->getLinksetCost();
+				}
+			}
+		}
+	}
+
+	return cost;
+}
+
+F32 LLObjectSelection::getSelectedPhysicsCost()
+{
+	cleanupNodes();
+	F32 cost = 0.f;
+
+	for (list_t::iterator iter = mList.begin(); iter != mList.end(); ++iter)
+	{
+		LLSelectNode* node = *iter;
+		LLViewerObject* object = node->getObject();
+
+		if (object)
+		{
+			cost += object->getPhysicsCost();
+		}
+	}
+
+	return cost;
+}
+
+F32 LLObjectSelection::getSelectedLinksetPhysicsCost()
+{
+	cleanupNodes();
+	F32 cost = 0.f;
+
+	std::set<LLViewerObject*> me_roots;
+
+	for (list_t::iterator iter = mList.begin(); iter != mList.end(); ++iter)
+	{
+		LLSelectNode* node = *iter;
+		LLViewerObject* object = node->getObject();
+
+		if (object)
+		{
+			LLViewerObject* root = static_cast<LLViewerObject*>(object->getRoot());
+			if (root)
+			{
+				if (me_roots.find(root) == me_roots.end())
+				{
+					me_roots.insert(root);
+					cost += root->getLinksetPhysicsCost();
+				}
+			}
+		}
+	}
+
+	return cost;
+}
+
+F32 LLObjectSelection::getSelectedObjectStreamingCost(S32* total_bytes, S32* visible_bytes)
+{
+	F32 cost = 0.f;
+	for (list_t::iterator iter = mList.begin(); iter != mList.end(); ++iter)
+	{
+		LLSelectNode* node = *iter;
+		LLViewerObject* object = node->getObject();
+
+		if (object)
+		{
+			S32 bytes = 0;
+			S32 visible = 0;
+			cost += object->getStreamingCost(&bytes, &visible);
+
+			if (total_bytes)
+			{
+				*total_bytes += bytes;
+			}
+
+			if (visible_bytes)
+			{
+				*visible_bytes += visible;
+			}
+		}
+	}
+
+	return cost;
+}
+
+U32 LLObjectSelection::getSelectedObjectTriangleCount()
+{
+	U32 count = 0;
+	for (list_t::iterator iter = mList.begin(); iter != mList.end(); ++iter)
+	{
+		LLSelectNode* node = *iter;
+		LLViewerObject* object = node->getObject();
+
+		if (object)
+		{
+			count += object->getTriangleCount();
+		}
+	}
+
+	return count;
+}
+
 
 //-----------------------------------------------------------------------------
 // getTECount()
@@ -6173,8 +6588,14 @@ BOOL LLObjectSelection::contains(LLViewerObject* object, S32 te)
 			LLSelectNode* nodep = *iter;
 			if (nodep->getObject() == object)
 			{
+				// Optimization
+				if (nodep->getTESelectMask() == TE_SELECT_MASK_ALL)
+				{
+					return TRUE;
+				}
+
 				BOOL all_selected = TRUE;
-				for (S32 i = 0; i < SELECT_MAX_TES; i++)
+				for (S32 i = 0; i < object->getNumTEs(); i++)
 				{
 					all_selected = all_selected && nodep->isTESelected(i);
 				}
@@ -6412,7 +6833,7 @@ bool LLSelectMgr::selectionMove(const LLVector3& displ,
 	if (update_position)
 	{
 		// calculate the distance of the object closest to the camera origin
-		F32 min_dist = 1e+30f;
+		F32 min_dist = F32_MAX; // value will be overridden in the loop
 		LLVector3 obj_pos;
 		for (LLObjectSelection::root_iterator it = getSelection()->root_begin();
 			 it != getSelection()->root_end(); ++it)

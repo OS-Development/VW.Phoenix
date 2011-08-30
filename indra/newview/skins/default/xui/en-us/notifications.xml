@@ -7101,6 +7101,10 @@ The URL you clicked cannot be opened from this web browser.
     If you continue to have problems, please visit: http://www.phoenixviewer.com/
   </global>
 
+  <global name="UnsupportedCPUSSE2">
+Your CPU speed does not meet the minimum requirements (missing SSE2 support).
+  </global>
+
   <global name="UnsupportedCPUAmount">
 796
   </global>

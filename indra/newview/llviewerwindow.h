@@ -284,8 +284,7 @@ public:
 	typedef enum e_snapshot_type
 	{
 		SNAPSHOT_TYPE_COLOR,
-		SNAPSHOT_TYPE_DEPTH,
-		SNAPSHOT_TYPE_OBJECT_ID
+		SNAPSHOT_TYPE_DEPTH
 	} ESnapshotType;
 	BOOL			saveSnapshot(const std::string&  filename, S32 image_width, S32 image_height, BOOL show_ui = TRUE, BOOL do_rebuild = FALSE, ESnapshotType type = SNAPSHOT_TYPE_COLOR);
 	BOOL			rawSnapshot(LLImageRaw *raw, S32 image_width, S32 image_height, BOOL keep_window_aspect = TRUE, BOOL is_texture = FALSE,
@@ -322,7 +321,9 @@ public:
 									LLVector3 *intersection = NULL,
 									LLVector2 *uv = NULL,
 									LLVector3 *normal = NULL,
-									LLVector3 *binormal = NULL);
+									LLVector3 *binormal = NULL,
+									LLVector3* start = NULL,
+									LLVector3* end = NULL);
 	
 	
 	// Returns a pointer to the last object hit
@@ -469,13 +470,14 @@ extern LLFrameTimer		gAwayTriggerTimer;		// how long the avatar has been away
 
 extern BOOL				gDebugSelect;
 
-extern BOOL				gDebugFastUIRender;
 extern LLViewerObject*  gDebugRaycastObject;
 extern LLVector3        gDebugRaycastIntersection;
 extern LLVector2        gDebugRaycastTexCoord;
 extern LLVector3        gDebugRaycastNormal;
 extern LLVector3        gDebugRaycastBinormal;
 extern S32				gDebugRaycastFaceHit;
+extern LLVector3		gDebugRaycastStart;
+extern LLVector3		gDebugRaycastEnd;
 
 extern S32 CHAT_BAR_HEIGHT; 
 

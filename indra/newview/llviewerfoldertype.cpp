@@ -127,13 +127,13 @@ LLViewerFolderDictionary::LLViewerFolderDictionary()
 	addEntry(LLFolderType::FT_LOST_AND_FOUND, 		new ViewerFolderEntry("Lost And Found",	   		"Inv_LostOpen",					"Inv_LostClosed",				TRUE));
 	addEntry(LLFolderType::FT_ANIMATION, 			new ViewerFolderEntry("Animations",				"Inv_AnimationsOpen",			"Inv_AnimationsClosed",			FALSE));
 	addEntry(LLFolderType::FT_GESTURE, 				new ViewerFolderEntry("Gestures",				"Inv_GesturesOpen",				"Inv_GesturesClosed",			FALSE));
+	addEntry(LLFolderType::FT_MESH, 				new ViewerFolderEntry("Meshes",					"Inv_MeshOpen",					"Inv_MeshClosed",				FALSE));
 	addEntry(LLFolderType::FT_NONE, 				new ViewerFolderEntry("New Folder",				"Inv_FolderOpen",				"Inv_FolderClosed",				FALSE,	"default"));
 
 	addEntry(LLFolderType::FT_FAVORITE, 			new ViewerFolderEntry("Favorites",				"Inv_FavoritesOpen",			"Inv_FavoritesClosed",			FALSE));
 	addEntry(LLFolderType::FT_CURRENT_OUTFIT, 		new ViewerFolderEntry("Current Outfit",			"Inv_LookFolderOpen",			"Inv_LookFolderClosed",			TRUE));
 	addEntry(LLFolderType::FT_OUTFIT, 				new ViewerFolderEntry("New Outfit",				"Inv_LookFolderOpen",			"Inv_LookFolderClosed",			TRUE));
 	addEntry(LLFolderType::FT_MY_OUTFITS, 			new ViewerFolderEntry("My Outfits",				"Inv_LookFolderOpen",			"Inv_LookFolderClosed",			TRUE));
-	addEntry(LLFolderType::FT_MESH, 				new ViewerFolderEntry("Meshes",					"Inv_MeshOpen",					"Inv_MeshClosed",				FALSE));
 	addEntry(LLFolderType::FT_INBOX, 				new ViewerFolderEntry("Inbox",					"Inv_InboxOpen",				"Inv_InboxClosed",				FALSE));
 
 #if SUPPORT_ENSEMBLES

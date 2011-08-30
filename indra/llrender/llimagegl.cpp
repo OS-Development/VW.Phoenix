@@ -998,6 +998,7 @@ void LLImageGL::setManualImage(U32 target, S32 miplevel, S32 intformat, S32 widt
 //the texture is assiciate with some image by calling glTexImage outside LLImageGL
 BOOL LLImageGL::createGLTexture()
 {
+	if (gNoRender) return FALSE;
 	if (gGLManager.mIsDisabled)
 	{
 		llwarns << "Trying to create a texture while GL is disabled!" << llendl;
@@ -1026,6 +1027,7 @@ BOOL LLImageGL::createGLTexture()
 
 BOOL LLImageGL::createGLTexture(S32 discard_level, const LLImageRaw* imageraw, S32 usename/*=0*/, BOOL to_create, S32 category)
 {
+	if (gNoRender) return FALSE;
 	if (gGLManager.mIsDisabled)
 	{
 		llwarns << "Trying to create a texture while GL is disabled!" << llendl;
@@ -1310,7 +1312,6 @@ void LLImageGL::deleteDeadTextures()
 	{
 		GLuint tex = sDeadTextureList.front();
 		sDeadTextureList.pop_front();
-
 		for (int i = 0; i < gGLManager.mNumTextureUnits; i++)
 		{
 			if (sCurrentBoundTextures[i] == tex)
@@ -1646,6 +1647,7 @@ void LLImageGL::analyzeAlpha(const void* data_in, U32 w, U32 h)
 	{
 		upperhalftotal += sample[i];
 	}
+
 	if (midrangetotal > length/16 || // lots of midrange, or
 	    (lowerhalftotal == length && alphatotal != 0) || // all close to transparent but not all totally transparent, or
 	    (upperhalftotal == length && alphatotal != 255*length)) // all close to opaque but not all totally opaque

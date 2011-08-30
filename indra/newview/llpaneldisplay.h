@@ -110,6 +110,7 @@ protected:
 	LLCheckBoxCtrl	*mCtrlWindLight;
 	LLCheckBoxCtrl	*mCtrlAvatarVP;
 	LLCheckBoxCtrl	*mCtrlShaderEnable;
+	LLCheckBoxCtrl	*mCtrlDeferredEnable;
 	LLCheckBoxCtrl	*mCtrlAvatarImpostors;
 	LLCheckBoxCtrl	*mCtrlAvatarCloth;
 	LLRadioGroup	*mRadioLightingDetail2;
@@ -149,6 +150,7 @@ protected:
 
 	BOOL mBumpShiny;
 	BOOL mShaderEnable;
+	BOOL mRenderDeferred;
 	BOOL mWindLight;
 	BOOL mReflections;
 	BOOL mAvatarVP;

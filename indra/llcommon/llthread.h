@@ -42,8 +42,17 @@ class LLThread;
 class LLMutex;
 class LLCondition;
 
+#if LL_WINDOWS
+#define ll_thread_local __declspec(thread)
+#else
+#define ll_thread_local __thread
+#endif
+
 class LL_COMMON_API LLThread
 {
+private:
+	static U32 sIDIter;
+
 public:
 	typedef enum e_thread_status
 	{
@@ -84,6 +93,8 @@ public:
 	apr_pool_t *getAPRPool() { return mAPRPoolp; }
 	LLVolatileAPRPool* getLocalAPRFilePool() { return mLocalAPRFilePoolp ; }
 
+	U32 getID() const { return mID; }
+
 private:
 	BOOL				mPaused;
 	
@@ -98,6 +109,7 @@ protected:
 	apr_pool_t			*mAPRPoolp;
 	BOOL				mIsLocalPool;
 	EThreadStatus		mStatus;
+	U32					mID;
 
 	//a local apr_pool for APRFile operations in this thread. If it exists, LLAPRFile::sAPRFilePoolp should not be used.
 	//Note: this pool is used by APRFile ONLY, do NOT use it for any other purposes.
@@ -130,23 +142,35 @@ protected:
 
 //============================================================================
 
+#define MUTEX_DEBUG (LL_DEBUG || LL_RELEASE_WITH_DEBUG_INFO)
+
 class LL_COMMON_API LLMutex
 {
 public:
-	LLMutex(apr_pool_t *apr_poolp); // NULL pool constructs a new pool for the mutex
-	~LLMutex();
+	typedef enum
+	{
+		NO_THREAD = 0xFFFFFFFF
+	} e_locking_thread;
 	
-	void lock() { apr_thread_mutex_lock(mAPRMutexp); }
-	void unlock() { apr_thread_mutex_unlock(mAPRMutexp); }
-	// Returns true if lock was obtained successfully.
-	bool tryLock() { return !APR_STATUS_IS_EBUSY(apr_thread_mutex_trylock(mAPRMutexp)); }
+	LLMutex(apr_pool_t *apr_poolp); // NULL pool constructs a new pool for the mutex
+	virtual ~LLMutex();
 
+	void lock();		// blocks
+	void unlock();
 	bool isLocked(); 	// non-blocking, but does do a lock/unlock so not free
+	U32 lockingThread() const; //get ID of locking thread
 
 protected:
 	apr_thread_mutex_t *mAPRMutexp;
+	mutable U32			mCount;
+	mutable U32			mLockingThread;
+
 	apr_pool_t			*mAPRPoolp;
 	BOOL				mIsLocalPool;
+
+#if MUTEX_DEBUG
+	std::map<U32, BOOL> mIsLocked;
+#endif
 };
 
 // Actually a condition/mutex pair (since each condition needs to be associated with a mutex).
@@ -164,7 +188,7 @@ protected:
 	apr_thread_cond_t *mAPRCondp;
 };
 
-class LL_COMMON_API LLMutexLock
+class LLMutexLock
 {
 public:
 	LLMutexLock(LLMutex* mutex)

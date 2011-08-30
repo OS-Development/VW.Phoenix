@@ -483,6 +483,15 @@ LLToolDragAndDrop::dragOrDrop3dImpl LLToolDragAndDrop::sDragAndDrop3d[DAD_COUNT]
 		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_OBJECT
 		&LLToolDragAndDrop::dad3dNULL,//dad3dAssetOnLand, // Dest: DT_LAND
 	},
+	//	Source: DAD_MESH
+	// TODO: gesture on self could play it?  edit it?
+	{
+		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_NONE
+		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_SELF
+		&LLToolDragAndDrop::dad3dGiveInventory, // Dest: DT_AVATAR
+		&LLToolDragAndDrop::dad3dMeshObject, // Dest: DT_OBJECT
+		&LLToolDragAndDrop::dad3dNULL,//dad3dAssetOnLand, // Dest: DT_LAND
+	},
 };
 
 LLToolDragAndDrop::LLToolDragAndDrop()
@@ -1168,6 +1177,31 @@ void LLToolDragAndDrop::dropTextureAllFaces(LLViewerObject* hit_obj,
 	}
 	// send the update to the simulator
 	hit_obj->sendTEUpdate();
+}
+
+void LLToolDragAndDrop::dropMesh(LLViewerObject* hit_obj,
+								 LLInventoryItem* item,
+								 LLToolDragAndDrop::ESource source,
+								 const LLUUID& src_id)
+{
+	if (!item)
+	{
+		llwarns << "no inventory item." << llendl;
+		return;
+	}
+	LLUUID asset_id = item->getAssetUUID();
+	BOOL success = handleDropTextureProtections(hit_obj, item, source, src_id);
+	if(!success)
+	{
+		return;
+	}
+
+	LLSculptParams sculpt_params;
+	sculpt_params.setSculptTexture(asset_id);
+	sculpt_params.setSculptType(LL_SCULPT_TYPE_MESH);
+	hit_obj->setParameterEntry(LLNetworkData::PARAMS_SCULPT, sculpt_params, TRUE);
+
+	dialog_refresh_all();
 }
 
 /*
@@ -2375,10 +2409,11 @@ EAcceptance LLToolDragAndDrop::dad3dRezScript(
 	return rv;
 }
 
-EAcceptance LLToolDragAndDrop::dad3dTextureObject(
-	LLViewerObject* obj, S32 face, MASK mask, BOOL drop)
+EAcceptance LLToolDragAndDrop::dad3dApplyToObject(LLViewerObject* obj, S32 face,
+												  MASK mask, BOOL drop,
+												  EDragAndDropType cargo_type)
 {
-	lldebugs << "LLToolDragAndDrop::dad3dTextureObject()" << llendl;
+	lldebugs << "LLToolDragAndDrop::dad3dApplyToObject()" << llendl;
 
 	// *HACK: In order to resolve SL-22177, we need to block drags
 	// from notecards and objects onto other objects.
@@ -2412,13 +2447,24 @@ EAcceptance LLToolDragAndDrop::dad3dTextureObject(
 
 	if(drop && (ACCEPT_YES_SINGLE <= rv))
 	{
-		if((mask & MASK_SHIFT))
+		if (cargo_type == DAD_TEXTURE)
 		{
-			dropTextureAllFaces(obj, item, mSource, mSourceID);
+			if((mask & MASK_SHIFT))
+			{
+				dropTextureAllFaces(obj, item, mSource, mSourceID);
+			}
+			else
+			{
+				dropTextureOneFace(obj, face, item, mSource, mSourceID);
+			}
+		}
+		else if (cargo_type == DAD_MESH)
+		{
+			dropMesh(obj, item, mSource, mSourceID);
 		}
 		else
 		{
-			dropTextureOneFace(obj, face, item, mSource, mSourceID);
+			llwarns << "unsupported asset type" << llendl;
 		}
 		
 		// VEFFECT: SetTexture
@@ -2432,6 +2478,19 @@ EAcceptance LLToolDragAndDrop::dad3dTextureObject(
 	// enable multi-drop, although last texture will win
 	return ACCEPT_YES_MULTI;
 }
+
+EAcceptance LLToolDragAndDrop::dad3dTextureObject(LLViewerObject* obj, S32 face,
+												  MASK mask, BOOL drop)
+{
+	return dad3dApplyToObject(obj, face, mask, drop, DAD_TEXTURE);
+}
+
+EAcceptance LLToolDragAndDrop::dad3dMeshObject(LLViewerObject* obj, S32 face,
+											   MASK mask, BOOL drop)
+{
+	return dad3dApplyToObject(obj, face, mask, drop, DAD_MESH);
+}
+
 /*
 EAcceptance LLToolDragAndDrop::dad3dTextureSelf(
 	LLViewerObject* obj, S32 face, MASK mask, BOOL drop)

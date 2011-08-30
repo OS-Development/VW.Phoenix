@@ -36,11 +36,14 @@
 #include "lldrawpool.h"
 
 class LLVOAvatar;
+class LLGLSLShader;
+class LLFace;
+class LLMeshSkinInfo;
+class LLVolume;
+class LLVolumeFace;
 
 class LLDrawPoolAvatar : public LLFacePool
 {
-protected:
-	S32					mNumFaces;
 public:
 	enum
 	{
@@ -72,7 +75,6 @@ public:
 	/*virtual*/ void endRenderPass(S32 pass);
 	/*virtual*/ void prerender();
 	/*virtual*/ void render(S32 pass = 0);
-	/*virtual*/ void renderForSelect();
 
 	/*virtual*/ S32 getNumDeferredPasses();
 	/*virtual*/ void beginDeferredPass(S32 pass);
@@ -90,11 +92,11 @@ public:
 	/*virtual*/ void renderShadow(S32 pass);
 
 	void beginRigid();
-	void beginFootShadow();
+	void beginImpostor();
 	void beginSkinned();
 		
 	void endRigid();
-	void endFootShadow();
+	void endImpostor();
 	void endSkinned();
 
 	void beginDeferredImpostor();
@@ -105,6 +107,109 @@ public:
 	void endDeferredRigid();
 	void endDeferredSkinned();
 		
+	void beginPostDeferredAlpha();
+	void endPostDeferredAlpha();
+
+	void beginRiggedSimple();
+	void beginRiggedFullbright();
+	void beginRiggedFullbrightShiny();
+	void beginRiggedShinySimple();
+	void beginRiggedAlpha();
+	void beginRiggedFullbrightAlpha();
+	void beginRiggedGlow();
+	void beginDeferredRiggedAlpha();
+
+	void endRiggedSimple();
+	void endRiggedFullbright();
+	void endRiggedFullbrightShiny();
+	void endRiggedShinySimple();
+	void endRiggedAlpha();
+	void endRiggedFullbrightAlpha();
+	void endRiggedGlow();
+	void endDeferredRiggedAlpha();
+
+	void beginDeferredRiggedSimple();
+	void beginDeferredRiggedBump();
+	
+	void endDeferredRiggedSimple();
+	void endDeferredRiggedBump();
+		
+	void updateRiggedFaceVertexBuffer(LLVOAvatar* avatar,
+									  LLFace* facep, 
+									  const LLMeshSkinInfo* skin, 
+									  LLVolume* volume,
+									  const LLVolumeFace& vol_face);
+
+	void renderRigged(LLVOAvatar* avatar, U32 type, bool glow = false);
+	void renderRiggedSimple(LLVOAvatar* avatar);
+	void renderRiggedAlpha(LLVOAvatar* avatar);
+	void renderRiggedFullbrightAlpha(LLVOAvatar* avatar);
+	void renderRiggedFullbright(LLVOAvatar* avatar);
+	void renderRiggedShinySimple(LLVOAvatar* avatar);
+	void renderRiggedFullbrightShiny(LLVOAvatar* avatar);
+	void renderRiggedGlow(LLVOAvatar* avatar);
+	void renderDeferredRiggedSimple(LLVOAvatar* avatar);
+	void renderDeferredRiggedBump(LLVOAvatar* avatar);
+
+	typedef enum
+	{
+		RIGGED_SIMPLE = 0,
+		RIGGED_FULLBRIGHT,
+		RIGGED_SHINY,
+		RIGGED_FULLBRIGHT_SHINY,
+		RIGGED_GLOW,
+		RIGGED_ALPHA,
+		RIGGED_FULLBRIGHT_ALPHA,
+		RIGGED_DEFERRED_BUMP,
+		RIGGED_DEFERRED_SIMPLE,
+		NUM_RIGGED_PASSES,
+		RIGGED_UNKNOWN,
+	} eRiggedPass;
+
+	typedef enum
+	{
+		RIGGED_SIMPLE_MASK =			LLVertexBuffer::MAP_VERTEX | 
+										LLVertexBuffer::MAP_NORMAL | 
+										LLVertexBuffer::MAP_TEXCOORD0 |
+										LLVertexBuffer::MAP_COLOR |
+										LLVertexBuffer::MAP_WEIGHT4,
+
+		RIGGED_FULLBRIGHT_MASK =		LLVertexBuffer::MAP_VERTEX | 
+										LLVertexBuffer::MAP_TEXCOORD0 |
+										LLVertexBuffer::MAP_COLOR |
+										LLVertexBuffer::MAP_WEIGHT4,
+
+		RIGGED_SHINY_MASK =				RIGGED_SIMPLE_MASK,
+
+		RIGGED_FULLBRIGHT_SHINY_MASK =	RIGGED_SIMPLE_MASK,
+
+		RIGGED_GLOW_MASK =				LLVertexBuffer::MAP_VERTEX | 
+										LLVertexBuffer::MAP_TEXCOORD0 |
+										LLVertexBuffer::MAP_WEIGHT4,
+
+		RIGGED_ALPHA_MASK =				RIGGED_SIMPLE_MASK,
+
+		RIGGED_FULLBRIGHT_ALPHA_MASK =	RIGGED_FULLBRIGHT_MASK,
+
+		RIGGED_DEFERRED_BUMP_MASK =		LLVertexBuffer::MAP_VERTEX | 
+										LLVertexBuffer::MAP_NORMAL | 
+										LLVertexBuffer::MAP_TEXCOORD0 |
+										LLVertexBuffer::MAP_BINORMAL |
+										LLVertexBuffer::MAP_COLOR |
+										LLVertexBuffer::MAP_WEIGHT4,
+
+		RIGGED_DEFERRED_SIMPLE_MASK =	LLVertexBuffer::MAP_VERTEX | 
+										LLVertexBuffer::MAP_NORMAL | 
+										LLVertexBuffer::MAP_TEXCOORD0 |
+										LLVertexBuffer::MAP_COLOR |
+										LLVertexBuffer::MAP_WEIGHT4,
+	} eRiggedDataMask;
+
+	void addRiggedFace(LLFace* facep, U32 type);
+	void removeRiggedFace(LLFace* facep); 
+
+	std::vector<LLFace*> mRiggedFace[NUM_RIGGED_PASSES];
+		
 	/*virtual*/ LLViewerTexture *getDebugTexture();
 	/*virtual*/ LLColor3 getDebugColor() const; // For AGP debug display
 
@@ -112,6 +217,9 @@ public:
 
 	static BOOL sSkipOpaque;
 	static BOOL sSkipTransparent;
+	static S32 sDiffuseChannel;
+
+	static LLGLSLShader* sVertexProgram;
 };
 
 class LLVertexBufferAvatar : public LLVertexBuffer

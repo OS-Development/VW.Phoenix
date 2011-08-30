@@ -168,9 +168,9 @@ const std::string& LLInventoryIcon::getIconName(LLAssetType::EType asset_type,
 		case LLAssetType::AT_OBJECT:
 			idx = ICONNAME_OBJECT;
 			break;
-//		case LLAssetType::AT_MESH:
-//			idx = ICONNAME_MESH;
-//			break;
+		case LLAssetType::AT_MESH:
+			idx = ICONNAME_MESH;
+			break;
 		default:
 			break;
 	}

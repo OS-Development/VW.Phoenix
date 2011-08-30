@@ -103,6 +103,12 @@ LLVOTree::~LLVOTree()
 }
 
 // static
+bool LLVOTree::isTreeRenderingStopped()
+{
+	return LLVOTree::sTreeFactor < LLVOTree::sLODAngles[sMAX_NUM_TREE_LOD_LEVELS - 1];
+}
+
+// static
 void LLVOTree::initClass()
 {
 	std::string xml_filename = gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS,"trees.xml");
@@ -378,7 +384,7 @@ BOOL LLVOTree::idleUpdate(LLAgent &agent, LLWorld &world, const F64 &time)
 		}
 	}
 
-	S32 trunk_LOD = 0;
+	S32 trunk_LOD = sMAX_NUM_TREE_LOD_LEVELS;
 	F32 app_angle = getAppAngle()*LLVOTree::sTreeFactor;
 
 	for (S32 j = 0; j < sMAX_NUM_TREE_LOD_LEVELS; j++)
@@ -488,7 +494,7 @@ void LLVOTree::updateTextures()
 	{
 		if (gPipeline.hasRenderDebugMask(LLPipeline::RENDER_DEBUG_TEXTURE_AREA))
 		{
-			setDebugText(llformat("%4.0f", fsqrtf(mPixelArea)));
+			setDebugText(llformat("%4.0f", (F32)sqrt(mPixelArea)));
 		}
 		mTreeImagep->addTextureStats(mPixelArea);
 	}
@@ -523,7 +529,14 @@ BOOL LLVOTree::updateGeometry(LLDrawable *drawable)
 {
 	LLFastTimer ftm(LLFastTimer::FTM_UPDATE_TREE);
 
-	if (mReferenceBuffer.isNull() || mDrawable->getFace(0)->mVertexBuffer.isNull())
+	if (mTrunkLOD >= sMAX_NUM_TREE_LOD_LEVELS) //do not display the tree.
+	{
+		mReferenceBuffer = NULL ;
+		mDrawable->getFace(0)->setVertexBuffer(NULL);
+		return TRUE ;
+	}
+
+	if (mReferenceBuffer.isNull() || !mDrawable->getFace(0)->getVertexBuffer())
 	{
 		const F32 SRR3 = 0.577350269f; // sqrt(1/3)
 		const F32 SRR2 = 0.707106781f; // sqrt(1/2)
@@ -855,7 +868,7 @@ BOOL LLVOTree::updateGeometry(LLDrawable *drawable)
 	static LLCachedControl<bool> sRenderAnimateTrees(gSavedSettings, "RenderAnimateTrees");
 	if (sRenderAnimateTrees)
 	{
-		mDrawable->getFace(0)->mVertexBuffer = mReferenceBuffer;
+		mDrawable->getFace(0)->setVertexBuffer(mReferenceBuffer);
 	}
 	else
 	{
@@ -913,8 +926,9 @@ void LLVOTree::updateMesh()
 	calcNumVerts(vert_count, index_count, mTrunkLOD, stop_depth, mDepth, mTrunkDepth, mBranches);
 
 	LLFace* facep = mDrawable->getFace(0);
-	facep->mVertexBuffer = new LLVertexBuffer(LLDrawPoolTree::VERTEX_DATA_MASK, GL_STATIC_DRAW_ARB);
-	facep->mVertexBuffer->allocateBuffer(vert_count, index_count, TRUE);
+	LLVertexBuffer* buff = new LLVertexBuffer(LLDrawPoolTree::VERTEX_DATA_MASK, GL_STATIC_DRAW_ARB);
+	buff->allocateBuffer(vert_count, index_count, TRUE);
+	facep->setVertexBuffer(buff);
 	
 	LLStrider<LLVector3> vertices;
 	LLStrider<LLVector3> normals;
@@ -922,15 +936,15 @@ void LLVOTree::updateMesh()
 	LLStrider<U16> indices;
 	U16 idx_offset = 0;
 
-	facep->mVertexBuffer->getVertexStrider(vertices);
-	facep->mVertexBuffer->getNormalStrider(normals);
-	facep->mVertexBuffer->getTexCoord0Strider(tex_coords);
-	facep->mVertexBuffer->getIndexStrider(indices);
+	buff->getVertexStrider(vertices);
+	buff->getNormalStrider(normals);
+	buff->getTexCoord0Strider(tex_coords);
+	buff->getIndexStrider(indices);
 
 	genBranchPipeline(vertices, normals, tex_coords, indices, idx_offset, scale_mat, mTrunkLOD, stop_depth, mDepth, mTrunkDepth, 1.0, mTwist, droop, mBranches, alpha);
 
 	mReferenceBuffer->setBuffer(0);
-	facep->mVertexBuffer->setBuffer(0);
+	buff->setBuffer(0);
 }
 
 void LLVOTree::appendMesh(LLStrider<LLVector3>& vertices, 
@@ -1151,7 +1165,7 @@ U32 LLVOTree::drawBranchPipeline(LLMatrix4& matrix, U16* indicesp, S32 trunk_LOD
 
 				glLoadMatrixf((F32*) scale_mat.mMatrix);
  				glDrawElements(GL_TRIANGLES, sLODIndexCount[trunk_LOD], GL_UNSIGNED_SHORT, indicesp + sLODIndexOffset[trunk_LOD]);
-				gPipeline.addTrianglesDrawn(LEAF_INDICES/3);
+				gPipeline.addTrianglesDrawn(LEAF_INDICES);
 				stop_glerror();
 				ret += sLODIndexCount[trunk_LOD];
 			}
@@ -1200,7 +1214,7 @@ U32 LLVOTree::drawBranchPipeline(LLMatrix4& matrix, U16* indicesp, S32 trunk_LOD
 
 				glLoadMatrixf((F32*) scale_mat.mMatrix);
 				glDrawElements(GL_TRIANGLES, LEAF_INDICES, GL_UNSIGNED_SHORT, indicesp);
-				gPipeline.addTrianglesDrawn(LEAF_INDICES/3);							
+				gPipeline.addTrianglesDrawn(LEAF_INDICES);							
 				stop_glerror();
 				ret += LEAF_INDICES;
 			}
@@ -1225,7 +1239,7 @@ U32 LLVOTree::drawBranchPipeline(LLMatrix4& matrix, U16* indicesp, S32 trunk_LOD
 
 		glLoadMatrixf((F32*) scale_mat.mMatrix);
 		glDrawElements(GL_TRIANGLES, LEAF_INDICES, GL_UNSIGNED_SHORT, indicesp);
-		gPipeline.addTrianglesDrawn(LEAF_INDICES/3);
+		gPipeline.addTrianglesDrawn(LEAF_INDICES);
 		stop_glerror();
 		ret += LEAF_INDICES;
 
@@ -1247,7 +1261,7 @@ void LLVOTree::updateRadius()
 	mDrawable->setRadius(32.0f);
 }
 
-void LLVOTree::updateSpatialExtents(LLVector3& newMin, LLVector3& newMax)
+void LLVOTree::updateSpatialExtents(LLVector4a& newMin, LLVector4a& newMax)
 {
 	F32 radius = getScale().length()*0.05f;
 	LLVector3 center = getRenderPosition();
@@ -1257,9 +1271,11 @@ void LLVOTree::updateSpatialExtents(LLVector3& newMin, LLVector3& newMax)
 
 	center += LLVector3(0, 0, size.mV[2]) * getRotation();
 
-	newMin.set(center-size);
-	newMax.set(center+size);
-	mDrawable->setPositionGroup(center);
+	newMin.load3((center-size).mV);
+	newMax.load3((center+size).mV);
+	LLVector4a pos;
+	pos.load3(center.mV);
+	mDrawable->setPositionGroup(pos);
 }
 
 BOOL LLVOTree::lineSegmentIntersect(const LLVector3& start, const LLVector3& end, S32 face, BOOL pick_transparent, S32 *face_hitp,
@@ -1271,7 +1287,12 @@ BOOL LLVOTree::lineSegmentIntersect(const LLVector3& start, const LLVector3& end
 		return FALSE;
 	}
 
-	const LLVector3* ext = mDrawable->getSpatialExtents();
+	const LLVector4a* exta = mDrawable->getSpatialExtents();
+
+	//VECTORIZE THIS
+	LLVector3 ext[2];
+	ext[0].set(exta[0].getF32ptr());
+	ext[1].set(exta[1].getF32ptr());
 
 	LLVector3 center = (ext[1]+ext[0])*0.5f;
 	LLVector3 size = (ext[1]-ext[0]);
@@ -1309,15 +1330,15 @@ U32 LLVOTree::getPartitionType() const
 }
 
 LLTreePartition::LLTreePartition()
-: LLSpatialPartition(0)
+:	LLSpatialPartition(0, FALSE, GL_DYNAMIC_DRAW_ARB)
 {
-	mRenderByGroup = FALSE;
 	mDrawableType = LLPipeline::RENDER_TYPE_TREE;
 	mPartitionType = LLViewerRegion::PARTITION_TREE;
 	mSlopRatio = 0.f;
 	mLODPeriod = 1;
 }
 
+#ifdef HIGHLIGHT_GRASS_AND_TREES	// Broken for now
 void LLVOTree::generateSilhouetteVertices(std::vector<LLVector3> &vertices,
 										  std::vector<LLVector3> &normals,
 										  std::vector<S32> &segments,
@@ -1436,3 +1457,4 @@ void LLVOTree::generateSilhouette(LLSelectNode* nodep, const LLVector3& view_poi
 
 	nodep->mSilhouetteExists = TRUE;
 }
+#endif

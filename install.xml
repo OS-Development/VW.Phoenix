@@ -3,6 +3,131 @@
 	<map>
 		<key>installables</key>
 		<map>
+      <key>pcre</key>
+      <map>
+        <key>copyright</key>
+        <string>Copyright (c) 1997-2008 University of Cambridge</string>
+        <key>description</key>
+        <string>Regular expression library</string>
+        <key>license</key>
+        <string>bsd</string>
+        <key>packages</key>
+        <map>
+          <key>darwin</key>
+          <map>
+            <key>md5sum</key>
+            <string>63e2dc55142b8b36521c1b0c9b6ed6bb</string>
+            <key>url</key>
+            <uri>http://s3.amazonaws.com/viewer-source-downloads/install_pkgs/pcre-7.6-darwin-20090730.tar.bz2</uri>
+          </map>
+          <key>linux</key>
+          <map>
+            <key>md5sum</key>
+            <string>0886d0b1cdf104b6341df1832a8a7e09</string>
+            <key>url</key>
+            <uri>http://s3.amazonaws.com/viewer-source-downloads/install_pkgs/pcre-7.6-linux-20090804.tar.bz2</uri>
+          </map>
+        </map>
+      </map>
+      <key>llconvexdecompositionstub</key>
+      <map>
+        <key>copyright</key>
+        <string>on file</string>
+        <key>description</key>
+        <string>stub version of Convex decomposition utility for mesh</string>
+        <key>license</key>
+        <string>lgpl</string>
+        <key>packages</key>
+        <map>
+          <key>windows</key>
+          <map>
+            <key>md5sum</key>
+            <string>ef86f89a3ec330a98f29d2cc449adc1b</string>
+            <key>url</key>
+            <uri>http://sldev.free.fr/libraries/llconvexdecompositionstub-0.3-windows-vc80-20110826.tar.bz2</uri>
+          </map>
+          <key>darwin</key>
+          <map>
+            <key>md5sum</key>
+            <string>e6ddd0815d84733675c0fd324a8097b0</string>
+            <key>url</key>
+            <uri>>http://sldev.free.fr/libraries/llconvexdecompositionstub-0.3-darwin-20110421.tar.bz2</uri>
+          </map>
+          <key>linux</key>
+          <map>
+            <key>md5sum</key>
+            <string>bf10609a8fbd5ef81855a18dbf110a9d</string>
+            <key>url</key>
+            <uri>http://sldev.free.fr/libraries/llconvexdecompositionstub-0.3-linux-20110422.tar.bz2</uri>
+          </map>
+        </map>
+      </map>
+      <key>colladadom</key>
+      <map>
+        <key>copyright</key>
+        <string>Copyright 2005 Sony Computer Entertainment Inc.</string>
+        <key>description</key>
+        <string>Library for processing collada file format</string>
+        <key>license</key>
+        <string>scea</string>
+        <key>packages</key>
+        <map>
+          <key>darwin</key>
+          <map>
+            <key>md5sum</key>
+            <string>a0c7bc028cdf3c96216a815587d64c41</string>
+            <key>url</key>
+            <uri>http://sldev.free.fr/libraries/colladadom-2.2-darwin-20110420.tar.bz2</uri>
+          </map>
+          <key>linux</key>
+          <map>
+            <key>md5sum</key>
+            <string>3c5f3a7a8bc2d201edfc95a755c6078c</string>
+            <key>url</key>
+            <uri>http://sldev.free.fr/libraries/colladadom-2.2-linux-20110415.tar.bz2</uri>
+           </map>
+           <key>windows</key>
+           <map>
+             <key>md5sum</key>
+            <string>090f5ea94cba30fc3386f80819abe4ee</string>
+             <key>url</key>
+            <uri>http://sldev.free.fr/libraries/colladadom-2.2-windows-vc8-20110826.tar.bz2</uri>
+           </map>
+         </map>
+       </map>
+      <key>GLOD</key>
+      <map>
+        <key>copyright</key>
+        <string>Copyright (C) 2003-04 Jonathan Cohen, Nat Duca, Chris Niski, Johns Hopkins University and David Luebke, Brenden Schubert, University of Virginia. All rights reserved.</string>
+        <key>description</key>
+        <string>Geometric Level of Detail for OpenGL</string>
+        <key>license</key>
+        <string>GLOD</string>
+        <key>packages</key>
+        <map>
+          <key>darwin</key>
+          <map>
+            <key>md5sum</key>
+            <string>3a7263246813ecf9aff5a240892f9641</string>
+            <key>url</key>
+            <uri>http://s3.amazonaws.com/viewer-source-downloads/install_pkgs/glod-1.0pre4-darwin-20101007a.tar.bz2</uri>
+          </map>
+          <key>linux</key>
+          <map>
+            <key>md5sum</key>
+            <string>ca7368e9a1baf266b82d910fa8f821bd</string>
+            <key>url</key>
+            <uri>http://s3.amazonaws.com/viewer-source-downloads/install_pkgs/glod-1.0pre4-linux-20100920a.tar.bz2</uri>
+          </map>
+          <key>windows</key>
+          <map>
+            <key>md5sum</key>
+            <string>5f993f8092ddf4424ec3133dae9424dd</string>
+            <key>url</key>
+            <uri>http://s3.amazonaws.com/viewer-source-downloads/install_pkgs/glod-1.0pre4-windows-20100908a.tar.bz2</uri>
+           </map>
+         </map>
+       </map>
 			<key>hunspell</key>
 			<map>
 				<key>copyright</key>
@@ -141,9 +266,9 @@
 					<key>linux</key>
 					<map>
 						<key>md5sum</key>
-						<string>2ab29212a7f3acdaebf10059af816be0</string>
+						<string>aa5b145a5e8b111443e5f30cf6aaa95a</string>
 						<key>url</key>
-						<uri>http://s3.amazonaws.com/viewer-source-downloads/install_pkgs/GL-linux-20080812.tar.bz2</uri>
+						<uri>http://sldev.free.fr/libraries/GL-linux-20080812.tar.bz2</uri>
 					</map>
 					<key>linux64</key>
 					<map>
@@ -155,9 +280,9 @@
 					<key>windows</key>
 					<map>
 						<key>md5sum</key>
-						<string>91155239b02f576384603795d41eb971</string>
+						<string>30c77915bc707ca935b143e79075b4aa</string>
 						<key>url</key>
-						<uri>http://s3.amazonaws.com/viewer-source-downloads/install_pkgs/GL-windows-20090505.tar.bz2</uri>
+						<uri>http://sldev.free.fr/libraries/GL-windows-20090505.tar.bz2</uri>
 					</map>
 				</map>
 			</map>
@@ -1408,6 +1533,75 @@
 		</map>
 		<key>licenses</key>
 		<map>
+      <key>GLOD</key>
+      <map>
+        <key>text</key>
+        <string>The GLOD Open-Source License   Version 1.0             July 22, 2003
+
+Copyright (C) 2003 Jonathan Cohen, Nat Duca, Johns Hopkins University
+and David Luebke, Brenden Schubert, University of Virginia. All rights
+reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, is permitted provided that the following conditions are
+met:
+
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer and
+   request.
+
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer and
+   request in the documentation and/or other materials provided with
+   the distribution.
+
+3. The name "GLOD" must not be used to endorse or promote products
+   derived from this software without prior written permission.
+
+4. Redistributions of any modified version of this source, whether in
+   source or binary form , must include a form of the following
+   acknowledgment: "This product is derived from the GLOD library,
+   which is available from http://www.cs.jhu.edu/~graphics/GLOD."
+
+5. Redistributions of any modified version of this source in binary
+   form must provide, free of charge, access to the modified version
+   of the code.
+
+6. This license shall be governed by and construed and enforced in
+   accordance with the laws of the State of Maryland, without
+   reference to its conflicts of law provisions. The exclusive
+   jurisdiction and venue for all legal actions relating to this
+   license shall be in courts of competent subject matter jurisdiction
+   located in the State of Maryland.
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, GLOD IS PROVIDED
+UNDER THIS LICENSE ON AN AS IS BASIS, WITHOUT WARRANTY OF ANY KIND,
+EITHER EXPRESSED OR IMPLIED, INCLUDING, WITHOUT LIMITATION, WARRANTIES
+THAT GLOD IS FREE OF DEFECTS, MERCHANTABLE, FIT FOR A PARTICULAR
+PURPOSE OR NON-INFRINGING. ALL WARRANTIES ARE DISCLAIMED AND THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE CODE IS WITH
+YOU. SHOULD ANY CODE PROVE DEFECTIVE IN ANY RESPECT, YOU (NOT THE
+COPYRIGHT HOLDER OR ANY OTHER CONTRIBUTOR) ASSUME THE COST OF ANY
+NECESSARY SERVICING, REPAIR OR CORRECTION. THIS DISCLAIMER OF WARRANTY
+CONSTITUTES AN ESSENTIAL PART OF THIS LICENSE. NO USE OF ANY CODE IS
+AUTHORIZED HEREUNDER EXCEPT UNDER THIS DISCLAIMER.
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL
+THE COPYRIGHT HOLDER OR ANY OTHER CONTRIBUTOR BE LIABLE FOR ANY
+SPECIAL, INCIDENTAL, INDIRECT, OR CONSEQUENTIAL DAMAGES FOR LOSS OF
+PROFITS, REVENUE, OR FOR LOSS OF INFORMATION OR ANY OTHER LOSS.
+
+YOU EXPRESSLY AGREE TO FOREVER INDEMNIFY, DEFEND AND HOLD HARMLESS THE
+COPYRIGHT HOLDERS AND CONTRIBUTORS OF GLOD AGAINST ALL CLAIMS,
+DEMANDS, SUITS OR OTHER ACTIONS ARISING DIRECTLY OR INDIRECTLY FROM
+YOUR ACCEPTANCE AND USE OF GLOD.
+
+Although NOT REQUIRED, we would appreciate it if active users of GLOD
+put a link on their web site to the GLOD web site when possible.
+</string>
+        <key>url</key>
+        <string>http://www.cs.jhu.edu/~graphics/GLOD/license/</string>
+      </map>
 			<key>AFL2.1</key>
 			<map>
 				<key>url</key>
@@ -1552,6 +1746,11 @@
 				<key>text</key>
 				<string>ENGLISH Apple Computer, Inc. QuickTime 7 Software Developer Kit (SDK) Software License Agreement PLEASE READ THIS SOFTWARE LICENSE AGREEMENT ("LICENSE") BEFORE USING THE SOFTWARE. BY USING THE SOFTWARE, YOU ARE AGREEING TO BE BOUND BY THE TERMS OF THIS LICENSE. IF YOU ARE ACCESSING THE SOFTWARE ELECTRONICALLY, SIGNIFY YOUR AGREEMENT TO BE BOUND BY THE TERMS OF THIS LICENSE BY CLICKING THE "AGREE/ACCEPT" BUTTON. IF YOU DO NOT AGREE TO THE TERMS OF THIS LICENSE, RETURN THE APPLE SOFTWARE TO THE PLACE WHERE YOU OBTAINED IT FOR A REFUND OR, IF THE SOFTWARE WAS ACCESSED ELECTRONICALLY, CLICK "DISAGREE/DECLINE". IMPORTANT NOTE: To the extent this software may be used to reproduce materials, it is licensed to you only for reproduction of materials you are authorized or legally permitted to reproduce. 1. License. Any software, tools, utilities, sample code, documentation, fonts, API?s, header files and other materials accompanying this License, whether on disk, print or electronic documentation, in read only memory, or any other media, (collectively, the "Apple Software") are licensed, not sold, to you by Apple Computer, Inc. ("Apple") for use only under the terms of this License, and Apple reserves all rights not expressly granted to you. The rights granted herein are limited to Apple's and its licensors' intellectual property rights in the Apple Software and do not include any other patents or intellectual property rights. You own the media on which the Apple Software is recorded but Apple and/or Apple's licensor(s) retain ownership of the Apple Software itself. The Apple Software in this package and any copies, modifications and derivative works that this License authorizes you to make are subject to this License. 2. Permitted Uses and Restrictions. You may use the Apple Software to develop application software that is compatible with, and runs only on Mac OS X and/or Windows platforms with QuickTime installed. Except for compiling header files and linking libraries as necessary to build your application software, you have no right to modify, incorporate into or include in combination with your own programs, license or otherwise redistribute any portion of the Apple Software. Your software application may not interfere with the functionality of QuickTime Player or the QuickTime Plug-in, including but not limited to file type or MIME type associations that are registered to QuickTime. You may make only as many internal use copies of the Apple Software as reasonably necessary to use the Apple Software as permitted in this paragraph and distribute such copies only to your employees whose job duties require them to so use the Apple Software. You must reproduce on each copy of the Apple Software or portion thereof, the Apple copyright notice and any other proprietary legends that were on the original copy of the Apple Software. Except as expressly permitted in this License, you may not decompile, reverse engineer, disassemble, modify, rent, lease, loan, sublicense, distribute or create derivative works based upon the Apple Software in whole or part. Your rights under this License will terminate automatically without notice from Apple if you fail to comply with any term(s) of this License. In addition, Apple reserves the right to terminate this License if a new version of Apple's operating system software or the Apple Software is released which is incompatible with the Apple Software. 3. Disclaimer Of Warranty. The Apple Software may be "alpha", "beta", "development", pre-release, untested, and/or not fully tested and may contain errors that could cause failures or loss of data, be incomplete or contain inaccuracies. YOU EXPRESSLY ACKNOWLEDGE AND AGREE THAT USE OF THE APPLE SOFTWARE IS AT YOUR SOLE RISK AND THAT THE ENTIRE RISK AS TO SATISFACTORY QUALITY, PERFORMANCE, ACCURACY AND EFFORT IS WITH YOU. EXCEPT FOR THE LIMITED WARRANTY ON MEDIA SET FORTH ABOVE AND TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE APPLE SOFTWARE IS PROVIDED "AS IS", WITH ALL FAULTS AND WITHOUT WARRANTY OF ANY KIND, AND APPLE AND APPLE'S LICENSORS (COLLECTIVELY REFERRED TO AS "APPLE" FOR THE PURPOSES OF SECTIONS 4 AND 5) HEREBY DISCLAIM ALL WARRANTIES AND CONDITIONS WITH RESPECT TO THE APPLE SOFTWARE, EITHER EXPRESS, IMPLIED OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES AND/OR CONDITIONS OF MERCHANTABILITY, OF SATISFACTORY QUALITY, OF FITNESS FOR A PARTICULAR PURPOSE, OF ACCURACY, OF QUIET ENJOYMENT, AND NON-INFRINGEMENT OF THIRD PARTY RIGHTS. APPLE DOES NOT WARRANT AGAINST INTERFERENCE WITH YOUR ENJOYMENT OF THE APPLE SOFTWARE, THAT THE FUNCTIONS CONTAINED IN THE APPLE SOFTWARE WILL MEET YOUR REQUIREMENTS, THAT THE OPERATION OF THE APPLE SOFTWARE WILL BE UNINTERRUPTED OR ERROR-FREE, OR THAT DEFECTS IN THE APPLE SOFTWARE WILL BE CORRECTED. NO ORAL OR WRITTEN INFORMATION OR ADVICE GIVEN BY APPLE OR AN APPLE AUTHORIZED REPRESENTATIVE SHALL CREATE A WARRANTY. SHOULD THE APPLE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE ENTIRE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION. SOME JURISDICTIONS DO NOT ALLOW THE EXCLUSION OF IMPLIED WARRANTIES OR LIMITATIONS ON APPLICABLE STATUTORY RIGHTS OF A CONSUMER, SO THE ABOVE EXCLUSION AND LIMITATIONS MAY NOT APPLY TO YOU. 4. Limitation Of Liability. TO THE EXTENT NOT PROHIBITED BY LAW, IN NO EVENT SHALL APPLE BE LIABLE FOR PERSONAL INJURY, OR ANY INCIDENTAL, SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES WHATSOEVER, INCLUDING, WITHOUT LIMITATION, DAMAGES FOR LOSS OF PROFITS, LOSS OF DATA, BUSINESS INTERRUPTION OR ANY OTHER COMMERCIAL DAMAGES OR LOSSES, ARISING OUT OF OR RELATED TO YOUR USE OR INABILITY TO USE THE APPLE SOFTWARE, HOWEVER CAUSED, REGARDLESS OF THE THEORY OF LIABILITY (CONTRACT, TORT OR OTHERWISE) AND EVEN IF APPLE HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. SOME JURISDICTIONS DO NOT ALLOW THE LIMITATION OF LIABILITY FOR PERSONAL INJURY, OR OF INCIDENTAL OR CONSEQUENTIAL DAMAGES, SO THIS LIMITATION MAY NOT APPLY TO YOU. In no event shall Apple's total liability to you for all damages (other than as may be required by applicable law in cases involving personal injury) exceed the amount of fifty dollars ($50.00). The foregoing limitations will apply even if the above stated remedy fails of its essential purpose. 5. Export Control. You may not use or otherwise export or reexport the Apple Product except as authorized by United States law and the laws of the jurisdiction in which the Apple Product was obtained. In particular, but without limitation, the Apple Product may not be exported or re-exported (a) into any U.S. embargoed countries or (b) to anyone on the U.S. Treasury Department's list of Specially Designated Nationals or the U.S. Department of Commerce Denied Person?s List or Entity List. By using the Apple Product, you represent and warrant that you are not located in any such country or on any such list. 6. Government End Users. The Apple Software and related documentation are "Commercial Items", as that term is defined at 48 C.F.R. ?2.101, consisting of "Commercial Computer Software" and "Commercial Computer Software Documentation", as such terms are used in 48 C.F.R. ?12.212 or 48 C.F.R. ?227.7202, as applicable. Consistent with 48 C.F.R. ?12.212 or 48 C.F.R. ?227.7202-1through 227.7202-4, as applicable, the Commercial Computer Software and Commercial Computer Software Documentation are being licensed to U.S. Government end users (a) only as Commercial Items and (b) with only those rights as are granted to all other end users pursuant to the terms and conditions herein. Unpublished-rights reserved under the copyright laws of the United States. 7. Controlling Law and Severability. This License will be governed by and construed in accordance with the laws of the State of California, as applied to agreements entered into and to be performed entirely within California between California residents. This License shall not be governed by the United Nations Convention on Contracts for the International Sale of Goods, the application of which is expressly excluded. If for any reason a court of competent jurisdiction finds any provision, or portion thereof, to be unenforceable, the remainder of this License shall continue in full force and effect. 8. Complete Agreement. This License constitutes the entire agreement between the parties with respect to the use of the Apple Software licensed hereunder and supersedes all prior or contemporaneous understandings regarding such subject matter. No amendment to or modification of this License will be binding unless in writing and signed by Apple. Any translation of this License is done for local requirements and in the event of a dispute between the English and any non-English versions, the English version of this License shall govern. EA0300</string>
 			</map>
+      <key>scea</key>
+      <map>
+        <key>url</key>
+        <string>http://research.scea.com/scea_shared_source_license.html</string>
+      </map>
 			<key>sleepycat</key>
 			<map>
 				<key>url</key>

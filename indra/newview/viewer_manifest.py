@@ -313,6 +313,17 @@ class WindowsManifest(ViewerManifest):
         except:
             print("Skipping FMOD not found")
         
+        # Mesh 3rd party libs needed for auto LOD and collada reading
+        try:
+            if self.args['configuration'].lower() == 'debug':
+                self.path("libcollada14dom21-d.dll")
+            else:
+                self.path("libcollada14dom21.dll")
+            self.path("glod.dll")
+        except RuntimeError, err:
+            print err.message
+            print "Skipping COLLADA and GLOD libraries (assumming linked statically)"
+
         # Vivox runtimes
         if self.prefix(src="vivox-runtime/i686-win32", dst=""):
             self.path("SLVoice.exe")
@@ -941,6 +952,9 @@ class Linux_i686Manifest(LinuxManifest):
             self.path("libtcmalloc.so", "libtcmalloc.so") #formerly called google perf tools
             self.path("libtcmalloc.so.0", "libtcmalloc.so.0") #formerly called google perf tools
             self.path("libtcmalloc.so.0.1.0", "libtcmalloc.so.0.1.0") #formerly called google perf tools
+            self.path("libcollada14dom.so", "libcollada14dom.so") # Mesh support
+            self.path("libminizip.so", "libminizip.so") # Mesh support
+            self.path("libglod.so", "libglod.so") # Mesh support
             
             # Phoenix-specific addons
             self.path("libotr.so.2.2.0", "libotr.so.2")

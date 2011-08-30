@@ -25,7 +25,13 @@ else (STANDALONE)
       set(Boost_WAVE_LIBRARY 
           optimized libboost_wave-vc80-mt-${BOOST_VERSION}
           debug libboost_wave-vc80-mt-gd-${BOOST_VERSION})
-    else (MSVC90)
+      set(Boost_SYSTEM_LIBRARY 
+          optimized libboost_system-vc80-mt-${BOOST_VERSION}
+          debug libboost_system-vc80-mt-gd-${BOOST_VERSION})
+      set(Boost_FILESYSTEM_LIBRARY 
+          optimized libboost_filesystem-vc80-mt-${BOOST_VERSION}
+          debug libboost_filesystem-vc80-mt-gd-${BOOST_VERSION})
+	  else (MSVC90)
       set(Boost_PROGRAM_OPTIONS_LIBRARY 
           optimized libboost_program_options-vc90-mt-${BOOST_VERSION}
           debug libboost_program_options-vc90-mt-gd-${BOOST_VERSION})
@@ -38,6 +44,12 @@ else (STANDALONE)
       set(Boost_WAVE_LIBRARY 
           optimized libboost_wave-vc90-mt-${BOOST_VERSION}
           debug libboost_wave-vc90-mt-gd-${BOOST_VERSION})
+      set(Boost_SYSTEM_LIBRARY 
+          optimized libboost_system-vc90-mt-${BOOST_VERSION}
+          debug libboost_system-vc90-mt-gd-${BOOST_VERSION})
+      set(Boost_FILESYSTEM_LIBRARY 
+          optimized libboost_filesystem-vc90-mt-${BOOST_VERSION}
+          debug libboost_filesystem-vc90-mt-gd-${BOOST_VERSION})
     endif (MSVC80)
   elseif (LINUX)
   	set(Boost_PROGRAM_OPTIONS_LIBRARY boost_program_options-mt)  	

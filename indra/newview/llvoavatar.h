@@ -103,12 +103,14 @@ public:
 	static void initClass(); // Initialize data that's only init'd once per class.
 	static void cleanupClass();	// Cleanup data that's only init'd once per class.
 	static BOOL parseSkeletonFile(const std::string& filename);
+	virtual void updateGL();
+	virtual	LLVOAvatar* asAvatar();
 	virtual U32 processUpdateMessage(LLMessageSystem *mesgsys,
 									 void **user_data,
 									 U32 block_num,
 									 const EObjectUpdateType update_type,
 									 LLDataPacker *dp);
-	/*virtual*/ BOOL idleUpdate(LLAgent &agent, LLWorld &world, const F64 &time);
+	virtual BOOL idleUpdate(LLAgent &agent, LLWorld &world, const F64 &time);
 	void idleUpdateVoiceVisualizer(bool voice_enabled);
 	void idleUpdateMisc(bool detailed_update);
 	void idleUpdateAppearanceAnimation();
@@ -138,9 +140,11 @@ public:
 
 	// Graphical stuff for objects - maybe broken out into render class later?
 	U32 renderFootShadows();
-	U32 renderImpostor(LLColor4U color = LLColor4U(255,255,255,255));
+	U32 renderImpostor(LLColor4U color = LLColor4U(255,255,255,255), S32 diffuse_channel = 0);
 	U32 renderRigid();
 	U32 renderSkinned(EAvatarRenderPass pass);
+	F32 getLastSkinTime()	{ return mLastSkinTime; }
+	U32 renderSkinnedAttachments();
 	U32 renderTransparent(BOOL first_pass);
 	void renderCollisionVolumes();
 	
@@ -157,7 +161,7 @@ public:
 	/*virtual*/ void updateTextures();
 	// If setting a baked texture, need to request it from a non-local sim.
 	/*virtual*/ S32 setTETexture(const U8 te, const LLUUID& uuid);
-	/*virtual*/ void onShift(const LLVector3& shift_vector);
+	/*virtual*/ void onShift(const LLVector4a& shift_vector);
 	virtual U32 getPartitionType() const;
 	
 	void updateVisibility();
@@ -176,18 +180,19 @@ public:
 
 	/*virtual*/ void setPixelAreaAndAngle(LLAgent &agent);
 	BOOL updateJointLODs();
+	void updateLODRiggedAttachments(void);
 
 	virtual void updateRegion(LLViewerRegion *regionp);
 	
 	virtual const LLVector3 getRenderPosition() const;
 	virtual void updateDrawable(BOOL force_damped);
-	void updateSpatialExtents(LLVector3& newMin, LLVector3 &newMax);
-	void getSpatialExtents(LLVector3& newMin, LLVector3& newMax);
+	void updateSpatialExtents(LLVector4a& newMin, LLVector4a &newMax);
+	void getSpatialExtents(LLVector4a& newMin, LLVector4a& newMax);
 	BOOL isImpostor() const;
 	BOOL needsImpostorUpdate() const;
 	const LLVector3& getImpostorOffset() const;
 	const LLVector2& getImpostorDim() const;
-	void getImpostorValues(LLVector3* extents, LLVector3& angle, F32& distance) const;
+	void getImpostorValues(LLVector4a* extents, LLVector3& angle, F32& distance) const;
 	void cacheImpostorValues();
 	void setImpostorDim(const LLVector2& dim);
 
@@ -197,6 +202,11 @@ public:
 public:
 	virtual const char *getAnimationPrefix() { return "avatar"; }
 	virtual LLJoint *getRootJoint() { return &mRoot; }
+
+	void resetJointPositions(void);
+	void resetJointPositionsToDefault(void);
+	void resetSpecificJointPosition(const std::string& name);
+
 	virtual LLVector3 getCharacterPosition();
 	virtual LLQuaternion getCharacterRotation();
 	virtual LLVector3 getCharacterVelocity();
@@ -271,10 +281,18 @@ public:
 	// Returns "FirstName LastName"
 	std::string		getFullname() const;
 
+private: //aligned members
+	LLVector4a	mImpostorExtents[2];
+
+public:
 	BOOL updateCharacter(LLAgent &agent);
 	void updateHeadOffset();
 
 	F32 getPelvisToFoot() const { return mPelvisToFoot; }
+	void setPelvisOffset(bool hasOffset, const LLVector3& translation, F32 offset);
+	bool hasPelvisOffset(void)		{ return mHasPelvisOffset; }
+	void postPelvisSetRecalc(void);
+	void setPelvisOffset(F32 pelvixFixupAmount);
 
 public:
 	BOOL isAnyAnimationSignaled(const LLUUID *anim_array, const S32 num_anims);
@@ -285,6 +303,7 @@ protected:
 
 public:
 	void resolveHeightGlobal(const LLVector3d &inPos, LLVector3d &outPos, LLVector3 &outNorm);
+	bool distanceToGround(const LLVector3d &startPoint, LLVector3d &collisionPoint, F32 distToIntersectionAlongRay);
 	void resolveHeightAgent(const LLVector3 &inPos, LLVector3 &outPos, LLVector3 &outNorm);
 	void resolveRayCollisionAgent(const LLVector3d start_pt, const LLVector3d end_pt, LLVector3d &out_pos, LLVector3 &out_norm);
 	
@@ -294,7 +313,6 @@ public:
 	void processAvatarAppearance( LLMessageSystem* mesgsys );
 	void onFirstTEMessageReceived();
 	void updateSexDependentLayerSets( BOOL set_by_user );
-	void dirtyMesh(); // Dirty the avatar mesh
 	LLPolyMesh* getMesh( LLPolyMeshSharedData *shared_data );
 	void hideSkirt();
 
@@ -308,7 +326,9 @@ public:
 // [/RLVa:KB]
 	BOOL attachObject(LLViewerObject *viewer_object);
 	BOOL detachObject(LLViewerObject *viewer_object);
+	void cleanupAttachedMesh(LLViewerObject* pVO);
 	void lazyAttach();
+	void rebuildRiggedAttachments(void);
 
 	static BOOL	detachAttachmentIntoInventory(const LLUUID& item_id);
 
@@ -445,7 +465,6 @@ private:
 	LLVector3		mImpostorOffset;
 	LLVector2		mImpostorDim;
 	BOOL			mNeedsAnimUpdate;
-	LLVector3		mImpostorExtents[2];
 	LLVector3		mImpostorAngle;
 	F32				mImpostorDistance;
 	F32				mImpostorPixelArea;
@@ -604,6 +623,13 @@ public:
 public:
 	BOOL			mInAir;
 	LLFrameTimer	mTimeInAir;
+
+	bool			mHasPelvisOffset;
+	LLVector3		mPelvisOffset;
+	F32				mLastPelvisToFoot;
+	F32				mPelvisFixup;
+	F32				mLastPelvisFixup;
+
 	LLVector3 mHeadOffset; // current head position
 	LLViewerJoint mRoot; // avatar skeleton
 	BOOL mIsSitting; // sitting state
@@ -622,7 +648,6 @@ private:
 	BOOL mSupportsAlphaLayers; // For backwards compatibility, TRUE for 1.23+ clients
 	
 	// LLFrameTimer mUpdateLODTimer; // controls frequency of LOD change calculations
-	BOOL mDirtyMesh;
 	BOOL mTurning; // controls hysteresis on avatar rotation
 	F32	mSpeed; // misc. animation repeated state
 
@@ -727,6 +752,8 @@ private:
 	LLTexGlobalColor*	mTexEyeColor;
 
 	BOOL				mNeedsSkin;  //if TRUE, avatar has been animated and verts have not been updated
+	F32					mLastSkinTime; //value of gFrameTimeSeconds at last skin update
+
 	S32					mUpdatePeriod;
 
 	//--------------------------------------------------------------------
@@ -827,6 +854,14 @@ private:
 	static LLVOAvatarDefines::LLVOAvatarDictionary *sAvatarDictionary;
 	static LLVOAvatarSkeletonInfo* sAvatarSkeletonInfo;
 	static LLVOAvatarXmlInfo* sAvatarXmlInfo;
+
+public:
+	void dirtyMesh(); // Dirty the avatar mesh
+
+private:
+	void dirtyMesh(S32 priority);	// Dirty the avatar mesh, with priority
+	S32 mDirtyMesh; 				// 0 -- not dirty, 1 -- morphed, 2 -- LOD
+	BOOL mMeshTexturesDirty;
 
 	//-----------------------------------------------------------------------------------------------
 	// Diagnostics

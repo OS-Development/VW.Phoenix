@@ -56,9 +56,11 @@ public:
 	BOOL			loadBinary(LLFILE* fp, LLPolyMeshSharedData *mesh);
 	const std::string& getName() { return mName; }
 
+#if MESHES_AND_MORPHS
 	BOOL			saveLLM(LLFILE *fp);
 	BOOL			saveOBJ(LLFILE *fp);
 	BOOL			setMorphFromMesh(LLPolyMesh *morph);
+#endif //MESHES_AND_MORPHS
 
 public:
 	std::string			mName;

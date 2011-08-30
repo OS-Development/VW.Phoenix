@@ -40,7 +40,7 @@
 #include "message.h"
 #include "v2math.h"
 
-#include "llagent.h"
+#include "llagent.h"		// to get camera position
 #include "lldrawable.h"
 #include "llface.h"
 #include "llsky.h"
@@ -79,12 +79,14 @@ F32 LLVOPartGroup::getBinRadius()
 	return mScale.mV[0]*2.f;
 }
 
-void LLVOPartGroup::updateSpatialExtents(LLVector3& newMin, LLVector3& newMax)
+void LLVOPartGroup::updateSpatialExtents(LLVector4a& newMin, LLVector4a& newMax)
 {		
 	const LLVector3& pos_agent = getPositionAgent();
-	newMin = pos_agent - mScale;
-	newMax = pos_agent + mScale;
-	mDrawable->setPositionGroup(pos_agent);
+	newMin.load3((pos_agent - mScale).mV);
+	newMax.load3((pos_agent + mScale).mV);
+	LLVector4a pos;
+	pos.load3(pos_agent.mV);
+	mDrawable->setPositionGroup(pos);
 }
 
 BOOL LLVOPartGroup::idleUpdate(LLAgent &agent, LLWorld &world, const F64 &time)
@@ -152,6 +154,11 @@ BOOL LLVOPartGroup::updateGeometry(LLDrawable *drawable)
 	{
 		drawable->movePartition();
 		group = drawable->getSpatialGroup();
+	}
+
+	if (group && group->isVisible())
+	{
+		dirtySpatialGroup(TRUE);
 	}
 
 	if (!num_parts)
@@ -243,6 +250,14 @@ BOOL LLVOPartGroup::updateGeometry(LLDrawable *drawable)
 		facep->mCenterLocal = part->mPosAgent;
 		facep->setFaceColor(part->mColor);
 		facep->setTexture(part->mImagep);
+
+#ifdef MEDIA_ON_PRIM
+		//check if this particle texture is replaced by a parcel media texture.
+		if (part->mImagep.notNull() && part->mImagep->hasParcelMedia()) 
+		{
+			part->mImagep->getParcelMedia()->addMediaToFace(facep) ;
+		}
+#endif
 
 		mPixelArea = tot_area * pixel_meter_ratio;
 		const F32 area_scale = 10.f; // scale area to increase priority a bit
@@ -352,12 +367,11 @@ U32 LLVOPartGroup::getPartitionType() const
 }
 
 LLParticlePartition::LLParticlePartition()
-: LLSpatialPartition(LLDrawPoolAlpha::VERTEX_DATA_MASK)
+:	LLSpatialPartition(LLDrawPoolAlpha::VERTEX_DATA_MASK, TRUE, GL_STREAM_DRAW_ARB)
 {
 	mRenderPass = LLRenderPass::PASS_ALPHA;
 	mDrawableType = LLPipeline::RENDER_TYPE_PARTICLES;
 	mPartitionType = LLViewerRegion::PARTITION_PARTICLE;
-	mBufferUsage = GL_DYNAMIC_DRAW_ARB;
 	mSlopRatio = 0.f;
 	mLODPeriod = 1;
 }
@@ -452,7 +466,7 @@ void LLParticlePartition::getGeometry(LLSpatialGroup* group)
 		LLAlphaObject* object = (LLAlphaObject*) facep->getViewerObject();
 		facep->setGeomIndex(vertex_count);
 		facep->setIndicesIndex(index_count);
-		facep->mVertexBuffer = buffer;
+		facep->setVertexBuffer(buffer);
 		facep->setPoolType(LLDrawPool::POOL_ALPHA);
 		object->getGeometry(facep->getTEOffset(), verticesp, normalsp, texcoordsp, colorsp, indicesp);
 		
@@ -481,7 +495,9 @@ void LLParticlePartition::getGeometry(LLSpatialGroup* group)
 			U32 end = start + facep->getGeomCount()-1;
 			U32 offset = facep->getIndicesStart();
 			U32 count = facep->getIndicesCount();
-			LLDrawInfo* info = new LLDrawInfo(start,end,count,offset,facep->getTexture(), buffer, fullbright); 
+			LLDrawInfo* info = new LLDrawInfo(start, end, count, offset,
+											  facep->getTexture(),
+											  buffer, fullbright); 
 			info->mExtents[0] = group->mObjectExtents[0];
 			info->mExtents[1] = group->mObjectExtents[1];
 			info->mVSize = vsize;

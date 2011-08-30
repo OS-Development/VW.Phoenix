@@ -119,7 +119,7 @@ void commit_radio_orbit(LLUICtrl *, void*);
 void commit_radio_pan(LLUICtrl *, void*);
 void commit_grid_mode(LLUICtrl *, void*);
 void commit_slider_zoom(LLUICtrl *, void*);
-void commit_show_highlight(LLUICtrl *, void*); //Phoenix:KC
+//void commit_show_highlight(LLUICtrl *, void*); //Phoenix:KC
 
 //static
 void*	LLFloaterTools::createPanelPermissions(void* data)
@@ -242,9 +242,13 @@ BOOL	LLFloaterTools::postBuild()
 	childSetCommitCallback("combobox grid mode",commit_grid_mode, this);
 	
 	//Phoenix:KC show highlight
+	//mCheckShowHighlight = getChild<LLCheckBoxCtrl>("checkbox show highlight");
+	//childSetValue("checkbox show highlight", (BOOL)gSavedSettings.getBOOL("PhoenixRenderHighlightSelections"));
+	//childSetCommitCallback("checkbox show highlight",commit_show_highlight, this);
+	// Ansariel: Porting back from Firestorm for Mesh merge
 	mCheckShowHighlight = getChild<LLCheckBoxCtrl>("checkbox show highlight");
-	childSetValue("checkbox show highlight", (BOOL)gSavedSettings.getBOOL("PhoenixRenderHighlightSelections"));
-	childSetCommitCallback("checkbox show highlight",commit_show_highlight, this);
+	mOrginalShowHighlight = gSavedSettings.getBOOL("PhoenixRenderHighlightSelections");
+	mCheckShowHighlight->setValue(mOrginalShowHighlight);
 	
 	//Banana:KC - handiness
 	mCheckActualRoot = getChild<LLCheckBoxCtrl>("checkbox actual root");	
@@ -422,7 +426,8 @@ LLFloaterTools::LLFloaterTools()
 	mPanelLandInfo(NULL),
 
 	mTabLand(NULL),
-	mDirty(TRUE)
+	mDirty(TRUE),
+	mOpen(FALSE)
 {
 	setAutoFocus(FALSE);
 	LLCallbackMap::map_t factory_map;
@@ -850,7 +855,13 @@ void LLFloaterTools::onOpen()
 	//Phoenix:KC - set the check box value from the render setting
 	// this function runs on selection change and will cause it to become rechecked
 	//mCheckShowHighlight->setValue((BOOL)gSavedSettings.getBOOL("PhoenixRenderHighlightSelections"));
-	mCheckShowHighlight->setValue(LLSelectMgr::sRenderSelectionHighlights);
+	// Ansariel: Porting back from Firestorm for Mesh merge
+	if (!mOpen)
+	{
+		mOpen = TRUE;
+		mOrginalShowHighlight = gSavedSettings.getBOOL("PhoenixRenderHighlightSelections");
+		mCheckShowHighlight->setValue(mOrginalShowHighlight);
+	}
 
 	// gMenuBarView->setItemVisible(std::string("Tools"), TRUE);
 	// gMenuBarView->arrange();
@@ -873,8 +884,11 @@ void LLFloaterTools::onClose(bool app_quitting)
 	LLSelectMgr::getInstance()->promoteSelectionToRoot();
 	gSavedSettings.setBOOL("EditLinkedParts", FALSE);
 	//Phoenix:KC - restore the show highlight state to the saved setting
-	LLSelectMgr::sRenderSelectionHighlights = (BOOL)gSavedSettings.getBOOL("PhoenixRenderHighlightSelections");
-	
+//	LLSelectMgr::sRenderSelectionHighlights = (BOOL)gSavedSettings.getBOOL("PhoenixRenderHighlightSelections");
+	// Ansariel: Porting back from Firestorm for Mesh merge
+	gSavedSettings.setBOOL("PhoenixRenderHighlightSelections", mOrginalShowHighlight);
+	mOpen = FALSE; //hack cause onOpen runs on every selection change but onClose doesnt.
+
 	gViewerWindow->showCursor();
 
 	resetToolState();
@@ -1089,11 +1103,12 @@ void commit_grid_mode(LLUICtrl *ctrl, void *data)
 } 
 
 //Phoenix:KC temporarily change the show highlight state
-void commit_show_highlight(LLUICtrl *ctrl, void*)
-{
-	LLCheckBoxCtrl* check = (LLCheckBoxCtrl*)ctrl;
-	LLSelectMgr::sRenderSelectionHighlights = check->getValue().asBoolean();
-}
+// Ansariel: Not needed anymore after Mesh merge
+//void commit_show_highlight(LLUICtrl *ctrl, void*)
+//{
+//	LLCheckBoxCtrl* check = (LLCheckBoxCtrl*)ctrl;
+//	LLSelectMgr::sRenderSelectionHighlights = check->getValue().asBoolean();
+//}
 
 // static 
 void LLFloaterTools::setObjectType( void* data )

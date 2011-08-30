@@ -89,7 +89,7 @@ LLInventoryDictionary::LLInventoryDictionary()
 	addEntry(LLInventoryType::IT_WEARABLE,            new InventoryEntry("wearable",  "wearable",      2, LLAssetType::AT_CLOTHING, LLAssetType::AT_BODYPART));
 	addEntry(LLInventoryType::IT_ANIMATION,           new InventoryEntry("animation", "animation",     1, LLAssetType::AT_ANIMATION));  
 	addEntry(LLInventoryType::IT_GESTURE,             new InventoryEntry("gesture",   "gesture",       1, LLAssetType::AT_GESTURE)); 
-//	addEntry(LLInventoryType::IT_MESH,                new InventoryEntry("mesh",      "mesh",          1, LLAssetType::AT_MESH));
+	addEntry(LLInventoryType::IT_MESH,                new InventoryEntry("mesh",      "mesh",          1, LLAssetType::AT_MESH));
 }
 
 
@@ -124,7 +124,7 @@ DEFAULT_ASSET_FOR_INV_TYPE[LLAssetType::AT_COUNT] =
 
 	LLInventoryType::IT_NONE,			// 23	AT_LINK
 	LLInventoryType::IT_NONE,			// 24	AT_LINK_FOLDER
-/*
+
 	LLInventoryType::IT_NONE,			// 25	AT_NONE
 	LLInventoryType::IT_NONE,			// 26	AT_NONE
 	LLInventoryType::IT_NONE,			// 27	AT_NONE
@@ -150,7 +150,6 @@ DEFAULT_ASSET_FOR_INV_TYPE[LLAssetType::AT_COUNT] =
 	LLInventoryType::IT_NONE,			// 47	AT_NONE
 	LLInventoryType::IT_NONE,			// 48	AT_NONE
 	LLInventoryType::IT_MESH            // 49	AT_MESH
-*/
 };
 
 // static
@@ -181,7 +180,7 @@ const std::string &LLInventoryType::lookupHumanReadable(EType type)
 // static
 LLInventoryType::EType LLInventoryType::defaultForAssetType(LLAssetType::EType asset_type)
 {
-	if((asset_type >= 0) && (asset_type < LLAssetType::AT_COUNT))
+	if (asset_type >= 0 && asset_type < LLAssetType::AT_COUNT)
 	{
 		return DEFAULT_ASSET_FOR_INV_TYPE[S32(asset_type)];
 	}

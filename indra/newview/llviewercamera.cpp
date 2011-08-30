@@ -38,6 +38,7 @@
 #include "llquaternion.h"
 
 #include "llagent.h"
+#include "llmatrix4a.h"
 #include "llviewercontrol.h"
 #include "lldrawable.h"
 #include "llface.h"
@@ -50,6 +51,8 @@
 #include "llworld.h"
 #include "lltoolmgr.h"
 #include "llviewerjoystick.h"
+
+U32 LLViewerCamera::sCurCameraID = LLViewerCamera::CAMERA_WORLD;
 
 //glu pick matrix implementation borrowed from Mesa3D
 glh::matrix4f gl_pick_matrix(GLfloat x, GLfloat y, GLfloat width, GLfloat height, GLint* viewport)
@@ -754,21 +757,29 @@ BOOL LLViewerCamera::areVertsVisible(LLViewerObject* volumep, BOOL all_verts)
 	
 	LLMatrix4 render_mat(vo_volume->getRenderRotation(), LLVector4(vo_volume->getRenderPosition()));
 
+	LLMatrix4a render_mata;
+	render_mata.loadu(render_mat);
+	LLMatrix4a mata;
+	mata.loadu(mat);
+
 	num_faces = volume->getNumVolumeFaces();
 	for (i = 0; i < num_faces; i++)
 	{
 		const LLVolumeFace& face = volume->getVolumeFace(i);
 				
-		for (U32 v = 0; v < face.mVertices.size(); v++)
+		for (U32 v = 0; v < face.mNumVertices; v++)
 		{
-			LLVector4 vec = LLVector4(face.mVertices[v].mPosition) * mat;
+			const LLVector4a& src_vec = face.mPositions[v];
+			LLVector4a vec;
+			mata.affineTransform(src_vec, vec);
 
 			if (drawablep->isActive())
 			{
-				vec = vec * render_mat;	
+				LLVector4a t = vec;
+				render_mata.affineTransform(t, vec);
 			}
 
-			BOOL in_frustum = pointInFrustum(LLVector3(vec)) > 0;
+			BOOL in_frustum = pointInFrustum(LLVector3(vec.getF32ptr())) > 0;
 
 			if (( !in_frustum && all_verts) ||
 				 (in_frustum && !all_verts))

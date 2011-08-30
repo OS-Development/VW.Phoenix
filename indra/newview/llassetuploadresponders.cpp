@@ -68,6 +68,100 @@ static const S32 FILE_COUNT_DISPLAY_THRESHOLD = 5;
 
 void dialog_refresh_all();
 
+void on_new_single_inventory_upload_complete(LLAssetType::EType asset_type,
+											 LLInventoryType::EType inventory_type,
+											 const std::string inventory_type_string,
+											 const LLUUID& item_folder_id,
+											 const std::string& item_name,
+											 const std::string& item_description,
+											 const LLSD& server_response,
+											 S32 upload_price)
+{
+	if (upload_price > 0)
+	{
+		// this upload costed us L$, update our balance
+		// and display something saying that it cost L$
+		LLStatusBar::sendMoneyBalanceRequest();
+
+		LLSD args;
+		args["AMOUNT"] = llformat("%d", upload_price);
+		LLNotifications::instance().add("UploadDone", args);
+	}
+
+	if (item_folder_id.notNull())
+	{
+		U32 everyone_perms = PERM_NONE;
+		U32 group_perms = PERM_NONE;
+		U32 next_owner_perms = PERM_ALL;
+		if (server_response.has("new_next_owner_mask"))
+		{
+			// The server provided creation perms so use them.
+			// Do not assume we got the perms we asked for
+			// since the server may not have granted them all.
+			everyone_perms = server_response["new_everyone_mask"].asInteger();
+			group_perms = server_response["new_group_mask"].asInteger();
+			next_owner_perms = server_response["new_next_owner_mask"].asInteger();
+		}
+		else 
+		{
+			// The server doesn't provide creation perms
+			// so use old assumption-based perms.
+			if (inventory_type_string != "snapshot")
+			{
+				next_owner_perms = PERM_MOVE | PERM_TRANSFER;
+			}
+		}
+
+		LLPermissions new_perms;
+		new_perms.init(gAgent.getID(), gAgent.getID(), LLUUID::null, LLUUID::null);
+		new_perms.initMasks(PERM_ALL, PERM_ALL, everyone_perms, group_perms,
+							next_owner_perms);
+
+		S32 creation_date_now = time_corrected();
+		LLPointer<LLViewerInventoryItem> item = new LLViewerInventoryItem(
+			server_response["new_inventory_item"].asUUID(),
+			item_folder_id,
+			new_perms,
+			server_response["new_asset"].asUUID(),
+			asset_type,
+			inventory_type,
+			item_name,
+			item_description,
+			LLSaleInfo::DEFAULT,
+			LLInventoryItem::II_FLAGS_NONE,
+			creation_date_now);
+
+		gInventory.updateItem(item);
+		gInventory.notifyObservers();
+
+		// Show the preview panel for textures and sounds to let
+		// user know that the image (or snapshot) arrived intact.
+		LLInventoryView* view = LLInventoryView::getActiveInventory();
+		if (view)
+		{
+			LLFocusableElement* focus = gFocusMgr.getKeyboardFocus();
+
+			view->getPanel()->setSelection(server_response["new_inventory_item"].asUUID(),
+										   TAKE_FOCUS_NO);
+			if ((LLAssetType::AT_TEXTURE == asset_type || LLAssetType::AT_SOUND == asset_type)
+				&& LLFilePicker::instance().getFileCount() <= FILE_COUNT_DISPLAY_THRESHOLD)
+			{
+				view->getPanel()->openSelected();
+			}
+
+			// restore keyboard focus
+			gFocusMgr.setKeyboardFocus(focus);
+		}
+	}
+	else
+	{
+		llwarns << "Can't find a folder to put it in" << llendl;
+	}
+
+	// remove the "Uploading..." message
+	LLUploadDialog::modalUploadFinished();	
+}
+
 LLAssetUploadResponder::LLAssetUploadResponder(const LLSD &post_data,
 											   const LLUUID& vfile_id,
 											   LLAssetType::EType asset_type)
@@ -216,95 +310,28 @@ void LLNewAgentInventoryResponder::uploadComplete(const LLSD& content)
 
 	LLAssetType::EType asset_type = LLAssetType::lookup(mPostData["asset_type"].asString());
 	LLInventoryType::EType inventory_type = LLInventoryType::lookup(mPostData["inventory_type"].asString());
-	S32 expected_upload_cost = LLGlobalEconomy::Singleton::getInstance()->getPriceUpload();
+	S32 expected_upload_cost = 0;
 
 	// Update L$ and ownership credit information
 	// since it probably changed on the server
 	if (asset_type == LLAssetType::AT_TEXTURE ||
 		asset_type == LLAssetType::AT_SOUND ||
-		asset_type == LLAssetType::AT_ANIMATION)
+		asset_type == LLAssetType::AT_ANIMATION ||
+		asset_type == LLAssetType::AT_MESH)
 	{
-		LLStatusBar::sendMoneyBalanceRequest();
-
-		LLSD args;
-		args["AMOUNT"] = llformat("%d", expected_upload_cost);
-		LLNotifications::instance().add("UploadPayment", args);
+		expected_upload_cost = LLGlobalEconomy::Singleton::getInstance()->getPriceUpload();
 	}
 
-	// Actually add the upload to viewer inventory
 	llinfos << "Adding " << content["new_inventory_item"].asUUID() << " "
 			<< content["new_asset"].asUUID() << " to inventory." << llendl;
-	if(mPostData["folder_id"].asUUID().notNull())
-	{
-		//std::ostringstream out;
-		//LLSDXMLFormatter *formatter = new LLSDXMLFormatter;
-		//formatter->format(mPostData, out, LLSDFormatter::OPTIONS_PRETTY);
-		//llinfos << "Post Data: " << out.str() << llendl;
+	on_new_single_inventory_upload_complete(asset_type, inventory_type,
+											mPostData["asset_type"].asString(),
+											mPostData["folder_id"].asUUID(),
+											mPostData["name"],
+											mPostData["description"],
+											content, expected_upload_cost);
 
-		U32 everyone_perms = PERM_NONE;
-		U32 group_perms = PERM_NONE;
-		U32 next_owner_perms = PERM_ALL;
-		if(content.has("new_next_owner_mask"))
-		{
-			// This is a new sim that provides creation perms so use them.
-			// Do not assume we got the perms we asked for in mPostData 
-			// since the sim may not have granted them all.
-			everyone_perms = content["new_everyone_mask"].asInteger();
-			group_perms = content["new_group_mask"].asInteger();
-			next_owner_perms = content["new_next_owner_mask"].asInteger();
-		}
-		else 
-		{
-			// This old sim doesn't provide creation perms so use old assumption-based perms.
-			if(mPostData["inventory_type"].asString() != "snapshot")
-			{
-				next_owner_perms = PERM_MOVE | PERM_TRANSFER;
-			}
-		}
-		LLPermissions new_perms;
-		new_perms.init(gAgent.getID(), gAgent.getID(), LLUUID::null, LLUUID::null);
-		new_perms.initMasks(PERM_ALL, PERM_ALL, everyone_perms, group_perms, next_owner_perms);
-		S32 creation_date_now = time_corrected();
-		LLPointer<LLViewerInventoryItem> item
-			= new LLViewerInventoryItem(content["new_inventory_item"].asUUID(),
-										mPostData["folder_id"].asUUID(),
-										new_perms,
-										content["new_asset"].asUUID(),
-										asset_type,
-										inventory_type,
-										mPostData["name"].asString(),
-										mPostData["description"].asString(),
-										LLSaleInfo::DEFAULT,
-										LLInventoryItem::II_FLAGS_NONE,
-										creation_date_now);
-		gInventory.updateItem(item);
-		gInventory.notifyObservers();
-
-		// Show the preview panel for textures and sounds to let
-		// user know that the image (or snapshot) arrived intact.
-		LLInventoryView* view = LLInventoryView::getActiveInventory();
-		if(view)
-		{
-			LLFocusableElement* focus = gFocusMgr.getKeyboardFocus();
-
-			view->getPanel()->setSelection(content["new_inventory_item"].asUUID(), TAKE_FOCUS_NO);
-			if((LLAssetType::AT_TEXTURE == asset_type || LLAssetType::AT_SOUND == asset_type)
-				&& LLFilePicker::instance().getFileCount() <= FILE_COUNT_DISPLAY_THRESHOLD)
-			{
-				view->getPanel()->openSelected();
-			}
-			//LLInventoryView::dumpSelectionInformation((void*)view);
-			// restore keyboard focus
-			gFocusMgr.setKeyboardFocus(focus);
-		}
-	}
-	else
-	{
-		llwarns << "Can't find a folder to put it in" << llendl;
-	}
-
-	// remove the "Uploading..." message
-	LLUploadDialog::modalUploadFinished();
+	// continue uploading for bulk uploads
 	
 	// *FIX: This is a pretty big hack. What this does is check the
 	// file picker if there are any more pending uploads. If so,
@@ -329,11 +356,11 @@ void LLNewAgentInventoryResponder::uploadComplete(const LLSD& content)
 		std::string display_name = LLStringUtil::null;
 		LLAssetStorage::LLStoreAssetCallback callback = NULL;
 		void *userdata = NULL;
-		upload_new_resource(next_file, asset_name, asset_name,
-				    0, LLFolderType::FT_NONE, LLInventoryType::IT_NONE,
-				    next_owner_perms, group_perms,
-				    everyone_perms, display_name,
-				    callback, expected_upload_cost, userdata);
+		upload_new_resource(next_file, asset_name, asset_name, 0,
+							LLFolderType::FT_NONE, LLInventoryType::IT_NONE,
+							next_owner_perms, group_perms, everyone_perms,
+							display_name, callback, expected_upload_cost,
+							userdata);
 	}
 }
 

@@ -33,29 +33,28 @@
 #ifndef LL_LLSELECTMGR_H
 #define LL_LLSELECTMGR_H
 
+#include "llbbox.h"
+#include "llcategory.h"
 #include "llcharacter.h"
+#include "llcontrol.h"
+#include "llcoord.h"
 #include "lleditmenuhandler.h"
-#include "llstring.h"
-#include "llundo.h"
-#include "lluuid.h"
+#include "llframetimer.h"
+#include "llpermissions.h"
 #include "llpointer.h"
+#include "llquaternion.h"
 #include "llsafehandle.h"
 #include "llsaleinfo.h"
-#include "llcategory.h"
+#include "llundo.h"
+#include "lluuid.h"
 #include "v3dmath.h"
-#include "llquaternion.h"
-#include "llcoord.h"
-#include "llframetimer.h"
-#include "llbbox.h"
-#include "llpermissions.h"
 #include "llviewerobject.h"
 
 #include <deque>
-#include "boost/iterator/filter_iterator.hpp"
+#include <boost/iterator/filter_iterator.hpp>
 
 class LLMessageSystem;
 class LLViewerTexture;
-class LLViewerObject;
 class LLColor4;
 class LLVector3;
 class LLSelectNode;
@@ -140,6 +139,7 @@ public:
 	BOOL isTESelected(S32 te_index);
 	S32 getLastSelectedTE();
 	S32 getTESelectMask() { return mTESelectMask; }
+	void renderOneWireframe(const LLColor4& color);
 	void renderOneSilhouette(const LLColor4 &color);
 	void setTransient(BOOL transient) { mTransient = transient; }
 	BOOL isTransient() { return mTransient; }
@@ -147,7 +147,7 @@ public:
 	void setObject(LLViewerObject* object);
 	// *NOTE: invalidate stored textures and colors when # faces change
 	void saveColors();
-	void saveTextures(const std::vector<LLUUID>& textures);
+	void saveTextures(const uuid_vec_t& textures);
 	void saveTextureScaleRatios();
 
 	BOOL allowOperationOnNode(PermissionBit op, U64 group_proxy_power) const;
@@ -183,11 +183,10 @@ public:
 	std::string		mSitName;
 	U64				mCreationDate;
 	std::vector<LLColor4>	mSavedColors;
-	std::vector<LLUUID>		mSavedTextures;
+	uuid_vec_t				mSavedTextures;
 	std::vector<LLVector3>  mTextureScaleRatios;
 	std::vector<LLVector3>	mSilhouetteVertices;	// array of vertices to render silhouette of object
 	std::vector<LLVector3>	mSilhouetteNormals;	// array of normals to render silhouette of object
-	std::vector<S32>		mSilhouetteSegments;	// array of normals to render silhouette of object
 	BOOL					mSilhouetteExists;	// need to generate silhouette?
 
 protected:
@@ -289,6 +288,8 @@ public:
 	LLViewerObject*	getFirstCopyableObject(BOOL get_parent = FALSE);
 	LLViewerObject* getFirstDeleteableObject();
 	LLViewerObject*	getFirstMoveableObject(BOOL get_parent = FALSE);
+
+	// Return the object that lead to this selection, possible a child
 	LLViewerObject* getPrimaryObject() { return mPrimaryObject; }
 
 	// iterate through texture entries
@@ -304,6 +305,14 @@ public:
 
 	// count members
 	S32 getObjectCount();
+	F32 getSelectedObjectCost();
+	F32 getSelectedLinksetCost();
+	F32 getSelectedPhysicsCost();
+	F32 getSelectedLinksetPhysicsCost();
+
+	F32 getSelectedObjectStreamingCost(S32* total_bytes = NULL, S32* visible_bytes = NULL);
+	U32 getSelectedObjectTriangleCount();
+
 	S32 getTECount();
 	S32 getRootObjectCount();
 
@@ -338,7 +347,6 @@ class LLSelectMgr : public LLEditMenuHandler, public LLSingleton<LLSelectMgr>
 {
 public:
 	static BOOL					sRectSelectInclusive;	// do we need to surround an object to pick it?
-	static BOOL					sRenderSelectionHighlights;	// do we show selection silhouettes?
 	static BOOL					sRenderHiddenSelections;	// do we show selection silhouettes that are occluded?
 	static BOOL					sRenderLightRadius;	// do we show the radius of selected lights?
 	static F32					sHighlightThickness;
@@ -354,6 +362,11 @@ public:
 	static LLColor4				sHighlightChildColor;
 	static LLColor4				sHighlightInspectColor;
 	static LLColor4				sContextSilhouetteColor;
+
+	LLCachedControl<bool>		mHideSelectedObjects;
+	LLCachedControl<bool>		mRenderHighlightSelections;
+	LLCachedControl<bool>		mAllowSelectAvatar;
+	LLCachedControl<bool>		mDebugSelectMgr;
 
 public:
 	LLSelectMgr();
@@ -393,12 +406,15 @@ public:
 	// Add
 	////////////////////////////////////////////////////////////////
 
+	// This method is meant to select an object, and then select all
+	// of the ancestors and descendants. This should be the normal behavior.
+	//
+	// *NOTE: You must hold on to the object selection handle, otherwise
+	// the objects will be automatically deselected in 1 frame.
+	LLObjectSelectionHandle selectObjectAndFamily(LLViewerObject* object, BOOL add_to_end = FALSE);
+
 	// For when you want just a child object.
 	LLObjectSelectionHandle selectObjectOnly(LLViewerObject* object, S32 face = SELECT_ALL_TES);
-
-	// This method is meant to select an object, and then select all
-	// of the ancestors and descendents. This should be the normal behavior.
-	LLObjectSelectionHandle selectObjectAndFamily(LLViewerObject* object, BOOL add_to_end = FALSE);
 
 	// Same as above, but takes a list of objects.  Used by rectangle select.
 	LLObjectSelectionHandle selectObjectAndFamily(const std::vector<LLViewerObject*>& object_list, BOOL send_to_sim = TRUE);
@@ -448,6 +464,7 @@ public:
 	LLObjectSelectionHandle	getHighlightedObjects() { return mHighlightedObjects; }
 
 	LLSelectNode *getHoverNode();
+	LLSelectNode *getPrimaryHoverNode();
 
 	////////////////////////////////////////////////////////////////
 	// Grid manipulation
@@ -491,6 +508,11 @@ public:
 	bool selectionGetIncludeInSearch(bool* include_in_search_out); // true if all selected objects have same
 	BOOL selectionGetGlow(F32 *glow);
 
+	void selectionSetPhysicsType(U8 type);
+	void selectionSetGravity(F32 gravity);
+	void selectionSetFriction(F32 friction);
+	void selectionSetDensity(F32 density);
+	void selectionSetRestitution(F32 restitution);
 	void selectionSetMaterial(U8 material);
 	void selectionSetImage(const LLUUID& imageid); // could be item or asset id
 	void selectionSetColor(const LLColor4 &color);

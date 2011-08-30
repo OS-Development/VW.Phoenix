@@ -77,7 +77,7 @@ void LLDrawPoolClouds::prerender()
 void LLDrawPoolClouds::render(S32 pass)
 {
 	LLFastTimer ftm(LLFastTimer::FTM_RENDER_CLOUDS);
- 	if (!(gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_CLOUDS)))
+ 	if (!gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_CLOUDS))
 	{
 		return;
 	}
@@ -98,9 +98,4 @@ void LLDrawPoolClouds::render(S32 pass)
 	std::sort(mDrawFace.begin(), mDrawFace.end(), LLFace::CompareDistanceGreater());
 
 	drawLoop();
-}
-
-
-void LLDrawPoolClouds::renderForSelect()
-{
 }

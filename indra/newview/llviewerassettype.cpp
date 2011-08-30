@@ -41,10 +41,8 @@ static const std::string empty_string;
 
 struct ViewerAssetEntry : public LLDictionaryEntry
 {
-	ViewerAssetEntry(EDragAndDropType dad_type // drag and drop type
-		)
-		:
-		LLDictionaryEntry(empty_string), // no reverse lookup needed for now, so just leave this blank
+	ViewerAssetEntry(EDragAndDropType dad_type) // drag and drop type
+	:	LLDictionaryEntry(empty_string), // no reverse lookup needed for now, so just leave this blank
 		mDadType(dad_type)
 	{
 	}
@@ -83,7 +81,7 @@ LLViewerAssetDictionary::LLViewerAssetDictionary()
 	addEntry(LLViewerAssetType::AT_SIMSTATE, 			new ViewerAssetEntry(DAD_NONE));
 	addEntry(LLViewerAssetType::AT_LINK, 				new ViewerAssetEntry(DAD_LINK));
 	addEntry(LLViewerAssetType::AT_LINK_FOLDER, 		new ViewerAssetEntry(DAD_LINK));
-//	addEntry(LLViewerAssetType::AT_MESH, 				new ViewerAssetEntry(DAD_MESH));
+	addEntry(LLViewerAssetType::AT_MESH, 				new ViewerAssetEntry(DAD_MESH));
 	addEntry(LLViewerAssetType::AT_NONE, 				new ViewerAssetEntry(DAD_NONE));
 };
 

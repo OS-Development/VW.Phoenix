@@ -41,6 +41,7 @@
 class LLImageRaw;
 class LLSpatialGroup;
 class LLDrawInfo;
+class LLGLSLShader;
 class LLViewerFetchedTexture;
 
 class LLDrawPoolBump : public LLRenderPass
@@ -75,16 +76,19 @@ public:
 	void renderFullbrightShiny();
 	void endFullbrightShiny();
 
-	void beginBump();
-	void renderBump();
-	void endBump();
+	void beginBump(U32 pass = LLRenderPass::PASS_BUMP);
+	void renderBump(U32 pass = LLRenderPass::PASS_BUMP);
+	void endBump(U32 pass = LLRenderPass::PASS_BUMP);
 
-	virtual S32 getNumDeferredPasses() { return 1; }
+	static void bindCubeMap(LLGLSLShader* shader, S32 shader_level, S32& diffuse_channel, S32& cube_channel, bool invisible);
+	static void unbindCubeMap(LLGLSLShader* shader, S32 shader_level, S32& diffuse_channel, S32& cube_channel, bool invisible);
+
+	virtual S32 getNumDeferredPasses();
 	/*virtual*/ void beginDeferredPass(S32 pass);
 	/*virtual*/ void endDeferredPass(S32 pass);
 	/*virtual*/ void renderDeferred(S32 pass);
 
-	virtual S32 getNumPostDeferredPasses() { return 1; }
+	virtual S32 getNumPostDeferredPasses() { return 2; }
 	/*virtual*/ void beginPostDeferredPass(S32 pass);
 	/*virtual*/ void endPostDeferredPass(S32 pass);
 	/*virtual*/ void renderPostDeferred(S32 pass);

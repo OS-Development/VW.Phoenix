@@ -37,7 +37,6 @@
 
 #include "llassetstorage.h"
 #include "lldarrayptr.h"
-#include "llhudtext.h"
 #include "llhudicon.h"
 #include "llinventory.h"
 #include "llpointer.h"
@@ -61,10 +60,12 @@ class LLColor4;
 class LLFrameTimer;
 class LLDrawable;
 class LLHost;
+class LLHUDText;
 class LLWorld;
 class LLNameValue;
 class LLNetMap;
 class LLMessageSystem;
+class LLPartSysData;
 class LLPrimitive;
 class LLPipeline;
 class LLTextureEntry;
@@ -75,6 +76,7 @@ class LLViewerPartSourceScript;
 class LLViewerRegion;
 class LLViewerObjectMedia;
 class LLVOInventoryListener;
+class LLVOAvatar;
 
 typedef enum e_object_update_type
 {
@@ -118,7 +120,7 @@ public:
 
 //============================================================================
 
-class LLViewerObject : public LLPrimitive, public LLRefCount
+class LLViewerObject : public LLPrimitive, public LLRefCount, public LLGLUpdate
 {
 protected:
 	~LLViewerObject(); // use unref()
@@ -137,13 +139,15 @@ public:
 
 	typedef const child_list_t const_child_list_t;
 
-	LLViewerObject(const LLUUID &id, const LLPCode type, LLViewerRegion *regionp, BOOL is_global = FALSE);
+	LLViewerObject(const LLUUID &id, const LLPCode pcode, LLViewerRegion *regionp, BOOL is_global = FALSE);
 	MEM_TYPE_NEW(LLMemType::MTYPE_OBJECT);
 
 	virtual void markDead();				// Mark this object as dead, and clean up its references
 	BOOL isDead() const									{return mDead;}
 	BOOL isOrphaned() const								{ return mOrphaned; }
 	BOOL isParticleSource() const;
+
+	virtual LLVOAvatar* asAvatar();
 
 	static void initVOClasses();
 	static void cleanupVOClasses();
@@ -173,6 +177,7 @@ public:
 	void			setOnActiveList(BOOL on_active)		{ mOnActiveList = on_active; }
 
 	virtual BOOL	isAttachment() const { return FALSE; }
+	virtual LLVOAvatar* getAvatar() const;  //get the avatar this object is attached to, or NULL if object is not an attachment
 	virtual BOOL	isHUDAttachment() const { return FALSE; }
 	virtual void 	updateRadius() {};
 	virtual F32 	getVObjRadius() const; // default implemenation is mDrawable->getRadius()
@@ -196,6 +201,7 @@ public:
 	
 	virtual LLDrawable* createDrawable(LLPipeline *pipeline);
 	virtual BOOL		updateGeometry(LLDrawable *drawable);
+	virtual void		updateGL();
 	virtual void		updateFaceSize(S32 idx);
 	virtual BOOL		updateLOD();
 	virtual BOOL		setDrawableParent(LLDrawable* parentp);
@@ -220,6 +226,8 @@ public:
 
 	virtual BOOL isFlexible() const					{ return FALSE; }
 	virtual BOOL isSculpted() const 				{ return FALSE; }
+	virtual BOOL isMesh() const						{ return FALSE; }
+	virtual BOOL hasLightTexture() const			{ return FALSE; }
 
 	// This method returns true if the object is over land owned by
 	// the agent, one of its groups, or it encroaches and 
@@ -311,12 +319,29 @@ public:
 	/*virtual*/ S32     setTEGlow(const U8 te, const F32 glow);
 	/*virtual*/	BOOL	setMaterial(const U8 material);
 	virtual		void	setTEImage(const U8 te, LLViewerTexture *imagep); // Not derived from LLPrimitive
+	void                changeTEImage(S32 index, LLViewerTexture* new_image);
 	LLViewerTexture		*getTEImage(const U8 te) const;
 	
 	void fitFaceTexture(const U8 face);
 	void sendTEUpdate() const;			// Sends packed representation of all texture entry information
 	
 	virtual void setScale(const LLVector3 &scale, BOOL damped = FALSE);
+
+	virtual F32 getStreamingCost(S32* bytes = NULL, S32* visible_bytes = NULL);
+	virtual U32 getTriangleCount();
+	virtual U32 getHighLODTriangleCount();
+
+	void setObjectCost(F32 cost);
+	F32 getObjectCost();
+
+	void setLinksetCost(F32 cost);
+	F32 getLinksetCost();
+
+	void setPhysicsCost(F32 cost);
+	F32 getPhysicsCost();
+
+	void setLinksetPhysicsCost(F32 cost);
+	F32 getLinksetPhysicsCost();
 
 	void sendShapeUpdate();
 
@@ -361,7 +386,7 @@ public:
 
 	void markForUpdate(BOOL priority);
 	void updateVolume(const LLVolumeParams& volume_params);
-	virtual	void updateSpatialExtents(LLVector3& min, LLVector3& max);
+	virtual	void updateSpatialExtents(LLVector4a& min, LLVector4a& max);
 	virtual F32 getBinRadius();
 	
 	LLBBox				getBoundingBoxAgent() const;
@@ -374,7 +399,7 @@ public:
 	void clearDrawableState(U32 state, BOOL recursive = TRUE);
 
 	// Called when the drawable shifts
-	virtual void onShift(const LLVector3 &shift_vector)	{ }
+	virtual void onShift(const LLVector4a &shift_vector)	{ }
 		
 	//////////////////////////////////////
 	//
@@ -447,6 +472,13 @@ public:
 	inline BOOL		flagAnimSource() const			{ return ((mFlags & FLAGS_ANIM_SOURCE) != 0); }
 	inline BOOL		flagCameraSource() const		{ return ((mFlags & FLAGS_CAMERA_SOURCE) != 0); }
 	inline BOOL		flagCameraDecoupled() const		{ return ((mFlags & FLAGS_CAMERA_DECOUPLED) != 0); }
+	inline BOOL		flagObjectMove() const			{ return ((mFlags & FLAGS_OBJECT_MOVE) != 0); }
+
+	U8				getPhysicsShapeType() const;
+	inline F32      getPhysicsGravity() const       { return mPhysicsGravity; }
+	inline F32      getPhysicsFriction() const      { return mPhysicsFriction; }
+	inline F32      getPhysicsDensity() const       { return mPhysicsDensity; }
+	inline F32      getPhysicsRestitution() const   { return mPhysicsRestitution; }
 
 	bool getIncludeInSearch() const;
 	void setIncludeInSearch(bool include_in_search);
@@ -463,7 +495,12 @@ public:
 
 	void updateFlags();
 	BOOL setFlags(U32 flag, BOOL state);
-	
+	void setPhysicsShapeType(U8 type);
+	void setPhysicsGravity(F32 gravity);
+	void setPhysicsFriction(F32 friction);
+	void setPhysicsDensity(F32 density);
+	void setPhysicsRestitution(F32 restitution);
+
 	virtual void dump() const;
 	static U32		getNumZombieObjects()			{ return sNumZombieObjects; }
 
@@ -471,7 +508,7 @@ public:
 
 	virtual S32 getLOD() const { return 3; } 
 	virtual U32 getPartitionType() const;
-	virtual void dirtySpatialGroup() const;
+	virtual void dirtySpatialGroup(BOOL priority = FALSE) const;
 	virtual void dirtyMesh();
 
 	virtual LLNetworkData* getParameterEntry(U16 param_type) const;
@@ -520,6 +557,13 @@ public:
 		LL_VO_HUD_PART_GROUP =		LL_PCODE_APP | 0xc0,
 	} EVOType;
 
+	typedef enum e_physics_shape_types
+	{
+		PHYSICS_SHAPE_PRIM = 0,
+		PHYSICS_SHAPE_NONE,
+		PHYSICS_SHAPE_CONVEX_HULL,
+	} EPhysicsShapeType;
+
 	LLUUID			mID;
 
 	// unique within region, not unique across regions
@@ -537,6 +581,13 @@ public:
 
 	// Grabbed from UPDATE_FLAGS
 	U32				mFlags;
+
+	// Sent to sim in UPDATE_FLAGS, received in ObjectPhysicsProperties
+	U8              mPhysicsShapeType;
+	F32             mPhysicsGravity;
+	F32             mPhysicsFriction;
+	F32             mPhysicsDensity;
+	F32             mPhysicsRestitution;
 
 	// Pipeline classes
 	LLPointer<LLDrawable> mDrawable;
@@ -648,6 +699,14 @@ protected:
 	LLViewerObjectMedia* mMedia;	// NULL if no media associated
 	U8 mClickAction;
 
+	F32 mObjectCost; //resource cost of this object or -1 if unknown
+	F32 mLinksetCost;
+	F32 mPhysicsCost;
+	F32 mLinksetPhysicsCost;
+
+	bool mCostStale;
+	mutable bool mPhysicsShapeUnknown;
+
 	static			U32			sNumZombieObjects;			// Objects which are dead, but not deleted
 
 	static			BOOL		sMapDebug;					// Map render mode
@@ -666,16 +725,16 @@ private:
 	static S32 sNumObjects;
 
 public:
-	const LLUUID &getAttachmentItemID() const { return mAttachmentItemID; }
-	void setAttachmentItemID(const LLUUID &id) { mAttachmentItemID = id; }
+	const LLUUID &getAttachmentItemID() const;
+	void setAttachmentItemID(const LLUUID &id);
 	const LLUUID &extractAttachmentItemID(); // find&set the inventory item ID of the attached object
 
-	EObjectUpdateType getLastUpdateType() const { return mLastUpdateType; }
-	void setLastUpdateType(EObjectUpdateType last_update_type) { mLastUpdateType = last_update_type; }
-	BOOL getLastUpdateCached() const { return mLastUpdateCached; }
-	void setLastUpdateCached(BOOL last_update_cached) { mLastUpdateCached = last_update_cached; }
+	EObjectUpdateType getLastUpdateType() const;
+	void setLastUpdateType(EObjectUpdateType last_update_type);
+	BOOL getLastUpdateCached() const;
+	void setLastUpdateCached(BOOL last_update_cached);
 private:
-	LLUUID mAttachmentItemID; // ItemID when item is in user inventory.
+	LLUUID mAttachmentItemID; // ItemID of the associated object is in user inventory.
 
 	EObjectUpdateType	mLastUpdateType;
 	BOOL				mLastUpdateCached;
@@ -716,8 +775,8 @@ public:
 class LLAlphaObject : public LLViewerObject
 {
 public:
-	LLAlphaObject(const LLUUID &id, const LLPCode type, LLViewerRegion *regionp)
-	: LLViewerObject(id,type,regionp) 
+	LLAlphaObject(const LLUUID &id, const LLPCode pcode, LLViewerRegion *regionp)
+	: LLViewerObject(id, pcode, regionp) 
 	{ mDepth = 0.f; }
 
 	virtual F32 getPartSize(S32 idx);

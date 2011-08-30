@@ -145,6 +145,7 @@ static struct ft_display_info ft_display_table[] =
     { LLFastTimer::FTM_CULL_REBOUND,		"   Rebound",		&LLColor4::blue3, 0 },
 	{ LLFastTimer::FTM_FRUSTUM_CULL,		"   Frustum Cull",	&LLColor4::blue4, 0 },
 	{ LLFastTimer::FTM_OCCLUSION_READBACK,	"   Occlusion Read", &LLColor4::red2, 0 },
+	{ LLFastTimer::FTM_BUILD_OCCLUSION,		"   Occlusion Build",	&LLColor4::red3, 0 },
 	{ LLFastTimer::FTM_IMAGE_UPDATE,		"  Image Update",	&LLColor4::yellow4, 1 },
 	{ LLFastTimer::FTM_IMAGE_CREATE,		"   Image CreateGL",&LLColor4::yellow5, 0 },
 	{ LLFastTimer::FTM_IMAGE_DECODE,		"   Image Decode",	&LLColor4::yellow6, 0 },

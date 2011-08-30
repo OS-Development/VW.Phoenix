@@ -29,6 +29,8 @@ set(debug_files
     libapr-1.dll
     libaprutil-1.dll
     libapriconv-1.dll
+    libcollada14dom22-d.dll
+    glod.dll
     libhunspell.dll
     lgggrowl++.dll
     lgggrowl.dll
@@ -232,6 +234,8 @@ set(release_files
     libapr-1.dll
     libaprutil-1.dll
     libapriconv-1.dll
+    libcollada14dom22.dll
+    glod.dll
     libhunspell.dll
     lgggrowl++.dll
     lgggrowl.dll

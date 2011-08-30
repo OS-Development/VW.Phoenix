@@ -60,6 +60,7 @@ public:
 	// Initialize data that's only inited once per class.
 	static void initClass();
 	static void cleanupClass();
+	static bool isTreeRenderingStopped();
 
 	/*virtual*/ U32 processUpdateMessage(LLMessageSystem *mesgsys,
 											void **user_data,
@@ -74,7 +75,7 @@ public:
 
 	/*virtual*/ LLDrawable* createDrawable(LLPipeline *pipeline);
 	/*virtual*/ BOOL		updateGeometry(LLDrawable *drawable);
-	/*virtual*/ void		updateSpatialExtents(LLVector3 &min, LLVector3 &max);
+	/*virtual*/ void		updateSpatialExtents(LLVector4a &min, LLVector4a &max);
 
 	virtual U32 getPartitionType() const;
 
@@ -122,11 +123,11 @@ public:
 										  LLVector3* intersection = NULL,       // return the intersection point
 										  LLVector2* tex_coord = NULL,          // return the texture coordinates of the intersection point
 										  LLVector3* normal = NULL,             // return the surface normal at the intersection point
-										  LLVector3* bi_normal = NULL           // return the surface bi-normal at the intersection point
-		);
-
+										  LLVector3* bi_normal = NULL);		// return the surface bi-normal at the intersection point
+ 
+#ifdef HIGHLIGHT_GRASS_AND_TREES	// Broken for now
 	void    generateSilhouette(LLSelectNode* nodep, const LLVector3& view_point);
-	
+#endif
 
 	static S32 sMaxTreeSpecies;
 
@@ -202,6 +203,7 @@ protected:
 	static S32 sLODSlices[4];
 	static F32 sLODAngles[4];
 
+#ifdef HIGHLIGHT_GRASS_AND_TREES	// Broken for now
 private:
 	void generateSilhouetteVertices(std::vector<LLVector3> &vertices,
 									std::vector<LLVector3> &normals,
@@ -209,7 +211,7 @@ private:
 									const LLVector3& view_vec,
 									const LLMatrix4& mat,
 									const LLMatrix3& norm_mat);
-	
+#endif	
 };
 
 #endif

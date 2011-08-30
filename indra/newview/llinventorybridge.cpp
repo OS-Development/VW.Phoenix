@@ -876,6 +876,13 @@ LLInvFVBridge* LLInvFVBridge::createBridge(LLAssetType::EType asset_type,
 		// Only should happen for broken links.
 		new_listener = new LLLinkItemBridge(inventory, uuid);
 		break;
+	case LLAssetType::AT_MESH:
+		if (!(inv_type == LLInventoryType::IT_MESH))
+		{
+			llwarns << LLAssetType::lookup(asset_type) << " asset has inventory type " << safe_inv_type_lookup(inv_type) << " on uuid " << uuid << llendl;
+		}
+		new_listener = new LLMeshBridge(inventory, uuid);
+		break;
 
 	default:
 		llinfos << "Unhandled asset type (llassetstorage.h): "
@@ -2388,13 +2395,12 @@ BOOL LLFolderBridge::dragOrDrop(MASK mask, BOOL drop,
 	case DAD_BODYPART:
 	case DAD_ANIMATION:
 	case DAD_GESTURE:
+	case DAD_MESH:
 	case DAD_LINK:
-		accept = dragItemIntoFolder((LLInventoryItem*)cargo_data,
-									drop);
+		accept = dragItemIntoFolder((LLInventoryItem*)cargo_data, drop);
 		break;
 	case DAD_CATEGORY:
-		accept = dragCategoryIntoFolder((LLInventoryCategory*)cargo_data,
-										drop);
+		accept = dragCategoryIntoFolder((LLInventoryCategory*)cargo_data, drop);
 		break;
 	default:
 		break;
@@ -3258,6 +3264,7 @@ BOOL LLCallingCardBridge::dragOrDrop(MASK mask, BOOL drop,
 		case DAD_BODYPART:
 		case DAD_ANIMATION:
 		case DAD_GESTURE:
+		case DAD_MESH:
 			{
 				LLInventoryItem* inv_item = (LLInventoryItem*)cargo_data;
 				const LLPermissions& perm = inv_item->getPermissions();
@@ -5376,6 +5383,63 @@ void LLWearableBridge::onRemoveFromAvatarArrived(LLWearable* wearable,
 		}
 	}
 	delete on_remove_struct;
+}
+
+
+// +=================================================+
+// |        LLMeshBridge                             |
+// +=================================================+
+
+std::string LLMeshBridge::sPrefix("Mesh: ");
+
+LLUIImagePtr LLMeshBridge::getIcon() const
+{
+	return LLInventoryIcon::getIcon(LLAssetType::AT_MESH, LLInventoryType::IT_MESH, 0, FALSE);
+}
+
+void LLMeshBridge::openItem()
+{
+	// open mesh
+}
+
+void LLMeshBridge::previewItem()
+{
+	// preview mesh
+}
+
+void LLMeshBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
+{
+	// *TODO: Translate
+	lldebugs << "LLMeshBridge::buildContextMenu()" << llendl;
+	std::vector<std::string> items;
+	std::vector<std::string> disabled_items;
+
+	if (isInTrash())
+	{
+		items.push_back(std::string("Purge Item"));
+		if (!isItemRemovable())
+		{
+			disabled_items.push_back(std::string("Purge Item"));
+		}
+
+		items.push_back(std::string("Restore Item"));
+	}
+	else
+	{
+		items.push_back(std::string("Properties"));
+
+		getClipboardEntries(true, items, disabled_items, flags);
+	}
+
+	hideContextEntries(menu, items, disabled_items);
+}
+
+// virtual
+void LLMeshBridge::performAction(LLFolderView* folder, LLInventoryModel* model, std::string action)
+{
+	// do action
+
+	LLItemBridge::performAction(folder, model, action);
 }
 
 

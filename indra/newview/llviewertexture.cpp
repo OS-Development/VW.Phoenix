@@ -542,10 +542,9 @@ void LLViewerTexture::init(bool firstinit)
 	mParcelMedia = NULL;
 	mNumFaces = 0;
 	mFaceList.clear();
-#ifdef MEDIA_ON_PRIM
 	mNumVolumes = 0;
 	mVolumeList.clear();
-#else
+#ifndef MEDIA_ON_PRIM
 	mIsMediaTexture = false;
 #endif
 }
@@ -559,9 +558,7 @@ S8 LLViewerTexture::getType() const
 void LLViewerTexture::cleanup()
 {
 	mFaceList.clear();
-#ifdef MEDIA_ON_PRIM
 	mVolumeList.clear();
-#endif
 	if (mGLTexturep)
 	{
 		mGLTexturep->cleanup();
@@ -726,7 +723,6 @@ void LLViewerTexture::reorganizeFaceList()
 	mFaceList.erase(mFaceList.begin() + mNumFaces, mFaceList.end());
 }
 
-#ifdef MEDIA_ON_PRIM
 //virtual
 void LLViewerTexture::addVolume(LLVOVolume* volumep)
 {
@@ -780,7 +776,6 @@ void LLViewerTexture::reorganizeVolumeList()
 	mLastVolumeListUpdateTimer.reset();
 	mVolumeList.erase(mVolumeList.begin() + mNumVolumes, mVolumeList.end());
 }
-#endif // MEDIA_ON_PRIM
 
 //virtual
 void LLViewerTexture::switchToCachedImage()
@@ -1542,7 +1537,7 @@ F32 LLViewerFetchedTexture::calcDecodePriority()
 
 	S32 cur_discard = getCurrentDiscardLevelForFetching();
 	bool have_all_data = (cur_discard >= 0 && cur_discard <= mDesiredDiscardLevel);
-	F32 pixel_priority = fsqrtf(mMaxVirtualSize);
+	F32 pixel_priority = (F32)sqrt(mMaxVirtualSize);
 
 	F32 priority = 0.f;
 
@@ -1731,9 +1726,7 @@ void LLViewerFetchedTexture::updateVirtualSize()
 		mMaxVirtualSizeResetCounter--;
 	}
 	reorganizeFaceList();
-#ifdef MEDIA_ON_PRIM
 	reorganizeVolumeList();
-#endif
 }
 
 S32 LLViewerFetchedTexture::getCurrentDiscardLevelForFetching()

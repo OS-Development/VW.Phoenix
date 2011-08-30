@@ -668,6 +668,26 @@ protected:
 	static std::string sPrefix;
 };
 
+class LLMeshBridge : public LLItemBridge
+{
+	friend class LLInvFVBridge;
+public:
+	virtual const std::string& getPrefix() { return sPrefix; }
+
+	virtual LLUIImagePtr getIcon() const;
+	virtual void openItem();
+	virtual void previewItem();
+	virtual void buildContextMenu(LLMenuGL& menu, U32 flags);
+	virtual void performAction(LLFolderView* folder, LLInventoryModel* model, std::string action);
+
+protected:
+	LLMeshBridge(LLInventoryPanel* inventory, const LLUUID& uuid)
+	:	LLItemBridge(inventory, uuid) {}
+
+protected:
+	static std::string sPrefix;
+};
+
 void rez_attachment(LLViewerInventoryItem* item, 
 					LLViewerJointAttachment* attachment,
 					bool replace = false);

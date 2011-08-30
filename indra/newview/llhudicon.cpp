@@ -39,6 +39,7 @@
 
 #include "llviewerobject.h"
 #include "lldrawable.h"
+#include "llvector4a.h"
 #include "llviewercamera.h"
 #include "llviewertexture.h"
 #include "llviewerwindow.h"
@@ -206,11 +207,6 @@ void LLHUDIcon::render()
 	renderIcon(FALSE);
 }
 
-void LLHUDIcon::renderForSelect()
-{
-	renderIcon(TRUE);
-}
-
 BOOL LLHUDIcon::lineSegmentIntersect(const LLVector3& start, const LLVector3& end, LLVector3* intersection)
 {
 	if (mHidden)
@@ -226,26 +222,27 @@ BOOL LLHUDIcon::lineSegmentIntersect(const LLVector3& start, const LLVector3& en
 
 	// put icon above object, and in front
 	// RN: don't use drawable radius, it's fricking HUGE
-	LLVector3 icon_relative_pos = (LLViewerCamera::getInstance()->getUpAxis() * ~mSourceObject->getRenderRotation());
+	LLViewerCamera* camera = LLViewerCamera::getInstance();
+	LLVector3 icon_relative_pos = (camera->getUpAxis() * ~mSourceObject->getRenderRotation());
 	icon_relative_pos.abs();
 
 	F32 distance_scale = llmin(mSourceObject->getScale().mV[VX] / icon_relative_pos.mV[VX], 
 		mSourceObject->getScale().mV[VY] / icon_relative_pos.mV[VY], 
 		mSourceObject->getScale().mV[VZ] / icon_relative_pos.mV[VZ]);
 	F32 up_distance = 0.5f * distance_scale;
-	LLVector3 icon_position = obj_position + (up_distance * LLViewerCamera::getInstance()->getUpAxis()) * 1.2f;
+	LLVector3 icon_position = obj_position + (up_distance * camera->getUpAxis()) * 1.2f;
 
-	LLVector3 icon_to_cam = LLViewerCamera::getInstance()->getOrigin() - icon_position;
+	LLVector3 icon_to_cam = camera->getOrigin() - icon_position;
 	icon_to_cam.normVec();
 
 	icon_position += icon_to_cam * mSourceObject->mDrawable->getRadius() * 1.1f;
 
-	mDistance = dist_vec(icon_position, LLViewerCamera::getInstance()->getOrigin());
+	mDistance = dist_vec(icon_position, camera->getOrigin());
 
 	LLVector3 x_pixel_vec;
 	LLVector3 y_pixel_vec;
 	
-	LLViewerCamera::getInstance()->getPixelVectors(icon_position, y_pixel_vec, x_pixel_vec);
+	camera->getPixelVectors(icon_position, y_pixel_vec, x_pixel_vec);
 
 	F32 scale_factor = 1.f;
 	if (mAnimTimer.getElapsedTimeF32() < ANIM_TIME)
@@ -264,21 +261,42 @@ BOOL LLHUDIcon::lineSegmentIntersect(const LLVector3& start, const LLVector3& en
 	LLVector3 x_scale = image_aspect * (F32)gViewerWindow->getWindowHeight() * mScale * scale_factor * x_pixel_vec;
 	LLVector3 y_scale = (F32)gViewerWindow->getWindowHeight() * mScale * scale_factor * y_pixel_vec;
 
-	LLVector3 lower_left = icon_position - (x_scale * 0.5f);
-	LLVector3 lower_right = icon_position + (x_scale * 0.5f);
-	LLVector3 upper_left = icon_position - (x_scale * 0.5f) + y_scale;
-	LLVector3 upper_right = icon_position + (x_scale * 0.5f) + y_scale;
+	LLVector4a x_scalea;
+	LLVector4a icon_positiona;
+	LLVector4a y_scalea;
 
+	x_scalea.load3(x_scale.mV);
+	x_scalea.mul(0.5f);
+	y_scalea.load3(y_scale.mV);
+
+	icon_positiona.load3(icon_position.mV);
+
+	LLVector4a lower_left;
+	lower_left.setSub(icon_positiona, x_scalea);
+	LLVector4a lower_right;
+	lower_right.setAdd(icon_positiona, x_scalea);
+	LLVector4a upper_left;
+	upper_left.setAdd(lower_left, y_scalea);
+	LLVector4a upper_right;
+	upper_right.setAdd(lower_right, y_scalea);
+
+	LLVector4a enda;
+	enda.load3(end.mV);
+	LLVector4a starta;
+	starta.load3(start.mV);
+	LLVector4a dir;
+	dir.setSub(enda, starta);
 	
-	F32 t = 0.f;
-	LLVector3 dir = end-start;
+	F32 a,b,t;
 
-	if (LLTriangleRayIntersect(upper_right, upper_left, lower_right, start, dir, NULL, NULL, &t, FALSE) ||
-		LLTriangleRayIntersect(upper_left, lower_left, lower_right, start, dir, NULL, NULL, &t, FALSE))
+	if (LLTriangleRayIntersect(upper_right, upper_left, lower_right, starta, dir, a,b,t) ||
+		LLTriangleRayIntersect(upper_left, lower_left, lower_right, starta, dir, a,b,t))
 	{
 		if (intersection)
 		{
-			*intersection = start + dir*t;
+			dir.mul(t);
+			starta.add(dir);
+			*intersection = LLVector3(starta.getF32ptr());
 		}
 		return TRUE;
 	}

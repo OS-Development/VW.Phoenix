@@ -45,6 +45,7 @@ class LLDrawPoolWater: public LLFacePool
 protected:
 	LLPointer<LLViewerTexture> mHBTex[2];
 	LLPointer<LLViewerTexture> mWaterImagep;
+	LLPointer<LLViewerTexture> mOpaqueWaterImagep;
 	LLPointer<LLViewerTexture> mWaterNormp;
 
 public:
@@ -70,23 +71,25 @@ public:
 	/*virtual*/ LLDrawPool *instancePool();
 	static void restoreGL();
 	
-	/*virtual*/ S32 getNumPostDeferredPasses() { return getNumPasses(); }
+	/*virtual*/ S32 getNumPostDeferredPasses() { return 0; /*getNumPasses();*/ }
 	/*virtual*/ void beginPostDeferredPass(S32 pass);
 	/*virtual*/ void endPostDeferredPass(S32 pass);
 	/*virtual*/ void renderPostDeferred(S32 pass) { render(pass); }
+	/*virtual*/ S32 getNumDeferredPasses() { return 1; }
+	/*virtual*/ void renderDeferred(S32 pass = 0);
 
 	/*virtual*/ S32 getNumPasses();
 	/*virtual*/ void render(S32 pass = 0);
-	/*virtual*/ void renderFaceSelected(LLFace *facep, LLViewerTexture *image, const LLColor4 &color,
-										const S32 index_offset = 0, const S32 index_count = 0);
 	/*virtual*/ void prerender();
-	/*virtual*/ void renderForSelect();
 
 	/*virtual*/ LLViewerTexture *getDebugTexture();
 	/*virtual*/ LLColor3 getDebugColor() const; // For AGP debug display
 
 	void renderReflection(LLFace* face);
 	void shade();
+
+protected:
+	void renderOpaqueLegacyWater();
 };
 
 void cgErrorCallback();

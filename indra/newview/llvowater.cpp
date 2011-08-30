@@ -52,9 +52,6 @@
 
 const BOOL gUseRoam = FALSE;
 
-
-///////////////////////////////////
-
 template<class T> inline T LERP(T a, T b, F32 factor)
 {
 	return a + (b - a) * factor;
@@ -66,8 +63,11 @@ const U32 WIDTH			= (N_RES * WAVE_STEP); //128.f //64		// width of wave tile, in
 const F32 WAVE_STEP_INV	= (1. / WAVE_STEP);
 
 
-LLVOWater::LLVOWater(const LLUUID &id, const LLPCode pcode, LLViewerRegion *regionp)
-:	LLStaticViewerObject(id, pcode, regionp)
+LLVOWater::LLVOWater(const LLUUID &id,
+					 const LLPCode pcode,
+					 LLViewerRegion *regionp)
+:	LLStaticViewerObject(id, pcode, regionp),
+	mRenderType(LLPipeline::RENDER_TYPE_WATER)
 {
 	// Terrain must draw during selection passes so it can block objects behind it.
 	mbCanSelect = FALSE;
@@ -75,7 +75,6 @@ LLVOWater::LLVOWater(const LLUUID &id, const LLPCode pcode, LLViewerRegion *regi
 
 	mUseTexture = TRUE;
 	mIsEdgePatch = FALSE;
-	mRenderType = LLPipeline::RENDER_TYPE_WATER;
 }
 
 void LLVOWater::markDead()
@@ -156,21 +155,29 @@ BOOL LLVOWater::updateGeometry(LLDrawable *drawable)
 	LLStrider<U16> indicesp;
 	U16 index_offset;
 
-	S32 size = 16;
+	// A quad is 4 vertices and 6 indices (making 2 triangles)
+	static const unsigned int vertices_per_quad = 4;
+	static const unsigned int indices_per_quad = 6;
 
-	S32 num_quads = size*size;	
-	face->setSize(4*num_quads, 6*num_quads);
+	static LLCachedControl<bool> render_transparent_water(gSavedSettings, "RenderTransparentWater");
+	const S32 size = render_transparent_water ? 16 : 1;
 
-	if (face->mVertexBuffer.isNull())
+	const S32 num_quads = size * size;	
+	face->setSize(vertices_per_quad * num_quads,
+				  indices_per_quad * num_quads);
+
+	LLVertexBuffer* buff = face->getVertexBuffer();
+	if (!buff)
 	{
-		face->mVertexBuffer = new LLVertexBuffer(LLDrawPoolWater::VERTEX_DATA_MASK, GL_DYNAMIC_DRAW_ARB);
-		face->mVertexBuffer->allocateBuffer(face->getGeomCount(), face->getIndicesCount(), TRUE);
+		buff = new LLVertexBuffer(LLDrawPoolWater::VERTEX_DATA_MASK, GL_DYNAMIC_DRAW_ARB);
+		buff->allocateBuffer(face->getGeomCount(), face->getIndicesCount(), TRUE);
 		face->setIndicesIndex(0);
 		face->setGeomIndex(0);
+		face->setVertexBuffer(buff);
 	}
 	else
 	{
-		face->mVertexBuffer->resizeBuffer(face->getGeomCount(), face->getIndicesCount());
+		buff->resizeBuffer(face->getGeomCount(), face->getIndicesCount());
 	}
 		
 	index_offset = face->getGeometry(verticesp,normalsp,texCoordsp, indicesp);
@@ -224,7 +231,7 @@ BOOL LLVOWater::updateGeometry(LLDrawable *drawable)
 		}
 	}
 	
-	face->mVertexBuffer->setBuffer(0);
+	buff->setBuffer(0);
 
 	mDrawable->movePartition();
 	LLPipeline::sCompiles++;
@@ -256,15 +263,21 @@ void LLVOWater::setIsEdgePatch(const BOOL edge_patch)
 	mIsEdgePatch = edge_patch;
 }
 
-void LLVOWater::updateSpatialExtents(LLVector3 &newMin, LLVector3& newMax)
+void LLVOWater::updateSpatialExtents(LLVector4a& newMin, LLVector4a& newMax)
 {
-	LLVector3 pos = getPositionAgent();
-	LLVector3 scale = getScale();
+	LLVector4a pos;
+	pos.load3(getPositionAgent().mV);
+	LLVector4a scale;
+	scale.load3(getScale().mV);
+	scale.mul(0.5f);
 
-	newMin = pos - scale * 0.5f;
-	newMax = pos + scale * 0.5f;
+	newMin.setSub(pos, scale);
+	newMax.setAdd(pos, scale);
 
-	mDrawable->setPositionGroup((newMin + newMax) * 0.5f);
+	pos.setAdd(newMin,newMax);
+	pos.mul(0.5f);
+
+	mDrawable->setPositionGroup(pos);
 }
 
 U32 LLVOWater::getPartitionType() const
@@ -278,9 +291,8 @@ U32 LLVOVoidWater::getPartitionType() const
 }
 
 LLWaterPartition::LLWaterPartition()
-: LLSpatialPartition(0)
+: LLSpatialPartition(0, FALSE, GL_DYNAMIC_DRAW_ARB)
 {
-	mRenderByGroup = FALSE;
 	mInfiniteFarClip = TRUE;
 	mDrawableType = LLPipeline::RENDER_TYPE_WATER;
 	mPartitionType = LLViewerRegion::PARTITION_WATER;

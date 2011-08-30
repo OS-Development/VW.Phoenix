@@ -249,11 +249,6 @@ void LLFacePool::dirtyTextures(const std::set<LLViewerFetchedTexture*>& textures
 {
 }
 
-BOOL LLFacePool::moveFace(LLFace *face, LLDrawPool *poolp, BOOL copy_data)
-{
-	return TRUE;
-}
-
 // static
 S32 LLFacePool::drawLoop(face_array_t& face_list)
 {
@@ -294,13 +289,6 @@ void LLFacePool::drawLoop()
 	{
 		drawLoop(mDrawFace);
 	}
-}
-
-void LLFacePool::renderFaceSelected(LLFace *facep, 
-									LLViewerTexture *image,
-									const LLColor4 &color,
-									const S32 index_offset, const S32 index_count)
-{
 }
 
 void LLFacePool::enqueue(LLFace* facep)
@@ -482,7 +470,8 @@ void LLRenderPass::pushBatch(LLDrawInfo& params, U32 mask, BOOL texture)
 	{
 		if (params.mTexture.notNull())
 		{
-			gGL.getTexUnit(0)->bind(params.mTexture.get(), TRUE);
+			params.mTexture->addTextureStats(params.mVSize);
+			gGL.getTexUnit(0)->bind(params.mTexture, TRUE);
 			if (params.mTextureMatrix)
 			{
 				glMatrixMode(GL_TEXTURE);
@@ -503,8 +492,8 @@ void LLRenderPass::pushBatch(LLDrawInfo& params, U32 mask, BOOL texture)
 			params.mGroup->rebuildMesh();
 		}
 		params.mVertexBuffer->setBuffer(mask);
-		params.mVertexBuffer->drawRange(LLRender::TRIANGLES, params.mStart, params.mEnd, params.mCount, params.mOffset);
-		gPipeline.addTrianglesDrawn(params.mCount/3);
+		params.mVertexBuffer->drawRange(params.mDrawMode, params.mStart, params.mEnd, params.mCount, params.mOffset);
+		gPipeline.addTrianglesDrawn(params.mCount, params.mDrawMode);
 	}
 
 	if (params.mTextureMatrix && texture && params.mTexture.notNull())

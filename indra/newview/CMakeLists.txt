@@ -16,6 +16,7 @@ include(LLAddBuildTest)
 include(LLAudio)
 include(LLCharacter)
 include(LLCommon)
+include(LLConvexDecomposition)
 include(LLImage)
 include(LLImageJ2COJ)
 include(LLInventory)
@@ -36,6 +37,7 @@ include(TemplateCheck)
 include(UI)
 include(LLKDU)
 include(ViewerMiscLibs)
+include(GLOD)
 include(ViewerArtwork.cmake)
 
 include(Growl)
@@ -54,9 +56,11 @@ include_directories(
     ${HUNSPELL_INCLUDE_DIR}
     ${ELFIO_INCLUDE_DIR}
     ${JSONCPP_INCLUDE_DIRS}
+    ${GLOD_INCLUDE_DIR}
     ${LLAUDIO_INCLUDE_DIRS}
     ${LLCHARACTER_INCLUDE_DIRS}
     ${LLCOMMON_INCLUDE_DIRS}
+    ${LLCONVEXDECOMP_INCLUDE_DIRS}
     ${LLIMAGE_INCLUDE_DIRS}
     ${LLINVENTORY_INCLUDE_DIRS}
     ${LLMATH_INCLUDE_DIRS}
@@ -70,6 +74,8 @@ include_directories(
     ${LLXML_INCLUDE_DIRS}
     ${LSCRIPT_INCLUDE_DIRS}
     ${LSCRIPT_INCLUDE_DIRS}/lscript_compile
+    ${LIBS_PREBUILT_DIR}/include/collada
+    ${LIBS_PREBUILT_DIR}/include/collada/1.4
     ${VIEWER_RESOURCE_DIRS}
     ${LIBOTR_INCLUDE_DIRS}
     ${GROWL_INCLUDE_DIRS}
@@ -155,7 +161,6 @@ set(viewer_SOURCE_FILES
     llcontainerview.cpp
     llcurrencyuimanager.cpp
     llcylinder.cpp
-
     lldaycyclemanager.cpp
     lldebugmessagebox.cpp
     lldebugview.cpp
@@ -311,6 +316,7 @@ set(viewer_SOURCE_FILES
     llmediaremotectrl.cpp
     llmemoryview.cpp
     llmenucommands.cpp
+    llmeshrepository.cpp
     llmimetypes.cpp
     llmorphview.cpp
     llmoveview.cpp
@@ -370,6 +376,7 @@ set(viewer_SOURCE_FILES
     llparcelselection.cpp
     llpatchvertexarray.cpp
     llphysicsmotion.cpp
+	llphysicsshapebuilderutil.cpp
     llpolymesh.cpp
     llpolymorph.cpp
     llprefschat.cpp
@@ -802,6 +809,7 @@ set(viewer_HEADER_FILES
     llmediaremotectrl.h
     llmemoryview.h
     llmenucommands.h
+    llmeshrepository.h
     llmimetypes.h
     llmorphview.h
     llmoveview.h
@@ -862,6 +870,7 @@ set(viewer_HEADER_FILES
     llparcelselection.h
     llpatchvertexarray.h
     llphysicsmotion.h
+	llphysicsshapebuilderutil.h
     llpolymesh.h
     llpolymorph.h
     llprefschat.h
@@ -1504,6 +1513,7 @@ target_link_libraries(${VIEWER_BINARY_NAME}
     ${Boost_THREAD_LIBRARY}
     ${DBUSGLIB_LIBRARIES}
     ${OPENGL_LIBRARIES}
+    ${GLOD_LIBRARIES}
     ${JSONCPP_LIBRARIES}
     ${SDL_LIBRARY}
     ${SMARTHEAP_LIBRARY}
@@ -1511,6 +1521,7 @@ target_link_libraries(${VIEWER_BINARY_NAME}
     ${WINDOWS_LIBRARIES}
     ${XMLRPCEPI_LIBRARIES}
     ${ELFIO_LIBRARIES}
+    ${LLCONVEXDECOMP_LIBRARY}
     ${LIBOTR_LIBRARIES}
     ${HUNSPELL_LIBRARY}
     ${GROWL_LIBRARY}

@@ -267,12 +267,9 @@ void handle_test_load_url(void*);
 //
 // Evil hackish imported globals
 //
-extern BOOL	gRenderLightGlows;
 extern BOOL gRenderAvatar;
-extern BOOL	gHideSelectedObjects;
 extern BOOL gShowOverlayTitle;
 extern BOOL gOcclusionCull;
-extern BOOL gAllowSelectAvatar;
 
 //
 // Globals
@@ -1111,7 +1108,6 @@ void handle_export_menus_to_xml(void*)
 extern BOOL gDebugClicks;
 extern BOOL gDebugWindowProc;
 extern BOOL gDebugTextEditorTips;
-extern BOOL gDebugSelectMgr;
 
 void init_debug_ui_menu(LLMenuGL* menu)
 {
@@ -1140,7 +1136,7 @@ void init_debug_ui_menu(LLMenuGL* menu)
 		(void*)"DoubleClickTeleport"));
 	menu->appendSeparator();
 //	menu->append(new LLMenuItemCallGL( "Print Packets Lost",			&print_packets_lost, NULL, NULL, 'L', MASK_SHIFT ));
-	menu->append(new LLMenuItemToggleGL("Debug SelectMgr", &gDebugSelectMgr));
+	menu->append(new LLMenuItemCheckGL("Debug SelectMgr", menu_toggle_control, NULL, menu_check_control, (void*)"DebugSelectMgr"));
 	menu->append(new LLMenuItemToggleGL("Debug Clicks", &gDebugClicks));
 	menu->append(new LLMenuItemToggleGL("Debug Views", &LLView::sDebugRects));
 	menu->append(new LLMenuItemCheckGL("Show Name Tooltips", toggle_show_xui_names, NULL, check_show_xui_names, NULL));
@@ -1278,63 +1274,102 @@ void init_debug_rendering_menu(LLMenuGL* menu)
 	sub_menu = new LLMenuGL("Info Displays");
 	menu->appendMenu(sub_menu);
 
-	sub_menu->append(new LLMenuItemCheckGL("Verify",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_VERIFY));
-	sub_menu->append(new LLMenuItemCheckGL("BBoxes",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_BBOXES));
-	sub_menu->append(new LLMenuItemCheckGL("Points",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_POINTS));
-	sub_menu->append(new LLMenuItemCheckGL("Octree",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_OCTREE));
-	sub_menu->append(new LLMenuItemCheckGL("Shadow Frusta",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_SHADOW_FRUSTA));
-	sub_menu->append(new LLMenuItemCheckGL("Occlusion",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_OCCLUSION));
-	sub_menu->append(new LLMenuItemCheckGL("Render Batches", &LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_BATCH_SIZE));
-	sub_menu->append(new LLMenuItemCheckGL("Animated Textures",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_TEXTURE_ANIM));
-	sub_menu->append(new LLMenuItemCheckGL("Texture Priority",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_TEXTURE_PRIORITY));
-	sub_menu->append(new LLMenuItemCheckGL("Avatar Rendering Cost",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_SHAME));
-	sub_menu->append(new LLMenuItemCheckGL("Texture Area (sqrt(A))",&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_TEXTURE_AREA));
-	sub_menu->append(new LLMenuItemCheckGL("Texture Comments",&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_TEXTURE_COMMENT));
-	sub_menu->append(new LLMenuItemCheckGL("Face Area (sqrt(A))",&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_FACE_AREA));
-	sub_menu->append(new LLMenuItemCheckGL("Lights",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_LIGHTS));
-	sub_menu->append(new LLMenuItemCheckGL("Particles",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_PARTICLES));
-	sub_menu->append(new LLMenuItemCheckGL("Composition", &LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_COMPOSITION));
-	sub_menu->append(new LLMenuItemCheckGL("Glow",&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_GLOW));
-	sub_menu->append(new LLMenuItemCheckGL("Raycasting",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_RAYCAST));
-	sub_menu->append(new LLMenuItemCheckGL("Sculpt",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_SCULPTED));
+	sub_menu->append(new LLMenuItemCheckGL("Verify",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_VERIFY));
+	sub_menu->append(new LLMenuItemCheckGL("BBoxes",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_BBOXES));
+	sub_menu->append(new LLMenuItemCheckGL("Normals",
+										   &LLPipeline::toggleRenderDebug, NULL,
+										   &LLPipeline::toggleRenderDebugControl,
+										   (void*)LLPipeline::RENDER_DEBUG_NORMALS));
+	sub_menu->append(new LLMenuItemCheckGL("Points",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_POINTS));
+	sub_menu->append(new LLMenuItemCheckGL("Octree",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_OCTREE));
+	sub_menu->append(new LLMenuItemCheckGL("Shadow Frusta",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_SHADOW_FRUSTA));
+	sub_menu->append(new LLMenuItemCheckGL("Physics Shapes",
+										   &LLPipeline::toggleRenderDebug, NULL,
+										   &LLPipeline::toggleRenderDebugControl,
+										   (void*)LLPipeline::RENDER_DEBUG_PHYSICS_SHAPES));
+	sub_menu->append(new LLMenuItemCheckGL("Occlusion",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_OCCLUSION));
+	sub_menu->append(new LLMenuItemCheckGL("Render Batches",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_BATCH_SIZE));
+	sub_menu->append(new LLMenuItemCheckGL("Update Type",
+										   &LLPipeline::toggleRenderDebug, NULL,
+										   &LLPipeline::toggleRenderDebugControl,
+										   (void*)LLPipeline::RENDER_DEBUG_UPDATE_TYPE));
+	sub_menu->append(new LLMenuItemCheckGL("Animated Textures",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_TEXTURE_ANIM));
+	sub_menu->append(new LLMenuItemCheckGL("Texture Priority",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_TEXTURE_PRIORITY));
+	sub_menu->append(new LLMenuItemCheckGL("Avatar Rendering Cost",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_SHAME));
+	sub_menu->append(new LLMenuItemCheckGL("Texture Area (sqrt(A))",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_TEXTURE_AREA));
+	sub_menu->append(new LLMenuItemCheckGL("Texture Comments",
+											&LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_TEXTURE_COMMENT));
+	sub_menu->append(new LLMenuItemCheckGL("Face Area (sqrt(A))",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_FACE_AREA));
+	sub_menu->append(new LLMenuItemCheckGL("LOD Info",
+										   &LLPipeline::toggleRenderDebug, NULL,
+										   &LLPipeline::toggleRenderDebugControl,
+										   (void*)LLPipeline::RENDER_DEBUG_LOD_INFO));
+	sub_menu->append(new LLMenuItemCheckGL("Build Queue",
+										   &LLPipeline::toggleRenderDebug, NULL,
+										   &LLPipeline::toggleRenderDebugControl,
+										   (void*)LLPipeline::RENDER_DEBUG_LOD_INFO));
+	sub_menu->append(new LLMenuItemCheckGL("Lights",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_LIGHTS));
+	sub_menu->append(new LLMenuItemCheckGL("Particles",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_PARTICLES));
+	sub_menu->append(new LLMenuItemCheckGL("Composition",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_COMPOSITION));
+	sub_menu->append(new LLMenuItemCheckGL("Glow",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_GLOW));
+	sub_menu->append(new LLMenuItemCheckGL("Raycasting",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_RAYCAST));
+	sub_menu->append(new LLMenuItemCheckGL("Sculpt",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_SCULPTED));
 		
 	sub_menu->append(new LLMenuItemCallGL("Vectorize Perf Test", &run_vectorize_perf_test));
 
@@ -1361,7 +1396,7 @@ void init_debug_rendering_menu(LLMenuGL* menu)
 //	menu->append(new LLMenuItemCheckGL("Cull Small Objects", toggle_cull_small, NULL, menu_check_control, (void*)"RenderCullBySize"));
 
 	menu->appendSeparator();
-	menu->append(new LLMenuItemToggleGL("Hide Selected", &gHideSelectedObjects));
+	menu->append(new LLMenuItemCheckGL("Hide Selected Objects", menu_toggle_control, NULL, menu_check_control, (void*)"HideSelectedObjects"));
 	menu->appendSeparator();
 	menu->append(new LLMenuItemCheckGL("Tangent Basis", menu_toggle_control, NULL, menu_check_control, (void*)"ShowTangentBasis"));
 	menu->append(new LLMenuItemCallGL("Selected Texture Info", handle_selected_texture_info, NULL, NULL, 'T', MASK_CONTROL|MASK_SHIFT|MASK_ALT));
@@ -1381,7 +1416,10 @@ void init_debug_rendering_menu(LLMenuGL* menu)
 	item = new LLMenuItemCheckGL("Debug Pipeline", menu_toggle_control, NULL, menu_check_control, (void*)"RenderDebugPipeline");
 	menu->append(item);
 
-	item = new LLMenuItemCheckGL("Fast Alpha", menu_toggle_control, NULL, menu_check_control, (void*)"RenderFastAlpha");
+	item = new LLMenuItemCheckGL("Automatic Alpha Masks (non-deferred)", menu_toggle_control, NULL, menu_check_control, (void*)"RenderAutoMaskAlphaNonDeferred");
+	menu->append(item);
+
+	item = new LLMenuItemCheckGL("Automatic Alpha Masks (deferred)", menu_toggle_control, NULL, menu_check_control, (void*)"RenderAutoMaskAlphaDeferred");
 	menu->append(item);
 
 	item = new LLMenuItemCheckGL("Animate Textures", menu_toggle_control, NULL, menu_check_control, (void*)"AnimateTextures");
@@ -1449,7 +1487,8 @@ void init_debug_avatar_menu(LLMenuGL* menu)
 
 	sub_menu->append(new LLMenuItemCallGL("Toggle PG", handle_toggle_pg));
 
-	sub_menu->append(new LLMenuItemToggleGL("Allow Select Avatar", &gAllowSelectAvatar));
+	sub_menu->append(new LLMenuItemCheckGL("Allow Select Avatar", menu_toggle_control, NULL, menu_check_control, (void*)"AllowSelectAvatar"));
+
 	sub_menu->createJumpKeys();
 
 	menu->appendMenu(sub_menu);
@@ -1482,10 +1521,11 @@ void init_debug_avatar_menu(LLMenuGL* menu)
 	menu->append(new LLMenuItemCallGL("Debug Avatar Textures", handle_debug_avatar_textures, NULL, NULL, 'A', MASK_SHIFT|MASK_CONTROL|MASK_ALT));
 	menu->append(new LLMenuItemCallGL("Dump Local Textures", handle_dump_avatar_local_textures, NULL, NULL, 'M', MASK_SHIFT|MASK_ALT ));	
 #endif
+#if MESHES_AND_MORPHS
 	LLMenuItemCallGL* mesh_item = new LLMenuItemCallGL("Meshes And Morphs...", handle_meshes_and_morphs);
 	mesh_item->setUserData((void*)mesh_item);  // So we can remove it later
 	menu->append(mesh_item);
-
+#endif //MESHES_AND_MORPHS
 	menu->createJumpKeys();
 }
 
@@ -7871,9 +7911,9 @@ class LLToolsShowSelectionHighlights : public view_listener_t
 	{
 		//LLSelectMgr::enableSilhouette = !LLSelectMgr::enableSilhouette;
 		//gSavedSettings.setBOOL("PhoenixRenderHighlightSelections",!gSavedSettings.getBOOL("PhoenixRenderHighlightSelections"));
-		LLSelectMgr::sRenderSelectionHighlights = !LLSelectMgr::sRenderSelectionHighlights;
+		//LLSelectMgr::sRenderSelectionHighlights = !LLSelectMgr::sRenderSelectionHighlights;
 		
-		gSavedSettings.setBOOL("PhoenixRenderHighlightSelections", LLSelectMgr::sRenderSelectionHighlights);
+		gSavedSettings.setBOOL("PhoenixRenderHighlightSelections", !gSavedSettings.getBOOL("PhoenixRenderHighlightSelections"));
 		return true;
 	}
 };
@@ -7955,6 +7995,7 @@ void handle_dump_avatar_local_textures(void*)
 	}
 }
 
+#if MESHES_AND_MORPHS
 void handle_meshes_and_morphs(void* menu_item)
 {
 	LLMenuItemCallGL* item = (LLMenuItemCallGL*) menu_item;
@@ -8275,6 +8316,7 @@ void handle_morph_load_obj(void* data)
 
 	morph_data->setMorphFromMesh(&mesh);
 }
+#endif //MESHES_AND_MORPHS
 
 void handle_debug_avatar_textures(void*)
 {

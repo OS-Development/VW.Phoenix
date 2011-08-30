@@ -317,6 +317,7 @@ bool LLXMLRPCTransaction::Impl::process()
 		}
 	}
 	
+#if 0
 	const F32 MAX_PROCESSING_TIME = 0.05f;
 	LLTimer timer;
 
@@ -327,7 +328,9 @@ bool LLXMLRPCTransaction::Impl::process()
 			return false;
 		}
 	}
-
+#else
+	mCurlRequest->perform();
+#endif
 	while(1)
 	{
 		CURLcode result;

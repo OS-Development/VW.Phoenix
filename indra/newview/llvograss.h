@@ -77,8 +77,6 @@ public:
 	/*virtual*/ BOOL updateLOD();
 	/*virtual*/ void setPixelAreaAndAngle(LLAgent &agent); // generate accurate apparent angle and area
 
-	void    generateSilhouette(LLSelectNode* nodep, const LLVector3& view_point);
-	
 	void plantBlades();
 
 	/*virtual*/ BOOL    isActive() const; // Whether this object needs to do an idleUpdate.
@@ -91,8 +89,11 @@ public:
 										  LLVector3* intersection = NULL,       // return the intersection point
 										  LLVector2* tex_coord = NULL,          // return the texture coordinates of the intersection point
 										  LLVector3* normal = NULL,             // return the surface normal at the intersection point
-										  LLVector3* bi_normal = NULL           // return the surface bi-normal at the intersection point
-		);
+										  LLVector3* bi_normal = NULL);		// return the surface bi-normal at the intersection point
+
+#ifdef HIGHLIGHT_GRASS_AND_TREES	// Broken for now
+	void generateSilhouette(LLSelectNode* nodep, const LLVector3& view_point);
+#endif
 
 	static S32 sMaxGrassSpecies;
 
@@ -124,12 +125,14 @@ protected:
 	~LLVOGrass();
 
 private:
+#ifdef HIGHLIGHT_GRASS_AND_TREES	// Broken for now
 	void generateSilhouetteVertices(std::vector<LLVector3> &vertices,
 									std::vector<LLVector3> &normals,
 									std::vector<S32> &segments,
 									const LLVector3& view_vec,
 									const LLMatrix4& mat,
 									const LLMatrix3& norm_mat);
+#endif
 	void updateSpecies();
 	F32 mLastHeight;		// For cheap update hack
 	S32 mNumBlades;

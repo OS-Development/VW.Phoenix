@@ -75,7 +75,7 @@ LLDrawPoolTerrain::LLDrawPoolTerrain(LLViewerTexture *texturep) :
 													GL_ALPHA8, GL_ALPHA,
 													LLUUID("e97cf410-8e61-7005-ec06-629eba4cd1fb"));
 
-	gGL.getTexUnit(0)->bind(mAlphaRampImagep);
+	//gGL.getTexUnit(0)->bind(mAlphaRampImagep.get());
 	mAlphaRampImagep->setAddressMode(LLTexUnit::TAM_CLAMP);
 
 	m2DAlphaRampImagep = LLViewerTextureManager::getFetchedTextureFromFile("alpha_gradient_2d.j2c", 
@@ -84,12 +84,12 @@ LLDrawPoolTerrain::LLDrawPoolTerrain(LLViewerTexture *texturep) :
 													GL_ALPHA8, GL_ALPHA,
 													LLUUID("38b86f85-2575-52a9-a531-23108d8da837"));
 
-	gGL.getTexUnit(0)->bind(m2DAlphaRampImagep);
+	//gGL.getTexUnit(0)->bind(m2DAlphaRampImagep.get());
 	m2DAlphaRampImagep->setAddressMode(LLTexUnit::TAM_CLAMP);
 
 	mTexturep->setBoostLevel(LLViewerTexture::BOOST_TERRAIN);
 
-	gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
+	//gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
 }
 
 LLDrawPoolTerrain::~LLDrawPoolTerrain()
@@ -479,7 +479,7 @@ void LLDrawPoolTerrain::renderFull4TU()
 	// Stage 1: Generate alpha ramp for detail0/detail1 transition
 	//
 
-	gGL.getTexUnit(1)->bind(m2DAlphaRampImagep);
+	gGL.getTexUnit(1)->bind(m2DAlphaRampImagep.get());
 	gGL.getTexUnit(1)->enable(LLTexUnit::TT_TEXTURE);
 	gGL.getTexUnit(1)->activate();
 	
@@ -538,7 +538,7 @@ void LLDrawPoolTerrain::renderFull4TU()
 	//
 	// Stage 1: Generate alpha ramp for detail2/detail3 transition
 	//
-	gGL.getTexUnit(1)->bind(m2DAlphaRampImagep.get());
+	gGL.getTexUnit(1)->bind(m2DAlphaRampImagep);
 	gGL.getTexUnit(1)->enable(LLTexUnit::TT_TEXTURE);
 	gGL.getTexUnit(1)->activate();
 
@@ -570,7 +570,7 @@ void LLDrawPoolTerrain::renderFull4TU()
 	//
 	// Stage 3: Generate alpha ramp for detail1/detail2 transition
 	//
-	gGL.getTexUnit(3)->bind(m2DAlphaRampImagep.get());
+	gGL.getTexUnit(3)->bind(m2DAlphaRampImagep);
 	gGL.getTexUnit(3)->enable(LLTexUnit::TT_TEXTURE);
 	gGL.getTexUnit(3)->activate();
 
@@ -907,28 +907,6 @@ void LLDrawPoolTerrain::renderOwnership()
 	glMatrixMode(GL_TEXTURE);
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
-}
-
-
-void LLDrawPoolTerrain::renderForSelect()
-{
-	if (mDrawFace.empty())
-	{
-		return;
-	}
-
-	
-	gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
-
-	for (std::vector<LLFace*>::iterator iter = mDrawFace.begin();
-		 iter != mDrawFace.end(); iter++)
-	{
-		LLFace *facep = *iter;
-		if (!facep->getDrawable()->isDead() && (facep->getDrawable()->getVObj()->mGLName))
-		{
-			facep->renderForSelect(LLVertexBuffer::MAP_VERTEX);
-		}
-	}
 }
 
 void LLDrawPoolTerrain::dirtyTextures(const std::set<LLViewerFetchedTexture*>& textures)

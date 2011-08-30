@@ -112,6 +112,7 @@ const F32 FLEXIBLE_OBJECT_DEFAULT_LENGTH = 1.0f;
 const BOOL FLEXIBLE_OBJECT_DEFAULT_USING_COLLISION_SPHERE = FALSE;
 const BOOL FLEXIBLE_OBJECT_DEFAULT_RENDERING_COLLISION_SPHERE = FALSE;
 
+const S32 MAX_FACE_BITS = 9;
 
 const char *SCULPT_DEFAULT_TEXTURE = "be293869-d0d9-0a69-5989-ad27f1946fd4"; // old inverted texture: "7595d345-a24c-e7ef-f0bd-78793792133e";
 
@@ -132,7 +133,7 @@ void LLPrimitive::setVolumeManager( LLVolumeMgr* volume_manager )
 {
 	if ( !volume_manager || sVolumeManager )
 	{
-		llerrs << "Unable to set LLPrimitive::sVolumeManager to NULL" << llendl;
+		llerrs << "LLPrimitive::sVolumeManager attempting to be set to NULL or it already has been set." << llendl;
 	}
 	sVolumeManager = volume_manager;
 }
@@ -153,7 +154,8 @@ bool LLPrimitive::cleanupVolumeManager()
 
 //===============================================================
 LLPrimitive::LLPrimitive()
-:	mMiscFlags(0)
+:	mNumTEs(0),
+	mMiscFlags(0)
 {
 	mPrimitiveCode = 0;
 
@@ -171,7 +173,6 @@ LLPrimitive::LLPrimitive()
 	
 	mScale.setVec(1.f,1.f,1.f);
 
-	mNumTEs = 0;
 	mTextureList = NULL;
 }
 
@@ -236,13 +237,13 @@ void LLPrimitive::setPCode(const U8 p_code)
 const LLTextureEntry * LLPrimitive::getTE(const U8 te_num) const
 {
 	// if we're asking for a non-existent face, return null
-	if (mNumTEs && (te_num< mNumTEs))
+	if (mNumTEs && te_num < mNumTEs)
 	{
-		return(&mTextureList[te_num]);
+		return &mTextureList[te_num];
 	}
 	else
 	{	
-		return(NULL);
+		return NULL;
 	}
 }
 
@@ -1579,6 +1580,8 @@ BOOL LLNetworkData::isValid(U16 param_type, U32 size)
 		return (size == 16);
 	case PARAMS_SCULPT:
 		return (size == 17);
+	case PARAMS_LIGHT_IMAGE:
+		return (size == 28);
 	}
 	
 	return FALSE;
@@ -1911,3 +1914,76 @@ bool LLSculptParams::fromLLSD(LLSD& sd)
 	return false;
 }
 
+//============================================================================
+
+LLLightImageParams::LLLightImageParams()
+{
+	mType = PARAMS_LIGHT_IMAGE;
+	mParams.setVec(F_PI * 0.5f, 0.f, 0.f);
+}
+
+BOOL LLLightImageParams::pack(LLDataPacker &dp) const
+{
+	dp.packUUID(mLightTexture, "texture");
+	dp.packVector3(mParams, "params");
+
+	return TRUE;
+}
+
+BOOL LLLightImageParams::unpack(LLDataPacker &dp)
+{
+	dp.unpackUUID(mLightTexture, "texture");
+	dp.unpackVector3(mParams, "params");
+
+	return TRUE;
+}
+
+bool LLLightImageParams::operator==(const LLNetworkData& data) const
+{
+	if (data.mType != PARAMS_LIGHT_IMAGE)
+	{
+		return false;
+	}
+
+	const LLLightImageParams *param = (const LLLightImageParams*)&data;
+	if (param->mLightTexture != mLightTexture)
+	{
+		return false;
+	}
+
+	if (param->mParams != mParams)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+void LLLightImageParams::copy(const LLNetworkData& data)
+{
+	const LLLightImageParams *param = (LLLightImageParams*)&data;
+	mLightTexture = param->mLightTexture;
+	mParams = param->mParams;
+}
+
+LLSD LLLightImageParams::asLLSD() const
+{
+	LLSD sd;
+
+	sd["texture"] = mLightTexture;
+	sd["params"] = mParams.getValue();
+
+	return sd;
+}
+
+bool LLLightImageParams::fromLLSD(LLSD& sd)
+{
+	if (sd.has("texture"))
+	{
+		setLightTexture(sd["texture"]);
+		setParams(LLVector3( sd["params"]));
+		return true;
+	} 
+
+	return false;
+}

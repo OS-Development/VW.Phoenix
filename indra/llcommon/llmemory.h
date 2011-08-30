@@ -32,6 +32,10 @@
 #ifndef LL_MEMORY_H
 #define LL_MEMORY_H
 
+#if !LL_WINDOWS
+#include <stdint.h>
+#endif
+
 #include "llmemtype.h"
 
 #if LL_DEBUG

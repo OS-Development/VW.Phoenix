@@ -579,6 +579,32 @@ void handle_compress_image(void*)
 	}
 }
 
+LLSD generate_new_resource_upload_capability_body(LLAssetType::EType asset_type,
+												  const std::string& name,
+												  const std::string& desc,
+												  LLFolderType::EType destination_folder_type,
+												  LLInventoryType::EType inv_type,
+												  U32 next_owner_perms,
+												  U32 group_perms,
+												  U32 everyone_perms)
+{
+	LLSD body;
+
+	body["folder_id"] = gInventory.findCategoryUUIDForType(destination_folder_type == LLFolderType::FT_NONE ?
+														   LLFolderType::assetTypeToFolderType(asset_type) :
+														   destination_folder_type);
+
+	body["asset_type"] = LLAssetType::lookup(asset_type);
+	body["inventory_type"] = LLInventoryType::lookup(inv_type);
+	body["name"] = name;
+	body["description"] = desc;
+	body["next_owner_mask"] = LLSD::Integer(next_owner_perms);
+	body["group_mask"] = LLSD::Integer(group_perms);
+	body["everyone_mask"] = LLSD::Integer(everyone_perms);
+
+	return body;
+}
+
 void upload_new_resource(const std::string& src_filename,
 						 std::string name,
 						 std::string desc, S32 compression_info,
@@ -1143,16 +1169,15 @@ void upload_new_resource(const LLTransactionID &tid,
 	{
 		llinfos << "New Agent Inventory via capability" << llendl;
 		LLSD body;
-		body["folder_id"] = gInventory.findCategoryUUIDForType(destination_folder_type == LLFolderType::FT_NONE ?
-															   LLFolderType::assetTypeToFolderType(asset_type) :
-															   destination_folder_type);
-		body["asset_type"] = LLAssetType::lookup(asset_type);
-		body["inventory_type"] = LLInventoryType::lookup(inv_type);
-		body["name"] = name;
-		body["description"] = desc;
-		body["next_owner_mask"] = LLSD::Integer(next_owner_perms);
-		body["group_mask"] = LLSD::Integer(group_perms);
-		body["everyone_mask"] = LLSD::Integer(everyone_perms);
+		body = generate_new_resource_upload_capability_body(asset_type,
+															name,
+															desc,
+															destination_folder_type,
+															inv_type,
+															next_owner_perms,
+															group_perms,
+															everyone_perms);
+
 		body["expected_upload_cost"] = LLSD::Integer(expected_upload_cost);
 		
 		//std::ostringstream llsdxml;

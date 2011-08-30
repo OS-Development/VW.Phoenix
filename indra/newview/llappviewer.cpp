@@ -75,6 +75,7 @@
 #include "llfirstuse.h"
 #include "llrender.h"
 #include "llfont.h"
+#include "llvector4a.h"
 
 #include "llweb.h"
 #include "llsecondlifeurls.h"
@@ -168,6 +169,7 @@
 #include "llimview.h"
 #include "llviewerthrottle.h"
 #include "llparcel.h"
+#include "llmeshrepository.h"
 
 #include "llavatarnamecache.h"
 #include "llinventoryview.h"
@@ -432,7 +434,8 @@ static void settings_to_globals()
 	LLSelectMgr::sRectSelectInclusive	= gSavedSettings.getBOOL("RectangleSelectInclusive");
 	LLSelectMgr::sRenderHiddenSelections = gSavedSettings.getBOOL("RenderHiddenSelections");
 	LLSelectMgr::sRenderLightRadius = gSavedSettings.getBOOL("RenderLightRadius");
-	LLPipeline::sFastAlpha				= gSavedSettings.getBOOL("RenderFastAlpha");
+	LLPipeline::sAutoMaskAlphaDeferred	= gSavedSettings.getBOOL("RenderAutoMaskAlphaDeferred");
+	LLPipeline::sAutoMaskAlphaNonDeferred = gSavedSettings.getBOOL("RenderAutoMaskAlphaNonDeferred");
 
 	gFrameStats.setTrackStats(gSavedSettings.getBOOL("StatsSessionTrackFrameStats"));
 	gAgentPilot.mNumRuns		= gSavedSettings.getS32("StatsNumRuns");
@@ -445,13 +448,12 @@ static void settings_to_globals()
 	gShowObjectUpdates = gSavedSettings.getBOOL("ShowObjectUpdates");
 	LLWorldMapView::sMapScale = gSavedSettings.getF32("MapScale");
 	LLHoverView::sShowHoverTips = gSavedSettings.getBOOL("ShowHoverTips");
-
-	LLCubeMap::sUseCubeMaps = LLFeatureManager::getInstance()->isFeatureAvailable("RenderCubeMap");
 }
 
 static void settings_modify()
 {
-	LLRenderTarget::sUseFBO				= gSavedSettings.getBOOL("RenderUseFBO");
+	LLPipeline::sRenderDeferred			= gSavedSettings.getBOOL("RenderDeferred");
+	LLRenderTarget::sUseFBO				= LLPipeline::sRenderDeferred;
 	LLVOAvatar::sUseImpostors			= gSavedSettings.getBOOL("RenderUseImpostors");
 	LLVOSurfacePatch::sLODFactor		= gSavedSettings.getF32("RenderTerrainLODFactor");
 	LLVOSurfacePatch::sLODFactor *= LLVOSurfacePatch::sLODFactor; //square lod factor to get exponential range of [1,4]
@@ -643,10 +645,15 @@ void LLAppViewer::setChatSpamTime(const LLSD &data)
 {
         chatSpamTime=data.asReal();
 }
-void LLAppViewer::setHighlights(const LLSD &data)
-{
-	LLSelectMgr::sRenderSelectionHighlights = data.asBoolean();
-}
+
+// Ansariel: This should be obsolete by now. sRenderSelectionHighlights
+//			 has been redefined to LLCachedControl<bool> mRenderSelectionHighlights
+//			 and gets updated automatically!
+//void LLAppViewer::setHighlights(const LLSD &data)
+//{
+//	LLSelectMgr::sRenderSelectionHighlights = data.asBoolean();
+//}
+
 bool LLAppViewer::init()
 {
 	//
@@ -657,11 +664,15 @@ bool LLAppViewer::init()
 	// we run the "program crashed last time" error handler below.
 	//
 
+	// initialize SSE options
+	LLVector4a::initClass();
+
 	if(gDebugInfo.has("PhoenixPortableMode"))
 	{
 		gDirUtilp->initAppDirs("*Portable*"); // *HACK: Special magic string for portable mode
 		mPurgeOnExit = true;
-	}else
+	}
+	else
 	{
 		// Need to do this initialization before we do anything else, since anything
 		// that touches files should really go through the lldir API
@@ -855,6 +866,9 @@ bool LLAppViewer::init()
 	gGLActive = TRUE;
 	initWindow();
 
+	// initWindow also initializes the Feature List, so now we can initialize this global.
+	LLCubeMap::sUseCubeMaps = LLFeatureManager::getInstance()->isFeatureAvailable("RenderCubeMap");
+
 	// call all self-registered classes
 	LLInitClassList::instance().fireCallbacks();
 
@@ -888,6 +902,18 @@ bool LLAppViewer::init()
 		// all hell breaks lose.
 		OSMessageBox(
 			LLNotifications::instance().getGlobalString("UnsupportedGLRequirements"),
+			LLStringUtil::null,
+			OSMB_OK);
+		return 0;
+	}
+
+	// Without SSE2 support we will crash almost immediately, warn here.
+	if (!gSysCPU.hasSSE2())
+	{	
+		// can't use an alert here since we're exiting and
+		// all hell breaks lose.
+		OSMessageBox(
+			LLNotifications::instance().getGlobalString("UnsupportedCPUSSE2"),
 			LLStringUtil::null,
 			OSMB_OK);
 		return 0;
@@ -974,7 +1000,11 @@ bool LLAppViewer::init()
     chatSpamTime = gSavedSettings.getF32("PhoenixChatSpamTime");
 	gSavedSettings.getControl("PhoenixChatSpamCount")->getSignal()->connect(boost::bind(&setChatSpamCount, _2));
     chatSpamCount = gSavedSettings.getF32("PhoenixChatSpamCount");
-	gSavedSettings.getControl("PhoenixRenderHighlightSelections")->getSignal()->connect(boost::bind(&setHighlights, _2));
+
+	// Ansariel: This should be obsolete by now. sRenderSelectionHighlights
+	//			 has been redefined to LLCachedControl<bool> mRenderHighlightSelections
+	//			 and gets updated automatically!
+	//gSavedSettings.getControl("PhoenixRenderHighlightSelections")->getSignal()->connect(boost::bind(&setHighlights, _2));
 
 	gGLActive = FALSE;
 
@@ -1202,13 +1232,12 @@ bool LLAppViewer::mainLoop()
 						break;
 					}
 				}
+
+				gMeshRepo.update();
 				
-				 // Prevent the worker threads from running while rendering.
-				// if (LLThread::processorCount()==1) //pause() should only be required when on a single processor client...
-				if (run_multiple_threads == FALSE)
+				// Pause threads only when RunMultipleThreads is FALSE.
+				if (!run_multiple_threads)
 				{
-					//LLFastTimer ftm(FTM_PAUSE_THREADS); //not necessary.
-	 				
 					if(!total_work_pending) //pause texture fetching threads if nothing to process.
 					{
 						LLAppViewer::getTextureCache()->pause();
@@ -1310,6 +1339,9 @@ bool LLAppViewer::cleanup()
 	LLError::logToFixedBuffer(NULL);
 
 	llinfos << "Cleaning Up" << llendflush;
+
+	// shut down mesh streamer
+	gMeshRepo.shutdown();
 
 	// Must clean up texture references before viewer window is destroyed.
 	LLHUDManager::getInstance()->updateEffects();
@@ -1710,6 +1742,9 @@ bool LLAppViewer::initThreads()
 	LLAppViewer::sTextureCache = new LLTextureCache(enable_threads && true);
 	LLAppViewer::sTextureFetch = new LLTextureFetch(LLAppViewer::getTextureCache(), sImageDecodeThread, enable_threads && true);
 	LLImage::initClass();
+
+	// Mesh streaming and caching
+	gMeshRepo.init();
 
 	// *FIX: no error handling here!
 	return true;

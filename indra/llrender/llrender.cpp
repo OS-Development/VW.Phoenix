@@ -45,10 +45,12 @@ LLRender gGL;
 // Handy copies of last good GL matrices
 F64	gGLModelView[16];
 F64	gGLLastModelView[16];
+F64 gGLLastProjection[16];
 F64 gGLProjection[16];
 S32	gGLViewport[4];
 
 static const U32 LL_NUM_TEXTURE_LAYERS = 8; // Increase to 32 for multiple clothing layers
+static const U32 LL_NUM_LIGHT_UNITS = 8;
 
 static GLenum sGLTextureType[] =
 {
@@ -102,7 +104,7 @@ LLTexUnit::LLTexUnit(S32 index)
 	mCurrColorScale(1), mCurrAlphaScale(1), mCurrTexture(0),
 	mHasMipMaps(false)
 {
-	llassert_always(index < LL_NUM_TEXTURE_LAYERS);
+	llassert_always(index < (S32)LL_NUM_TEXTURE_LAYERS);
 	mIndex = index;
 }
 
@@ -200,10 +202,12 @@ void LLTexUnit::disable(void)
 		activate();
 		unbind(mCurrTexType);
 		gGL.flush();
+
 		if (mIndex < gGLManager.mNumTextureUnits)
 		{
 			glDisable(sGLTextureType[mCurrTexType]);
 		}
+
 		mCurrTexType = TT_NONE;
 	}
 }
@@ -236,7 +240,6 @@ bool LLTexUnit::bind(LLTexture* texture, bool for_rendering, bool forceBind)
 	{
 		if (texture->getWidth() * texture->getHeight() == LLImageGL::sCurTexPickSize)
 		{
-			// This will re-generate the texture immediately.
 			gl_tex->updateBindStats(gl_tex->mTextureMemory);
 			return bind(LLImageGL::sHighlightTexturep.get());
 		}
@@ -353,6 +356,11 @@ bool LLTexUnit::bind(LLRenderTarget* renderTarget, bool bindDepth)
 
 	if (bindDepth)
 	{
+		if (renderTarget->hasStencil())
+		{
+			llerrs << "Cannot bind a render buffer for sampling.  Allocate render target without a stencil buffer if sampling of depth buffer is required." << llendl;
+		}
+
 		bindManual(renderTarget->getUsage(), renderTarget->getDepth());
 	}
 	else
@@ -398,7 +406,6 @@ void LLTexUnit::unbind(eTextureType type)
 		activate();
 		mCurrTexture = 0;
 		glBindTexture(sGLTextureType[type], 0);
-		stop_glerror();
 	}
 }
 
@@ -770,6 +777,130 @@ void LLTexUnit::debugTextureUnit(void)
 	}
 }
 
+LLLightState::LLLightState(S32 index)
+:	mIndex(index),
+	mEnabled(false),
+	mConstantAtten(1.f),
+	mLinearAtten(0.f),
+	mQuadraticAtten(0.f),
+	mSpotExponent(0.f),
+	mSpotCutoff(180.f)
+{
+	if (mIndex == 0)
+	{
+		mDiffuse.set(1, 1, 1, 1);
+		mSpecular.set(1, 1, 1, 1);
+	}
+
+	mAmbient.set(0, 0, 0, 1);
+	mPosition.set(0, 0, 1, 0);
+	mSpotDirection.set(0, 0, -1);
+
+}
+
+void LLLightState::enable()
+{
+	if (!mEnabled)
+	{
+		glEnable(GL_LIGHT0+mIndex);
+		mEnabled = true;
+	}
+}
+
+void LLLightState::disable()
+{
+	if (mEnabled)
+	{
+		glDisable(GL_LIGHT0+mIndex);
+		mEnabled = false;
+	}
+}
+
+void LLLightState::setDiffuse(const LLColor4& diffuse)
+{
+	if (mDiffuse != diffuse)
+	{
+		mDiffuse = diffuse;
+		glLightfv(GL_LIGHT0+mIndex, GL_DIFFUSE, mDiffuse.mV);
+	}
+}
+
+void LLLightState::setAmbient(const LLColor4& ambient)
+{
+	if (mAmbient != ambient)
+	{
+		mAmbient = ambient;
+		glLightfv(GL_LIGHT0+mIndex, GL_AMBIENT, mAmbient.mV);
+	}
+}
+
+void LLLightState::setSpecular(const LLColor4& specular)
+{
+	if (mSpecular != specular)
+	{
+		mSpecular = specular;
+		glLightfv(GL_LIGHT0+mIndex, GL_SPECULAR, mSpecular.mV);
+	}
+}
+
+void LLLightState::setPosition(const LLVector4& position)
+{
+	//always set position because modelview matrix may have changed
+	mPosition = position;
+	glLightfv(GL_LIGHT0+mIndex, GL_POSITION, mPosition.mV);
+}
+
+void LLLightState::setConstantAttenuation(const F32& atten)
+{
+	if (mConstantAtten != atten)
+	{
+		mConstantAtten = atten;
+		glLightf(GL_LIGHT0+mIndex, GL_CONSTANT_ATTENUATION, atten);
+	}
+}
+
+void LLLightState::setLinearAttenuation(const F32& atten)
+{
+	if (mLinearAtten != atten)
+	{
+		mLinearAtten = atten;
+		glLightf(GL_LIGHT0+mIndex, GL_LINEAR_ATTENUATION, atten);
+	}
+}
+
+void LLLightState::setQuadraticAttenuation(const F32& atten)
+{
+	if (mQuadraticAtten != atten)
+	{
+		mQuadraticAtten = atten;
+		glLightf(GL_LIGHT0+mIndex, GL_QUADRATIC_ATTENUATION, atten);
+	}
+}
+
+void LLLightState::setSpotExponent(const F32& exponent)
+{
+	if (mSpotExponent != exponent)
+	{
+		mSpotExponent = exponent;
+		glLightf(GL_LIGHT0+mIndex, GL_SPOT_EXPONENT, exponent);
+	}
+}
+
+void LLLightState::setSpotCutoff(const F32& cutoff)
+{
+	if (mSpotCutoff != cutoff)
+	{
+		mSpotCutoff = cutoff;
+		glLightf(GL_LIGHT0+mIndex, GL_SPOT_CUTOFF, cutoff);
+	}
+}
+
+void LLLightState::setSpotDirection(const LLVector3& direction)
+{
+	//always set direction because modelview matrix may have changed
+	mSpotDirection = direction;
+	glLightfv(GL_LIGHT0+mIndex, GL_SPOT_DIRECTION, direction.mV);
+}
 
 LLRender::LLRender()
 :	mDirty(false),
@@ -790,6 +921,11 @@ LLRender::LLRender()
 		mTexUnits.push_back(new LLTexUnit(i));
 	}
 	mDummyTexUnit = new LLTexUnit(-1);
+
+	for (U32 i = 0; i < LL_NUM_LIGHT_UNITS; ++i)
+	{
+		mLightState.push_back(new LLLightState(i));
+	}
 
 	for (U32 i = 0; i < 4; i++)
 	{
@@ -818,6 +954,12 @@ void LLRender::shutdown()
 	mTexUnits.clear();
 	delete mDummyTexUnit;
 	mDummyTexUnit = NULL;
+
+	for (U32 i = 0; i < mLightState.size(); ++i)
+	{
+		delete mLightState[i];
+	}
+	mLightState.clear();
 }
 
 void LLRender::refreshState(void)
@@ -995,6 +1137,16 @@ LLTexUnit* LLRender::getTexUnit(U32 index)
 	}
 }
 
+LLLightState* LLRender::getLight(U32 index)
+{
+	if (index < mLightState.size())
+	{
+		return mLightState[index];
+	}
+
+	return NULL;
+}
+
 bool LLRender::verifyTexUnitActive(U32 unitToVerify)
 {
 	if (mCurrTextureUnitIndex == unitToVerify)
@@ -1100,6 +1252,33 @@ void LLRender::flush()
 		}
 #endif
 				
+		if (gDebugGL)
+		{
+			if (mMode == LLRender::QUADS)
+			{
+				if (mCount % 4 != 0)
+				{
+					llerrs << "Incomplete quad rendered." << llendl;
+				}
+			}
+
+			if (mMode == LLRender::TRIANGLES)
+			{
+				if (mCount % 3 != 0)
+				{
+					llerrs << "Incomplete triangle rendered." << llendl;
+				}
+			}
+
+			if (mMode == LLRender::LINES)
+			{
+				if (mCount % 2 != 0)
+				{
+					llerrs << "Incomplete line rendered." << llendl;
+				}
+			}
+		}
+
 		mBuffer->setBuffer(immediate_mask);
 		mBuffer->drawArrays(mMode, 0, mCount);
 		
@@ -1124,6 +1303,69 @@ void LLRender::vertex3f(const GLfloat& x, const GLfloat& y, const GLfloat& z)
 	mVerticesp[mCount] = mVerticesp[mCount-1];
 	mColorsp[mCount] = mColorsp[mCount-1];
 	mTexcoordsp[mCount] = mTexcoordsp[mCount-1];
+}
+
+void LLRender::vertexBatchPreTransformed(LLVector3* verts, S32 vert_count)
+{
+	if (mCount + vert_count > 4094)
+	{
+		//	llwarns << "GL immediate mode overflow.  Some geometry not drawn." << llendl;
+		return;
+	}
+
+	for (S32 i = 0; i < vert_count; i++)
+	{
+		mVerticesp[mCount] = verts[i];
+
+		mCount++;
+		mTexcoordsp[mCount] = mTexcoordsp[mCount-1];
+		mColorsp[mCount] = mColorsp[mCount-1];
+	}
+
+	mVerticesp[mCount] = mVerticesp[mCount-1];
+}
+
+void LLRender::vertexBatchPreTransformed(LLVector3* verts, LLVector2* uvs, S32 vert_count)
+{
+	if (mCount + vert_count > 4094)
+	{
+		//	llwarns << "GL immediate mode overflow.  Some geometry not drawn." << llendl;
+		return;
+	}
+
+	for (S32 i = 0; i < vert_count; i++)
+	{
+		mVerticesp[mCount] = verts[i];
+		mTexcoordsp[mCount] = uvs[i];
+
+		mCount++;
+		mColorsp[mCount] = mColorsp[mCount-1];
+	}
+
+	mVerticesp[mCount] = mVerticesp[mCount-1];
+	mTexcoordsp[mCount] = mTexcoordsp[mCount-1];
+}
+
+void LLRender::vertexBatchPreTransformed(LLVector3* verts, LLVector2* uvs, LLColor4U* colors, S32 vert_count)
+{
+	if (mCount + vert_count > 4094)
+	{
+		//	llwarns << "GL immediate mode overflow.  Some geometry not drawn." << llendl;
+		return;
+	}
+
+	for (S32 i = 0; i < vert_count; i++)
+	{
+		mVerticesp[mCount] = verts[i];
+		mTexcoordsp[mCount] = uvs[i];
+		mColorsp[mCount] = colors[i];
+
+		mCount++;
+	}
+
+	mVerticesp[mCount] = mVerticesp[mCount-1];
+	mTexcoordsp[mCount] = mTexcoordsp[mCount-1];
+	mColorsp[mCount] = mColorsp[mCount-1];
 }
 
 void LLRender::vertex2i(const GLint& x, const GLint& y)

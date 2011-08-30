@@ -213,10 +213,10 @@ BOOL LLHUDText::lineSegmentIntersect(const LLVector3& start, const LLVector3& en
 		}
 
 		LLVector3 dir = end-start;
-		F32 t = 0.f;
+		F32 a, b, t;
 
-		if (LLTriangleRayIntersect(v[0], v[1], v[2], start, dir, NULL, NULL, &t, FALSE) ||
-			LLTriangleRayIntersect(v[2], v[3], v[0], start, dir, NULL, NULL, &t, FALSE) )
+		if (LLTriangleRayIntersect(v[0], v[1], v[2], start, dir, a, b, t, FALSE) ||
+			LLTriangleRayIntersect(v[2], v[3], v[0], start, dir, a, b, t, FALSE) )
 		{
 			if (t <= 1.f)
 			{
@@ -235,15 +235,6 @@ void LLHUDText::render()
 	{
 		LLGLDepthTest gls_depth(GL_TRUE, GL_FALSE);
 		renderText(FALSE);
-	}
-}
-
-void LLHUDText::renderForSelect()
-{
-	if (!mOnHUDAttachment)
-	{
-		LLGLDepthTest gls_depth(GL_TRUE, GL_FALSE);
-		renderText(TRUE);
 	}
 }
 

@@ -66,6 +66,7 @@ if (WINDOWS)
 
   add_definitions(
       /DLL_WINDOWS=1
+      /DDOM_DYNAMIC
       /DUNICODE
       /D_UNICODE 
       /GS
@@ -75,6 +76,8 @@ if (WINDOWS)
       /Zc:forScope
       /nologo
       /Oy-
+      /Zc:wchar_t-
+      /arch:SSE2
       )
      
   if(MSVC80 OR MSVC90)
@@ -170,6 +173,8 @@ if (LINUX)
       -fno-strict-aliasing
       -fsigned-char
       -g
+      -msse2
+      -mfpmath=sse
       -pthread
       )
 
@@ -200,6 +205,7 @@ if (LINUX)
     add_definitions(-fvisibility=hidden)
     # don't catch SIGCHLD in our base application class for the viewer - some of our 3rd party libs may need their *own* SIGCHLD handler to work.  Sigh!  The viewer doesn't need to catch SIGCHLD anyway.
     add_definitions(-DLL_IGNORE_SIGCHLD)
+    add_definitions(-march=pentium4 -mfpmath=sse)
     if (NOT STANDALONE)
       add_definitions(-march=i686)
       # this stops us requiring a really recent glibc at runtime (O RLY?)
@@ -238,7 +244,7 @@ endif (DARWIN)
 
 
 if (LINUX OR DARWIN)
-  set(GCC_WARNINGS "-Wall -Wno-sign-compare -Wno-trigraphs -Wno-non-virtual-dtor -Woverloaded-virtual -Wno-write-strings -Wno-deprecated-declarations")
+  set(GCC_WARNINGS "-Wall -Wno-sign-compare -Wno-trigraphs -Wno-non-virtual-dtor -Wno-write-strings -Wno-deprecated-declarations")
 
   if (NOT GCC_DISABLE_FATAL_WARNINGS)
     set(GCC_WARNINGS "${GCC_WARNINGS} -Werror")
@@ -246,7 +252,7 @@ if (LINUX OR DARWIN)
     # set(GCC_WARNINGS "${GCC_WARNINGS} -Werror -fdiagnostics-show-option")
   endif (NOT GCC_DISABLE_FATAL_WARNINGS)
 
-  set(GCC_CXX_WARNINGS "${GCC_WARNINGS} -Wno-reorder")
+  set(GCC_CXX_WARNINGS "${GCC_WARNINGS} -Wno-reorder -Wno-non-virtual-dtor")
 
   set(CMAKE_C_FLAGS "${GCC_WARNINGS} ${CMAKE_C_FLAGS}")
   set(CMAKE_CXX_FLAGS "${GCC_CXX_WARNINGS} ${CMAKE_CXX_FLAGS}")

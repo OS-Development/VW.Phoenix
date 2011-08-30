@@ -194,7 +194,6 @@ private:
 	S8 mAutoGenMips;
 
 	BOOL mIsMask;
-	
 	BOOL mNeedsAlphaAndPickMask;
 	S8   mAlphaStride;
 	S8   mAlphaOffset;
@@ -217,7 +216,7 @@ protected:
 
 	bool	mTexOptionsDirty;
 	LLTexUnit::eTextureAddressMode		mAddressMode;	// Defaults to TAM_WRAP
-	LLTexUnit::eTextureFilterOptions	mFilterOption;	// Defaults to TFO_TRILINEAR
+	LLTexUnit::eTextureFilterOptions	mFilterOption;	// Defaults to TFO_ANISOTROPIC
 
 	LLGLint  mFormatInternal; // = GL internalformat
 	LLGLenum mFormatPrimary;  // = GL format (pixel data format)
@@ -284,7 +283,6 @@ public:
 	static void decTextureCounter(U32 val, S32 ncomponents, S32 category);
 	static void setCurTexSizebar(S32 index, BOOL set_pick_size = TRUE);
 	static void resetCurTexSizebar();
-
 	//----------------------------------------
 
 	//for debug use: show texture category distribution 

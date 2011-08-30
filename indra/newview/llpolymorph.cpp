@@ -211,6 +211,8 @@ BOOL LLPolyMorphData::loadBinary(LLFILE *fp, LLPolyMeshSharedData *mesh)
 
 	return TRUE;
 }
+
+#if MESHES_AND_MORPHS
 //-----------------------------------------------------------------------------
 // LLPolyMesh::saveLLM()
 //-----------------------------------------------------------------------------
@@ -501,6 +503,7 @@ BOOL LLPolyMorphData::setMorphFromMesh(LLPolyMesh *morph)
 
 	return TRUE;
 }
+#endif //MESHES_AND_MORPHS
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -631,7 +634,7 @@ BOOL LLPolyMorphTarget::setInfo(LLPolyMorphTargetInfo* info)
 
 	if (!mMorphData)
 	{
-		llwarns << "No morph target named " << morph_param_name << " found in mesh." << llendl;
+		llwarns << "No morph target named " << getInfo()->mMorphName << " found in mesh." << llendl;
 		return FALSE;  // Continue, ignoring this tag
 	}
 	return TRUE;
@@ -799,10 +802,10 @@ void LLPolyMorphTarget::apply( ESex avatar_sex )
 	if (delta_weight != 0.f)
 	{
 		llassert(!mMesh->isLOD());
-		LLVector3 *coords = mMesh->getWritableCoords();
+		LLVector4 *coords = mMesh->getWritableCoords();
 
 		LLVector3 *scaled_normals = mMesh->getScaledNormals();
-		LLVector3 *normals = mMesh->getWritableNormals();
+		LLVector4 *normals = mMesh->getWritableNormals();
 
 		LLVector3 *scaled_binormals = mMesh->getScaledBinormals();
 		LLVector3 *binormals = mMesh->getWritableBinormals();
@@ -822,7 +825,8 @@ void LLPolyMorphTarget::apply( ESex avatar_sex )
 				maskWeight = maskWeightArray[vert_index_morph];
 			}
 
-			coords[vert_index_mesh] += mMorphData->mCoords[vert_index_morph] * delta_weight * maskWeight;
+			coords[vert_index_mesh] += LLVector4(mMorphData->mCoords[vert_index_morph] * delta_weight * maskWeight);
+
 			if (getInfo()->mIsClothingMorph && clothing_weights)
 			{
 				LLVector3 clothing_offset = mMorphData->mCoords[vert_index_morph] * delta_weight * maskWeight;
@@ -837,7 +841,7 @@ void LLPolyMorphTarget::apply( ESex avatar_sex )
 			scaled_normals[vert_index_mesh] += mMorphData->mNormals[vert_index_morph] * delta_weight * maskWeight * NORMAL_SOFTEN_FACTOR;
 			LLVector3 normalized_normal = scaled_normals[vert_index_mesh];
 			normalized_normal.normVec();
-			normals[vert_index_mesh] = normalized_normal;
+			normals[vert_index_mesh] = LLVector4(normalized_normal);
 
 			// calculate new binormals
 			scaled_binormals[vert_index_mesh] += mMorphData->mBinormals[vert_index_morph] * delta_weight * maskWeight * NORMAL_SOFTEN_FACTOR;
@@ -882,75 +886,44 @@ void	LLPolyMorphTarget::applyMask(U8 *maskTextureData, S32 width, S32 height, S3
 	else
 	{
 		// remove effect of previous mask
-		undoMask(FALSE);
-	}
+		F32 *maskWeights = (mVertMask) ? mVertMask->getMorphMaskWeights() : NULL;
 
-	mLastWeight = 0.f;
-
-	mVertMask->generateMask(maskTextureData, width, height, num_components, invert, clothing_weights);
-
-	apply(mLastSex);
-}
-
-//-----------------------------------------------------------------------------
-// undoMask()
-//-----------------------------------------------------------------------------
-BOOL	LLPolyMorphTarget::undoMask(BOOL delete_mask)
-{
-	if (!mVertMask)
-	{
-		return FALSE;
-	}
-
-	// remove effect of previous mask
-
-	LLVector4 *clothing_weights = getInfo()->mIsClothingMorph ? mMesh->getWritableClothingWeights() : NULL;
-
-	F32 *mask_weights = mVertMask->getMorphMaskWeights();
-
-			LLVector3 *coords = mMesh->getWritableCoords();
+		if (maskWeights)
+		{
+			LLVector4 *coords = mMesh->getWritableCoords();
 			LLVector3 *scaled_normals = mMesh->getScaledNormals();
 			LLVector3 *scaled_binormals = mMesh->getScaledBinormals();
 			LLVector2 *tex_coords = mMesh->getWritableTexCoords();
 
 			for(U32 vert = 0; vert < mMorphData->mNumIndices; vert++)
 			{
-		F32 mask_weight = 1.f;
-		if (mask_weights)
-		{
-			mask_weight = mask_weights[vert];
-		}
-
-		F32 last_mask_weight = mLastWeight * mask_weight;
+				F32 lastMaskWeight = mLastWeight * maskWeights[vert];
 				S32 out_vert = mMorphData->mVertexIndices[vert];
 
 				// remove effect of existing masked morph
-		coords[out_vert] -= mMorphData->mCoords[vert] * last_mask_weight;
-		scaled_normals[out_vert] -= mMorphData->mNormals[vert] * last_mask_weight * NORMAL_SOFTEN_FACTOR;
-		scaled_binormals[out_vert] -= mMorphData->mBinormals[vert] * last_mask_weight * NORMAL_SOFTEN_FACTOR;
-		tex_coords[out_vert] -= mMorphData->mTexCoords[vert] * last_mask_weight;
+				coords[out_vert] -= LLVector4(mMorphData->mCoords[vert]) * lastMaskWeight;
+				scaled_normals[out_vert] -= mMorphData->mNormals[vert] * lastMaskWeight * NORMAL_SOFTEN_FACTOR;
+				scaled_binormals[out_vert] -= mMorphData->mBinormals[vert] * lastMaskWeight * NORMAL_SOFTEN_FACTOR;
+				tex_coords[out_vert] -= mMorphData->mTexCoords[vert] * lastMaskWeight;
 
 				if (clothing_weights)
 				{
-					LLVector3 clothing_offset = mMorphData->mCoords[vert] * last_mask_weight;
+					LLVector3 clothing_offset = mMorphData->mCoords[vert] * lastMaskWeight;
 					LLVector4* clothing_weight = &clothing_weights[out_vert];
 					clothing_weight->mV[VX] -= clothing_offset.mV[VX];
 					clothing_weight->mV[VY] -= clothing_offset.mV[VY];
 					clothing_weight->mV[VZ] -= clothing_offset.mV[VZ];
 				}
 			}
+		}
+	}
 
 	// set last weight to 0, since we've removed the effect of this morph
 	mLastWeight = 0.f;
 
-	if (delete_mask)
-	{
-		delete mVertMask;
-		mVertMask = NULL;
-		addPendingMorphMask();
-	}
+	mVertMask->generateMask(maskTextureData, width, height, num_components, invert, clothing_weights);
 
-	return TRUE;
+	apply(mLastSex);
 }
 
 

@@ -401,6 +401,10 @@
 			Nearby local lights
 		</radio_item>
 	</radio_group>
+	<check_box name="RenderDeferred" mouse_opaque="true" enabled="true"
+     label="Lighting &amp; Shadows (deferred rendering)" font="SansSerifSmall"
+	 tool_tip="Only available if your graphic card and drivers support FBO and deferred rendering. Note that the hit of this feature on the frame rate is very high and it requires a high end CPU and graphic card."
+	 bottom_delta="-16" left_delta="2" height="16" width="256"  follows="left|top"/>
 	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
 	     bottom="-331" drop_shadow_visible="true" enabled="true" follows="left|top"
 	     font="SansSerifSmall" h_pad="0" halign="left" height="12" left="360"

@@ -908,18 +908,21 @@ BOOL LLTaskCategoryBridge::dragOrDrop(MASK mask, BOOL drop,
 		case DAD_BODYPART:
 		case DAD_ANIMATION:
 		case DAD_GESTURE:
+		case DAD_MESH:
+#if 0
 			// *HACK: In order to resolve SL-22177, we need to block
-			// drags from notecards and objects onto other
-			// objects. uncomment the simpler version when we have
-			// that right.
-			//accept = LLToolDragAndDrop::isInventoryDropAcceptable(object, (LLViewerInventoryItem*)cargo_data);
-			if(LLToolDragAndDrop::isInventoryDropAcceptable(
-				   object, (LLViewerInventoryItem*)cargo_data)
-			   && (LLToolDragAndDrop::SOURCE_WORLD != LLToolDragAndDrop::getInstance()->getSource())
-			   && (LLToolDragAndDrop::SOURCE_NOTECARD != LLToolDragAndDrop::getInstance()->getSource()))
+			// drags from notecards and objects onto other objects.
+			// Use the simpler version when we have that right.
+			if (LLToolDragAndDrop::isInventoryDropAcceptable(object,
+															 (LLViewerInventoryItem*)cargo_data)
+				&& LLToolDragAndDrop::SOURCE_WORLD != LLToolDragAndDrop::getInstance()->getSource()
+				&& LLToolDragAndDrop::SOURCE_NOTECARD != LLToolDragAndDrop::getInstance()->getSource())
 			{
 				accept = TRUE;
 			}
+#else
+			accept = LLToolDragAndDrop::isInventoryDropAcceptable(object, (LLViewerInventoryItem*)cargo_data);
+#endif
 			if(accept && drop)
 			{
 				LLToolDragAndDrop::dropInventory(object,
@@ -929,18 +932,20 @@ BOOL LLTaskCategoryBridge::dragOrDrop(MASK mask, BOOL drop,
 			}
 			break;
 		case DAD_SCRIPT:
+#if 1	// not yet right for scripts
 			// *HACK: In order to resolve SL-22177, we need to block
-			// drags from notecards and objects onto other
-			// objects. uncomment the simpler version when we have
-			// that right.
-			//accept = LLToolDragAndDrop::isInventoryDropAcceptable(object, (LLViewerInventoryItem*)cargo_data);
-			if(LLToolDragAndDrop::isInventoryDropAcceptable(
-				   object, (LLViewerInventoryItem*)cargo_data)
+			// drags from notecards and objects onto other objects.
+			// Use the simpler version when we have that right.
+			if (LLToolDragAndDrop::isInventoryDropAcceptable(object,
+															 (LLViewerInventoryItem*)cargo_data)
 			   && (LLToolDragAndDrop::SOURCE_WORLD != LLToolDragAndDrop::getInstance()->getSource())
 			   && (LLToolDragAndDrop::SOURCE_NOTECARD != LLToolDragAndDrop::getInstance()->getSource()))
 			{
 				accept = TRUE;
 			}
+#else
+			accept = LLToolDragAndDrop::isInventoryDropAcceptable(object, (LLViewerInventoryItem*)cargo_data);
+#endif
 			if(accept && drop)
 			{
 				LLViewerInventoryItem* item = (LLViewerInventoryItem*)cargo_data;
@@ -1682,6 +1687,40 @@ LLUIImagePtr LLTaskWearableBridge::getIcon() const
 
 
 ///----------------------------------------------------------------------------
+/// Class LLTaskMeshBridge
+///----------------------------------------------------------------------------
+
+class LLTaskMeshBridge : public LLTaskInvFVBridge
+{
+public:
+	LLTaskMeshBridge(LLPanelInventory* panel,
+					 const LLUUID& uuid,
+					 const std::string& name);
+
+	virtual LLUIImagePtr getIcon() const;
+	virtual void openItem();
+};
+
+LLTaskMeshBridge::LLTaskMeshBridge(LLPanelInventory* panel,
+								   const LLUUID& uuid,
+								   const std::string& name)
+:	LLTaskInvFVBridge(panel, uuid, name)
+{
+}
+
+LLUIImagePtr LLTaskMeshBridge::getIcon() const
+{
+	return LLInventoryIcon::getIcon(LLAssetType::AT_MESH,
+									LLInventoryType::IT_MESH,
+									0, FALSE);
+}
+
+void LLTaskMeshBridge::openItem()
+{
+	// open mesh
+}
+
+///----------------------------------------------------------------------------
 /// LLTaskInvFVBridge impl
 //----------------------------------------------------------------------------
 
@@ -1760,6 +1799,11 @@ LLTaskInvFVBridge* LLTaskInvFVBridge::createObjectBridge(LLPanelInventory* panel
 		new_bridge = new LLTaskLSLBridge(panel,
 										 object->getUUID(),
 										 object->getName());
+		break;
+	case LLAssetType::AT_MESH:
+		new_bridge = new LLTaskMeshBridge(panel,
+										  object->getUUID(),
+										  object->getName());
 		break;
 	default:
 		llinfos << "Unhandled inventory type (llassetstorage.h): "

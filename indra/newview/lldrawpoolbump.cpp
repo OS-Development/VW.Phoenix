@@ -43,7 +43,6 @@
 #include "llglheaders.h"
 #include "llrender.h"
 
-#include "llagent.h"
 #include "llcubemap.h"
 #include "lldrawable.h"
 #include "llface.h"
@@ -103,7 +102,8 @@ void LLStandardBumpmap::addstandard()
 	if (!gTextureList.isInitialized())
 	{
 		//Note: loading pre-configuration sometimes triggers this call.
-		//But it is safe to return here because bump images will be reloaded during initialization later.
+		// But it is safe to return here because bump images will be reloaded
+		// during initialization later.
 		return;
 	}
 
@@ -206,9 +206,8 @@ void LLDrawPoolBump::prerender()
 // static
 S32 LLDrawPoolBump::numBumpPasses()
 {
-	static LLCachedControl<bool> sRenderObjectBump(gSavedSettings, "RenderObjectBump");
-
-	if (sRenderObjectBump)
+	static LLCachedControl<bool> render_object_bump(gSavedSettings, "RenderObjectBump");
+	if (render_object_bump)
 	{
 		if (mVertexShaderLevel > 1)
 		{
@@ -244,7 +243,7 @@ S32 LLDrawPoolBump::getNumPasses()
 void LLDrawPoolBump::beginRenderPass(S32 pass)
 {
 	LLFastTimer t(LLFastTimer::FTM_RENDER_BUMP);
-	switch( pass )
+	switch (pass)
 	{
 		case 0:
 			beginShiny();
@@ -276,8 +275,8 @@ void LLDrawPoolBump::render(S32 pass)
 	{
 		return;
 	}
-	
-	switch( pass )
+
+	switch (pass)
 	{
 		case 0:
 			renderShiny();
@@ -304,7 +303,7 @@ void LLDrawPoolBump::render(S32 pass)
 void LLDrawPoolBump::endRenderPass(S32 pass)
 {
 	LLFastTimer t(LLFastTimer::FTM_RENDER_BUMP);
-	switch( pass )
+	switch (pass)
 	{
 		case 0:
 			endShiny();
@@ -346,30 +345,43 @@ void LLDrawPoolBump::beginShiny(bool invisible)
 		sVertexMask = VERTEX_MASK_SHINY | LLVertexBuffer::MAP_TEXCOORD0;
 	}
 	
-	if (LLPipeline::sUnderWaterRender)
+	if (getVertexShaderLevel() > 0)
 	{
-		shader = &gObjectShinyWaterProgram;
+		if (LLPipeline::sUnderWaterRender)
+		{
+			shader = &gObjectShinyWaterProgram;
+		}
+		else
+		{
+			shader = &gObjectShinyProgram;
+		}
+		shader->bind();
 	}
 	else
 	{
-		shader = &gObjectShinyProgram;
+		shader = NULL;
 	}
 
+	bindCubeMap(shader, mVertexShaderLevel, diffuse_channel, cube_channel, invisible);
+}
+ 
+//static
+void LLDrawPoolBump::bindCubeMap(LLGLSLShader* shader, S32 shader_level, S32& diffuse_channel, S32& cube_channel, bool invisible)
+{
 	LLCubeMap* cube_map = gSky.mVOSkyp ? gSky.mVOSkyp->getCubeMap() : NULL;
-	if( cube_map )
+	if (cube_map)
 	{
-		if (!invisible && LLViewerShaderMgr::instance()->getVertexShaderLevel(LLViewerShaderMgr::SHADER_OBJECT) > 0 )
+		if (!invisible && shader)
 		{
 			LLMatrix4 mat;
 			mat.initRows(LLVector4(gGLModelView+0),
 						 LLVector4(gGLModelView+4),
 						 LLVector4(gGLModelView+8),
 						 LLVector4(gGLModelView+12));
-			shader->bind();
 			LLVector3 vec = LLVector3(gShinyOrigin) * mat;
 			LLVector4 vec4(vec, gShinyOrigin.mV[3]);
 			shader->uniform4fv(LLViewerShaderMgr::SHINY_ORIGIN, 1, vec4.mV);			
-			if (mVertexShaderLevel > 1)
+			if (shader_level > 1)
 			{
 				cube_map->setMatrix(1);
 				// Make sure that texture coord generation happens for tex unit 1, as that's the one we use for 
@@ -413,7 +425,7 @@ void LLDrawPoolBump::renderShiny(bool invisible)
 		return;
 	}
 
-	if( gSky.mVOSkyp->getCubeMap() )
+	if (gSky.mVOSkyp->getCubeMap())
 	{
 		LLGLEnable blend_enable(GL_BLEND);
 		if (!invisible && mVertexShaderLevel > 1)
@@ -431,22 +443,16 @@ void LLDrawPoolBump::renderShiny(bool invisible)
 	}
 }
 
-void LLDrawPoolBump::endShiny(bool invisible)
+//static
+void LLDrawPoolBump::unbindCubeMap(LLGLSLShader* shader, S32 shader_level, S32& diffuse_channel, S32& cube_channel, bool invisible)
 {
-	LLFastTimer t(LLFastTimer::FTM_RENDER_SHINY);
-	if ((!invisible && !gPipeline.hasRenderBatches(LLRenderPass::PASS_SHINY))|| 
-		(invisible && !gPipeline.hasRenderBatches(LLRenderPass::PASS_INVISI_SHINY)))
-	{
-		return;
-	}
-
 	LLCubeMap* cube_map = gSky.mVOSkyp ? gSky.mVOSkyp->getCubeMap() : NULL;
-	if( cube_map )
+	if (cube_map)
 	{
 		cube_map->disable();
 		cube_map->restoreMatrix();
 
-		if (!invisible && mVertexShaderLevel > 1)
+		if (!invisible && shader_level > 1)
 		{
 			shader->disableTexture(LLViewerShaderMgr::ENVIRONMENT_MAP, LLTexUnit::TT_CUBE_MAP);
 					
@@ -457,7 +463,6 @@ void LLDrawPoolBump::endShiny(bool invisible)
 					shader->disableTexture(LLViewerShaderMgr::DIFFUSE_MAP);
 				}
 			}
-			shader->unbind();
 		}
 	}
 	gGL.getTexUnit(diffuse_channel)->disable();
@@ -465,6 +470,22 @@ void LLDrawPoolBump::endShiny(bool invisible)
 
 	gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
 	gGL.getTexUnit(0)->setTextureBlendType(LLTexUnit::TB_MULT);
+}
+
+void LLDrawPoolBump::endShiny(bool invisible)
+{
+	LLFastTimer t(LLFastTimer::FTM_RENDER_SHINY);
+	if ((!invisible && !gPipeline.hasRenderBatches(LLRenderPass::PASS_SHINY)) || 
+		(invisible && !gPipeline.hasRenderBatches(LLRenderPass::PASS_INVISI_SHINY)))
+	{
+		return;
+	}
+
+	unbindCubeMap(shader, mVertexShaderLevel, diffuse_channel, cube_channel, invisible);
+	if (shader)
+	{
+		shader->unbind();
+	}
 
 	diffuse_channel = -1;
 	cube_channel = 0;
@@ -485,7 +506,7 @@ void LLDrawPoolBump::beginFullbrightShiny()
 	
 	if (LLPipeline::sUnderWaterRender)
 	{
-		shader = &gObjectShinyWaterProgram;
+		shader = &gObjectFullbrightShinyWaterProgram;
 	}
 	else
 	{
@@ -493,7 +514,7 @@ void LLDrawPoolBump::beginFullbrightShiny()
 	}
 
 	LLCubeMap* cube_map = gSky.mVOSkyp ? gSky.mVOSkyp->getCubeMap() : NULL;
-	if( cube_map )
+	if (cube_map)
 	{
 		LLMatrix4 mat;
 		mat.initRows(LLVector4(gGLModelView+0),
@@ -528,7 +549,7 @@ void LLDrawPoolBump::renderFullbrightShiny()
 		return;
 	}
 
-	if( gSky.mVOSkyp->getCubeMap() )
+	if (gSky.mVOSkyp->getCubeMap())
 	{
 		LLGLEnable blend_enable(GL_BLEND);
 		LLRenderPass::renderTexture(LLRenderPass::PASS_FULLBRIGHT_SHINY, sVertexMask);
@@ -544,7 +565,7 @@ void LLDrawPoolBump::endFullbrightShiny()
 	}
 
 	LLCubeMap* cube_map = gSky.mVOSkyp ? gSky.mVOSkyp->getCubeMap() : NULL;
-	if( cube_map )
+	if (cube_map)
 	{
 		cube_map->disable();
 		cube_map->restoreMatrix();
@@ -583,8 +604,8 @@ void LLDrawPoolBump::renderGroup(LLSpatialGroup* group, U32 type, U32 mask, BOOL
 			params.mGroup->rebuildMesh();
 		}
 		params.mVertexBuffer->setBuffer(mask);
-		params.mVertexBuffer->drawRange(LLRender::TRIANGLES, params.mStart, params.mEnd, params.mCount, params.mOffset);
-		gPipeline.addTrianglesDrawn(params.mCount/3);
+		params.mVertexBuffer->drawRange(params.mDrawMode, params.mStart, params.mEnd, params.mCount, params.mOffset);
+		gPipeline.addTrianglesDrawn(params.mCount, params.mDrawMode);
 	}
 }
 
@@ -659,9 +680,9 @@ BOOL LLDrawPoolBump::bindBumpMap(U8 bump_code, LLViewerTexture* texture, F32 vsi
 }
 
 //static
-void LLDrawPoolBump::beginBump()
+void LLDrawPoolBump::beginBump(U32 pass)
 {	
-	if (!gPipeline.hasRenderBatches(LLRenderPass::PASS_BUMP))
+	if (!gPipeline.hasRenderBatches(pass))
 	{
 		return;
 	}
@@ -704,9 +725,9 @@ void LLDrawPoolBump::beginBump()
 }
 
 //static
-void LLDrawPoolBump::renderBump()
+void LLDrawPoolBump::renderBump(U32 pass)
 {
-	if (!gPipeline.hasRenderBatches(LLRenderPass::PASS_BUMP))
+	if (!gPipeline.hasRenderBatches(pass))
 	{
 		return;
 	}
@@ -719,13 +740,13 @@ void LLDrawPoolBump::renderBump()
 	/// Get rid of z-fighting with non-bump pass.
 	LLGLEnable polyOffset(GL_POLYGON_OFFSET_FILL);
 	glPolygonOffset(-1.0f, -1.0f);
-	renderBump(LLRenderPass::PASS_BUMP, sVertexMask);
+	renderBump(pass, sVertexMask);
 }
 
 //static
-void LLDrawPoolBump::endBump()
+void LLDrawPoolBump::endBump(U32 pass)
 {
-	if (!gPipeline.hasRenderBatches(LLRenderPass::PASS_BUMP))
+	if (!gPipeline.hasRenderBatches(pass))
 	{
 		return;
 	}
@@ -740,6 +761,12 @@ void LLDrawPoolBump::endBump()
 	gGL.getTexUnit(0)->setTextureBlendType(LLTexUnit::TB_MULT);
 	
 	gGL.setSceneBlendType(LLRender::BT_ALPHA);
+}
+
+S32 LLDrawPoolBump::getNumDeferredPasses()
+{
+	static LLCachedControl<bool> render_object_bump(gSavedSettings, "RenderObjectBump");
+	return render_object_bump ? 1 : 0;
 }
 
 void LLDrawPoolBump::beginDeferredPass(S32 pass)
@@ -796,22 +823,45 @@ void LLDrawPoolBump::renderDeferred(S32 pass)
 
 void LLDrawPoolBump::beginPostDeferredPass(S32 pass)
 {
-	beginFullbrightShiny();
+	switch (pass)
+	{
+	case 0:
+		beginFullbrightShiny();
+		break;
+	case 1:
+		beginBump(LLRenderPass::PASS_POST_BUMP);
+		break;
+	}
 }
 
 void LLDrawPoolBump::endPostDeferredPass(S32 pass)
 {
-	endFullbrightShiny();
+	switch (pass)
+	{
+	case 0:
+		endFullbrightShiny();
+		break;
+	case 1:
+		endBump(LLRenderPass::PASS_POST_BUMP);
+		break;
+	}
 }
 
 void LLDrawPoolBump::renderPostDeferred(S32 pass)
 {
-	renderFullbrightShiny();
+	switch (pass)
+	{
+	case 0:
+		renderFullbrightShiny();
+		break;
+	case 1:
+		renderBump(LLRenderPass::PASS_POST_BUMP);
+		break;
+	}
 }
 
 ////////////////////////////////////////////////////////////////
-// List of one-component bump-maps created from other texures.
-
+// List of bump-maps created from other textures.
 
 //const LLUUID TEST_BUMP_ID("3d33eaf2-459c-6f97-fd76-5fce3fc29447");
 
@@ -877,10 +927,8 @@ void LLBumpImageList::addTextureStats(U8 bump, const LLUUID& base_image_id, F32 
 	}
 }
 
-
 void LLBumpImageList::updateImages()
 {	
-	llpushcallstacks;
 	for (bump_image_map_t::iterator iter = mBrightnessEntries.begin(); iter != mBrightnessEntries.end(); )
 	{
 		bump_image_map_t::iterator curiter = iter++;
@@ -907,7 +955,7 @@ void LLBumpImageList::updateImages()
 			}
 		}
 	}
-	llpushcallstacks;
+
 	for (bump_image_map_t::iterator iter = mDarknessEntries.begin(); iter != mDarknessEntries.end(); )
 	{
 		bump_image_map_t::iterator curiter = iter++;
@@ -934,7 +982,6 @@ void LLBumpImageList::updateImages()
 			}
 		}
 	}
-	llpushcallstacks;
 }
 
 
@@ -973,7 +1020,7 @@ LLViewerTexture* LLBumpImageList::getBrightnessDarknessImage(LLViewerFetchedText
 		else
 		{
 			LLPointer<LLImageRaw> raw = new LLImageRaw(1, 1, 1);
-			raw->clear(0x77, 0x77, 0x77, 0xFF);
+			raw->clear(0x77, 0x77, 0xFF, 0xFF);
 
 			(*entries_list)[src_image->getID()] = LLViewerTextureManager::getLocalTexture( raw.get(), TRUE);
 			bump = (*entries_list)[src_image->getID()]; // In case callback was called immediately and replaced the image
@@ -1188,7 +1235,7 @@ void LLBumpImageList::onSourceLoaded(BOOL success, LLViewerTexture *src_vi, LLIm
 				F32 twice_one_over_range = 2.f / (maximum - minimum);
 				S32 i;
 
-				const F32 ARTIFICIAL_SCALE = 2.f;  // Advantage: exagerates the effect in midrange.  Disadvantage: clamps at the extremes.
+				const F32 ARTIFICIAL_SCALE = 2.f;  // Advantage: exaggerates the effect in midrange.  Disadvantage: clamps at the extremes.
 				if (BE_DARKNESS == bump_code)
 				{
 					for (i = minimum; i <= maximum; i++)
@@ -1199,7 +1246,6 @@ void LLBumpImageList::onSourceLoaded(BOOL success, LLViewerTexture *src_vi, LLIm
 				}
 				else
 				{
-					// BE_LIGHTNESS
 					for (i = minimum; i <= maximum; i++)
 					{
 						F32 minus_one_to_one = F32(i - minimum) * twice_one_over_range - 1.f;
@@ -1281,8 +1327,8 @@ void LLDrawPoolBump::pushBatch(LLDrawInfo& params, U32 mask, BOOL texture)
 	{
 		if (params.mTexture.notNull())
 		{
-			gGL.getTexUnit(diffuse_channel)->bind(params.mTexture.get());
-			//params.mTexture->addTextureStats(params.mVSize);
+			gGL.getTexUnit(diffuse_channel)->bind(params.mTexture);
+			params.mTexture->addTextureStats(params.mVSize);
 		}
 		else
 		{
@@ -1295,8 +1341,8 @@ void LLDrawPoolBump::pushBatch(LLDrawInfo& params, U32 mask, BOOL texture)
 		params.mGroup->rebuildMesh();
 	}
 	params.mVertexBuffer->setBuffer(mask);
-	params.mVertexBuffer->drawRange(LLRender::TRIANGLES, params.mStart, params.mEnd, params.mCount, params.mOffset);
-	gPipeline.addTrianglesDrawn(params.mCount/3);
+	params.mVertexBuffer->drawRange(params.mDrawMode, params.mStart, params.mEnd, params.mCount, params.mOffset);
+	gPipeline.addTrianglesDrawn(params.mCount, params.mDrawMode);
 	if (params.mTextureMatrix)
 	{
 		if (mShiny)
