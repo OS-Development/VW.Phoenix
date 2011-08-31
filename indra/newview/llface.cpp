@@ -1007,7 +1007,7 @@ BOOL LLFace::getGeometryVolume(const LLVolume& volume,
 							   const U16 &index_offset,
 							   bool force_rebuild)
 {
-	//LLFastTimer t(LLFastTimer::FTM_FACE_GET_GEOM);
+	LLFastTimer t(LLFastTimer::FTM_FACE_GET_GEOM);
 	llassert(verify());
 	const LLVolumeFace &vf = volume.getVolumeFace(f);
 	S32 num_vertices = (S32)vf.mNumVertices;

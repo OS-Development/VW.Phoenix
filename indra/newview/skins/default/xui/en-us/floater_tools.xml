@@ -1073,41 +1073,66 @@
 			     initial_value="false" label="Flexible Path" left="10" mouse_opaque="true"
 			     name="Flexible1D Checkbox Ctrl"
 			     tool_tip="Allows object to flex about the Z axis. (Client-side only)"
-			     width="121" />
+			     width="120" />
+			<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+			     bottom_delta="0" drop_shadow_visible="true" follows="left|top"
+			     font="SansSerifSmall" h_pad="0" halign="left" height="16" left="140"
+			     mouse_opaque="true" name="label physicsshapetype" v_pad="0" width="120">
+				Physics Shape Type:
+			</text>
       <spinner bottom_delta="-20" decimal_digits="5" follows="left|top" height="16"
-			     increment="1" initial_val="2" label="Softness" label_width="65" left="10"
+			     increment="1" initial_val="2" label="Softness" label_width="55" left="10"
 			     max_val="3" min_val="0" mouse_opaque="true" name="FlexNumSections"
-			     width="128" />
-      <spinner bottom_delta="-20" decimal_digits="5" follows="left|top" height="16"
-			     increment="0.5" initial_val="0.3" label="Gravity" label_width="65"
+			     width="118" />
+			<combo_box allow_text_entry="false" bottom_delta="-2" follows="left|top" height="18"
+			     left="140" max_chars="20" mouse_opaque="true" name="Physics Shape Type Combo Ctrl"
+			     visible="false" width="118" tool_tip="Choose the physics shape type"/>
+			<spinner bottom_delta="-18" decimal_digits="3" follows="left|top" height="16"
+			     increment="0.5" initial_val="0.3" label="Gravity" label_width="55"
 			     left="10" max_val="10" min_val="-10" mouse_opaque="true" name="FlexGravity"
-			     width="128" />
+			     width="118" />
+			<spinner bottom_delta="0" decimal_digits="1" follows="left|top" height="16"
+			     increment="1" initial_val="1" label="Gravity" label_width="55" left="140"
+			     max_val="28" min_val="-1" mouse_opaque="true" name="Physics Gravity"
+			     width="118" />
       <spinner bottom_delta="-20" decimal_digits="5" follows="left|top" height="16"
-			     increment="0.5" initial_val="2" label="Drag" label_width="65" left="10"
+			     increment="0.5" initial_val="2" label="Drag" label_width="55" left="10"
 			     max_val="10" min_val="0" mouse_opaque="true" name="FlexFriction"
-			     width="128" />
+			     width="118" />
+			<spinner bottom_delta="0" decimal_digits="1" follows="left|top" height="16"
+			     increment="0.1" initial_val="0" label="Friction" label_width="55" left="140"
+			     max_val="255" min_val="0" mouse_opaque="true" name="Physics Friction"
+			     width="118" />
       <spinner bottom_delta="-20" decimal_digits="5" follows="left|top" height="16"
-			     increment="0.5" initial_val="0" label="Wind" label_width="65" left="10"
-			     max_val="10" min_val="0" mouse_opaque="true" name="FlexWind" width="128" />
+			     increment="0.5" initial_val="0" label="Wind" label_width="55" left="10"
+			     max_val="10" min_val="0" mouse_opaque="true" name="FlexWind" width="118" />
+			<spinner bottom_delta="0" decimal_digits="1" follows="left|top" height="16"
+			     increment="0.1" initial_val="0" label="Density" label_width="55" left="140"
+			     max_val="22587" min_val="1" mouse_opaque="true" name="Physics Density"
+			     width="118" tool_tip="Density in 100 kg/m3" />
       <spinner bottom_delta="-20" decimal_digits="5" follows="left|top" height="16"
-			     increment="0.5" initial_val="1" label="Tension" label_width="65" left="10"
-			     max_val="10" min_val="0" mouse_opaque="true" name="FlexTension" width="128" />
+			     increment="0.5" initial_val="1" label="Tension" label_width="55" left="10"
+			     max_val="10" min_val="0" mouse_opaque="true" name="FlexTension" width="118" />
+			<spinner bottom_delta="0" decimal_digits="3" follows="left|top" height="16"
+			     increment="0.01" initial_val="0" label="Restitution" label_width="55" left="140"
+			     max_val="1" min_val="0" mouse_opaque="true" name="Physics Restitution"
+			     width="118" />
       <spinner bottom_delta="-20" decimal_digits="5" follows="left|top" height="16"
-			     increment="0.01" initial_val="0" label="Force X" label_width="65" left="10"
+			     increment="0.01" initial_val="0" label="Force X" label_width="55" left="10"
 			     max_val="10" min_val="-10" mouse_opaque="true" name="FlexForceX"
 			     width="128" />
       <spinner bottom_delta="-20" decimal_digits="5" follows="left|top" height="16"
-			     increment="0.01" initial_val="0" label="Force Y" label_width="65" left="10"
+			     increment="0.01" initial_val="0" label="Force Y" label_width="55" left="10"
 			     max_val="10" min_val="-10" mouse_opaque="true" name="FlexForceY"
 			     width="128" />
       <spinner bottom_delta="-20" decimal_digits="5" follows="left|top" height="16"
-			     increment="0.01" initial_val="0" label="Force Z" label_width="65" left="10"
+			     increment="0.01" initial_val="0" label="Force Z" label_width="55" left="10"
 			     max_val="10" min_val="-10" mouse_opaque="true" name="FlexForceZ"
-			     width="128" />
+			     width="118" />
       <check_box bottom_delta="-30" follows="left|top" font="SansSerifSmall" height="16"
 			     initial_value="false" label="Light" left="10" mouse_opaque="true"
 			     name="Light Checkbox Ctrl" tool_tip="Causes object to emit light"
-			     width="121" />
+			     width="120" />
       <text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
 			     bottom_delta="-21" drop_shadow_visible="true" follows="left|top"
 			     font="SansSerifSmall" h_pad="0" halign="left" height="10" left_delta="0"
@@ -1130,6 +1155,15 @@
 			     increment="0.25" initial_val="1" label="Falloff" label_width="65"
 			     left_delta="0" max_val="2" min_val="0" mouse_opaque="true"
 			     name="Light Falloff" width="128" />
+			<string name="None">
+				None
+			</string>
+			<string name="Prim">
+				Prim
+			</string>
+			<string name="Convex Hull">
+				Convex Hull
+			</string>
     </panel>
 
     <!-- Texture sub-tab -->

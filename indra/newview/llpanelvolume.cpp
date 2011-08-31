@@ -36,46 +36,46 @@
 #include "llpanelvolume.h"
 
 // linden library includes
+#include "llbutton.h"
+#include "llcheckboxctrl.h"
 #include "llclickaction.h"
+#include "llcombobox.h"
 #include "lleconomy.h"
 #include "llerror.h"
+#include "llfocusmgr.h"
 #include "llfontgl.h"
-#include "llflexibleobject.h"
 #include "llmaterialtable.h"
 #include "llpermissionsflags.h"
+#include "llresmgr.h"
+#include "llspinctrl.h"
 #include "llstring.h"
+#include "lltextbox.h"
+#include "llui.h"
+#include "lluictrlfactory.h"
 #include "llvolume.h"
 #include "m3math.h"
 #include "material_codes.h"
 
 // project includes
 #include "llagent.h"
-#include "llbutton.h"
-#include "llcheckboxctrl.h"
 #include "llcolorswatch.h"
-#include "llcombobox.h"
+#include "lldrawpool.h"
 #include "llfirstuse.h"
-#include "llfocusmgr.h"
+#include "llflexibleobject.h"
 #include "llmanipscale.h"
+#include "llmeshrepository.h"
 #include "llpanelinventory.h"
 #include "llpreviewscript.h"
-#include "llresmgr.h"
 #include "llselectmgr.h"
-#include "llspinctrl.h"
-#include "lltextbox.h"
 #include "lltool.h"
 #include "lltoolcomp.h"
 #include "lltoolmgr.h"
-#include "llui.h"
 #include "llviewerobject.h"
 #include "llviewerregion.h"
 #include "llviewerwindow.h"
 #include "llvovolume.h"
 #include "llworld.h"
 #include "pipeline.h"
-
-#include "lldrawpool.h"
-#include "lluictrlfactory.h"
 
 // "Features" Tab
 
@@ -119,6 +119,15 @@ BOOL	LLPanelVolume::postBuild()
 		childSetValidate("Light Falloff",precommitValidate);
 	}
 	
+	// PHYSICS Parameters
+	{
+		childSetCommitCallback("Physics Shape Type Combo Ctrl", sendPhysicsShapeType, this);
+		childSetCommitCallback("Physics Gravity", sendPhysicsGravity, this);
+		childSetCommitCallback("Physics Friction", sendPhysicsFriction, this);
+		childSetCommitCallback("Physics Density", sendPhysicsDensity, this);
+		childSetCommitCallback("Physics Restitution", sendPhysicsRestitution, this);
+	}
+
 	// Start with everyone disabled
 	clearCtrls();
 
@@ -312,6 +321,49 @@ void LLPanelVolume::getState( )
 		childSetEnabled("FlexForceZ",false);
 	}
 	
+	// Physics properties
+	childSetValue("Physics Gravity", objectp->getPhysicsGravity());
+	childSetEnabled("Physics Gravity", editable);
+	childSetValue("Physics Friction", objectp->getPhysicsFriction());
+	childSetEnabled("Physics Friction", editable);
+	childSetValue("Physics Density", objectp->getPhysicsDensity());
+	childSetEnabled("Physics Density", editable);
+	childSetValue("Physics Restitution", objectp->getPhysicsRestitution());
+	childSetEnabled("Physics Restitution", editable);
+
+	// update the physics shape combo to include allowed physics shapes
+	LLComboBox* physics_shape = getChild<LLComboBox>("Physics Shape Type Combo Ctrl");
+	physics_shape->removeall();
+	physics_shape->add(getString("None"), LLSD(1));
+
+	BOOL isMesh = FALSE;
+	LLSculptParams *sculpt_params = (LLSculptParams *)objectp->getParameterEntry(LLNetworkData::PARAMS_SCULPT);
+	if (sculpt_params)
+	{
+		isMesh = (sculpt_params->getSculptType() & LL_SCULPT_TYPE_MASK) == LL_SCULPT_TYPE_MESH;
+	}
+
+	if (isMesh && objectp)
+	{
+		const LLVolumeParams &volume_params = objectp->getVolume()->getParams();
+		LLUUID mesh_id = volume_params.getSculptID();
+		if (gMeshRepo.hasPhysicsShape(mesh_id))
+		{
+			// if a mesh contains an uploaded or decomposed physics mesh,
+			// allow 'Prim'
+			physics_shape->add(getString("Prim"), LLSD(0));			
+		}
+	}
+	else
+	{
+		// simple prims always allow physics shape prim
+		physics_shape->add(getString("Prim"), LLSD(0));	
+	}
+
+	physics_shape->add(getString("Convex Hull"), LLSD(2));	
+	physics_shape->setValue(LLSD(objectp->getPhysicsShapeType()));
+	physics_shape->setEnabled(editable);
+
 	mObject = objectp;
 	mRootObject = root_objectp;
 }
@@ -336,6 +388,25 @@ void LLPanelVolume::refresh()
 	{
 		mRootObject = NULL;
 	}
+/* *TODO
+	bool visible = (LLViewerShaderMgr::instance()->getVertexShaderLevel(LLViewerShaderMgr::SHADER_DEFERRED) > 0);
+
+	childSetVisible("label texture", visible);
+	childSetVisible("Light FOV", visible);
+	childSetVisible("Light Focus", visible);
+	childSetVisible("Light Ambiance", visible);
+	childSetVisible("light texture control", visible);
+*/
+	bool enable_mesh = gAgent.getRegion() &&
+					   !gAgent.getRegion()->getCapability("GetMesh").empty();
+
+	childSetVisible("label physicsshapetype", enable_mesh);
+	childSetEnabled("label physicsshapetype", enable_mesh);
+	childSetVisible("Physics Shape Type Combo Ctrl", enable_mesh);
+	childSetVisible("Physics Gravity", enable_mesh);
+	childSetVisible("Physics Friction", enable_mesh);
+	childSetVisible("Physics Density", enable_mesh);
+	childSetVisible("Physics Restitution", enable_mesh);
 }
 
 
@@ -533,3 +604,40 @@ void LLPanelVolume::onCommitIsFlexible( LLUICtrl* ctrl, void* userdata )
 	self->sendIsFlexible();
 }
 
+// static
+void LLPanelVolume::sendPhysicsShapeType(LLUICtrl* ctrl, void* userdata)
+{
+	U8 type = ctrl->getValue().asInteger();
+	LLSelectMgr::getInstance()->selectionSetPhysicsType(type);
+/*	*TODO
+	refreshCost();
+*/
+}
+
+// static
+void LLPanelVolume::sendPhysicsGravity(LLUICtrl* ctrl, void* userdata)
+{
+	F32 val = ctrl->getValue().asReal();
+	LLSelectMgr::getInstance()->selectionSetGravity(val);
+}
+
+// static
+void LLPanelVolume::sendPhysicsFriction(LLUICtrl* ctrl, void* userdata)
+{
+	F32 val = ctrl->getValue().asReal();
+	LLSelectMgr::getInstance()->selectionSetFriction(val);
+}
+
+// static
+void LLPanelVolume::sendPhysicsRestitution(LLUICtrl* ctrl, void* userdata)
+{
+	F32 val = ctrl->getValue().asReal();
+	LLSelectMgr::getInstance()->selectionSetRestitution(val);
+}
+
+// static
+void LLPanelVolume::sendPhysicsDensity(LLUICtrl* ctrl, void* userdata)
+{
+	F32 val = ctrl->getValue().asReal();
+	LLSelectMgr::getInstance()->selectionSetDensity(val);
+}

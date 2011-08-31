@@ -199,10 +199,10 @@ BOOL LLDrawable::isLight() const
 
 void LLDrawable::cleanupReferences()
 {
-	LLFastTimer t(LLFastTimer::FTM_PIPELINE);
+	LLFastTimer t(LLFastTimer::FTM_CLEANUP_DRAWABLE);
 	
 	{
-		//LLFastTimer t2(LLFastTimer::FTM_DELETE_FACES);
+		LLFastTimer t2(LLFastTimer::FTM_DELETE_FACES);
 		std::for_each(mFaces.begin(), mFaces.end(), DeletePointer());
 		mFaces.clear();
 	}
@@ -212,7 +212,7 @@ void LLDrawable::cleanupReferences()
 	gPipeline.unlinkDrawable(this);
 
 	{
-		//LLFastTimer t3(LLFastTimer::FTM_DEREF_DRAWABLE);
+		LLFastTimer t3(LLFastTimer::FTM_DEREF_DRAWABLE);
 		// Cleanup references to other objects
 		mVObjp = NULL;
 		mParent = NULL;

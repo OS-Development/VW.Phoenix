@@ -33,13 +33,14 @@
 #ifndef LL_LLPRIMITIVE_H
 #define LL_LLPRIMITIVE_H
 
+#include "llpointer.h"
+#include "llprimtexturelist.h"
+#include "lltextureentry.h"
 #include "lluuid.h"
+#include "llvolume.h"
+#include "message.h"
 #include "v3math.h"
 #include "xform.h"
-#include "message.h"
-#include "llpointer.h"
-#include "llvolume.h"
-#include "lltextureentry.h"
 
 // Moved to stdtypes.h --JC
 // typedef U8 LLPCode;
@@ -111,7 +112,7 @@ public:
 		PARAMS_RESERVED		= 0x50, // Used on server-side
 		PARAMS_MESH			= 0x60,
 	};
-	
+
 public:
 	U16 mType;
 	virtual ~LLNetworkData() {};
@@ -152,7 +153,7 @@ public:
 	operator LLSD() const { return asLLSD(); }
 	bool fromLLSD(LLSD& sd);
 
-	
+
 	void setColor(const LLColor4& color)	{ mColor = color; mColor.clamp(); }
 	void setRadius(F32 radius)				{ mRadius = llclamp(radius, LIGHT_MIN_RADIUS, LIGHT_MAX_RADIUS); }
 	void setFalloff(F32 falloff)			{ mFalloff = llclamp(falloff, LIGHT_MIN_FALLOFF, LIGHT_MAX_FALLOFF); }
@@ -241,7 +242,7 @@ public:
 	bool operator==(const LLNetworkData& data) const;
 	void copy(const LLNetworkData& data);
 	LLSD asLLSD() const;
-	operator LLSD() const { return asLLSD(); }
+	operator LLSD() const					{ return asLLSD(); }
 	bool fromLLSD(LLSD& sd);
 };// end of attributes structure
 
@@ -252,7 +253,7 @@ class LLSculptParams : public LLNetworkData
 protected:
 	LLUUID mSculptTexture;
 	U8 mSculptType;
-	
+
 public:
 	LLSculptParams();
 	/*virtual*/ BOOL pack(LLDataPacker &dp) const;
@@ -263,10 +264,10 @@ public:
 	operator LLSD() const { return asLLSD(); }
 	bool fromLLSD(LLSD& sd);
 
-	void setSculptTexture(const LLUUID& id) { mSculptTexture = id; }
-	LLUUID getSculptTexture()               { return mSculptTexture; }
-	void setSculptType(U8 type)             { mSculptType = type; }
-	U8 getSculptType()                      { return mSculptType; }
+	void setSculptTexture(const LLUUID& id)	{ mSculptTexture = id; }
+	LLUUID getSculptTexture() const			{ return mSculptTexture; }
+	void setSculptType(U8 type)				{ mSculptType = type; }
+	U8 getSculptType() const				{ return mSculptType; }
 };
 
 class LLLightImageParams : public LLNetworkData
@@ -290,7 +291,7 @@ public:
 	bool isLightSpotlight() const			{ return mLightTexture.notNull(); }
 	void setParams(const LLVector3& params)	{ mParams = params; }
 	LLVector3 getParams() const				{ return mParams; }
-	
+
 };
 
 class LLPrimitive : public LLXform
@@ -320,6 +321,8 @@ public:
 	LLPrimitive();
 	virtual ~LLPrimitive();
 
+	void clearTextureList();
+
 	static LLPrimitive *createPrimitive(LLPCode p_code);
 	void init_primitive(LLPCode p_code);
 
@@ -330,7 +333,7 @@ public:
 
 	// Modify texture entry properties
 	inline BOOL validTE(const U8 te_num) const;
-	const LLTextureEntry *getTE(const U8 te_num) const;
+	LLTextureEntry* getTE(const U8 te_num) const;
 
 	virtual void setNumTEs(const U8 num_tes);
 	virtual void setAllTETextures(const LLUUID &tex_id);
@@ -357,10 +360,6 @@ public:
 	virtual S32 setTEGlow(const U8 te, const F32 glow);
 	virtual BOOL setMaterial(const U8 material); // returns TRUE if material changed
 
-	void setTEArrays(const U8 size,
-					  const LLUUID* image_ids,
-					  const F32* scale_s,
-					  const F32* scale_t);
 	void copyTEs(const LLPrimitive *primitive);
 	S32 packTEField(U8 *cur_ptr, U8 *data_ptr, U8 data_size, U8 last_face_index, EMsgVariableType type) const;
 	S32 unpackTEField(U8 *cur_ptr, U8 *buffer_end, U8 *data_ptr, U8 data_size, U8 face_count, EMsgVariableType type);
@@ -370,7 +369,7 @@ public:
 	S32 unpackTEMessage(LLMessageSystem *mesgsys, char const* block_name, const S32 block_num); // Variable num of blocks
 	BOOL unpackTEMessage(LLDataPacker &dp);
 	static std::string tagstring;
-	
+
 #ifdef CHECK_FOR_FINITE
 	inline void setPosition(const LLVector3& pos);
 	inline void setPosition(const F32 x, const F32 y, const F32 z);
@@ -403,20 +402,27 @@ public:
 	void 		setAcceleration(const LLVector3& accel)		{ mAcceleration = accel; }
 	void 		setAcceleration(const F32 x, const F32 y, const F32 z)		{ mAcceleration.setVec(x,y,z); }
 #endif
-	
+
 	LLPCode				getPCode() const			{ return mPrimitiveCode; }
 	std::string			getPCodeString() const		{ return pCodeToString(mPrimitiveCode); }
 	const LLVector3&	getAngularVelocity() const	{ return mAngularVelocity; }
 	const LLVector3&	getVelocity() const			{ return mVelocity; }
 	const LLVector3&	getAcceleration() const		{ return mAcceleration; }
-	U8					getNumTEs() const			{ return mNumTEs; }
+	U8					getNumTEs() const			{ return mTextureList.size(); }
+	U8					getExpectedNumTEs() const;
 
 	U8					getMaterial() const			{ return mMaterial; }
-	
+
 	void				setVolumeType(const U8 code);
 	U8					getVolumeType();
 
-	void setTextureList(LLTextureEntry *listp);
+	// clears existing textures
+	// copies the contents of other_list into mEntryList
+	void copyTextureList(const LLPrimTextureList& other_list);
+
+	// clears existing textures
+	// takes the contents of other_list and clears other_list
+	void takeTextureList(LLPrimTextureList& other_list);
 
 	inline BOOL	isAvatar() const;
 	inline BOOL	isSittingAvatar() const;
@@ -431,7 +437,7 @@ public:
 	static LLPCode legacyToPCode(const U8 legacy);
 	static U8 pCodeToLegacy(const LLPCode pcode);
 	static bool getTESTAxes(const U8 face, U32* s_axis, U32* t_axis);
-	
+
 	inline static BOOL isPrimitive(const LLPCode pcode);
 	inline static BOOL isApp(const LLPCode pcode);
 
@@ -441,9 +447,9 @@ protected:
 	LLVector3			mAcceleration;		// are we under constant acceleration?
 	LLVector3			mAngularVelocity;	// angular velocity
 	LLPointer<LLVolume> mVolumep;
-	LLTextureEntry		*mTextureList;		// list of texture GUIDs, scales, offsets
+	LLPrimTextureList	mTextureList;		// list of texture GUIDs, scales, offsets
 	U8					mMaterial;			// Material code
-	U8					mNumTEs;			// # of faces on the primitve	
+	U8					mNumTEs;			// # of faces on the primitve
 	U32 				mMiscFlags;			// home for misc bools
 
 public:
@@ -529,7 +535,7 @@ void LLPrimitive::setAngularVelocity(const LLVector3& avel)
 	}
 }
 
-void LLPrimitive::setAngularVelocity(const F32 x, const F32 y, const F32 z)		
+void LLPrimitive::setAngularVelocity(const F32 x, const F32 y, const F32 z)
 { 
 	if (llfinite(x) && llfinite(y) && llfinite(z))
 	{
@@ -541,7 +547,7 @@ void LLPrimitive::setAngularVelocity(const F32 x, const F32 y, const F32 z)
 	}
 }
 
-void LLPrimitive::setVelocity(const LLVector3& vel)			
+void LLPrimitive::setVelocity(const LLVector3& vel)
 { 
 	if (vel.isFinite())
 	{
@@ -553,7 +559,7 @@ void LLPrimitive::setVelocity(const LLVector3& vel)
 	}
 }
 
-void LLPrimitive::setVelocity(const F32 x, const F32 y, const F32 z)			
+void LLPrimitive::setVelocity(const F32 x, const F32 y, const F32 z)
 { 
 	if (llfinite(x) && llfinite(y) && llfinite(z))
 	{
@@ -565,7 +571,7 @@ void LLPrimitive::setVelocity(const F32 x, const F32 y, const F32 z)
 	}
 }
 
-void LLPrimitive::setVelocityX(const F32 x)							
+void LLPrimitive::setVelocityX(const F32 x)
 { 
 	if (llfinite(x))
 	{
@@ -577,7 +583,7 @@ void LLPrimitive::setVelocityX(const F32 x)
 	}
 }
 
-void LLPrimitive::setVelocityY(const F32 y)							
+void LLPrimitive::setVelocityY(const F32 y)
 { 
 	if (llfinite(y))
 	{
@@ -589,7 +595,7 @@ void LLPrimitive::setVelocityY(const F32 y)
 	}
 }
 
-void LLPrimitive::setVelocityZ(const F32 z)							
+void LLPrimitive::setVelocityZ(const F32 z)
 { 
 	if (llfinite(z))
 	{
@@ -601,7 +607,7 @@ void LLPrimitive::setVelocityZ(const F32 z)
 	}
 }
 
-void LLPrimitive::addVelocity(const LLVector3& vel)			
+void LLPrimitive::addVelocity(const LLVector3& vel)
 { 
 	if (vel.isFinite())
 	{
@@ -613,7 +619,7 @@ void LLPrimitive::addVelocity(const LLVector3& vel)
 	}
 }
 
-void LLPrimitive::setAcceleration(const LLVector3& accel)		
+void LLPrimitive::setAcceleration(const LLVector3& accel)
 { 
 	if (accel.isFinite())
 	{
@@ -625,7 +631,7 @@ void LLPrimitive::setAcceleration(const LLVector3& accel)
 	}
 }
 
-void LLPrimitive::setAcceleration(const F32 x, const F32 y, const F32 z)		
+void LLPrimitive::setAcceleration(const F32 x, const F32 y, const F32 z)
 { 
 	if (llfinite(x) && llfinite(y) && llfinite(z))
 	{

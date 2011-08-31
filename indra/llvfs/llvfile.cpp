@@ -38,7 +38,7 @@
 #include "llthread.h"
 #include "llstat.h"
 #include "llvfs.h"
-#include "llfasttimer.h"
+//#include "llfasttimer.h"
 
 const S32 LLVFile::READ			= 0x00000001;
 const S32 LLVFile::WRITE		= 0x00000002;
@@ -319,7 +319,7 @@ BOOL LLVFile::setMaxSize(S32 size)
 
 	if (!mVFS->checkAvailable(size))
 	{
-		LLFastTimer t(LLFastTimer::FTM_VFILE_WAIT);
+		//LLFastTimer t(LLFastTimer::FTM_VFILE_WAIT);	// Do NOT activate: would make fastimer code called out of main thread !
 		S32 count = 0;
 		while (sVFSThread->getPending() > 1000)
 		{
@@ -427,7 +427,7 @@ bool LLVFile::isLocked(EVFSLock lock)
 
 void LLVFile::waitForLock(EVFSLock lock)
 {
-	LLFastTimer t(LLFastTimer::FTM_VFILE_WAIT);
+	//LLFastTimer t(LLFastTimer::FTM_VFILE_WAIT);	// Do NOT activate: would make fastimer code called out of main thread !
 	// spin until the lock clears
 	while (isLocked(lock))
 	{

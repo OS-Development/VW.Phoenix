@@ -200,6 +200,7 @@ void LLInventoryViewFinder::updateElementsFromFilter()
 	childSetValue("check_sound", (S32) (filter_types & 0x1 << LLInventoryType::IT_SOUND));
 	childSetValue("check_texture", (S32) (filter_types & 0x1 << LLInventoryType::IT_TEXTURE));
 	childSetValue("check_snapshot", (S32) (filter_types & 0x1 << LLInventoryType::IT_SNAPSHOT));
+	childSetValue("check_mesh", (S32) (filter_types & 0x1 << LLInventoryType::IT_MESH));
 	childSetValue("check_show_empty", show_folders == LLInventoryFilter::SHOW_ALL_FOLDERS);
 	childSetValue("check_since_logoff", mFilter->isSinceLogoff());
 	mSpinSinceHours->set((F32)(hours % 24));
@@ -278,6 +279,12 @@ void LLInventoryViewFinder::draw()
 	if (!childGetValue("check_snapshot"))
 	{
 		filter &= ~(0x1 << LLInventoryType::IT_SNAPSHOT);
+		filtered_by_all_types = FALSE;
+	}
+
+	if (!getChild<LLUICtrl>("check_mesh")->getValue())
+	{
+		filter &= ~(0x1 << LLInventoryType::IT_MESH);
 		filtered_by_all_types = FALSE;
 	}
 
@@ -361,6 +368,7 @@ void LLInventoryViewFinder::selectAllTypes(void* user_data)
 	self->childSetValue("check_sound", TRUE);
 	self->childSetValue("check_texture", TRUE);
 	self->childSetValue("check_snapshot", TRUE);
+	self->childSetValue("check_mesh", TRUE);
 
 /*
 	self->mCheckCallingCard->set(TRUE);
@@ -406,6 +414,7 @@ void LLInventoryViewFinder::selectNoTypes(void* user_data)
 	self->childSetValue("check_sound", FALSE);
 	self->childSetValue("check_texture", FALSE);
 	self->childSetValue("check_snapshot", FALSE);
+	self->childSetValue("check_mesh", FALSE);
 }
 
 

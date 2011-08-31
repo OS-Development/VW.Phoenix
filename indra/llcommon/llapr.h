@@ -38,7 +38,7 @@
 #if LL_LINUX || LL_SOLARIS
 #include <sys/param.h>  // Need PATH_MAX in APR headers...
 #endif
-#if 0 //LL_WINDOWS
+#if 0 //LL_WINDOWS // Nope, at least not for VS2005 !...
 	// Limit Windows API to small and manageable set.
 	// If you get undefined symbols, find the appropriate
 	// Windows header file and include that in your .cpp file.

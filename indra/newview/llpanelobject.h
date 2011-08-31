@@ -33,10 +33,10 @@
 #ifndef LL_LLPANELOBJECT_H
 #define LL_LLPANELOBJECT_H
 
-#include "v3math.h"
 #include "llpanel.h"
 #include "llmemory.h"
 #include "llvolume.h"
+#include "v3math.h"
 
 class LLSpinCtrl;
 class LLCheckBoxCtrl;

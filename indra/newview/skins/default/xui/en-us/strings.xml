@@ -209,7 +209,20 @@
 	<string name="compressed_image_files">Compressed Images</string>
 	<string name="load_files">Load Files</string>
 	<string name="choose_the_directory">Choose Directory</string>
-	
+
+	<!-- Materials -->
+	<string name="Stone">Stone</string>
+	<string name="Metal">Metal</string>
+	<string name="Glass">Glass</string>
+	<string name="Wood">Wood</string>
+	<string name="Flesh">Flesh</string>
+	<string name="Plastic">Plastic</string>
+	<string name="Rubber">Rubber</string>
+	<string name="Light">Light</string>
+
+	<!-- Legacy strings, almost never used -->
+	<string name="Fullbright">Fullbright (Legacy)</string>	<!-- used in the Build > materials dropdown-->
+
 	<!-- LSL Usage Hover Tips -->
   <string name="LSLTipSleepTime">
 Sleeps script for [SLEEP_TIME] seconds.

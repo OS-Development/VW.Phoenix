@@ -1448,6 +1448,9 @@ void init_debug_rendering_menu(LLMenuGL* menu)
 	item = new LLMenuItemCheckGL("Audit Texture", menu_toggle_control, NULL, menu_check_control, (void*)"AuditTexture");
 	menu->append(item);
 
+	item = new LLMenuItemCheckGL("Load Meshes At Max LOD", menu_toggle_control, NULL, menu_check_control, (void*)"MeshLoadHighLOD");
+	menu->append(item);
+
 #ifndef LL_RELEASE_FOR_DOWNLOAD
 	menu->appendSeparator();
 	menu->append(new LLMenuItemCallGL("Memory Leaking Simulation", LLFloaterMemLeak::show, NULL, NULL));

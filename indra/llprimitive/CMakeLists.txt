@@ -21,11 +21,13 @@ set(llprimitive_SOURCE_FILES
     llmaterialtable.cpp
     llmodel.cpp
     llprimitive.cpp
+    llprimtexturelist.cpp
     lltextureanim.cpp
     lltextureentry.cpp
     lltreeparams.cpp
     llvolumemessage.cpp
     llvolumexml.cpp
+    material_codes.cpp    
     )
 
 set(llprimitive_HEADER_FILES
@@ -35,6 +37,7 @@ set(llprimitive_HEADER_FILES
     llmaterialtable.h
     llmodel.h
     llprimitive.h
+    llprimtexturelist.h
     lltextureanim.h
     lltextureentry.h
     lltreeparams.h

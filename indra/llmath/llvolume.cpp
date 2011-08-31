@@ -3239,11 +3239,12 @@ void LLVolume::sculpt(U16 sculpt_width, U16 sculpt_height, S8 sculpt_components,
 	S32 requested_sizeS = 0;
 	S32 requested_sizeT = 0;
 
-	// create oblong sculpties and Mesh objects with high LOD always
+	// always create oblong sculpties with high LOD
 	F32 sculpt_detail = mDetail;
-	if (OblongSculptLODHack && sculpt_detail < 4.0 &&
-		(sculpt_width != sculpt_height ||
-		 (sculpt_type & LL_SCULPT_TYPE_MASK) == LL_SCULPT_TYPE_MESH))
+	//if (OblongSculptLODHack && sculpt_detail < 4.0 &&
+	//	(sculpt_width != sculpt_height ||
+	//	 (sculpt_type & LL_SCULPT_TYPE_MASK) == LL_SCULPT_TYPE_MESH))
+	if (sculpt_detail < 4.0 && sculpt_width != sculpt_height)
 	{
 		sculpt_detail = 4.0;
 	}

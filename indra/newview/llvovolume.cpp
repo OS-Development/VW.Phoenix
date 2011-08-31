@@ -1047,6 +1047,8 @@ BOOL LLVOVolume::setVolume(const LLVolumeParams &params_in, const S32 detail, bo
 	if (is404)
 	{
 		setIcon(LLViewerTextureManager::getFetchedTextureFromFile("inv_item_mesh.tga", TRUE, LLViewerTexture::BOOST_UI));
+		//render prim proxy when mesh loading attempts give up
+		volume_params.setSculptID(LLUUID::null, LL_SCULPT_TYPE_NONE);
 	}
 
 	if (mSculptChanged ||
@@ -1243,7 +1245,7 @@ BOOL LLVOVolume::calcLOD()
 	}
 
 	//hold onto unmodified distance for debugging
-	F32 debug_distance = distance;
+	//F32 debug_distance = distance;
 
 	distance *= sDistanceFactor;
 			
@@ -1265,7 +1267,8 @@ BOOL LLVOVolume::calcLOD()
 
 	if (gPipeline.hasRenderDebugMask(LLPipeline::RENDER_DEBUG_LOD_INFO))
 	{
-		setDebugText(llformat("%.2f:%.2f, %d", debug_distance, radius, cur_detail));
+		//setDebugText(llformat("%.2f:%.2f, %d", debug_distance, radius, cur_detail));
+		setDebugText(llformat("%d", cur_detail));
 	}
 
 	if (cur_detail != mLOD)
@@ -1587,7 +1590,7 @@ BOOL LLVOVolume::updateGeometry(LLDrawable *drawable)
 	if (mDrawable->isState(LLDrawable::REBUILD_RIGGED))
 	{
 		{
-			//LLFastTimer t(LLFastTimer::FTM_UPDATE_RIGGED_VOLUME);
+			LLFastTimer t(LLFastTimer::FTM_UPDATE_RIGGED_VOLUME);
 			updateRiggedVolume();
 		}
 		genBBoxes(FALSE);
@@ -2945,7 +2948,7 @@ void LLVOVolume::updateRadius()
 
 BOOL LLVOVolume::isAttachment() const
 {
-	return mState ? TRUE : FALSE;
+	return mState != 0;
 }
 
 BOOL LLVOVolume::isHUDAttachment() const
@@ -3369,7 +3372,8 @@ BOOL LLVOVolume::lineSegmentIntersect(const LLVector3& start, const LLVector3& e
 	{
 		if (gSavedSettings.getBOOL("BuildBtnState") && getAvatar()->isSelf())
 		{
-			gPipeline.markRebuild(mDrawable, LLDrawable::REBUILD_RIGGED, TRUE);
+			updateRiggedVolume();
+			genBBoxes(FALSE);
 			volume = mRiggedVolume;
 			transform = false;
 		}
@@ -3545,7 +3549,7 @@ void LLVOVolume::updateRiggedVolume()
 
 	LLVolume* volume = getVolume();
 
-	const LLMeshSkinInfo* skin = gMeshRepo.getSkinInfo(volume->getParams().getSculptID());
+	const LLMeshSkinInfo* skin = gMeshRepo.getSkinInfo(volume->getParams().getSculptID(), this);
 
 	if (!skin)
 	{
@@ -3624,7 +3628,7 @@ void LLRiggedVolume::update(const LLMeshSkinInfo* skin, LLVOAvatar* avatar, cons
 		LLVector4a* pos = dst_face.mPositions;
 
 		{
-			//LLFastTimer t(LLFastTimer::FTM_SKIN_RIGGED);
+			LLFastTimer t(LLFastTimer::FTM_SKIN_RIGGED);
 
 			for (U32 j = 0; j < dst_face.mNumVertices; ++j)
 			{
@@ -3683,7 +3687,7 @@ void LLRiggedVolume::update(const LLMeshSkinInfo* skin, LLVOAvatar* avatar, cons
 		}
 
 		{
-			//LLFastTimer t(LLFastTimer::FTM_RIGGED_OCTREE);
+			LLFastTimer t(LLFastTimer::FTM_RIGGED_OCTREE);
 			delete dst_face.mOctree;
 			dst_face.mOctree = NULL;
 
@@ -3714,6 +3718,7 @@ LLVolumePartition::LLVolumePartition()
 	mDrawableType = LLPipeline::RENDER_TYPE_VOLUME;
 	mPartitionType = LLViewerRegion::PARTITION_VOLUME;
 	mSlopRatio = 0.25f;
+	mBufferUsage = GL_DYNAMIC_DRAW_ARB;
 }
 
 LLVolumeBridge::LLVolumeBridge(LLDrawable* drawablep)
@@ -3958,7 +3963,7 @@ void LLVolumeGeometryManager::rebuildGeom(LLSpatialGroup* group)
 		drawablep->clearState(LLDrawable::HAS_ALPHA);
 
 		bool rigged = vobj->isAttachment() && vobj->isMesh() &&
-					  gMeshRepo.getSkinInfo(vobj->getVolume()->getParams().getSculptID());
+					  gMeshRepo.getSkinInfo(vobj->getVolume()->getParams().getSculptID(), vobj);
 
 		bool bake_sunlight = LLPipeline::sBakeSunlight && drawablep->isStatic();
 
@@ -3998,7 +4003,7 @@ void LLVolumeGeometryManager::rebuildGeom(LLSpatialGroup* group)
 				if (pAvatarVO)
 				{
 					LLUUID currentId = vobj->getVolume()->getParams().getSculptID();
-					const LLMeshSkinInfo*  pSkinData = gMeshRepo.getSkinInfo(currentId);
+					const LLMeshSkinInfo*  pSkinData = gMeshRepo.getSkinInfo(currentId, vobj);
 
 					if (pSkinData)
 					{
@@ -4231,7 +4236,7 @@ void LLVolumeGeometryManager::rebuildGeom(LLSpatialGroup* group)
 							bump_faces.push_back(facep);
 						}
 						else if ((te->getShiny() && LLPipeline::sRenderBump) ||
-								 !te->getFullbright() || bake_sunlight)
+								 !(te->getFullbright() || bake_sunlight))
 						{ //needs normal
 							simple_faces.push_back(facep);
 						}
@@ -4304,7 +4309,7 @@ void LLVolumeGeometryManager::rebuildMesh(LLSpatialGroup* group)
 	llassert(group);
 	if (group && group->isState(LLSpatialGroup::MESH_DIRTY) && !group->isState(LLSpatialGroup::GEOM_DIRTY))
 	{
-		//LLFastTimer tm(LLFastTimer::FTM_VOLUME_GEOM);
+		LLFastTimer tm(LLFastTimer::FTM_VOLUME_GEOM);
 		S32 num_mapped_veretx_buffer = LLVertexBuffer::sMappedCount;
 
 		group->mBuilt = 1.f;
@@ -4390,10 +4395,7 @@ void LLVolumeGeometryManager::rebuildMesh(LLSpatialGroup* group)
 		group->clearState(LLSpatialGroup::MESH_DIRTY | LLSpatialGroup::NEW_DRAWINFO);
 	}
 
-	if (group && group->isState(LLSpatialGroup::NEW_DRAWINFO))
-	{
-		llerrs << "Group still got NEW_DRAWINFO !  WTF ?" << llendl;
-	}
+	llassert(!group || !group->isState(LLSpatialGroup::NEW_DRAWINFO));
 }
 
 void LLVolumeGeometryManager::genDrawInfo(LLSpatialGroup* group, U32 mask, std::vector<LLFace*>& faces, BOOL distance_sort)

@@ -1472,7 +1472,7 @@ void LLSpatialGroup::doOcclusion(LLCamera* camera)
 		// Don't cull hole/edge water, unless RenderWaterVoidCulling is set and we have the GL_ARB_depth_clamp extension.
 		if (earlyFail(camera, this))
 		{
-			//LLFastTimer t0(LLFastTimer::FTM_OCCLUSION_EARLY_FAIL);
+			LLFastTimer t0(LLFastTimer::FTM_OCCLUSION_EARLY_FAIL);
 			setOcclusionState(DISCARD_QUERY);
 			assert_states_valid(this);
 			clearOcclusionState(OCCLUDED, STATE_MODE_DIFF);
@@ -1510,7 +1510,7 @@ void LLSpatialGroup::doOcclusion(LLCamera* camera)
 					U32 mode = GL_SAMPLES_PASSED_ARB;
 #endif
 					{
-						//LLFastTimer t2(LLFastTimer::FTM_PUSH_OCCLUSION_VERTS);
+						LLFastTimer t2(LLFastTimer::FTM_PUSH_OCCLUSION_VERTS);
 						glBeginQueryARB(mode, mOcclusionQuery[LLViewerCamera::sCurCameraID]);
 
 						mOcclusionVerts->setBuffer(LLVertexBuffer::MAP_VERTEX);
@@ -1546,7 +1546,7 @@ void LLSpatialGroup::doOcclusion(LLCamera* camera)
 				}
 
 				{
-					//LLFastTimer t3(LLFastTimer::FTM_SET_OCCLUSION_STATE);
+					LLFastTimer t3(LLFastTimer::FTM_SET_OCCLUSION_STATE);
 					setOcclusionState(QUERY_PENDING);
 					clearOcclusionState(DISCARD_QUERY);
 				}
@@ -2129,7 +2129,7 @@ BOOL LLSpatialPartition::getVisibleExtents(LLCamera& camera, LLVector3& visMin, 
 	visMaxa.load3(visMax.mV);
 
 	{
-		//LLFastTimer ftm(LLFastTimer::FTM_CULL_REBOUND);
+		LLFastTimer ftm(LLFastTimer::FTM_CULL_REBOUND);
 		LLSpatialGroup* group = (LLSpatialGroup*) mOctree->getListener(0);
 		group->rebound();
 	}

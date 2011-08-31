@@ -525,7 +525,7 @@ void LLPipeline::destroyGL()
 
 void LLPipeline::resizeScreenTexture()
 {
-	//LLFastTimer ft(LLFastTimer::FTM_RESIZE_SCREEN_TEXTURE);
+	LLFastTimer ft(LLFastTimer::FTM_RESIZE_SCREEN_TEXTURE);
 	if (gPipeline.canUseVertexShaders() && assertInitialized())
 	{
 		GLuint resX = gViewerWindow->getWindowDisplayWidth();
@@ -1264,7 +1264,7 @@ void LLPipeline::allocDrawable(LLViewerObject *vobj)
 
 void LLPipeline::unlinkDrawable(LLDrawable *drawable)
 {
-	LLFastTimer t(LLFastTimer::FTM_PIPELINE); //LLFastTimer t(LLFastTimer::FTM_UNLINK);
+	LLFastTimer t(LLFastTimer::FTM_UNLINK);
 
 	assertInitialized();
 
@@ -1273,7 +1273,7 @@ void LLPipeline::unlinkDrawable(LLDrawable *drawable)
 	// Based on flags, remove the drawable from the queues that it's on.
 	if (drawablep->isState(LLDrawable::ON_MOVE_LIST))
 	{
-		//LLFastTimer t(LLFastTimer::FTM_REMOVE_FROM_MOVE_LIST);
+		LLFastTimer t1(LLFastTimer::FTM_REMOVE_FROM_MOVE_LIST);
 		LLDrawable::drawable_vector_t::iterator iter = std::find(mMovedList.begin(), mMovedList.end(), drawablep);
 		if (iter != mMovedList.end())
 		{
@@ -1283,7 +1283,7 @@ void LLPipeline::unlinkDrawable(LLDrawable *drawable)
 
 	if (drawablep->getSpatialGroup())
 	{
-		//LLFastTimer t(LLFastTimer::FTM_REMOVE_FROM_SPATIAL_PARTITION);
+		LLFastTimer t2(LLFastTimer::FTM_REMOVE_FROM_SPATIAL_PARTITION);
 		if (!drawablep->getSpatialGroup()->mSpatialPartition->remove(drawablep, drawablep->getSpatialGroup()))
 		{
 #ifdef LL_RELEASE_FOR_DOWNLOAD
@@ -1295,7 +1295,7 @@ void LLPipeline::unlinkDrawable(LLDrawable *drawable)
 	}
 
 	{
-		//LLFastTimer t(LLFastTimer::FTM_REMOVE_FROM_LIGHT_SET);
+		LLFastTimer t3(LLFastTimer::FTM_REMOVE_FROM_LIGHT_SET);
 		mLights.erase(drawablep);
 
 		for (light_set_t::iterator iter = mNearbyLights.begin();
@@ -1310,7 +1310,7 @@ void LLPipeline::unlinkDrawable(LLDrawable *drawable)
 	}
 
 	{
-		//LLFastTimer t(LLFastTimer::FTM_REMOVE_FROM_HIGHLIGHT_SET);
+		LLFastTimer t4(LLFastTimer::FTM_REMOVE_FROM_HIGHLIGHT_SET);
 		HighlightItem item(drawablep);
 		mHighlightSet.erase(item);
 
@@ -3196,6 +3196,9 @@ void render_hud_elements()
 		LLWorld::getInstance()->renderPropertyLines();
 		LLViewerParcelMgr::getInstance()->render();
 		LLViewerParcelMgr::getInstance()->renderParcelCollision();
+
+		// Render name tags and hover texts.
+		LLHUDObject::renderAll();
 	}
 	else if (gForceRenderLandFence)
 	{
@@ -3607,7 +3610,6 @@ void LLPipeline::renderGeom(LLCamera& camera, BOOL forceVBOUpdate)
 		{
 			// Render debugging beacons.
 			gObjectList.renderObjectBeacons();
-			LLHUDObject::renderAll();
 			gObjectList.resetObjectBeacons();
 		}
 		else
@@ -6487,7 +6489,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 
 void LLPipeline::bindDeferredShader(LLGLSLShader& shader, U32 light_index, LLRenderTarget* gi_source, LLRenderTarget* last_gi_post, U32 noise_map)
 {
-	//LLFastTimer t(LLFastTimer::FTM_BIND_DEFERRED);
+	LLFastTimer t(LLFastTimer::FTM_BIND_DEFERRED);
 
 	if (noise_map == 0xFFFFFFFF)
 	{
@@ -6900,7 +6902,7 @@ void LLPipeline::renderDeferredLighting()
 	}
 
 	{
-		//LLFastTimer ftm(LLFastTimer::FTM_RENDER_DEFERRED);
+		LLFastTimer ftm(LLFastTimer::FTM_RENDER_DEFERRED);
 
 		LLViewerCamera* camera = LLViewerCamera::getInstance();
 
@@ -6961,7 +6963,7 @@ void LLPipeline::renderDeferredLighting()
 		{
 			mDeferredLight[0].bindTarget();
 			{	//paint shadow/SSAO light map (direct lighting lightmap)
-				//LLFastTimer ftm(LLFastTimer::FTM_SUN_SHADOW);
+				LLFastTimer ftm(LLFastTimer::FTM_SUN_SHADOW);
 				bindDeferredShader(gDeferredSunProgram, 0);
 
 				glClearColor(1,1,1,1);
@@ -7008,7 +7010,7 @@ void LLPipeline::renderDeferredLighting()
 			static LLCachedControl<bool> render_deferred_gi(gSavedSettings, "RenderDeferredGI");
 			if (render_deferred_blur_light && render_deferred_gi)
 			{
-				//LLFastTimer ftm(LLFastTimer::FTM_EDGE_DETECTION);
+				LLFastTimer ftm(LLFastTimer::FTM_EDGE_DETECTION);
 				//generate edge map
 				LLGLDisable blend(GL_BLEND);
 				LLGLDisable test(GL_ALPHA_TEST);
@@ -7051,7 +7053,7 @@ void LLPipeline::renderDeferredLighting()
 				}
 
 				{ //paint noisy GI map (bounce lighting lightmap)
-					//LLFastTimer ftm(LLFastTimer::FTM_GI_TRACE);
+					LLFastTimer ftm(LLFastTimer::FTM_GI_TRACE);
 					LLGLDisable blend(GL_BLEND);
 					LLGLDepthTest depth(GL_FALSE);
 					LLGLDisable test(GL_ALPHA_TEST);
@@ -7076,7 +7078,7 @@ void LLPipeline::renderDeferredLighting()
 				static LLCachedControl<F32> render_gi_blur_brightness(gSavedSettings, "RenderGIBlurBrightness");
 				for (U32 i = 0; i < pass_count; ++i)
 				{ //gather/soften indirect lighting map
-					//LLFastTimer ftm(LLFastTimer::FTM_GI_GATHER);
+					LLFastTimer ftm(LLFastTimer::FTM_GI_GATHER);
 					bindDeferredShader(gDeferredPostGIProgram, 0, &mGIMapPost[0], NULL, mTrueNoiseMap);
 					F32 blur_size = render_gi_blur_size / ((F32)i * render_gi_blur_increment + 1.f);
 					gDeferredPostGIProgram.uniform2f("delta", 1.f, 0.f);
@@ -7114,7 +7116,7 @@ void LLPipeline::renderDeferredLighting()
 
 		if (render_deferred_ssao)
 		{	//soften direct lighting lightmap
-			//LLFastTimer ftm(LLFastTimer::FTM_SOFTEN_SHADOW);
+			LLFastTimer ftm(LLFastTimer::FTM_SOFTEN_SHADOW);
 			//blur lightmap
 			mDeferredLight[1].bindTarget();
 
@@ -7205,7 +7207,7 @@ void LLPipeline::renderDeferredLighting()
 		static LLCachedControl<bool> render_deferred_atmospheric(gSavedSettings, "RenderDeferredAtmospheric");
 		if (render_deferred_atmospheric)
 		{	//apply sunlight contribution 
-			//LLFastTimer ftm(LLFastTimer::FTM_ATMOSPHERICS);
+			LLFastTimer ftm(LLFastTimer::FTM_ATMOSPHERICS);
 			bindDeferredShader(gDeferredSoftenProgram, 0, &mGIMapPost[0]);
 			{
 				LLGLDepthTest depth(GL_FALSE);
@@ -7354,7 +7356,7 @@ void LLPipeline::renderDeferredLighting()
 								continue;
 							}
 
-							//LLFastTimer ftm(LLFastTimer::FTM_LOCAL_LIGHTS);
+							LLFastTimer ftm(LLFastTimer::FTM_LOCAL_LIGHTS);
 							glTexCoord4f(tc.v[0], tc.v[1], tc.v[2], s*s);
 							glColor4f(col.mV[0], col.mV[1], col.mV[2], volume->getLightFalloff()*0.5f);
 							glDrawRangeElements(GL_TRIANGLE_FAN, 0, 7, 8,
@@ -7387,7 +7389,7 @@ void LLPipeline::renderDeferredLighting()
 
 				for (LLDrawable::drawable_list_t::iterator iter = spot_lights.begin(); iter != spot_lights.end(); ++iter)
 				{
-					//LLFastTimer ftm(LLFastTimer::FTM_PROJECTORS);
+					LLFastTimer ftm(LLFastTimer::FTM_PROJECTORS);
 					LLDrawable* drawablep = *iter;
 
 					LLVOVolume* volume = drawablep->getVOVolume();
@@ -7454,7 +7456,7 @@ void LLPipeline::renderDeferredLighting()
 
 				while (!fullscreen_lights.empty())
 				{
-					//LLFastTimer ftm(LLFastTimer::FTM_FULLSCREEN_LIGHTS);
+					LLFastTimer ftm(LLFastTimer::FTM_FULLSCREEN_LIGHTS);
 					light[count] = fullscreen_lights.front();
 					fullscreen_lights.pop_front();
 					col[count] = light_colors.front();
@@ -7483,7 +7485,7 @@ void LLPipeline::renderDeferredLighting()
 
 				for (LLDrawable::drawable_list_t::iterator iter = fullscreen_spot_lights.begin(); iter != fullscreen_spot_lights.end(); ++iter)
 				{
-					//LLFastTimer ftm(LLFastTimer::FTM_PROJECTORS);
+					LLFastTimer ftm(LLFastTimer::FTM_PROJECTORS);
 					LLDrawable* drawablep = *iter;
 
 					LLVOVolume* volume = drawablep->getVOVolume();
@@ -7528,7 +7530,7 @@ void LLPipeline::renderDeferredLighting()
 			gGL.setSceneBlendType(LLRender::BT_ALPHA);
 
 			{ //mix various light maps (local, sun, gi)
-				//LLFastTimer ftm(LLFastTimer::FTM_POST);
+				LLFastTimer ftm(LLFastTimer::FTM_POST);
 				LLGLDisable blend(GL_BLEND);
 				LLGLDisable test(GL_ALPHA_TEST);
 				LLGLDepthTest depth(GL_FALSE);
@@ -8241,7 +8243,7 @@ void LLPipeline::renderShadow(glh::matrix4f& view, glh::matrix4f& proj, LLCamera
 
 BOOL LLPipeline::getVisiblePointCloud(LLCamera& camera, LLVector3& min, LLVector3& max, std::vector<LLVector3>& fp, LLVector3 light_dir)
 {
-	//LLFastTimer t(LLFastTimer::FTM_VISIBLE_CLOUD);
+	LLFastTimer t(LLFastTimer::FTM_VISIBLE_CLOUD);
 	//get point cloud of intersection of frust and min, max
 
 	if (getVisibleExtents(camera, min, max))

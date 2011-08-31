@@ -686,7 +686,7 @@ void LLViewerJointMesh::updateFaceData(LLFace *face, F32 pixel_area, BOOL damp_w
 		return;
 	}
 
-	//LLFastTimer t(LLFastTimer::FTM_AVATAR_FACE);
+	LLFastTimer t(LLFastTimer::FTM_AVATAR_FACE);
 
 	LLStrider<LLVector3> verticesp;
 	LLStrider<LLVector3> normalsp;
@@ -837,7 +837,10 @@ void LLViewerJointMesh::updateVectorize()
 	sVectorizePerfTest = gSavedSettings.getBOOL("VectorizePerfTest");
 	sVectorizeProcessor = gSavedSettings.getU32("VectorizeProcessor");
 	BOOL vectorizeEnable = gSavedSettings.getBOOL("VectorizeEnable");
-	BOOL vectorizeSkin = gSavedSettings.getBOOL("VectorizeSkin");
+	// Skin vectorization is utterly broken in the mesh renderers,
+	// don't use it if you don't want avatars to look like the Invisible
+	// Man (updateGeometryVectorized) or Sonic the Edgedog (SSE/SSE2) !
+	BOOL vectorizeSkin = FALSE; // gSavedSettings.getBOOL("VectorizeSkin");
 
 	std::string vp;
 	switch(sVectorizeProcessor)
