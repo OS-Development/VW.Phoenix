@@ -56,11 +56,9 @@ public:
 	BOOL			loadBinary(LLFILE* fp, LLPolyMeshSharedData *mesh);
 	const std::string& getName() { return mName; }
 
-#if MESHES_AND_MORPHS
 	BOOL			saveLLM(LLFILE *fp);
 	BOOL			saveOBJ(LLFILE *fp);
 	BOOL			setMorphFromMesh(LLPolyMesh *morph);
-#endif //MESHES_AND_MORPHS
 
 public:
 	std::string			mName;
@@ -69,8 +67,8 @@ public:
 	U32					mNumIndices;
 	U32*				mVertexIndices;
 	U32					mCurrentIndex;
-	LLVector3*			mCoords;
-	LLVector3*			mNormals;
+	LLVector4*			mCoords;
+	LLVector4*			mNormals;
 	LLVector3*			mBinormals;
 	LLVector2*			mTexCoords;
 

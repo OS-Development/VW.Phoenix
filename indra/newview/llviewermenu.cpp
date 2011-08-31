@@ -1521,11 +1521,9 @@ void init_debug_avatar_menu(LLMenuGL* menu)
 	menu->append(new LLMenuItemCallGL("Debug Avatar Textures", handle_debug_avatar_textures, NULL, NULL, 'A', MASK_SHIFT|MASK_CONTROL|MASK_ALT));
 	menu->append(new LLMenuItemCallGL("Dump Local Textures", handle_dump_avatar_local_textures, NULL, NULL, 'M', MASK_SHIFT|MASK_ALT ));	
 #endif
-#if MESHES_AND_MORPHS
 	LLMenuItemCallGL* mesh_item = new LLMenuItemCallGL("Meshes And Morphs...", handle_meshes_and_morphs);
 	mesh_item->setUserData((void*)mesh_item);  // So we can remove it later
 	menu->append(mesh_item);
-#endif //MESHES_AND_MORPHS
 	menu->createJumpKeys();
 }
 
@@ -7995,7 +7993,6 @@ void handle_dump_avatar_local_textures(void*)
 	}
 }
 
-#if MESHES_AND_MORPHS
 void handle_meshes_and_morphs(void* menu_item)
 {
 	LLMenuItemCallGL* item = (LLMenuItemCallGL*) menu_item;
@@ -8316,7 +8313,6 @@ void handle_morph_load_obj(void* data)
 
 	morph_data->setMorphFromMesh(&mesh);
 }
-#endif //MESHES_AND_MORPHS
 
 void handle_debug_avatar_textures(void*)
 {

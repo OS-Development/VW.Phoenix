@@ -844,7 +844,6 @@ LLPolyMesh *LLPolyMesh::getMesh(const std::string &name, LLPolyMesh* reference_m
 	return poly_mesh;
 }
 
-#if MESHES_AND_MORPHS
 //-----------------------------------------------------------------------------
 // LLPolyMesh::getMeshData()
 //-----------------------------------------------------------------------------
@@ -1223,7 +1222,7 @@ BOOL LLPolyMesh::saveOBJ(LLFILE *fp)
 	int nfaces = mSharedData->mNumFaces;
 	int i;
 
-	LLVector3* coords = getWritableCoords();
+	LLVector4* coords = getWritableCoords();
 	for ( i=0; i<nverts; i++) {
 		std::string outstring = llformat("v %f %f %f\n",
 																		 coords[i][0],
@@ -1235,7 +1234,7 @@ BOOL LLPolyMesh::saveOBJ(LLFILE *fp)
 		}
 	}
 
-	LLVector3* normals = getWritableNormals();
+	LLVector4* normals = getWritableNormals();
 	for ( i=0; i<nverts; i++) {
 		std::string outstring = llformat("vn %f %f %f\n",
 																		 normals[i][0],
@@ -1292,8 +1291,8 @@ BOOL LLPolyMesh::loadOBJ(LLFILE *fp)
 	int nnormals	 = 0;
 	int ntexcoords = 0;
 
-	LLVector3* coords		 = getWritableCoords();
-	LLVector3* normals	 = getWritableNormals();
+	LLVector4* coords		 = getWritableCoords();
+	LLVector4* normals	 = getWritableNormals();
 	LLVector3* binormals = getWritableBinormals();
 	LLVector2* tex			 = getWritableTexCoords();
 	LLPolyFace* faces		 = getFaces();
@@ -1407,17 +1406,19 @@ BOOL LLPolyMesh::loadOBJ(LLFILE *fp)
 		S32 f1 = faces[f][1];
 		S32 f2 = faces[f][2];
 
-		LLVector3& v0 = coords[f0];
-		LLVector3& v1 = coords[f1];
-		LLVector3& v2 = coords[f2];
+		LLVector4& v0 = coords[f0];
+		LLVector4& v1 = coords[f1];
+		LLVector4& v2 = coords[f2];
 
 		LLVector2& t0 = tex[f0];
 		LLVector2& t1 = tex[f1];
 		LLVector2& t2 = tex[f2];
 
-		LLVector3 binorm = calc_binormal_from_triangle(v0, t0, v1, t1, v2, t2);
-		binorm.normVec();
-
+		LLVector4a outBinorm;
+		calc_binormal_from_triangle(outBinorm,LLVector4a(v0.mV[VX],v0.mV[VY],v0.mV[VZ]), t0,
+			LLVector4a(v1.mV[VX],v1.mV[VY],v1.mV[VZ]), t1,LLVector4a(v2.mV[VX],v2.mV[VY],v2.mV[VZ]), t2);
+		outBinorm.normalize3fast();
+		LLVector3 binorm(outBinorm[VX],outBinorm[VY],outBinorm[VZ]);		
 		binormals[f0] += binorm;
 		binormals[f1] += binorm;
 		binormals[f2] += binorm;
@@ -1444,8 +1445,8 @@ BOOL LLPolyMesh::setSharedFromCurrent()
 	LLPolyMesh delta(mSharedData, NULL);
 	U32 nverts = delta.getNumVertices();
 
-	LLVector3 *delta_coords			= delta.getWritableCoords();
-	LLVector3 *delta_normals		= delta.getWritableNormals();
+	LLVector4 *delta_coords			= delta.getWritableCoords();
+	LLVector4 *delta_normals		= delta.getWritableNormals();
 	LLVector3 *delta_binormals	= delta.getWritableBinormals();
 	LLVector2 *delta_tex_coords = delta.getWritableTexCoords();
 
@@ -1474,8 +1475,8 @@ BOOL LLPolyMesh::setSharedFromCurrent()
 		LLPolyMesh* mesh = avatarp->getMesh(mSharedData);
 		if (mesh)
 		{
-			LLVector3 *mesh_coords					 = mesh->getWritableCoords();
-			LLVector3 *mesh_normals					 = mesh->getWritableNormals();
+			LLVector4 *mesh_coords					 = mesh->getWritableCoords();
+			LLVector4 *mesh_normals					 = mesh->getWritableNormals();
 			LLVector3 *mesh_binormals				 = mesh->getWritableBinormals();
 			LLVector2 *mesh_tex_coords			 = mesh->getWritableTexCoords();
 			LLVector3 *mesh_scaled_normals	 = mesh->getScaledNormals();
@@ -1486,10 +1487,10 @@ BOOL LLPolyMesh::setSharedFromCurrent()
 				mesh_coords[vert_index]						-= delta_coords[vert_index];
 				mesh_tex_coords[vert_index]				-= delta_tex_coords[vert_index];
 
-				mesh_scaled_normals[vert_index]		-= delta_normals[vert_index];
+				mesh_scaled_normals[vert_index]		-= LLVector3(delta_normals[vert_index]);
 				LLVector3 normalized_normal				 = mesh_scaled_normals[vert_index];
 				normalized_normal.normVec();
-				mesh_normals[vert_index]					 = normalized_normal;
+				mesh_normals[vert_index]					 = LLVector4(normalized_normal);
 
 				mesh_scaled_binormals[vert_index] -= delta_binormals[vert_index];
 				LLVector3 tangent									 = mesh_scaled_binormals[vert_index] % normalized_normal;
@@ -1553,7 +1554,6 @@ void LLPolyMesh::getMorphList (const std::string& mesh_name, morph_list_t* morph
 }
 
 //-----------------------------------------------------------------------------
-#endif MESHES_AND_MORPHS
 
 //-----------------------------------------------------------------------------
 // LLPolyMesh::freeAllMeshes()
@@ -1574,7 +1574,7 @@ LLPolyMeshSharedData *LLPolyMesh::getSharedData() const
 //--------------------------------------------------------------------
 // LLPolyMesh::dumpDiagInfo()
 //--------------------------------------------------------------------
-void LLPolyMesh::dumpDiagInfo()
+void LLPolyMesh::dumpDiagInfo(void *)
 {
 	// keep track of totals
 	U32 total_verts = 0;
@@ -1932,8 +1932,8 @@ LLPolyMorphData *clone_morph_param_direction(const LLPolyMorphData *src_data,
 	cloned_morph_data->mName = name;
 	for (U32 v=0; v < cloned_morph_data->mNumIndices; v++)
 	{
-		cloned_morph_data->mCoords[v] = direction;
-		cloned_morph_data->mNormals[v] = LLVector3(0,0,0);
+		cloned_morph_data->mCoords[v] = LLVector4(direction);
+		cloned_morph_data->mNormals[v] = LLVector4(0,0,0,1);
 		cloned_morph_data->mBinormals[v] = LLVector3(0,0,0);
 	}
 	return cloned_morph_data;
