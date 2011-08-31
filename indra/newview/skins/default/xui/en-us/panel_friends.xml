@@ -26,11 +26,8 @@
 		<column name="friend_last_update_generation" width="0" />
 	</scroll_list>
 	<pad bottom="-7" height="0" left="-90" width="1" />
-	<button bottom_delta="-25" follows="top|right" height="22" label="Contact Sets"
-	     left_delta="-2" name="lgg_fg_openFG" tool_tip="List your friends divided in groups"
-	     width="85" />
 	<button bottom_delta="-25" follows="top|right" height="22" label="IM/Call"
-	     left_delta="2" name="im_btn" tool_tip="Open Instant Message session"
+	     left_delta="0" name="im_btn" tool_tip="Open Instant Message session"
 	     width="80" />
 	<button bottom_delta="-25" follows="top|right" height="22" label="Profile"
 	     left_delta="0" name="profile_btn"
@@ -47,8 +44,11 @@
 	<button bottom_delta="-25" follows="top|right" height="22" label="Add..."
 	     left_delta="0" name="add_btn" tool_tip="Offer friendship to a resident"
 	     width="80" />
+	<button bottom_delta="-25" follows="top|right" height="22" label="Contact Sets"
+	     left_delta="-3" name="lgg_fg_openFG" tool_tip="List your friends divided in groups"
+	     width="85" />
 	<button bottom_delta="-30" follows="top|right" height="22" label="Import"
-	     left_delta="0" name="import_btn" tool_tip="Import friends list from HDD"
+	     left_delta="3" name="import_btn" tool_tip="Import friends list from HDD"
 	     width="80" />
     <button bottom_delta="-25" follows="top|right" height="22" label="Export"
 	     left_delta="0" name="export_btn" tool_tip="Export friends list to HDD"
