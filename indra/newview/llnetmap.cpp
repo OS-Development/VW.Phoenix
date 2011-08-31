@@ -383,14 +383,25 @@ void LLNetMap::draw()
 			avatar_color = standard_color;
 			// TODO: it'd be very cool to draw these in sorted order from lowest Z to highest.
 			// just be careful to sort the avatar IDs along with the positions. -MG
-			pos_map = globalPosToView(positions[i], rotate_map);
+			
+			LLVector3d currentPos(positions[i]);
+			bool isHeightUnknown = (currentPos.mdV[VZ] == 0.f);
+			if (avatar_ids[i].notNull() && isHeightUnknown)
+			{
+				LLViewerObject* viewerObject = gObjectList.findObject(avatar_ids[i]);
+				if (viewerObject)
+				{
+					currentPos.mdV[VZ] = viewerObject->getPositionGlobal().mdV[VZ];
+					isHeightUnknown = false;
+				}
+			}
+			pos_map = globalPosToView(currentPos, rotate_map);
 
-				
-					std::string first, last;
-					gCacheName->getName(avatar_ids[i], first, last);
+			std::string first, last;
+			gCacheName->getName(avatar_ids[i], first, last);
 
-			if(LLMuteList::getInstance()->isMuted(avatar_ids[i])) avatar_color = muted_color;
-			if(is_agent_friend(avatar_ids[i])||LGGContactSets::getInstance()->isNonFriend(avatar_ids[i]))
+			if (LLMuteList::getInstance()->isMuted(avatar_ids[i])) avatar_color = muted_color;
+			if (is_agent_friend(avatar_ids[i]) || LGGContactSets::getInstance()->isNonFriend(avatar_ids[i]))
 			{
 				if(friendsGroupsOnMinimap)
 				{
@@ -411,7 +422,7 @@ void LLNetMap::draw()
 			LLWorldMapView::drawAvatar(
 				pos_map.mV[VX], pos_map.mV[VY], 
 				(!gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES)) ? avatar_color : standard_color, 
-				pos_map.mV[VZ],mDotRadius);
+				pos_map.mV[VZ],mDotRadius, isHeightUnknown);
 // [/RLVa:KB]
 //			LLWorldMapView::drawAvatar(
 //				pos_map.mV[VX], pos_map.mV[VY], avatar_color, pos_map.mV[VZ],mDotRadius);
@@ -421,7 +432,7 @@ void LLNetMap::draw()
 			{
 				closest_dist = dist_to_cursor;
 				mClosestAgentToCursor = avatar_ids[i];
-				mClosestAgentPosition = positions[i];
+				mClosestAgentPosition = currentPos;
 			}
 		}
 
@@ -650,6 +661,7 @@ BOOL LLNetMap::handleToolTip( S32 x, S32 y, std::string& msg, LLRect* sticky_rec
 
 			LLVector3d mypos = gAgent.getPositionGlobal();
 			LLVector3d position = mClosestAgentPosition;
+			bool isHigher1020mBug = (position.mdV[VZ] == 0.0);
 
 			if ( LLFloaterAvatarList::getInstance() )
 			{
@@ -658,15 +670,26 @@ BOOL LLNetMap::handleToolTip( S32 x, S32 y, std::string& msg, LLRect* sticky_rec
 				{
 					//position = LLFloaterAvatarList::AvatarPosition(mClosestAgentToCursor);
 					position = ent->getPosition();
+
+					// If avatar is >1020m and no viewer object exists,
+					// it is beyond far clip, so the distance value is wrong!
+					isHigher1020mBug = (isHigher1020mBug && gObjectList.findObject(mClosestAgentToCursor) == NULL);
 				}
 			}
-			LLVector3d delta = position - mypos;
-			F32 distance = (F32)delta.magVec();
 
-
-			//llinfos << distance << " - " << position << llendl;
-
-			msg.append( llformat("\n(Distance: %.02fm)\n\n",distance) );
+			F32 distance;
+			static LLCachedControl<F32> farClip(gSavedSettings, "RenderFarClip");
+			if (!isHigher1020mBug)
+			{
+				LLVector3d delta = position - mypos;
+				distance = (F32)delta.magVec();
+				msg.append( llformat("\n(Distance: %.02fm)\n\n",distance) );
+			}
+			else
+			{
+				distance = F32(farClip);
+				msg.append( llformat("\n(Distance: > %.02fm)\n\n",distance) );
+			}
 		}
 //		msg.append( region->getName() );
 // [RLVa:KB] - Version: 1.23.4 | Checked: 2009-07-04 (RLVa-1.0.0a) | Modified: RLVa-0.2.0b
