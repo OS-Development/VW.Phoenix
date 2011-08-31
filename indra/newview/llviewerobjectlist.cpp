@@ -1592,7 +1592,8 @@ void LLViewerObjectList::renderObjectsForMap(LLNetMap &netmap)
 	LLColor4 group_own_below_water_color = 
 						gColors.getColor( "NetMapGroupOwnBelowWater" );
 
-	F32 max_radius = gSavedSettings.getF32("PhoenixMiniMapPrimMaxRadius");
+	static LLCachedControl<F32> max_radius(gSavedSettings, "PhoenixMiniMapPrimMaxRadius");
+	static LLCachedControl<F32> max_zdistance_from_avatar(gSavedSettings, "PhoenixMiniMapPrimMaxVertDistance");
 
 	for (vobj_list_t::iterator iter = mMapObjects.begin(); iter != mMapObjects.end(); ++iter)
 	{
@@ -1606,12 +1607,20 @@ void LLViewerObjectList::renderObjectsForMap(LLNetMap &netmap)
 		const LLVector3& scale = objectp->getScale();
 		const LLVector3d pos = objectp->getPositionGlobal();
 		const F64 water_height = F64( objectp->getRegion()->getWaterHeight() );
-		// LLWorld::getInstance()->getWaterHeight();
 
+		// Skip all objects that are more than MiniMapPrimMaxVertDistance above or below the avatar
+		if (max_zdistance_from_avatar > 0.0)
+		{
+			F64 zdistance = pos.mdV[VZ] - gAgent.getPositionGlobal().mdV[VZ];
+			if (zdistance < (-max_zdistance_from_avatar) || zdistance > max_zdistance_from_avatar)
+			{
+				continue;
+			}
+		}
 		F32 approx_radius = (scale.mV[VX] + scale.mV[VY]) * 0.5f * 0.5f * 1.3f;  // 1.3 is a fudge
 
 		// DEV-17370 - megaprims of size > 4096 cause lag.  (go figger.)
-		approx_radius = llmin(approx_radius, max_radius);
+		approx_radius = llmin(approx_radius, F32(max_radius));
 
 		LLColor4U color = above_water_color;
 		if (objectp->permYouOwner())
