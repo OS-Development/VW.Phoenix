@@ -85,7 +85,7 @@ void on_new_single_inventory_upload_complete(LLAssetType::EType asset_type,
 
 		LLSD args;
 		args["AMOUNT"] = llformat("%d", upload_price);
-		LLNotifications::instance().add("UploadDone", args);
+		LLNotifications::instance().add("UploadPayment", args);
 	}
 
 	if (item_folder_id.notNull())
