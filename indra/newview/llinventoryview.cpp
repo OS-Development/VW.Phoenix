@@ -1176,6 +1176,11 @@ void LLInventoryView::onQuickFilterCommit(LLUICtrl* ctrl, void* user_data)
 		filter_type = 0x1 << LLInventoryType::IT_SNAPSHOT;
 	}
 
+	else if (view->getString("filter_type_mesh") == item_type)
+	{
+		filter_type = 0x1 << LLInventoryType::IT_MESH;
+	}
+
 	else if (view->getString("filter_type_custom") == item_type)
 	{
 		// When they select custom, show the floater then return
@@ -1248,6 +1253,7 @@ void LLInventoryView::refreshQuickFilter(LLUICtrl* ctrl)
   filter_mask |= (0x1 << LLInventoryType::IT_SOUND);
   filter_mask |= (0x1 << LLInventoryType::IT_TEXTURE);
   filter_mask |= (0x1 << LLInventoryType::IT_SNAPSHOT);
+  filter_mask |= (0x1 << LLInventoryType::IT_MESH);
 
 
   filter_type &= filter_mask;
@@ -1316,6 +1322,11 @@ void LLInventoryView::refreshQuickFilter(LLUICtrl* ctrl)
 	else if (filter_type == (0x1 << LLInventoryType::IT_SNAPSHOT))
 	{
 		selection = view->getString("filter_type_snapshot");
+	}
+
+	else if (filter_type == (0x1 << LLInventoryType::IT_MESH))
+	{
+		selection = view->getString("filter_type_mesh");
 	}
 
 	else
