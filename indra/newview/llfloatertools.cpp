@@ -76,6 +76,7 @@
 #include "llui.h"
 #include "llviewermenu.h"
 #include "llviewerparcelmgr.h"
+#include "llviewerregion.h"
 #include "llviewerwindow.h"
 #include "llviewercontrol.h"
 #include "llviewerjoystick.h"
@@ -541,7 +542,15 @@ void LLFloaterTools::refresh()
 	childSetTextArg("link_num_obj_count",  "[NUM]", value_string);
 	
 	std::string prim_count_string;
-	LLResMgr::getInstance()->getIntegerString(prim_count_string, LLSelectMgr::getInstance()->getSelection()->getObjectCount());
+	LLResMgr::getInstance()->getIntegerString(prim_count_string, prim_count);
+	if (gAgent.getRegion() && !gAgent.getRegion()->getCapability("GetMesh").empty())
+	{
+		S32 link_cost = (S32)LLSelectMgr::getInstance()->getSelection()->getSelectedLinksetCost();
+		if (link_cost > prim_count)
+		{
+			prim_count_string += " (" + llformat("%d", link_cost) + ")";
+		}
+	}
 	childSetTextArg("prim_count", "[COUNT]", prim_count_string);
 
 	// Refresh child tabs

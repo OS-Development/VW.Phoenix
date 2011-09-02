@@ -898,7 +898,7 @@ void LLDrawable::updateBinRadius()
 	}
 	else
 	{
-		mBinRadius = llmin(getRadius()*4.f, 256.f);
+		mBinRadius = llmin(getRadius() * 4.f, 256.f);
 	}
 }
 

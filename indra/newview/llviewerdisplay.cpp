@@ -606,7 +606,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 		stop_glerror();
 		
 		gFrameStats.start(LLFrameStats::UPDATE_GEOM);
-		const F32 max_geom_update_time = 0.005f*10.f*gFrameIntervalSeconds; // 50 ms/second update time
+		const F32 max_geom_update_time = 0.05f * gFrameIntervalSeconds; // 50 ms/second update time
 		gPipeline.createObjects(max_geom_update_time);
 		gPipeline.updateGeom(max_geom_update_time);
 		stop_glerror();

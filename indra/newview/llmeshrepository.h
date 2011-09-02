@@ -118,7 +118,7 @@ class LLModelInstance
 public:
 	LLPointer<LLModel> mModel;
 	LLPointer<LLModel> mLOD[5];
-	
+
 	std::string mLabel;
 
 	LLUUID mMeshID;
@@ -153,12 +153,12 @@ public:
 		std::vector<LLVector3> mPositions;
 		std::vector<U16> mIndices;
 		decomp_params mParams;
-				
+
 		//output state
 		std::string mStatusMessage;
 		std::vector<LLModel::PhysicsMesh> mHullMesh;
 		LLModel::convex_hull_decomposition mHull;
-		
+
 		//status message callback, called from decomposition thread
 		virtual S32 statusCallback(const char* status, S32 p1, S32 p2) = 0;
 
@@ -170,16 +170,16 @@ public:
 
 	LLCondition* mSignal;
 	LLMutex* mMutex;
-	
+
 	bool mInited;
 	bool mQuitting;
 	bool mDone;
-	
+
 	LLPhysicsDecomp();
 	~LLPhysicsDecomp();
 
 	void shutdown();
-		
+
 	void submitRequest(Request* request);
 	static S32 llcdCallback(const char*, S32, S32);
 	void cancel();
@@ -189,7 +189,7 @@ public:
 	void doDecompositionSingleHull();
 
 	virtual void run();
-	
+
 	void completeCurrent();
 	void notifyCompleted();
 
@@ -201,7 +201,6 @@ public:
 	LLPointer<Request> mCurRequest;
 
 	std::queue<LLPointer<Request> > mCompletedQ;
-
 };
 
 class LLMeshRepoThread : public LLThread
@@ -222,7 +221,7 @@ public:
 	//map of known mesh headers
 	typedef std::map<LLUUID, LLSD> mesh_header_map;
 	mesh_header_map mMeshHeader;
-	
+
 	std::map<LLUUID, U32> mMeshHeaderSize;
 	std::map<LLUUID, U32> mMeshResourceCost;
 
@@ -262,7 +261,6 @@ public:
 			return lhs.mScore > rhs.mScore; // greatest = first
 		}
 	};
-	
 
 	class LoadedMesh
 	{
@@ -280,7 +278,7 @@ public:
 
 	//set of requested skin info
 	std::set<LLUUID> mSkinRequests;
-	
+
 	//queue of completed skin info requests
 	std::queue<LLMeshSkinInfo> mSkinInfoQ;
 
@@ -345,8 +343,6 @@ public:
 	//send request for PhysicsShape, returns true if header info exists 
 	//  (should hold onto mesh_id and try again later if header info does not exist)
 	bool fetchMeshPhysicsShape(const LLUUID& mesh_id);
-
-
 };
 
 class LLMeshUploadThread : public LLThread 
@@ -378,13 +374,13 @@ public:
 	typedef std::map<LLPointer<LLModel>, instance_list> instance_map;
 	instance_map mInstance;
 
-	LLMutex*					mMutex;
-	LLCurlRequest* mCurlRequest;
+	LLMutex*		mMutex;
+	LLCurlRequest*	mCurlRequest;
 	S32				mPendingConfirmations;
 	S32				mPendingUploads;
 	S32				mPendingCost;
 	LLVector3		mOrigin;
-	bool			mFinished;	
+	bool			mFinished;
 	bool			mUploadTextures;
 	bool			mUploadSkin;
 	bool			mUploadJoints;
@@ -431,7 +427,6 @@ public:
 class LLMeshRepository
 {
 public:
-
 	//metrics
 	static U32 sBytesReceived;
 	static U32 sHTTPRequestCount;
@@ -439,7 +434,7 @@ public:
 	static U32 sCacheBytesRead;
 	static U32 sCacheBytesWritten;
 	static U32 sPeakKbps;
-	
+
 	static F32 getStreamingCost(LLSD& header, F32 radius, S32* bytes = NULL, S32* visible_bytes = NULL, S32 detail = -1);
 
 	LLMeshRepository();
@@ -450,7 +445,7 @@ public:
 
 	//mesh management functions
 	S32 loadMesh(LLVOVolume* volume, const LLVolumeParams& mesh_params, S32 detail = 0, S32 last_lod = -1);
-	
+
 	void notifyLoadedMeshes();
 	void notifyMeshLoaded(const LLVolumeParams& mesh_params, LLVolume* volume);
 	void notifyMeshUnavailable(const LLVolumeParams& mesh_params, S32 lod);
@@ -471,23 +466,23 @@ public:
 	LLSD& getMeshHeader(const LLUUID& mesh_id);
 
 	void uploadModel(std::vector<LLModelInstance>& data, LLVector3& scale, bool upload_textures,
-			bool upload_skin, bool upload_joints);
+					 bool upload_skin, bool upload_joints);
 
 	S32 getMeshSize(const LLUUID& mesh_id, S32 lod);
 
 	typedef std::map<LLVolumeParams, std::set<LLUUID> > mesh_load_map;
 	mesh_load_map mLoadingMeshes[4];
-	
+
 	typedef std::map<LLUUID, LLMeshSkinInfo> skin_map;
 	skin_map mSkinMap;
 
 	typedef std::map<LLUUID, LLModel::Decomposition*> decomposition_map;
 	decomposition_map mDecompositionMap;
 
-	LLMutex*					mMeshMutex;
-	
+	LLMutex* mMeshMutex;
+
 	std::vector<LLMeshRepoThread::LODRequest> mPendingRequests;
-	
+
 	//list of mesh ids awaiting skin info
 	typedef std::map<LLUUID, std::set<LLUUID> > skin_load_map;
 	skin_load_map mLoadingSkins;
@@ -500,13 +495,13 @@ public:
 
 	//list of mesh ids that need to send decomposition fetch requests
 	std::queue<LLUUID> mPendingDecompositionRequests;
-	
+
 	//list of mesh ids awaiting physics shapes
 	std::set<LLUUID> mLoadingPhysicsShapes;
 
 	//list of mesh ids that need to send physics shape fetch requests
 	std::queue<LLUUID> mPendingPhysicsShapeRequests;
-	
+
 	U32 mMeshThreadCount;
 
 	void cacheOutgoingMesh(LLMeshUploadData& data, LLSD& header);
@@ -537,7 +532,6 @@ public:
 	void updateInventory(inventory_data data);
 
 	std::string mGetMeshCapability;
-
 };
 
 extern LLMeshRepository gMeshRepo;

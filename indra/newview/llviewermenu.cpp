@@ -1345,7 +1345,7 @@ void init_debug_rendering_menu(LLMenuGL* menu)
 	sub_menu->append(new LLMenuItemCheckGL("Build Queue",
 										   &LLPipeline::toggleRenderDebug, NULL,
 										   &LLPipeline::toggleRenderDebugControl,
-										   (void*)LLPipeline::RENDER_DEBUG_LOD_INFO));
+										   (void*)LLPipeline::RENDER_DEBUG_BUILD_QUEUE));
 	sub_menu->append(new LLMenuItemCheckGL("Lights",
 										   &LLPipeline::toggleRenderDebug, NULL,
 											&LLPipeline::toggleRenderDebugControl,

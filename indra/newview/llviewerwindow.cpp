@@ -432,6 +432,80 @@ public:
 				addText(xpos, ypos, "Shaders Disabled");
 				ypos += y_inc;
 			}
+
+			if (gGLManager.mHasATIMemInfo)
+			{
+				S32 meminfo[4];
+				glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, meminfo);
+
+				addText(xpos, ypos, llformat("%.2f MB Texture Memory Free", meminfo[0] / 1024.f));
+				ypos += y_inc;
+
+				if (gGLManager.mHasVertexBufferObject)
+				{
+					glGetIntegerv(GL_VBO_FREE_MEMORY_ATI, meminfo);
+					addText(xpos, ypos, llformat("%.2f MB VBO Memory Free", meminfo[0] / 1024.f));
+					ypos += y_inc;
+				}
+			}
+			else if (gGLManager.mHasNVXMemInfo)
+			{
+				S32 free_memory;
+				glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &free_memory);
+				addText(xpos, ypos, llformat("%.2f MB Video Memory Free", free_memory / 1024.f));
+				ypos += y_inc;
+			}
+
+			//show streaming cost/triangle count of known prims in current region OR selection
+			{
+				F32 cost = 0.f;
+				S32 count = 0;
+				S32 object_count = 0;
+				S32 total_bytes = 0;
+				S32 visible_bytes = 0;
+
+				const char* label = "Region";
+				if (LLSelectMgr::getInstance()->getSelection()->getObjectCount() == 0)
+				{	//region
+					LLViewerRegion* region = gAgent.getRegion();
+					if (region)
+					{
+						for (U32 i = 0; i < gObjectList.getNumObjects(); ++i)
+						{
+							LLViewerObject* object = gObjectList.getObject(i);
+							if (object && object->getRegion() == region &&
+								object->getVolume())
+							{
+								object_count++;
+								S32 bytes = 0;	
+								S32 visible = 0;
+								cost += object->getStreamingCost(&bytes, &visible);
+								count += object->getTriangleCount();
+								total_bytes += bytes;
+								visible_bytes += visible;
+							}
+						}
+					}
+				}
+				else
+				{
+					label = "Selection";
+					cost = LLSelectMgr::getInstance()->getSelection()->getSelectedObjectStreamingCost(&total_bytes, &visible_bytes);
+					count = LLSelectMgr::getInstance()->getSelection()->getSelectedObjectTriangleCount();
+					object_count = LLSelectMgr::getInstance()->getSelection()->getObjectCount();
+				}
+
+				addText(xpos,ypos, llformat("%s streaming cost: %.1f", label, cost));
+				ypos += y_inc;
+
+				addText(xpos, ypos, llformat("%.1f KTris, %.1f/%.1f KB, %d objects",
+											 count / 1024.f,
+											 visible_bytes / 1024.f,
+											 total_bytes / 1024.f,
+											 object_count));
+				ypos += y_inc;
+			}
+
 			addText(xpos, ypos, llformat("%d MB Vertex Data", LLVertexBuffer::sAllocatedBytes/(1024*1024)));
 			ypos += y_inc;
 

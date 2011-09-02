@@ -799,7 +799,7 @@ LLObjectSelectionHandle LLSelectMgr::setHoverObject(LLViewerObject *objectp, S32
 	}
 
 	// Can't select yourself
-	if (objectp->mID == gAgentID)
+	if (objectp->mID == gAgentID && !LLSelectMgr::getInstance()->mAllowSelectAvatar)
 	{
 		mHoverObjects->deleteAllNodes();
 		return NULL;

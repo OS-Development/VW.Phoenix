@@ -73,6 +73,7 @@
 #include "llfloaterchat.h"
 #include "llviewerparcelmedia.h"
 #include "llviewertexturelist.h"
+#include "llmeshrepository.h"
 
 #ifdef TOGGLE_HACKED_GODLIKE_VIEWER
 BOOL 				gHackGodmode = FALSE;
@@ -135,6 +136,12 @@ static bool handleSetShaderChanged(const LLSD& newvalue)
 bool handleRenderTransparentWaterChanged(const LLSD& newvalue)
 {
 	LLWorld::getInstance()->updateWaterObjects();
+	return true;
+}
+
+static bool handleMeshMaxConcurrentRequestsChanged(const LLSD& newvalue)
+{
+	LLMeshRepoThread::sMaxConcurrentRequests = (U32) newvalue.asInteger();
 	return true;
 }
 
@@ -544,6 +551,7 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("RenderDeferredSSAO")->getSignal()->connect(boost::bind(&handleSetShaderChanged, _2));
 	gSavedSettings.getControl("RenderDeferredGI")->getSignal()->connect(boost::bind(&handleSetShaderChanged, _2));
 	gSavedSettings.getControl("RenderTransparentWater")->getSignal()->connect(boost::bind(&handleRenderTransparentWaterChanged, _2));
+	gSavedSettings.getControl("MeshMaxConcurrentRequests")->getSignal()->connect(boost::bind(&handleMeshMaxConcurrentRequestsChanged, _2));	
 	gSavedSettings.getControl("TextureMemory")->getSignal()->connect(boost::bind(&handleVideoMemoryChanged, _2));
 	gSavedSettings.getControl("ChatFontSize")->getSignal()->connect(boost::bind(&handleChatFontSizeChanged, _2));
 	gSavedSettings.getControl("ChatPersistTime")->getSignal()->connect(boost::bind(&handleChatPersistTimeChanged, _2));

@@ -425,7 +425,8 @@ void LLRenderPass::renderGroup(LLSpatialGroup* group, U32 type, U32 mask, BOOL t
 	for (LLSpatialGroup::drawmap_elem_t::iterator k = draw_info.begin(); k != draw_info.end(); ++k)	
 	{
 		LLDrawInfo *pparams = *k;
-		if (pparams) {
+		if (pparams)
+		{
 			pushBatch(*pparams, mask, texture);
 		}
 	}

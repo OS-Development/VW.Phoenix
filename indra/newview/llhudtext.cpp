@@ -748,26 +748,27 @@ void LLHUDText::updateVisibility()
 	}
 
 	// push text towards camera by radius of object, but not past camera
-	LLVector3 vec_from_camera = mPositionAgent - LLViewerCamera::getInstance()->getOrigin();
+	LLViewerCamera* camera = LLViewerCamera::getInstance();
+	LLVector3 vec_from_camera = mPositionAgent - camera->getOrigin();
 	LLVector3 dir_from_camera = vec_from_camera;
 	dir_from_camera.normVec();
 
-	if (dir_from_camera * LLViewerCamera::getInstance()->getAtAxis() <= 0.f)
+	if (dir_from_camera * camera->getAtAxis() <= 0.f)
 	{ //text is behind camera, don't render
 		mVisible = FALSE;
 		return;
 	}
 		
-	if (vec_from_camera * LLViewerCamera::getInstance()->getAtAxis() <= LLViewerCamera::getInstance()->getNear() + 0.1f + mSourceObject->getVObjRadius())
+	if (vec_from_camera * camera->getAtAxis() <= camera->getNear() + 0.1f + mSourceObject->getVObjRadius())
 	{
-		mPositionAgent = LLViewerCamera::getInstance()->getOrigin() + vec_from_camera * ((LLViewerCamera::getInstance()->getNear() + 0.1f) / (vec_from_camera * LLViewerCamera::getInstance()->getAtAxis()));
+		mPositionAgent = camera->getOrigin() + vec_from_camera * ((camera->getNear() + 0.1f) / (vec_from_camera * camera->getAtAxis()));
 	}
 	else
 	{
 		mPositionAgent -= dir_from_camera * mSourceObject->getVObjRadius();
 	}
 
-	mLastDistance = (mPositionAgent - LLViewerCamera::getInstance()->getOrigin()).magVec();
+	mLastDistance = (mPositionAgent - camera->getOrigin()).magVec();
 
 	if (mLOD >= 3 || !mTextSegments.size() || (mDoFade && (mLastDistance > mFadeDistance + mFadeRange)))
 	{
@@ -778,14 +779,14 @@ void LLHUDText::updateVisibility()
 	LLVector3 x_pixel_vec;
 	LLVector3 y_pixel_vec;
 
-	LLViewerCamera::getInstance()->getPixelVectors(mPositionAgent, y_pixel_vec, x_pixel_vec);
+	camera->getPixelVectors(mPositionAgent, y_pixel_vec, x_pixel_vec);
 
 	LLVector3 render_position = mPositionAgent + 			
 			(x_pixel_vec * mPositionOffset.mV[VX]) +
 			(y_pixel_vec * mPositionOffset.mV[VY]);
 
 	mOffscreen = FALSE;
-	if (!LLViewerCamera::getInstance()->sphereInFrustum(render_position, mRadius))
+	if (!camera->sphereInFrustum(render_position, mRadius))
 	{
 		if (!mVisibleOffScreen)
 		{
@@ -808,9 +809,10 @@ LLVector2 LLHUDText::updateScreenPos(LLVector2 &offset)
 	LLVector2 screen_pos_vec;
 	LLVector3 x_pixel_vec;
 	LLVector3 y_pixel_vec;
-	LLViewerCamera::getInstance()->getPixelVectors(mPositionAgent, y_pixel_vec, x_pixel_vec);
+	LLViewerCamera* camera = LLViewerCamera::getInstance();
+	camera->getPixelVectors(mPositionAgent, y_pixel_vec, x_pixel_vec);
 	LLVector3 world_pos = mPositionAgent + (offset.mV[VX] * x_pixel_vec) + (offset.mV[VY] * y_pixel_vec);
-	if (!LLViewerCamera::getInstance()->projectPosAgentToScreen(world_pos, screen_pos, FALSE) && mVisibleOffScreen)
+	if (!camera->projectPosAgentToScreen(world_pos, screen_pos, FALSE) && mVisibleOffScreen)
 	{
 		// bubble off-screen, so find a spot for it along screen edge
 		LLVector2 window_center(gViewerWindow->getWindowDisplayWidth() * 0.5f, gViewerWindow->getWindowDisplayHeight() * 0.5f);
@@ -818,7 +820,7 @@ LLVector2 LLHUDText::updateScreenPos(LLVector2 &offset)
 									screen_pos.mY - window_center.mV[VY]);
 		delta_from_center.normVec();
 
-		F32 camera_aspect = LLViewerCamera::getInstance()->getAspect();
+		F32 camera_aspect = camera->getAspect();
 		F32 delta_aspect = llabs(delta_from_center.mV[VX] / delta_from_center.mV[VY]);
 		if (camera_aspect / llmax(delta_aspect, 0.001f) > 1.f)
 		{
