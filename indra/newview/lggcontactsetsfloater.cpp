@@ -1009,7 +1009,7 @@ void lggContactSetsFloater::draw()
 		//need scroll bars
 		sizeV = minSize;
 //#pragma region ScrollBars
-		if (this->hasFocus())
+		if (this->hasFocus()&&this->hasMouseCapture())
 		{
 			LLUIImage *arrowUpImage = LLUI::getUIImage("map_avatar_above_32.tga");
 			LLUIImage *arrowDownImage = LLUI::getUIImage("map_avatar_below_32.tga");
@@ -1098,8 +1098,7 @@ void lggContactSetsFloater::draw()
 
 			LLColor4 color = LGGContactSets::getInstance()->getGroupColor(folder);
 			
-			if(doColorChange)
-				color = LGGContactSets::toneDownColor(color,((F32)bubble+.001)/(1.0f));
+			color = LGGContactSets::toneDownColor(color,doColorChange?((F32)bubble+.001)/(1.0f):1.0f,TRUE);
 
 			gGL.color4fv(color.mV);			
 			if(!barNotBg && !textNotBg)
@@ -1111,7 +1110,7 @@ void lggContactSetsFloater::draw()
 				smallBox.setLeftTopAndSize(box.mLeft,box.mTop,10+(bubble/2),box.getHeight());
 				gl_rect_2d(smallBox);
 				smallBox.setLeftTopAndSize(box.mLeft+10+(bubble/2),box.mTop,box.getWidth()-(10+(bubble/2)),box.getHeight());
-				gGL.color4fv(LGGContactSets::toneDownColor(LGGContactSets::getInstance()->getDefaultColor(),doColorChange?(((F32)bubble)/(1)):1).mV);
+				gGL.color4fv(LGGContactSets::toneDownColor(LGGContactSets::getInstance()->getDefaultColor(),doColorChange?(((F32)bubble)/(1)):1,TRUE).mV);
 				gl_rect_2d(smallBox);
 			}
 			if(box.pointInRect(mouse_x,mouse_y))
@@ -1214,11 +1213,10 @@ void lggContactSetsFloater::draw()
 			LLColor4 color = LGGContactSets::getInstance()->getGroupColor(cg);
 			if(!LGGContactSets::getInstance()->isFriendInGroup(agent_id,cg))
 				color = LGGContactSets::getInstance()->getDefaultColor();
-			if(showOtherGroups)color = LGGContactSets::getInstance()->
+			if(showOtherGroups||(currentGroup()=="All Groups"))color = LGGContactSets::getInstance()->
 				getFriendColor(agent_id,cg);
 
-			if(!iAMSelected&&doColorChange)
-				color = LGGContactSets::toneDownColor(color,((F32)bubble+.001)/(1.0f));
+			color = LGGContactSets::toneDownColor(color,(!iAMSelected&&doColorChange)?((F32)bubble+.001)/(1.0f):1.0f,TRUE);
 			
 			gGL.color4fv(color.mV);			
 			if(!barNotBg && !textNotBg)
@@ -1230,7 +1228,7 @@ void lggContactSetsFloater::draw()
 				smallBox.setLeftTopAndSize(box.mLeft,box.mTop,10+(bubble/2),box.getHeight());
 				gl_rect_2d(smallBox);
 				smallBox.setLeftTopAndSize(box.mLeft+10+(bubble/2),box.mTop,box.getWidth()-(10+(bubble/2)),box.getHeight());
-				gGL.color4fv(LGGContactSets::toneDownColor(LGGContactSets::getInstance()->getDefaultColor(),doColorChange?(((F32)bubble)/(1)):1).mV);
+				gGL.color4fv(LGGContactSets::toneDownColor(LGGContactSets::getInstance()->getDefaultColor(),doColorChange?(((F32)bubble)/(1)):1,TRUE).mV);
 				gl_rect_2d(smallBox);
 			}
 
@@ -1466,7 +1464,7 @@ void lggContactSetsFloater::draw()
 				if (LLAvatarNameCache::get(agent_id, &avatar_name))
 				{
 					std::string fullname;
-					static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+					static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixContactSetsNameFormat");
 					switch (sPhoenixNameSystem)
 					{
 					case 0 : fullname = avatar_name.getLegacyName(); break;
@@ -1742,10 +1740,11 @@ BOOL lggContactSetsFloater::compareAv(LLUUID av1, LLUUID av2)
 	std::string avN1("");
 	std::string avN2("");
 	LLAvatarName avatar_name;
+	static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixContactSetSortNameFormat");
+
 	if (LLAvatarNameCache::get(av1, &avatar_name))
 	{
 		std::string fullname;
-		static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
 		switch (sPhoenixNameSystem)
 		{
 			case 0 : fullname = avatar_name.getLegacyName(); break;
@@ -1759,7 +1758,6 @@ BOOL lggContactSetsFloater::compareAv(LLUUID av1, LLUUID av2)
 	if (LLAvatarNameCache::get(av2, &avatar_name))
 	{
 		std::string fullname;
-		static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
 		switch (sPhoenixNameSystem)
 		{
 			case 0 : fullname = avatar_name.getLegacyName(); break;
@@ -1824,7 +1822,7 @@ BOOL lggContactSetsFloater::generateCurrentList()
 			if (LLAvatarNameCache::get(currentList[itFilter], &avatar_name))
 			{
 				std::string fullname;
-				static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+				static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixContactSetsNameFormat");
 				switch (sPhoenixNameSystem)
 				{
 					case 0 : fullname = avatar_name.getLegacyName(); break;
@@ -1881,6 +1879,7 @@ public:
 
 	BOOL postBuild(void);
 	static void onClickOk(void* data);
+	static void onSelectNameFormat(LLUICtrl* ctrl, void* userdata);
 	static void onDefaultBackgroundChange(LLUICtrl* ctrl, void* userdata);
 	static lggContactSetsFloaterSettings* sSettingsInstance;
 };
@@ -1909,8 +1908,24 @@ BOOL lggContactSetsFloaterSettings::postBuild(void)
 	childSetAction("lgg_fg_okButton",onClickOk,this);
 	getChild<LLColorSwatchCtrl>("colordefault")->setCommitCallback(onDefaultBackgroundChange);
 	getChild<LLColorSwatchCtrl>("colordefault")->set(LGGContactSets::getInstance()->getDefaultColor());
+	
+	LLComboBox *dispName = getChild<LLComboBox>("lgg_fg_dispName");
+	dispName->setCommitCallback(onSelectNameFormat);
+	dispName->setCurrentByIndex(gSavedSettings.getS32("PhoenixContactSetsNameFormat"));
+	LLComboBox *sortName = getChild<LLComboBox>("lgg_fg_sortName");
+	sortName->setCommitCallback(onSelectNameFormat);
+	sortName->setCurrentByIndex(gSavedSettings.getS32("PhoenixContactSetSortNameFormat"));
+
 	return TRUE;
 }
+void lggContactSetsFloaterSettings::onSelectNameFormat(LLUICtrl* ctrl, void* userdata)
+{
+	gSavedSettings.setS32("PhoenixContactSetsNameFormat",
+		sSettingsInstance->getChild<LLComboBox>("lgg_fg_dispName")->getCurrentIndex());	
+	gSavedSettings.setS32("PhoenixContactSetSortNameFormat",
+		sSettingsInstance->getChild<LLComboBox>("lgg_fg_sortName")->getCurrentIndex());
+}
+
 void lggContactSetsFloaterSettings::onDefaultBackgroundChange(LLUICtrl* ctrl, void* userdata)
 {
 	LLColorSwatchCtrl* cctrl = (LLColorSwatchCtrl*)ctrl;

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
-<floater border="true" can_close="true" can_minimize="true" bottom="400" left="300" can_resize="false" height="290" width="470" name="lgg_fg_floater_settings" title="Contact Sets Settings">
+<floater border="true" can_close="true" can_minimize="true" bottom="400" left="300" can_resize="false" height="320" width="470" name="lgg_fg_floater_settings" title="Contact Sets Settings">
     <color_swatch border_color="0.45098, 0.517647, 0.607843, 1" bottom_delta="-60" can_apply_immediately="true" color="1, 1, 1, 1" follows="left|top" height="40" label="" left_delta="5" mouse_opaque="true" name="colordefault" tool_tip="Default color for friends not in a group. Affects only the FriendGroups list display." width="65" control_name="lgg_fg_groupColor"/>
     <text bottom_delta="30" follows="left|top" font="SansSerifSmall" height="10" left_delta="70" name="lgg_fg_text2a" width="110">Default color</text>
     <text bottom_delta="-11" follows="left|top" font="SansSerifSmall" height="10" left_delta="0" name="lgg_fg_text2b" width="120">for ungrouped friends</text>
@@ -15,7 +15,35 @@
 	<check_box bottom_delta="-15" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Require CTRL key to be pressed to be able to multiselect" left="5" mouse_opaque="true" name="PhoenixContactSetsRequireCTRL" visible="true" radio_style="false" width="270" control_name="PhoenixContactSetsRequireCTRL"/>
 	<check_box bottom_delta="-15" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Use the Zoom Effect in the floater" left="5" mouse_opaque="true" name="PhoenixContactSetsDoZoom" visible="true" radio_style="false" width="270" control_name="PhoenixContactSetsDoZoom"/>
 	<check_box bottom_delta="-15" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Use the color highlight effect in the floater" left="5" mouse_opaque="true" name="PhoenixContactSetsUseColorHighlight" visible="true" radio_style="false" width="270" control_name="PhoenixContactSetsUseColorHighlight"/>
-	<check_box bottom_delta="-15" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Show Folders above contacts (you can use the drop down instead if this is off)" left="5" mouse_opaque="true" name="PhoenixContactSetsShowFolders" visible="true" radio_style="false" width="270" control_name="PhoenixContactSetsShowFolders"/>
-	
+  <slider can_edit_text="false" control_name="PhoenixContactSetsMaxColorStrength" decimal_digits="0" follows="left|top" height="15" increment="1" initial_value="100" layout="topleft" left="280" max_val="100" min_val="1" name="PhoenixContactSetsMaxColorStrength" bottom_delta="0" width="180" label="BG Strength" label_width="70" tool_tip="How strong do you want the color of the background to be."/>
+
+
+  <check_box bottom_delta="-15" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Show Folders above contacts (you can use the drop down instead if this is off)" left="5" mouse_opaque="true" name="PhoenixContactSetsShowFolders" visible="true" radio_style="false" width="270" control_name="PhoenixContactSetsShowFolders"/>
+  <text type="string" length="1" follows="left|top" height="10" left="5" name="lgg_fg_text3" mouse_opaque="false" bottom_delta="-20" width="90">Name Format:</text>
+  <combo_box height="20" left_delta="80" name="lgg_fg_dispName" control_name="PhoenixContactSetsNameFormat" bottom_delta="-8" width="150" >
+    <combo_item name="Old Names" value="0">
+      Old Names
+    </combo_item>
+    <combo_item name="Display Names (with Username)" value="1">
+      Display Names (with Username)
+    </combo_item>
+    <combo_item name="Display Names only" value="2">
+      Display Names only
+    </combo_item>
+  </combo_box>
+  <text type="string" length="1" follows="left|top" height="10" left_delta="170" name="lgg_fg_text4" mouse_opaque="false" bottom_delta="8" width="90">Sort by:</text>
+  <combo_box height="20" left_delta="45" name="lgg_fg_sortName" control_name="PhoenixContactSetSortNameFormat" bottom_delta="-8" width="150" >
+    <combo_item name="Old Names" value="0">
+      Old Names
+    </combo_item>
+    <combo_item name="Display Names (with Username)" value="1">
+      Display Names (with Username)
+    </combo_item>
+    <combo_item name="Display Names only" value="2">
+      Display Names only
+    </combo_item> 
+  </combo_box>
+  
+  
     <button bottom_delta="-40" follows="top|left" font="SansSerifSmall" height="20" label="Ok" name="lgg_fg_okButton" left="195" width="40"/>
 </floater>

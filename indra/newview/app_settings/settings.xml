@@ -101,6 +101,39 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
+    <key>PhoenixContactSetsMaxColorStrength</key>
+    <map>
+      <key>Comment</key>
+      <string>How bright we let the background of the contacts sets be 1-100</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>100</integer>
+    </map>
+    <key>PhoenixContactSetsNameFormat</key>
+    <map>
+      <key>Comment</key>
+      <string> 0 = Old Style, 1 = Display Names and Username, 2 = Displayname only</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>2</integer>
+    </map>
+    <key>PhoenixContactSetSortNameFormat</key>
+    <map>
+      <key>Comment</key>
+      <string> 0 = Old Style, 1 = Display Names and Username, 2 = Displayname only</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>2</integer>
+    </map>
     <key>PhoenixContactSetsShowFolders</key>
     <map>
       <key>Comment</key>
