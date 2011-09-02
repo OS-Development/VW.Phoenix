@@ -17336,7 +17336,18 @@
       <key>Value</key>
       <string>Default</string>
     </map>
-		<key>UseEnvironmentFromRegionAlways</key>
+ <key>PhoenixWorldmapFilterDuplicateLandmarks</key>
+ <map>
+   <key>Comment</key>
+   <string>Filter duplicate Landmarks in the Landmark list on the world map.</string>
+   <key>Persist</key>
+   <integer>1</integer>
+   <key>Type</key>
+   <string>Boolean</string>
+   <key>Value</key>
+   <integer>0</integer>
+ </map>
+	<key>UseEnvironmentFromRegionAlways</key>
 		<map>
 			<key>Comment</key>
 			<string>Choose whether to always use the region's environment settings when they are availabe or to allow the manual selections to remain unchanging.</string>
