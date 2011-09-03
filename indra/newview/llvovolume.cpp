@@ -747,17 +747,14 @@ void LLVOVolume::updateTextureVirtualSize(bool forced)
 
 		if (isHUDAttachment())
 		{
-			F32 area = (F32) camera->getScreenPixelArea();
-			vsize = area;
 			imagep->setBoostLevel(LLViewerTexture::BOOST_HUD);
- 			face->setPixelArea(area); // treat as full screen
-			face->setVirtualSize(vsize);
+			// treat as full screen
+			vsize = (F32)camera->getScreenPixelArea();
 		}
 		else
 		{
 			vsize = face->getTextureVirtualSize();
-			//KC: dont boost attached textures unless we have a decent amout of texture mem
-			if (isAttachment()&& gTextureList.getMaxResidentTexMem() >= 256)
+			if (isAttachment())
 			{
 				// Rez attachments faster and at full details !
 				if (permYouOwner())
@@ -766,20 +763,53 @@ void LLVOVolume::updateTextureVirtualSize(bool forced)
 					// we shouldn't have to zoom on them to get the textures
 					// fully loaded !
 					imagep->setBoostLevel(LLViewerTexture::BOOST_HUD);
+					// ... and don't discard our attachments textures
 					imagep->dontDiscard();
 				}
 				else
 				{
-					// Others' can get their texture discarded to avoid
-					// filling up the video buffers in crowded areas...
-					imagep->setBoostLevel(LLViewerTexture::BOOST_SELECTED);
+					// Others' can get their texture discarded to avoid filling
+					// up the video buffers in crowded areas...
+					static LLCachedControl<bool> boost_texture(gSavedSettings, "TextureBoostAttachments");
+					static LLCachedControl<S32> min_vsize_sqrt(gSavedSettings, "TextureMinAttachmentsVSize");
+					const F32 HIGH_BIAS = 1.5f;
+					if (boost_texture && LLViewerTexture::sDesiredDiscardBias < HIGH_BIAS)
+					{
+						// As long as the current bias is not too high (i.e. we
+						// are not using too much memory), and provided that
+						// the TextureBoostAttachments setting is TRUE, let's
+						// boost significantly the attachments.
+						// First, raise the priority to the one of selected
+						// objects, causing the attachments to rez much faster
+						// and preventing them to get affected by the bias
+						// level (see LLViewerTexture::processTextureStats() for
+						// the algorithm).
+						imagep->setBoostLevel(LLViewerTexture::BOOST_SELECTED);
+						// And now, the importance to the camera...
+						// The problem with attachments is that they most often
+						// use very small prims with high resolution textures,
+						// and Snowglobe's algorithm considers such textures as
+						// unimportant to the camera... Let's counter this
+						// effect, using a minimum, user configurable virtual
+						// size.
+						F32 min_vsize = (F32)(min_vsize_sqrt * min_vsize_sqrt);
+						if (vsize < min_vsize)
+						{
+							vsize = min_vsize;
+						}
+					}
+					else
+					{
+						// Bias is at its maximum: only boost a little, not
+						// preventing bias to affect this texture either.
+						imagep->setBoostLevel(LLViewerTexture::BOOST_AVATAR);
+					}
+					// boost the decode priority too (doesn't affect memory usage)
 					LLViewerFetchedTexture *tex = LLViewerTextureManager::staticCastToFetchedTexture(imagep);
 					if (tex)
 					{
 						tex->setAdditionalDecodePriority(1.5f);
 					}
-					vsize = (F32) LLViewerCamera::getInstance()->getScreenPixelArea();
-					face->setPixelArea(vsize); // treat as full screen
 				}
 			}
 		}
@@ -1192,8 +1222,7 @@ void LLVOVolume::sculpt()
 					   
 			sculpt_data = raw_image->getData();
 		}
-		static LLCachedControl<bool> sPhoenixOblongSculptLODHack(gSavedSettings, "PhoenixOblongSculptLODHack");
-		getVolume()->sculpt(sculpt_width, sculpt_height, sculpt_components, sculpt_data, discard_level, sPhoenixOblongSculptLODHack);
+		getVolume()->sculpt(sculpt_width, sculpt_height, sculpt_components, sculpt_data, discard_level);
 
 		//notify rebuild any other VOVolumes that reference this sculpty volume
 		for (S32 i = 0; i < mSculptTexture->getNumVolumes(); ++i)

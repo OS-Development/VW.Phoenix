@@ -2,6 +2,28 @@
 <llsd>
 
 	<map>
+    <key>TextureBoostAttachments</key>
+    <map>
+      <key>Comment</key>
+      <string>If TRUE, boost the importance to the camera for textures on avatars' attachments</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>TextureMinAttachmentsVSize</key>
+    <map>
+      <key>Comment</key>
+      <string>Used to boost textures on avatars' attachments by pretending their virtual size can't be smaller than the square of this value</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>192</integer>
+    </map>
 	<key>HideSelectedObjects</key>
 	<map>
 		<key>Comment</key>
@@ -17148,17 +17170,6 @@
 			<key>Value</key>
 			<integer>0</integer>
 		</map>
-		<key>PhoenixOblongSculptLODHack</key>
-		<map>
-			<key>Comment</key>
-			<string>Enables LOD hack on oblong sculpts</string>
-			<key>Persist</key>
-			<integer>1</integer>
-			<key>Type</key>
-			<string>Boolean</string>
-			<key>Value</key>
-			<integer>0</integer>
-		</map>
 <!-- this is automatic now and only used for display -->
 		<key>Phoenix64mPrimSupport</key>
 		<map>
@@ -17219,17 +17230,6 @@
 		<map>
 			<key>Comment</key>
 			<string>Allow all land for Phoenix WL sharing</string>
-			<key>Persist</key>
-			<integer>1</integer>
-			<key>Type</key>
-			<string>Boolean</string>
-			<key>Value</key>
-			<integer>0</integer>
-		</map>
-		<key>PhoenixTextureLoadFullRes</key>
-		<map>
-			<key>Comment</key>
-			<string>If TRUE, always load textures at full resolution (discard = 0)</string>
 			<key>Persist</key>
 			<integer>1</integer>
 			<key>Type</key>
