@@ -244,6 +244,15 @@ void PhoenixViewerLink::msdata(U32 status, std::string body)
 		{
 			self->ms_motd = "";
 		}
+
+		if(data.has("MOTD Random"))
+		{
+			LLSD& motd = data["MOTD Random"];
+			LLSD::array_iterator iter = motd.beginArray();
+			self->ms_motd = (iter + (ll_rand((S32)motd.size())))->asString();
+			gAgent.mMOTD = self->ms_motd;
+		}
+		
 		if(data.has("BlockedReason"))
 		{
 			blocked_login_info = data["BlockedReason"]; 
