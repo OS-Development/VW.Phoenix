@@ -2,28 +2,6 @@
 <llsd>
 
 	<map>
-    <key>TextureBoostAttachments</key>
-    <map>
-      <key>Comment</key>
-      <string>If TRUE, boost the importance to the camera for textures on avatars' attachments</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>Boolean</string>
-      <key>Value</key>
-      <integer>1</integer>
-    </map>
-    <key>TextureMinAttachmentsVSize</key>
-    <map>
-      <key>Comment</key>
-      <string>Used to boost textures on avatars' attachments by pretending their virtual size can't be smaller than the square of this value</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>S32</string>
-      <key>Value</key>
-      <integer>192</integer>
-    </map>
 	<key>HideSelectedObjects</key>
 	<map>
 		<key>Comment</key>

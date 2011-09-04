@@ -747,96 +747,28 @@ void LLVOVolume::updateTextureVirtualSize(bool forced)
 
 		if (isHUDAttachment())
 		{
+			F32 area = (F32) camera->getScreenPixelArea();
+			vsize = area;
 			imagep->setBoostLevel(LLViewerTexture::BOOST_HUD);
-			// treat as full screen
-			vsize = (F32)camera->getScreenPixelArea();
+ 			face->setPixelArea(area); // treat as full screen
+			face->setVirtualSize(vsize);
 		}
 		else
 		{
 			vsize = face->getTextureVirtualSize();
-			if (isAttachment())
-			{
-				// Rez attachments faster and at full details !
-				if (permYouOwner())
-				{
-					// Our attachments must really rez fast and fully:
-					// we shouldn't have to zoom on them to get the textures
-					// fully loaded !
-					imagep->setBoostLevel(LLViewerTexture::BOOST_HUD);
-					// ... and don't discard our attachments textures
-					imagep->dontDiscard();
-				}
-				else
-				{
-					// Others' can get their texture discarded to avoid filling
-					// up the video buffers in crowded areas...
-					static LLCachedControl<bool> boost_texture(gSavedSettings, "TextureBoostAttachments");
-					static LLCachedControl<S32> min_vsize_sqrt(gSavedSettings, "TextureMinAttachmentsVSize");
-					const F32 HIGH_BIAS = 1.5f;
-					if (boost_texture && LLViewerTexture::sDesiredDiscardBias < HIGH_BIAS)
-					{
-						// As long as the current bias is not too high (i.e. we
-						// are not using too much memory), and provided that
-						// the TextureBoostAttachments setting is TRUE, let's
-						// boost significantly the attachments.
-						// First, raise the priority to the one of selected
-						// objects, causing the attachments to rez much faster
-						// and preventing them to get affected by the bias
-						// level (see LLViewerTexture::processTextureStats() for
-						// the algorithm).
-						imagep->setBoostLevel(LLViewerTexture::BOOST_SELECTED);
-						// And now, the importance to the camera...
-						// The problem with attachments is that they most often
-						// use very small prims with high resolution textures,
-						// and Snowglobe's algorithm considers such textures as
-						// unimportant to the camera... Let's counter this
-						// effect, using a minimum, user configurable virtual
-						// size.
-						F32 min_vsize = (F32)(min_vsize_sqrt * min_vsize_sqrt);
-						if (vsize < min_vsize)
-						{
-							vsize = min_vsize;
-						}
-					}
-					else
-					{
-						// Bias is at its maximum: only boost a little, not
-						// preventing bias to affect this texture either.
-						imagep->setBoostLevel(LLViewerTexture::BOOST_AVATAR);
-					}
-					// boost the decode priority too (doesn't affect memory usage)
-					LLViewerFetchedTexture *tex = LLViewerTextureManager::staticCastToFetchedTexture(imagep);
-					if (tex)
-					{
-						tex->setAdditionalDecodePriority(1.5f);
-					}
-				}
-			}
 		}
 
 		mPixelArea = llmax(mPixelArea, face->getPixelArea());		
 
 		if (face->mTextureMatrix != NULL)
 		{
-			// Animating textures also rez badly in Snowglobe because the
-			// actual displayed area is only a fraction (corresponding to one
-			// frame) of the animating texture. Let's fix that here:
-			if (mTextureAnimp && mTextureAnimp->mScaleS > 0.0f && mTextureAnimp->mScaleT > 0.0f)
-			{
-				// Adjust to take into account the actual frame size which is only a
-				// portion of the animating texture
-				vsize = vsize / mTextureAnimp->mScaleS / mTextureAnimp->mScaleT;
-			}
-
 			if ((vsize < MIN_TEX_ANIM_SIZE && old_size > MIN_TEX_ANIM_SIZE) ||
 				(vsize > MIN_TEX_ANIM_SIZE && old_size < MIN_TEX_ANIM_SIZE))
 			{
 				gPipeline.markRebuild(mDrawable, LLDrawable::REBUILD_TCOORD, FALSE);
 			}
 		}
-
-		face->setVirtualSize(vsize);
-
+				
 		if (gPipeline.hasRenderDebugMask(LLPipeline::RENDER_DEBUG_TEXTURE_AREA))
 		{
 			if (vsize < min_vsize) min_vsize = vsize;
@@ -3052,8 +2984,8 @@ U32 LLVOVolume::getRenderCost(std::set<LLUUID> &textures) const
 
 	if (isSculpted())
 	{
-		LLSculptParams *sculpt_params = (LLSculptParams*) getParameterEntry(LLNetworkData::PARAMS_SCULPT);
-		const LLUUID sculpt_id = sculpt_params->getSculptTexture();
+		const LLSculptParams *sculpt_params = (LLSculptParams *) getParameterEntry(LLNetworkData::PARAMS_SCULPT);
+		LLUUID sculpt_id = sculpt_params->getSculptTexture();
 		textures.insert(sculpt_id);
 	}
 
