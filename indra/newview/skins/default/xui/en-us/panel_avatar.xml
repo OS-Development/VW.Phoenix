@@ -226,14 +226,24 @@ Phoenix Support
 			     mouse_opaque="true" name="web_profile_help" width="18" />
       <check_box bottom_delta="0" follows="right|top" font="SansSerifSmall" height="16"
 			     initial_value="false" label="Automatically load web profiles"
-			     left_delta="90" mouse_opaque="true" name="auto_load"
+			     left_delta="20" mouse_opaque="true" name="auto_load"
 			     tool_tip="Automatically load ALL profile webpages without asking first."
 			     width="127" />
+			<flyout_button bottom_delta="0" follows="left|top" font="SansSerifSmall" halign="center"
+			     width="120" height="18" label="SL web profile" label_selected="SL web profile" left="330"
+			     mouse_opaque="true" name="sl_web_profile" enabled="false" 
+			     tool_tip="This button loads the SL web-based profile page in the embedded web browser instead of the homepage set by the resident. Using the fly-out menu (i.e. by clicking the small down arrow), you may also open the web profile in a larger, built-in web browser or in your system web browser, and you can browse back to the home URL if you browsed away from it." >
+				<flyout_button_item value="sl_builtin" name="builtin_item">In built-in browser</flyout_button_item>
+				<flyout_button_item value="sl_open" name="open_item">In external browser</flyout_button_item>
+			</flyout_button>
       <web_browser border_visible="false" bottom="-444" follows="top|left|right" height="400"
 			     ignore_ui_scale="false" left="10" name="profile_html" start_url=""
 			     width="400" />
       <text bottom="5" follows="bottom|left|right" left="15" name="status_text" right="-70"
 			     top="25" />
+			<string name="loading">
+				Loading...
+			</string>
     </panel>
     <panel border="true" bottom="-482" follows="left|top|right|bottom" height="466"
 		     label="Interests" left="1" mouse_opaque="true" name="Interests" width="418">

@@ -53,6 +53,7 @@
 #include "llfloaterfriends.h"
 #include "llfloatergroupinfo.h"
 #include "llfloaterworldmap.h"
+#include "llfloatermediabrowser.h"
 #include "llfloatermute.h"
 #include "llfloateravatarinfo.h"
 #include "lliconctrl.h"
@@ -97,6 +98,7 @@
 
 #include "llavatarname.h"
 #include "lggcontactsets.h"
+#include "hippogridmanager.h"
 
 // Statics
 std::list<LLPanelAvatar*> LLPanelAvatar::sAllPanels;
@@ -508,6 +510,8 @@ BOOL LLPanelAvatarWeb::postBuild(void)
 {
 	childSetKeystrokeCallback("url_edit", onURLKeystroke, this);
 	childSetCommitCallback("load", onCommitLoad, this);
+	childSetCommitCallback("sl_web_profile", onCommitSLWebProfile, this);
+	childSetEnabled("sl_web_profile", gHippoGridManager->getCurrentGrid()->isSecondLife());
 
 	childSetAction("web_profile_help",onClickWebProfileHelp,this);
 
@@ -650,6 +654,7 @@ void LLPanelAvatarWeb::load(std::string url)
 	{
 		mNavigateTo = url;
 	}
+	childSetText("url_edit", getString("loading"));
 }
 
 //static
@@ -688,6 +693,37 @@ void LLPanelAvatarWeb::onCommitLoad(LLUICtrl* ctrl, void* data)
 		{
 			self->load(self->mHome);
 		}
+	}
+}
+
+// static
+void LLPanelAvatarWeb::onCommitSLWebProfile(LLUICtrl* ctrl, void * data)
+{
+	LLPanelAvatarWeb* self = (LLPanelAvatarWeb*)data;
+	if (!self || !ctrl) return;
+
+	std::string user_name = self->getPanelAvatar()->getAvatarUserName();
+	if (user_name.empty()) return;
+
+	std::string urlstr = getProfileURL(user_name);
+	if (urlstr.empty()) return;
+
+	std::string valstr = ctrl->getValue().asString();
+	if (valstr == "sl_builtin")
+	{
+		 // open in a trusted built-in browser
+		LLFloaterMediaBrowser::showInstance(urlstr);
+	}
+	else if (valstr == "sl_open")
+	{
+		 // open in user's external browser
+		LLWeb::loadURLExternal(urlstr);
+	}
+	else
+	{
+		// Load SL's web-based avatar profile (trusted)
+		self->mWebBrowser->setTrusted(true);
+		self->load(urlstr);
 	}
 }
 
@@ -1303,6 +1339,7 @@ LLPanelAvatar::LLPanelAvatar(
 	mPanelWeb(NULL),
 	mDropTarget(NULL),
 	mAvatarID(LLUUID::null),	// mAvatarID is set with 'setAvatarID()'
+	mAvatarUserName(std::string("")),
 	mHaveProperties(FALSE),
 	mHaveStatistics(FALSE),
 	mHaveNotes(false),
@@ -1505,6 +1542,7 @@ void LLPanelAvatar::on_avatar_name_response(const LLUUID& agent_id, const LLAvat
 	}
 	if(hit)
 	{
+		self->mAvatarUserName = av_name.mUsername;
 		LLLineEditor* dnname_edit = self->getChild<LLLineEditor>("dnname");
 		if(LLAvatarNameCache::useDisplayNames() && agent_id==self->mAvatarID) dnname_edit->setText(av_name.getCompleteName());
 	}
@@ -1568,6 +1606,7 @@ void LLPanelAvatar::setAvatarID(const LLUUID &avatar_id, const std::string &name
 		if(LLAvatarNameCache::useDisplayNames()){
 			if(LLAvatarNameCache::get(avatar_id, &av_name)){
 				dnname_edit->setText(av_name.getCompleteName());
+				mAvatarUserName = av_name.mUsername;
 				if(LGGContactSets::getInstance()->hasVisuallyDiferentPseudonym(avatar_id))
 					dnname_edit->setText("'"+av_name.mDisplayName+"' ("+av_name.getLegacyName()+")");
 			}

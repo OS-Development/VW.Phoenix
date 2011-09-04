@@ -156,6 +156,7 @@ public:
 	void load(std::string url);
 	static void onURLKeystroke(LLLineEditor* editor, void* data);
 	static void onCommitLoad(LLUICtrl* ctrl, void* data);
+	static void onCommitSLWebProfile(LLUICtrl* ctrl, void* data);
 	static void onCommitURL(LLUICtrl* ctrl, void* data);
 	static void onClickWebProfileHelp(void *);
 
@@ -294,6 +295,7 @@ public:
 	void setOnlineStatus(EOnlineStatus online_status);
 
 	const LLUUID& getAvatarID() const { return mAvatarID; }
+	std::string getAvatarUserName() { return mAvatarUserName; }
 	
 	void resetGroupList();
 
@@ -372,6 +374,7 @@ public:
 	
 private:
 	LLUUID						mAvatarID;			// for which avatar is this window?
+	std::string					mAvatarUserName;	// Known avatar user name
 	BOOL						mIsFriend;			// Are we friends?
 	BOOL						mHaveProperties;
 	BOOL						mHaveStatistics;
