@@ -55,8 +55,11 @@ LLPanelDirMarket::LLPanelDirMarket(const std::string& name, LLFloaterDirectory* 
 }
 
 // virtual
-void LLPanelDirMarket::search(const std::string& search_text)
+void LLPanelDirMarket::search(const std::string& url)
 {
-	// no-op, initial page is loaded during construction and there
-	// is no search interface, just browse
+	if (mWebBrowser)
+	{
+		LL_INFOS("Marketplace") << "Sending navigateTo " << url << LL_ENDL;
+		mWebBrowser->navigateTo(url);
+	}
 }

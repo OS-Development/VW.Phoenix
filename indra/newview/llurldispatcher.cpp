@@ -55,6 +55,8 @@ const std::string SLURL_SL_PREFIX			= "sl://";
 const std::string SLURL_SECONDLIFE_PREFIX	= "secondlife://";
 const std::string SLURL_SLURL_PREFIX		= "http://slurl.com/secondlife/";
 const std::string SLURL_SLURL_ALT_PREFIX	= "http://maps.secondlife.com/secondlife/";
+const std::string SLURL_SLMARKETPLACE_PREFIX	= "https://marketplace.secondlife.com/";
+const std::string SLURL_SLMARKETPLACE_ALT_PREFIX	= "http://marketplace.secondlife.com/";
 
 const std::string SLURL_APP_TOKEN = "app/";
 
@@ -64,6 +66,8 @@ public:
 	static bool isSLURL(const std::string& url);
 
 	static bool isSLURLCommand(const std::string& url);
+
+	static bool isMarketPlaceURL(const std::string& url);
 
 	static bool dispatch(const std::string& url,
 						 LLMediaCtrl* web,
@@ -94,6 +98,9 @@ private:
 	static bool dispatchRegion(const std::string& url, bool right_mouse);
 		// handles secondlife://Ahern/123/45/67/
 		// Returns true if handled.
+
+	static bool dispatchMarket(const std::string& url, bool right_mouse);
+		// Handles marketplace urls.
 
 	static void regionHandleCallback(U64 handle, const std::string& url,
 		const LLUUID& snapshot_id, bool teleport);
@@ -136,6 +143,13 @@ bool LLURLDispatcherImpl::isSLURLCommand(const std::string& url)
 	return false;
 }
 
+bool LLURLDispatcherImpl::isMarketPlaceURL(const std::string& url)
+{
+	if (matchPrefix(url, SLURL_SLMARKETPLACE_PREFIX)) return true;
+	if (matchPrefix(url, SLURL_SLMARKETPLACE_ALT_PREFIX)) return true;
+	return false;
+}
+
 // static
 bool LLURLDispatcherImpl::dispatchCore(const std::string& url,
 									   bool right_mouse,
@@ -146,6 +160,7 @@ bool LLURLDispatcherImpl::dispatchCore(const std::string& url,
 	if (dispatchHelp(url, right_mouse)) return true;
 	if (dispatchApp(url, right_mouse, web, trusted_browser)) return true;
 	if (dispatchRegion(url, right_mouse)) return true;
+	if (dispatchMarket(url, right_mouse)) return true;
 
 	/*
 	// Inform the user we can't handle this
@@ -248,6 +263,18 @@ bool LLURLDispatcherImpl::dispatchRegion(const std::string& url, bool right_mous
 									  LLURLDispatcherImpl::regionNameCallback,
 									  url,
 									  false);	// don't teleport
+	return true;
+}
+
+// static
+bool LLURLDispatcherImpl::dispatchMarket(const std::string& url, bool right_mouse)
+{
+	if (!isMarketPlaceURL(url))
+	{
+		return false;
+	}
+	
+	LLFloaterDirectory::showMarket(url);
 	return true;
 }
 

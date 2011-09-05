@@ -81,6 +81,7 @@ LLFloaterDirectory::LLFloaterDirectory(const std::string& name)
 	mClassifiedPanel = NULL;
 	mEventsPanel = NULL;
 	mLandPanel = NULL;
+	mMarketPanel = NULL;
 
 	mPanelAvatarp = NULL;
 	mPanelEventp = NULL;
@@ -185,7 +186,8 @@ void* LLFloaterDirectory::createShowcase(void* userdata)
 void* LLFloaterDirectory::createMarket(void* userdata)
 {
 	LLFloaterDirectory *self = (LLFloaterDirectory*)userdata;
-	return new LLPanelDirMarket("market_panel", self);
+	self->mMarketPanel = new LLPanelDirMarket("market_panel", self);
+	return self->mMarketPanel;
 }
 
 // static
@@ -352,6 +354,17 @@ void LLFloaterDirectory::showLandForSale(const LLUUID& parcel_id)
 void LLFloaterDirectory::showGroups()
 {
 	showPanel("groups_panel");
+}
+
+// static
+void LLFloaterDirectory::showMarket(const std::string& url)
+{
+	showPanel("market_panel");
+	
+	if (sInstance->mMarketPanel)
+	{
+		sInstance->mMarketPanel->search(url);
+	}
 }
 
 // static

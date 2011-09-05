@@ -49,6 +49,7 @@ class LLPanelDirLand;
 class LLPanelDirPeople;
 class LLPanelDirPlaces;
 class LLPanelDirPopular;
+class LLPanelDirMarket;
 
 class LLPanelAvatar;
 class LLPanelEvent;
@@ -76,6 +77,7 @@ public:
 	static void showEvents(S32 event_id);
 	static void showLandForSale(const LLUUID& parcel_id);
 	static void showGroups();
+	static void showMarket(const std::string& url);
 	static void refreshGroup(const LLUUID& group_id);
 	static void hide(void*);
 
@@ -97,6 +99,7 @@ private:
 	LLPanelDirClassified* mClassifiedPanel;
 	LLPanelDirEvents* mEventsPanel;
 	LLPanelDirLand* mLandPanel;
+	LLPanelDirMarket* mMarketPanel;
 
 	static void* createFindAll(void* userdata);
 	static void* createClassified(void* userdata);
