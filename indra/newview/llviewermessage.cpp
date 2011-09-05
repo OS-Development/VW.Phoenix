@@ -2701,7 +2701,7 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 			LLFloaterChat::addChat(chat, FALSE, FALSE);
 
 			// This message is directly to us, so we should probably always growl?
-			gGrowlManager->notify(name, message.substr(message_offset), "Instant Message received");
+			if(!is_muted)gGrowlManager->notify(name, message.substr(message_offset), "Instant Message received");
 		}
 		break;
 	case IM_FROM_TASK_AS_ALERT:
