@@ -34,38 +34,41 @@
 
 #include "llfloatertools.h"
 
-#include "llfontgl.h"
-#include "llcoord.h"
-#include "llgl.h"
-
-#include "llagent.h"
 #include "llbutton.h"
 #include "llcheckboxctrl.h"
 #include "llcombobox.h"
+#include "llcoord.h"
 #include "lldraghandle.h"
-#include "llfloaterbuildoptions.h"
-#include "llfloateropenobject.h"
 #include "llfocusmgr.h"
+#include "llfontgl.h"
+#include "llgl.h"
 #include "llmenugl.h"
-#include "llpanelcontents.h"
-#include "llpanelface.h"
-#include "llpanelland.h"
-#include "llpanelinventory.h"
-#include "llpanelobject.h"
-#include "llpanelvolume.h"
-#include "llpanelpermissions.h"
 #include "llresmgr.h"
-#include "llselectmgr.h"
 #include "llslider.h"
-#include "llstatusbar.h"
+#include "llspinctrl.h"
 #include "lltabcontainer.h"
 #include "lltextbox.h"
+#include "llui.h"
+#include "lluictrlfactory.h"
+
+#include "llagent.h"
+#include "llfloaterbuildoptions.h"
+#include "llfloateropenobject.h"
+#include "llmeshrepository.h"
+#include "llpanelcontents.h"
+#include "llpanelface.h"
+#include "llpanelinventory.h"
+#include "llpanelland.h"
+#include "llpanelobject.h"
+#include "llpanelpermissions.h"
+#include "llpanelvolume.h"
+#include "llselectmgr.h"
+#include "llstatusbar.h"
 #include "lltoolbrush.h"
 #include "lltoolcomp.h"
 #include "lltooldraganddrop.h"
 #include "lltoolface.h"
 #include "lltoolfocus.h"
-#include "lltoolgrab.h"
 #include "lltoolgrab.h"
 #include "lltoolindividual.h"
 #include "lltoolmgr.h"
@@ -73,14 +76,12 @@
 #include "lltoolpipette.h"
 #include "lltoolplacer.h"
 #include "lltoolselectland.h"
-#include "llui.h"
+#include "llviewercontrol.h"
+#include "llviewerjoystick.h"
 #include "llviewermenu.h"
 #include "llviewerparcelmgr.h"
 #include "llviewerregion.h"
 #include "llviewerwindow.h"
-#include "llviewercontrol.h"
-#include "llviewerjoystick.h"
-#include "lluictrlfactory.h"
 #include "qtoolalign.h"
 #include "llselectmgr.h" //Banana:KC
 
@@ -543,7 +544,7 @@ void LLFloaterTools::refresh()
 	
 	std::string prim_count_string;
 	LLResMgr::getInstance()->getIntegerString(prim_count_string, prim_count);
-	if (gAgent.getRegion() && !gAgent.getRegion()->getCapability("GetMesh").empty())
+	if (gMeshRepo.meshRezEnabled())
 	{
 		S32 link_cost = (S32)LLSelectMgr::getInstance()->getSelection()->getSelectedLinksetCost();
 		if (link_cost > prim_count)

@@ -859,11 +859,8 @@ void LLSelectMgr::highlightObjectOnly(LLViewerObject* objectp)
 	}
 
 	if (objectp->getPCode() != LL_PCODE_VOLUME
-#ifdef HIGHLIGHT_GRASS_AND_TREES	// Broken for now
 		&& objectp->getPCode() != LL_PCODE_LEGACY_TREE
-		&& objectp->getPCode() != LL_PCODE_LEGACY_GRASS
-#endif
-	   )
+		&& objectp->getPCode() != LL_PCODE_LEGACY_GRASS)
 	{
 		return;
 	}
@@ -913,11 +910,8 @@ void LLSelectMgr::highlightObjectAndFamily(const std::vector<LLViewerObject*>& o
 		}
 		
 		if (object->getPCode() != LL_PCODE_VOLUME
-#ifdef HIGHLIGHT_GRASS_AND_TREES	// Broken for now
 			&& object->getPCode() != LL_PCODE_LEGACY_TREE
-			&& object->getPCode() != LL_PCODE_LEGACY_GRASS
-#endif
-		   )
+			&& object->getPCode() != LL_PCODE_LEGACY_GRASS)
 		{
 			continue;
 		}
@@ -943,11 +937,8 @@ void LLSelectMgr::unhighlightObjectOnly(LLViewerObject* objectp)
 	}
 
 	if (objectp->getPCode() != LL_PCODE_VOLUME
-#ifdef HIGHLIGHT_GRASS_AND_TREES	// Broken for now
 		&& objectp->getPCode() != LL_PCODE_LEGACY_TREE
-		&& objectp->getPCode() != LL_PCODE_LEGACY_GRASS
-#endif
-	   )
+		&& objectp->getPCode() != LL_PCODE_LEGACY_GRASS)
 	{
 		return;
 	}
@@ -5212,7 +5203,6 @@ void LLSelectMgr::generateSilhouette(LLSelectNode* nodep, const LLVector3& view_
 	{
 		((LLVOVolume*)objectp)->generateSilhouette(nodep, view_point);
 	}
-#ifdef HIGHLIGHT_GRASS_AND_TREES	// Broken for now
 	else if (objectp && objectp->getPCode() == LL_PCODE_LEGACY_GRASS)
 	{
 		((LLVOGrass*)objectp)->generateSilhouette(nodep, view_point);
@@ -5221,7 +5211,6 @@ void LLSelectMgr::generateSilhouette(LLSelectNode* nodep, const LLVector3& view_
 	{
 		((LLVOTree*)objectp)->generateSilhouette(nodep, view_point);
 	}
-#endif
 }
 
 //
@@ -5673,10 +5662,9 @@ void LLSelectNode::renderOneSilhouette(const LLColor4 &color)
 
 	LLViewerCamera* camera = LLViewerCamera::getInstance();
 
-#ifndef HIGHLIGHT_GRASS_AND_TREES	// Broken for now
-	LLVolume *volume = objectp->getVolume();
-	if (volume)
-#endif
+	// we used to only call this for volumes, but let's render silhouettes for any node that has them.
+	//LLVolume *volume = objectp->getVolume();
+	//if (volume)
 	{
 		F32 silhouette_thickness;
 		if (is_hud_object && gAgent.getAvatarObject())
@@ -5849,8 +5837,8 @@ S32 get_family_count(LLViewerObject *parent)
 //-----------------------------------------------------------------------------
 void LLSelectMgr::updateSelectionCenter()
 {
-	const F32 MOVE_SELECTION_THRESHOLD = 1.f;		//  Movement threshold in meters for updating selection
-													//  center (tractor beam)
+	// Movement threshold in meters for updating selection center (tractor beam)
+	const F32 MOVE_SELECTION_THRESHOLD = 1.f;
 
 	//override any object updates received
 	//for selected objects
@@ -6761,16 +6749,13 @@ LLViewerObject* LLObjectSelection::getFirstDeleteableObject()
 		bool apply(LLSelectNode* node)
 		{
 			LLViewerObject* obj = node->getObject();
-			// you can delete an object if you are the owner
-			// or you have permission to modify it.
-			if( obj && ( (obj->permModify()) ||
-						 (obj->permYouOwner()) ||
-						 (!obj->permAnyOwner())	))		// public
+			// You can delete an object if it is not an attachment and you are
+			// the owner or you have permission to modify it.
+			if (obj && !obj->isAttachment() &&
+				(obj->permModify() || obj->permYouOwner() ||
+				 !obj->permAnyOwner()))		// not public
 			{
-				if( !obj->isAttachment() )
-				{
-					return true;
-				}
+				return true;
 			}
 			return false;
 		}

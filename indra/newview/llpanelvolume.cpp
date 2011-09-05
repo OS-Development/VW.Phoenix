@@ -380,14 +380,14 @@ void LLPanelVolume::getState( )
 	physics_shape->removeall();
 	physics_shape->add(getString("None"), LLSD(1));
 
-	BOOL isMesh = FALSE;
+	BOOL is_mesh = FALSE;
 	LLSculptParams *sculpt_params = (LLSculptParams *)objectp->getParameterEntry(LLNetworkData::PARAMS_SCULPT);
 	if (sculpt_params)
 	{
-		isMesh = (sculpt_params->getSculptType() & LL_SCULPT_TYPE_MASK) == LL_SCULPT_TYPE_MESH;
+		is_mesh = (sculpt_params->getSculptType() & LL_SCULPT_TYPE_MASK) == LL_SCULPT_TYPE_MESH;
 	}
 
-	if (isMesh && objectp)
+	if (is_mesh && objectp)
 	{
 		const LLVolumeParams &volume_params = objectp->getVolume()->getParams();
 		LLUUID mesh_id = volume_params.getSculptID();

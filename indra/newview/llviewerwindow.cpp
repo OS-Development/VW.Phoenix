@@ -563,22 +563,27 @@ public:
 			
 			ypos += y_inc;
 
-			addText(xpos, ypos, llformat("%.3f MB Mesh Data Received", LLMeshRepository::sBytesReceived/(1024.f*1024.f)));
+			if (gMeshRepo.meshRezEnabled())
+			{
+				addText(xpos, ypos, llformat("%.3f MB Mesh Data Received", LLMeshRepository::sBytesReceived/(1024.f*1024.f)));
 
-			ypos += y_inc;
+				ypos += y_inc;
 
-			addText(xpos, ypos, llformat("%d/%d Mesh HTTP Requests/Retries", LLMeshRepository::sHTTPRequestCount,
-					LLMeshRepository::sHTTPRetryCount));
+				addText(xpos, ypos, llformat("%d/%d Mesh HTTP Requests/Retries", LLMeshRepository::sHTTPRequestCount,
+						LLMeshRepository::sHTTPRetryCount));
 
-			ypos += y_inc;
+				ypos += y_inc;
 
-			addText(xpos, ypos, llformat("%.3f/%.3f MB Mesh Cache Read/Write ", LLMeshRepository::sCacheBytesRead/(1024.f*1024.f), LLMeshRepository::sCacheBytesWritten/(1024.f*1024.f)));
+				addText(xpos, ypos, llformat("%.3f/%.3f MB Mesh Cache Read/Write ", LLMeshRepository::sCacheBytesRead/(1024.f*1024.f), LLMeshRepository::sCacheBytesWritten/(1024.f*1024.f)));
 
-			ypos += y_inc;
+				ypos += y_inc;
+			}
 
-			LLVertexBuffer::sBindCount = LLImageGL::sBindCount = 
-				LLVertexBuffer::sSetCount = LLImageGL::sUniqueCount = 
-				gPipeline.mNumVisibleNodes = LLPipeline::sVisibleLightCount = 0;
+			LLVertexBuffer::sBindCount = LLImageGL::sBindCount =
+										 LLVertexBuffer::sSetCount =
+										 LLImageGL::sUniqueCount =
+										 gPipeline.mNumVisibleNodes =
+										 LLPipeline::sVisibleLightCount = 0;
 		}
 
 		static LLCachedControl<bool> debug_show_render_matrices(gSavedSettings, "DebugShowRenderMatrices");
@@ -684,9 +689,9 @@ public:
 				LLMeshUploadThread* thread = *iter;
 
 				addText(xpos, ypos, llformat("Mesh Upload -- price quote: %d:%d | upload: %d:%d | create: %d", 
-								thread->mPendingConfirmations, thread->mUploadQ.size()+thread->mTextureQ.size(),
-								thread->mPendingUploads, thread->mConfirmedQ.size()+thread->mConfirmedTextureQ.size(),
-								thread->mInstanceQ.size()));
+						thread->mPendingConfirmations, thread->mUploadQ.size() + thread->mTextureQ.size(),
+						thread->mPendingUploads, thread->mConfirmedQ.size() + thread->mConfirmedTextureQ.size(),
+						thread->mInstanceQ.size()));
 				ypos += y_inc;
 			}
 		}

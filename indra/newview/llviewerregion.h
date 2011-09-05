@@ -271,6 +271,12 @@ public:
 
 	void getInfo(LLSD& info);
 
+	bool meshRezEnabled() const;
+	bool meshUploadEnabled() const;
+
+	void getSimulatorFeatures(LLSD& info);	
+	void setSimulatorFeatures(const LLSD& info);
+
 	// handle a full update message
 	void cacheFullUpdate(LLViewerObject* objectp, LLDataPackerBinaryBuffer &dp);
 	LLDataPacker *getDP(U32 local_id, U32 crc);
@@ -418,6 +424,8 @@ private:
 	LLHTTPClient::ResponderPtr  mHttpResponderPtr ;
 
 	BOOL mReleaseNotesRequested;
+
+	LLSD mSimulatorFeatures;
 };
 
 inline BOOL LLViewerRegion::getAllowDamage() const

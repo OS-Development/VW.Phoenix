@@ -735,7 +735,6 @@ void LLPanelObject::getState()
 	BOOL enabled = FALSE;
 	BOOL hole_enabled = FALSE;
 	F32 scale_x = 1.f, scale_y = 1.f;
-	BOOL isMesh = FALSE;
 
 	if (!objectp || !objectp->getVolume() || !editable || !single_volume)
 	{
@@ -767,9 +766,8 @@ void LLPanelObject::getState()
 		// that you have permissions on AND are not attachments.
 		enabled = root_objectp->permModify();
 
-		const LLVolumeParams &volume_params = objectp->getVolume()->getParams();
-
 		// Volume type
+		const LLVolumeParams &volume_params = objectp->getVolume()->getParams();
 		U8 path = volume_params.getPathParams().getCurveType();
 		U8 profile_and_hole = volume_params.getProfileParams().getCurveType();
 		U8 profile	= profile_and_hole & LL_PCODE_PROFILE_MASK;
@@ -782,7 +780,7 @@ void LLPanelObject::getState()
 		scale_x = volume_params.getRatioX();
 		scale_y = volume_params.getRatioY();
 
-		BOOL linear_path = (path == LL_PCODE_PATH_LINE) || (path == LL_PCODE_PATH_FLEXIBLE);
+		BOOL linear_path = (path == LL_PCODE_PATH_LINE || path == LL_PCODE_PATH_FLEXIBLE);
 		if ( linear_path && profile == LL_PCODE_PROFILE_CIRCLE )
 		{
 			selected_item = MI_CYLINDER;
@@ -1357,15 +1355,8 @@ void LLPanelObject::getState()
 	mLabelRevolutions->setVisible( revolutions_visible );
 	mSpinRevolutions ->setVisible( revolutions_visible );
 
-	mCtrlSculptTexture->setVisible(sculpt_texture_visible);
-	mLabelSculptType->setVisible(sculpt_texture_visible);
-	mCtrlSculptType->setVisible(sculpt_texture_visible);
-	mCtrlSculptMirror->setVisible(sculpt_texture_visible);
-	mCtrlSculptInvert->setVisible(sculpt_texture_visible);
-
-
-	// sculpt texture
-
+	// sculpt texture and parameters
+	BOOL is_mesh = FALSE;
 	if (selected_item == MI_SCULPT)
 	{
         LLUUID id;
@@ -1384,43 +1375,25 @@ void LLPanelObject::getState()
 			U8 sculpt_stitching = sculpt_type & LL_SCULPT_TYPE_MASK;
 			BOOL sculpt_invert = sculpt_type & LL_SCULPT_FLAG_INVERT;
 			BOOL sculpt_mirror = sculpt_type & LL_SCULPT_FLAG_MIRROR;
-			isMesh = (sculpt_stitching == LL_SCULPT_TYPE_MESH);
+			is_mesh = (sculpt_stitching == LL_SCULPT_TYPE_MESH);
 
 			LLTextureCtrl*  mTextureCtrl = getChild<LLTextureCtrl>("sculpt texture control");
-			if (mTextureCtrl)
-			{
-				mTextureCtrl->setTentative(FALSE);
-				mTextureCtrl->setEnabled(editable && !isMesh);
-				if (editable)
-					mTextureCtrl->setImageAssetID(sculpt_params->getSculptTexture());
-				else
-					mTextureCtrl->setImageAssetID(LLUUID::null);
-			}
+			mTextureCtrl->setTentative(FALSE);
+			mTextureCtrl->setEnabled(editable && !is_mesh);
+			mTextureCtrl->setImageAssetID(editable ? sculpt_params->getSculptTexture() : LLUUID::null);
 
-			mComboBaseType->setEnabled(!isMesh);
+			mComboBaseType->setEnabled(!is_mesh);
 
-			if (mCtrlSculptType)
-			{
-				mCtrlSculptType->setCurrentByIndex(sculpt_stitching);
-				mCtrlSculptType->setEnabled(editable && !isMesh);
-			}
+			mCtrlSculptType->setCurrentByIndex(sculpt_stitching);
+			mCtrlSculptType->setEnabled(editable && !is_mesh);
 
-			if (mCtrlSculptMirror)
-			{
-				mCtrlSculptMirror->set(sculpt_mirror);
-				mCtrlSculptMirror->setEnabled(editable);
-			}
+			mCtrlSculptMirror->set(sculpt_mirror);
+			mCtrlSculptMirror->setEnabled(editable && !is_mesh);
 
-			if (mCtrlSculptInvert)
-			{
-				mCtrlSculptInvert->set(sculpt_invert);
-				mCtrlSculptInvert->setEnabled(editable);
-			}
+			mCtrlSculptInvert->set(sculpt_invert);
+			mCtrlSculptInvert->setEnabled(editable && !is_mesh);
 
-			if (mLabelSculptType)
-			{
-				mLabelSculptType->setEnabled(TRUE);
-			}
+			mLabelSculptType->setEnabled(!is_mesh);
 		}
 	}
 	else
@@ -1428,6 +1401,11 @@ void LLPanelObject::getState()
 		mSculptTextureRevert = LLUUID::null;
 	}
 
+	mLabelSculptType->setVisible(sculpt_texture_visible && !is_mesh);
+	mCtrlSculptType->setVisible(sculpt_texture_visible && !is_mesh);
+	mCtrlSculptMirror->setVisible(sculpt_texture_visible && !is_mesh);
+	mCtrlSculptInvert->setVisible(sculpt_texture_visible && !is_mesh);
+	mCtrlSculptTexture->setVisible(sculpt_texture_visible && !is_mesh);
 
 	//----------------------------------------------------------------------------
 
@@ -2175,7 +2153,7 @@ void LLPanelObject::sendSculpt()
 
 	if (mCtrlSculptMirror)
 	{
-		mCtrlSculptMirror->setEnabled(enabled);
+		mCtrlSculptMirror->setEnabled(enabled ? TRUE : FALSE);
 		if (mCtrlSculptMirror->get())
 		{
 			sculpt_type |= LL_SCULPT_FLAG_MIRROR;
@@ -2183,7 +2161,7 @@ void LLPanelObject::sendSculpt()
 	}
 	if (mCtrlSculptInvert)
 	{
-		mCtrlSculptInvert->setEnabled(enabled);
+		mCtrlSculptInvert->setEnabled(enabled ? TRUE : FALSE);
 		if (mCtrlSculptInvert->get())
 		{
 			sculpt_type |= LL_SCULPT_FLAG_INVERT;
@@ -2205,19 +2183,6 @@ void LLPanelObject::refresh()
 	if (mRootObject.notNull() && mRootObject->isDead())
 	{
 		mRootObject = NULL;
-	}
-
-	bool enable_mesh = gAgent.getRegion() &&
-				   !gAgent.getRegion()->getCapability("GetMesh").empty();
-
-	BOOL found = mCtrlSculptType->itemExists("Mesh");
-	if (enable_mesh && !found)
-	{
-		mCtrlSculptType->add("Mesh");
-	}
-	else if (!enable_mesh && found)
-	{
-		mCtrlSculptType->remove("Mesh");
 	}
 }
 

@@ -768,22 +768,19 @@ BOOL LLVOGrass::lineSegmentIntersect(const LLVector3& start, const LLVector3& en
 	return ret;
 }
 
-#ifdef HIGHLIGHT_GRASS_AND_TREES	// Broken for now
 void LLVOGrass::generateSilhouetteVertices(std::vector<LLVector3> &vertices,
 										   std::vector<LLVector3> &normals,
-										   std::vector<S32> &segments,
 										   const LLVector3& obj_cam_vec,
 										   const LLMatrix4& mat,
 										   const LLMatrix3& norm_mat)
 {
 	vertices.clear();
 	normals.clear();
-	segments.clear();
 	
 	F32 width  = sSpeciesTable[mSpecies]->mBladeSizeX;
 	F32 height = sSpeciesTable[mSpecies]->mBladeSizeY;
 
-	for (S32 i = 0;  i < mNumBlades; i++)
+	for (S32 i = 0; i < mNumBlades; i++)
 	{
 		F32 x   = exp_x[i] * mScale.mV[VX];
 		F32 y   = exp_y[i] * mScale.mV[VY];
@@ -819,32 +816,28 @@ void LLVOGrass::generateSilhouetteVertices(std::vector<LLVector3> &vertices,
 		position4.mV[2] += blade_height;
 
 
-		LLVector3 normal = (position1-position2) % (position2 - position3);
+		LLVector3 normal = (position1 - position2) % (position2 - position3);
 		normal.normalize();
 
 		vertices.push_back(position1 + mRegionp->getOriginAgent());
 		normals.push_back(normal);
 		vertices.push_back(position2 + mRegionp->getOriginAgent());
 		normals.push_back(normal);
-		segments.push_back(vertices.size());
 
 		vertices.push_back(position2 + mRegionp->getOriginAgent());
 		normals.push_back(normal);
 		vertices.push_back(position4 + mRegionp->getOriginAgent());
 		normals.push_back(normal);
-		segments.push_back(vertices.size());
 
 		vertices.push_back(position4 + mRegionp->getOriginAgent());
 		normals.push_back(normal);
 		vertices.push_back(position3 + mRegionp->getOriginAgent());
 		normals.push_back(normal);
-		segments.push_back(vertices.size());
 
 		vertices.push_back(position3 + mRegionp->getOriginAgent());
 		normals.push_back(normal);
 		vertices.push_back(position1 + mRegionp->getOriginAgent());
 		normals.push_back(normal);
-		segments.push_back(vertices.size());
 	}
 }
 	
@@ -853,10 +846,8 @@ void LLVOGrass::generateSilhouetteVertices(std::vector<LLVector3> &vertices,
 void LLVOGrass::generateSilhouette(LLSelectNode* nodep, const LLVector3& view_point)
 {
 	generateSilhouetteVertices(nodep->mSilhouetteVertices, nodep->mSilhouetteNormals,
-							   nodep->mSilhouetteSegments,
-							   LLVector3(0,0,0), LLMatrix4(), LLMatrix3());
+							   LLVector3(0, 0, 0), LLMatrix4(), LLMatrix3());
 
 	nodep->mSilhouetteExists = TRUE;
 	
 }
-#endif

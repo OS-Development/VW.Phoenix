@@ -3564,3 +3564,23 @@ void LLMeshRepository::buildPhysicsMesh(LLModel::Decomposition& decomp)
 		}
 	}
 }
+
+bool LLMeshRepository::meshUploadEnabled()
+{
+	LLViewerRegion *region = gAgent.getRegion();
+	if (region)
+	{
+		return region->meshUploadEnabled();
+	}
+	return false;
+}
+
+bool LLMeshRepository::meshRezEnabled()
+{
+	LLViewerRegion *region = gAgent.getRegion();
+	if (region)
+	{
+		return region->meshRezEnabled();
+	}
+	return false;
+}
