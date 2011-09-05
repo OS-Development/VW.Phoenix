@@ -385,7 +385,7 @@ void lggContactSetsFloater::drawRightClick()
 				isNonFriend++;
 		}
 	}
-	if (currentGroup != "All Groups" && currentGroup != "No Groups" && currentGroup != "")
+	if (currentGroup != "All Sets" && currentGroup != "No Sets" && currentGroup != "")
 	{
 		drawRemove = TRUE;
 		extras += 2;
@@ -1213,7 +1213,7 @@ void lggContactSetsFloater::draw()
 			LLColor4 color = LGGContactSets::getInstance()->getGroupColor(cg);
 			if(!LGGContactSets::getInstance()->isFriendInGroup(agent_id,cg))
 				color = LGGContactSets::getInstance()->getDefaultColor();
-			if(showOtherGroups||(currentGroup()=="All Groups"))color = LGGContactSets::getInstance()->
+			if(showOtherGroups||(currentGroup()=="All Sets"))color = LGGContactSets::getInstance()->
 				getFriendColor(agent_id,cg);
 
 			color = LGGContactSets::toneDownColor(color,(!iAMSelected&&doColorChange)?((F32)bubble+.001)/(1.0f):1.0f,TRUE);
@@ -1245,7 +1245,7 @@ void lggContactSetsFloater::draw()
 					std::string oGroupName = groupsIsIn[gr];
 					sizePerOGroup=
 						LLFontGL::getFontSansSerifSmall()->getWidth(oGroupName)+8;
-					LLColor4 oGroupColor = LGGContactSets::getInstance()->getGroupColor(oGroupName);
+					LLColor4 oGroupColor = LGGContactSets::toneDownColor(LGGContactSets::getInstance()->getGroupColor(oGroupName),1.0f,TRUE);
 					LLRect oGroupArea;
 					oGroupArea.setLeftTopAndSize(w,box.mBottom+12+breathingRoom,sizePerOGroup,12+(breathingRoom/2));
 					gGL.color4fv(oGroupColor.mV);			
