@@ -169,6 +169,30 @@ private:
 	LLMediaCtrl*		mWebBrowser;
 };
 
+class LLPanelAvatarSLUM : 
+	public LLPanelAvatarTab
+	, public LLViewerMediaObserver
+{
+public:
+	LLPanelAvatarSLUM(const std::string& name, const LLRect& rect, LLPanelAvatar* panel_avatar);
+	/*virtual*/ ~LLPanelAvatarSLUM();
+	/*virtual*/ BOOL	postBuild(void);
+
+	/*virtual*/ void refresh();
+
+	void navigateStart(const LLUUID& avatar_id);
+	static void callbackSLUMAvatarName(const LLUUID& id, const std::string& full_name, bool is_group, void* data);
+
+	// inherited from LLViewerMediaObserver
+	/*virtual*/ void handleMediaEvent(LLPluginClassMedia* self, EMediaEvent event);
+
+private:
+	std::string	mHome;
+	std::string	mNavigateTo;
+	LLMediaCtrl*	mWebBrowser;
+	LLFrameTimer 	mPerformanceTimer;
+	bool 		mFirstNavigate;
+};
 
 class LLPanelAvatarAdvanced : public LLPanelAvatarTab
 {
@@ -356,6 +380,7 @@ private:
 	static	void*	createPanelAvatarClassified(void*	data);
 	static	void*	createPanelAvatarFirstLife(void*	data);
 	static	void*	createPanelAvatarNotes(void*	data);
+	static	void*	createPanelAvatarSLUM(void*	data);
 
 public:
 	LLPanelAvatarSecondLife*	mPanelSecondLife;
@@ -365,6 +390,7 @@ public:
 	LLPanelAvatarNotes*			mPanelNotes;
 	LLPanelAvatarFirstLife*		mPanelFirstLife;
 	LLPanelAvatarWeb*			mPanelWeb;
+	LLPanelAvatarSLUM*			mPanelSLUM;
 
 	LLDropTarget* 				mDropTarget;
 

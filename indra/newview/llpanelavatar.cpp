@@ -56,6 +56,7 @@
 #include "llfloatermediabrowser.h"
 #include "llfloatermute.h"
 #include "llfloateravatarinfo.h"
+#include "llframetimer.h"
 #include "lliconctrl.h"
 #include "llinventoryview.h"
 #include "lllineeditor.h"
@@ -525,6 +526,15 @@ BOOL LLPanelAvatarWeb::postBuild(void)
 	return TRUE;
 }
 
+BOOL LLPanelAvatarSLUM::postBuild(void)
+{
+	mWebBrowser = getChild<LLMediaCtrl>("slumfeed_html");
+	mWebBrowser->addObserver(this);
+	mWebBrowser->setTrusted( true );
+
+	return TRUE;
+}
+
 BOOL LLPanelAvatarClassified::postBuild(void)
 {
 	childSetAction("New...",onClickNew,NULL);
@@ -745,6 +755,99 @@ void LLPanelAvatarWeb::handleMediaEvent(LLPluginClassMedia* self, EMediaEvent ev
 	}
 }
 
+//-----------------------------------------------------------------------------
+// LLPanelAvatarSLUM
+//-----------------------------------------------------------------------------
+LLPanelAvatarSLUM::LLPanelAvatarSLUM(const std::string& name, const LLRect& rect, 
+								   LLPanelAvatar* panel_avatar)
+:	LLPanelAvatarTab(name, rect, panel_avatar),
+	mWebBrowser(NULL)
+{
+}
+
+LLPanelAvatarSLUM::~LLPanelAvatarSLUM()
+{
+}
+
+void LLPanelAvatarSLUM::refresh()
+{
+	if (mNavigateTo != "")
+	{
+		llinfos << "Loading " << mNavigateTo << llendl;
+		mWebBrowser->navigateTo( mNavigateTo );
+		mNavigateTo = "";
+	}
+}
+
+// static
+void LLPanelAvatarSLUM::callbackSLUMAvatarName(const LLUUID& id, const std::string& full_name, bool is_group, void* data)
+{
+	LLPanelAvatarSLUM* self = (LLPanelAvatarSLUM*)data;
+	if (self)
+	{
+		std::string url = getProfileURL(gCacheName->buildUsername(full_name));
+		self->mFirstNavigate = true;
+		self->mPerformanceTimer.start();
+		self->mWebBrowser->navigateTo( url );
+	}
+}
+
+void LLPanelAvatarSLUM::navigateStart(const LLUUID& avatar_id)
+{
+	if (mWebBrowser)
+	{
+		std::string av_name;
+		if (gCacheName->getFullName(avatar_id, av_name))
+		{
+			std::string url = getProfileURL(gCacheName->buildUsername(av_name));
+			mFirstNavigate = true;
+			mPerformanceTimer.start();
+			mWebBrowser->navigateTo( url );
+		}
+		else
+		{
+			gCacheName->get(avatar_id, false, boost::bind(&LLPanelAvatarSLUM::callbackSLUMAvatarName, _1, _2, _3, (void*)this));
+		}
+	}
+}
+
+void LLPanelAvatarSLUM::handleMediaEvent(LLPluginClassMedia* self, EMediaEvent event)
+{
+	switch(event)
+	{
+		case MEDIA_EVENT_STATUS_TEXT_CHANGED:
+			childSetText("status_text", self->getStatusText() );
+		break;
+		
+		case MEDIA_EVENT_LOCATION_CHANGED:
+			// Debugging info to console
+			llinfos << self->getLocation() << llendl;
+		break;
+		
+		case MEDIA_EVENT_NAVIGATE_BEGIN:
+		{
+			if (mFirstNavigate)
+			{
+				mFirstNavigate = false;
+			}
+			else
+			{
+				mPerformanceTimer.start();
+			}
+		}
+		break;
+		
+		case MEDIA_EVENT_NAVIGATE_COMPLETE:
+		{
+			childSetText("status_text", llformat("Load Time: %.2f seconds", mPerformanceTimer.getElapsedTimeF32()));
+		}
+		break;
+		
+		default:
+			// Having a default case makes the compiler happy.
+		break;
+	}
+}
 
 //-----------------------------------------------------------------------------
 // LLPanelAvatarAdvanced
@@ -1337,6 +1440,7 @@ LLPanelAvatar::LLPanelAvatar(
 	mPanelNotes(NULL),
 	mPanelFirstLife(NULL),
 	mPanelWeb(NULL),
+	mPanelSLUM(NULL),
 	mDropTarget(NULL),
 	mAvatarID(LLUUID::null),	// mAvatarID is set with 'setAvatarID()'
 	mAvatarUserName(std::string("")),
@@ -1358,6 +1462,7 @@ LLPanelAvatar::LLPanelAvatar(
 	factory_map["Classified"] = LLCallbackMap(createPanelAvatarClassified, this);
 	factory_map["1st Life"] = LLCallbackMap(createPanelAvatarFirstLife, this);
 	factory_map["My Notes"] = LLCallbackMap(createPanelAvatarNotes, this);
+	factory_map["SLUMfeed"] = LLCallbackMap(createPanelAvatarSLUM, this);
 	
 	LLUICtrlFactory::getInstance()->buildPanel(this, "panel_avatar.xml", &factory_map);
 
@@ -1572,6 +1677,7 @@ void LLPanelAvatar::setAvatarID(const LLUUID &avatar_id, const std::string &name
 	mPanelSecondLife->enableControls(own_avatar && mAllowEdit);
 	mPanelWeb->enableControls(own_avatar && mAllowEdit);
 	mPanelAdvanced->enableControls(own_avatar && mAllowEdit);
+	mPanelSLUM->navigateStart(avatar_id);
 	// Teens don't have this.
 	if (mPanelFirstLife) mPanelFirstLife->enableControls(own_avatar && mAllowEdit);
 
@@ -2716,6 +2822,13 @@ void*	LLPanelAvatar::createPanelAvatarWeb(void*	data)
 	LLPanelAvatar* self = (LLPanelAvatar*)data;
 	self->mPanelWeb = new LLPanelAvatarWeb(std::string("Web"),LLRect(),self);
 	return self->mPanelWeb;
+}
+
+void*	LLPanelAvatar::createPanelAvatarSLUM(void*	data)
+{
+	LLPanelAvatar* self = (LLPanelAvatar*)data;
+	self->mPanelSLUM = new LLPanelAvatarSLUM(std::string("SLUM"),LLRect(),self);
+	return self->mPanelSLUM;
 }
 
 void*	LLPanelAvatar::createPanelAvatarInterests(void*	data)
