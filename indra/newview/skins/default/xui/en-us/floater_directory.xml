@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <floater can_close="true" can_drag_on_left="false" can_minimize="true"
-     can_resize="true" height="570" min_height="570" min_width="780"
+     can_resize="true" height="570" min_height="570" min_width="830"
      name="directory" rect_control="FloaterFindRect2" title="Search Second Life"
      width="780">
 	<tab_container bottom="-570" follows="left|top|right|bottom" height="550" left="0"
@@ -605,7 +605,7 @@ To buy direct, visit the land and click on the place name in the title bar.
 			     draw_heading="true" 
                                
 			     follows="left|top|right|bottom" height="450" left="4" mouse_opaque="true"
-			     multi_select="false" name="results" search_column="2" width="326">
+			     multi_select="false" name="results" search_column="2" width="276">
         <column label="" name="icon" width="24" />
         <column label="" name="type" width="-1" />
         <column label="Name" name="name" width="274" />
@@ -725,8 +725,8 @@ To buy direct, visit the land and click on the place name in the title bar.
 	</tab_container>
 	<panel bottom="-560" follows="right|top" height="470" left="340"
 	     name="classified_details_panel" width="440" />
-	<panel bottom="-560" follows="right|top" height="486" left="350" name="Panel Avatar"
-	     width="430" />
+	<panel bottom="-560" follows="right|top" height="486" left="300" name="Panel Avatar"
+	     width="480" />
 	<panel bottom="-560" follows="right|top" height="470" left="340"
 	     name="event_details_panel" width="440" />
 	<panel bottom="-580" follows="right|top" height="515" left="350"
