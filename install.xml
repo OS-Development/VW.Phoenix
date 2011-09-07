@@ -51,7 +51,7 @@
             <key>md5sum</key>
             <string>e6ddd0815d84733675c0fd324a8097b0</string>
             <key>url</key>
-            <uri>>http://sldev.free.fr/libraries/llconvexdecompositionstub-0.3-darwin-20110421.tar.bz2</uri>
+            <uri>http://sldev.free.fr/libraries/llconvexdecompositionstub-0.3-darwin-20110421.tar.bz2</uri>
           </map>
           <key>linux</key>
           <map>
