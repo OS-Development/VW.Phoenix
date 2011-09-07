@@ -12516,8 +12516,8 @@
 			<string>U32</string>
 			<key>Value</key>
 			<real>16</real>
-			<key>MeshThreadCount</key>
 		</map>
+		<key>MeshThreadCount</key>
 		<map>
 			<key>Comment</key>
 			<string>Number of threads to use for loading meshes.</string>
