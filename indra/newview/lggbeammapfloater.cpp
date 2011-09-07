@@ -353,7 +353,7 @@ void lggBeamMapFloater::onClickLoad(void* data)
 		lggPoint p;
 		LLVector3 vec(beamData["offset"]);
 		vec *= (scale)/(8.0f/(rec.getWidth()));
-		LLColor4 color = beamData["color"];
+		LLColor4 color = LLColor4(beamData["color"]);
 		p.c = color;
 		p.x = (S32)(vec.mV[VY]+rec.getCenterX());
 		p.y = (S32)(vec.mV[VZ]+rec.getCenterY());

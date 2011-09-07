@@ -1344,7 +1344,7 @@ void LLFloaterAvatarList::refreshAvatarList()
 	static LLCachedControl<bool> sPhoenixAvatarListColorEntries(gSavedSettings, "PhoenixAvatarListColorEntries");
 	LLColor4 friend_color;
 	LLColor4 muted_color;
-	LLColor4 marked_color = LLColor4::cyan.getValue();
+	LLColor4 marked_color = LLColor4::cyan;
 	if(sPhoenixAvatarListColorEntries)
 	{
 		static LLCachedControl<LLColor4U> sMapFriend(gColors, "MapFriend");
