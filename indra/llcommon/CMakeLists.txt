@@ -246,6 +246,9 @@ target_link_libraries(
     )
 
 if (DARWIN)
+    include(CMakeFindFrameworks)
+    find_library(CARBON_LIBRARY Carbon)
+    target_link_libraries(llcommon ${CARBON_LIBRARY})
     # Don't embed a full path in the library's install name
     set_target_properties(
         llcommon

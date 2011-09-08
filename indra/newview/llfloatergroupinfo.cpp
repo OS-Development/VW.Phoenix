@@ -221,8 +221,7 @@ void LLFloaterGroupInfo::showFromUUID(const LLUUID& group_id,
 		{
 			// Look up the group name.
 			// The callback will insert it into the title.
-			const bool is_group = true;
-			gCacheName->get(group_id, is_group, callbackLoadGroupName);
+			gCacheName->get(group_id, true, boost::bind(&callbackLoadGroupName,_1,_2,_3));
 		}
 	}
 
