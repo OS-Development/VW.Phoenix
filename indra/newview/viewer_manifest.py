@@ -653,6 +653,15 @@ class DarwinManifest(ViewerManifest):
                                 "libaprutil-1.0.3.8.dylib",
                                 "libexpat.0.5.0.dylib"):
                     self.path(os.path.join(libdir, libfile), libfile)
+
+                # Mesh 3rd party libs needed for auto LOD and collada reading
+                try:
+                    for libfile in ("libcollada14dom.dylib",
+                                    "libGLOD.dylib"):
+                        self.path(os.path.join(libdir, libfile), libfile)
+                except RuntimeError, err:
+                    print err.message
+                    print "Skipping COLLADA and GLOD libraries (assumming linked statically)"
                 
                 #libfmodwrapper.dylib
                 self.path(self.args['configuration'] + "/libfmodwrapper.dylib", "libfmodwrapper.dylib")
