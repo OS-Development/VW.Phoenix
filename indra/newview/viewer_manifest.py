@@ -290,16 +290,16 @@ class WindowsManifest(ViewerManifest):
                 print "WARNING: not copying VC runtimes to staging area, this will fail if you make an installer from this staging"
 
             # For google-perftools tcmalloc allocator.
-			if self.prefix(src="../../libraries/i686-win32/lib/release", dst=""):
-				try:
-					if self.args['configuration'].lower() == 'debug':
-						self.path('libtcmalloc_minimal-debug.dll')
-					else:
-						self.path('libtcmalloc_minimal.dll')
-				except:
-					print "Skipping libtcmalloc_minimal.dll"
+            if self.prefix(src="../../libraries/i686-win32/lib/release", dst=""):
+                try:
+                    if self.args['configuration'].lower() == 'debug':
+                        self.path('libtcmalloc_minimal-debug.dll')
+                    else:
+                        self.path('libtcmalloc_minimal.dll')
+                except:
+                    print "Skipping libtcmalloc_minimal.dll"
 
-				self.end_prefix()
+                self.end_prefix()
 
         self.path(src="licenses-win32.txt", dst="licenses.txt")
         self.path("featuretable.txt")
