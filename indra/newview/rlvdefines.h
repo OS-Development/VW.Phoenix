@@ -76,11 +76,11 @@ const S32 RLV_VERSION_BUILD = 1;
 // Implementation version
 const S32 RLVa_VERSION_MAJOR = 1;
 const S32 RLVa_VERSION_MINOR = 1;
-const S32 RLVa_VERSION_PATCH = 3;
-const S32 RLVa_VERSION_BUILD = 2;
+const S32 RLVa_VERSION_PATCH = 4;
+const S32 RLVa_VERSION_BUILD = 0;
 
- //Uncomment before a final release
-#define RLV_RELEASE
+// Uncomment before a final release
+//#define RLV_RELEASE
 
 // The official viewer version we're patching against
 #define RLV_MAKE_TARGET(x, y, z)	((x << 16) | (y << 8) | z)
