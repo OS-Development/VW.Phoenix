@@ -205,7 +205,6 @@ if (LINUX)
     add_definitions(-fvisibility=hidden)
     # don't catch SIGCHLD in our base application class for the viewer - some of our 3rd party libs may need their *own* SIGCHLD handler to work.  Sigh!  The viewer doesn't need to catch SIGCHLD anyway.
     add_definitions(-DLL_IGNORE_SIGCHLD)
-    add_definitions(-march=pentium4 -mfpmath=sse)
     if (NOT STANDALONE)
       add_definitions(-march=i686)
       # this stops us requiring a really recent glibc at runtime (O RLY?)

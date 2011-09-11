@@ -35,6 +35,7 @@
 #include "llfloaterbuyland.h"
 
 // viewer includes
+#include "llxmlrpctransaction.h" // must be before llagent.h or "error: multiple types in one declaration" will happen.
 #include "llagent.h"
 #include "llbutton.h"
 #include "llcachename.h"
@@ -62,7 +63,7 @@
 #include "llweb.h"
 #include "llwindow.h"
 #include "llworld.h"
-#include "llxmlrpctransaction.h"
+
 #include "llviewernetwork.h"
 #include "roles_constants.h"
 
