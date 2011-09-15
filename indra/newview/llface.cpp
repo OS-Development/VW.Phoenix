@@ -1501,7 +1501,7 @@ BOOL LLFace::getGeometryVolume(const LLVolume& volume,
 		LLVector4a src;
 
 		U32 vec[4];
-		vec[0] = vec[1] = vec[2] = vec[3] = color.mAll;
+		vec[0] = vec[1] = vec[2] = vec[3] = color.asRGBA();
 
 		src.loadua((F32*) vec);
 
