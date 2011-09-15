@@ -390,6 +390,10 @@ void LLFloaterInspect::drawTextureEntry(const LLViewerTexture* tex, const U8 i)
 					{
 						gCacheName->get(mTex[i].uploaderkey, false, boost::bind(&LLFloaterInspect::callbackLoadAvatarName, _1, _2, _3));
 					}
+					else
+					{
+						mTex[i].line2->setText(uploadName);
+					}
 
 					if (decodedComment.find("z")!=decodedComment.end()) 
 					{
