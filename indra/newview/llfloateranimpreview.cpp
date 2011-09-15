@@ -238,8 +238,7 @@ BOOL LLFloaterAnimPreview::postBuild()
 		// now load bvh file
 		S32 file_size;
 		
-		LLAPRFile infile;
-		infile.open(mFilenameAndPath, LL_APR_RB, NULL, &file_size);
+		LLAPRFile infile(mFilenameAndPath, LL_APR_RB, &file_size);
 		
 		if (!infile.getFileHandle())
 		{

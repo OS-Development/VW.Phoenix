@@ -441,8 +441,7 @@ public:
 	void fire(const LLUUID &inv_item)
 	{
 		S32 file_size;
-		LLAPRFile infile ;
-		infile.open(data->filename, LL_APR_RB, NULL, &file_size);
+		LLAPRFile infile(data->filename, LL_APR_RB, &file_size);
 		if (infile.getFileHandle())
 		{
 			//cmdline_printchat("got file handle @ postinv");
@@ -605,8 +604,7 @@ void ImportTracker::send_inventory(LLSD& prim)
 					{
 						std::string url = gAgent.getRegion()->getCapability("NewFileAgentInventory");
 						S32 file_size;
-						LLAPRFile infile ;
-						infile.open(data->filename, LL_APR_RB, NULL, &file_size);
+						LLAPRFile infile(data->filename, LL_APR_RB, &file_size);
 						if (infile.getFileHandle())
 						{
 							//cmdline_printchat("got file handle");
@@ -639,8 +637,7 @@ void ImportTracker::send_inventory(LLSD& prim)
 					//cmdline_printchat("case cloth/bodypart");
 					{
 						S32 file_size;
-						LLAPRFile infile ;
-						infile.open(data->filename, LL_APR_RB, NULL, &file_size);
+						LLAPRFile infile(data->filename, LL_APR_RB, &file_size);
 						if (infile.getFileHandle())
 						{
 							//cmdline_printchat("got file handle @ cloth");

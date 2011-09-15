@@ -32,7 +32,6 @@
 #include "linden_common.h"
 #include "indra_constants.h"
 
-#include "llapr.h"
 #include "llerrorcontrol.h"
 
 #include <math.h>

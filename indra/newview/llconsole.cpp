@@ -69,7 +69,7 @@ LLConsole::LLConsole(const std::string& name, const LLRect &rect,
 	mFont(LLFontGL::getFontSansSerif()),
 	mConsoleWidth(0),
 	mConsoleHeight(0),
-	mQueueMutex(NULL)
+	mQueueMutex()
 {
 	mTimer.reset();
 

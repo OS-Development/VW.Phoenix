@@ -155,7 +155,7 @@ void LLFloaterBlacklist::addEntry(LLUUID key, LLSD data)
 			      wav_path= gDirUtilp->getExpandedFilename(MM_SNDLOC,sound_id.asString()) + ".dsf";
 		  else
 			      wav_path= gDirUtilp->getExpandedFilename(LL_PATH_CACHE,sound_id.asString()) + ".dsf";
-		  if(LLAPRFile::isExist(wav_path, NULL, LL_APR_RPB))
+		  if(LLAPRFile::isExist(wav_path, LL_APR_RPB))
 		    LLAPRFile::remove(wav_path);
 		  gAudiop->removeAudioData(sound_id);
 		}

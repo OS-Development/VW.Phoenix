@@ -35,7 +35,7 @@
 
 #include "lltimer.h" // for ms_sleep()
 #include "llpumpio.h"
-#include "llapr.h"
+
 #include "llerrorcontrol.h"
 #include "llpluginclassmedia.h"
 
@@ -442,9 +442,6 @@ void glutMouseButton( int button, int state, int x, int y )
 //
 int main( int argc, char* argv[] )
 {
-
-	ll_init_apr();
-
 	// Set up llerror logging 
 	{
 		LLError::initForApplication(".");
