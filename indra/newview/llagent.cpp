@@ -8138,9 +8138,9 @@ void LLAgent::setWearable( LLInventoryItem* new_item, LLWearable* new_wearable )
 
 	LLWearable* old_wearable = mWearableEntry[ type ].mWearable;
 
-// [RLVa:KB] - Checked: 2009-07-07 (RLVa-1.0.0d)
+// [RLVa:KB] - Checked: 2009-07-07 (RLVa-1.1.4a)
 	// Block if: we can't wear on that layer; or we're already wearing something there we can't take off
-	if ( (rlv_handler_t::isEnabled()) && (!gRlvWearableLocks.canWear(type)) )
+	if ( (rlv_handler_t::isEnabled()) && (!gRlvWearableLocks.canWear(dynamic_cast<const LLViewerInventoryItem*>(new_item))) )
 	{
 		return;
 	}

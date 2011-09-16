@@ -4893,8 +4893,8 @@ void wear_inventory_category_on_avatar_step3(LLWearableHoldingPattern* holder, B
 //						item->setAssetUUID(wearable->getID());
 //						item->updateAssetOnServer();
 //					}
-// [RLVa:KB] - Checked: 2010-09-28 (RLVa-1.1.3b) | Modified: RLVa-1.1.3b
-					if (!gRlvWearableLocks.canWear(wearable->getType()))
+// [RLVa:KB] - Checked: 2010-09-28 (RLVa-1.1.3b) | Modified: RLVa-1.1.4a
+					if (!gRlvWearableLocks.canWear(item))
 					{
 						continue;
 					}
@@ -5231,6 +5231,13 @@ void LLWearableBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 		
 		items.push_back(std::string("Wearable Wear"));
 		items.push_back(std::string("Wearable Edit"));
+// [RLVa:KB] - Checked: 2011-09-16 (RLVa-1.1.4a) | Added: RLVa-1.1.4a
+		if ( (rlv_handler_t::isEnabled()) && (!gRlvWearableLocks.canRemove(item)) )
+		{
+			disabled_items.push_back(std::string("Wearable Wear"));
+			disabled_items.push_back(std::string("Wearable Edit"));
+		}
+// [/RLVa:KB]
 
 		if ((flags & FIRST_SELECTED_ITEM) == 0)
 		{
@@ -5249,6 +5256,10 @@ void LLWearableBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 		if( item && (item->getType() == LLAssetType::AT_CLOTHING) )
 		{
 			items.push_back(std::string("Take Off"));
+// [RLVa:KB] - Checked: 2011-09-16 (RLVa-1.1.4a) | Added: RLVa-1.1.4a
+			if ( (rlv_handler_t::isEnabled()) && (!gRlvWearableLocks.canRemove(item)) )
+				disabled_items.push_back(std::string("Take Off"));
+// [/RLVa:KB]
 			/*menu.append(new LLMenuItemCallGL("Take Off",
 											 LLWearableBridge::onRemoveFromAvatar,
 											 LLWearableBridge::canRemoveFromAvatar,
