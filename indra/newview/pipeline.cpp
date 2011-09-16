@@ -5907,7 +5907,7 @@ void LLPipeline::resetVertexBuffers()
 	sNoAlpha = gSavedSettings.getBOOL("RenderNoAlpha");
 	sAutoMaskAlphaDeferred = gSavedSettings.getBOOL("RenderAutoMaskAlphaDeferred");
 	sAutoMaskAlphaNonDeferred = gSavedSettings.getBOOL("RenderAutoMaskAlphaNonDeferred");
-	sRenderMaxVBOSize = (U32)gSavedSettings.getS32("RenderMaxVBOSize");
+	sRenderMaxVBOSize = gSavedSettings.getU32("RenderMaxVBOSize");
 	sTextureBindTest = gSavedSettings.getBOOL("RenderDebugTextureBind");
 }
 
