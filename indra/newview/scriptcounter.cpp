@@ -81,7 +81,7 @@ void ScriptCounter::init()
 LLVOAvatar* find_avatar_from_object( LLViewerObject* object );
 
 LLVOAvatar* find_avatar_from_object( const LLUUID& object_id );
-void ScriptCounter::checkCount()
+void ScriptCounter::checkCount(LLUUID targetID)
 {
   toCount--;
   if(!toCount)
@@ -89,7 +89,24 @@ void ScriptCounter::checkCount()
     gMessageSystem->mPacketRing.setOutBandwidth(0.0);
     gMessageSystem->mPacketRing.setUseOutThrottle(FALSE);
     std::string resultStr;
-    resultStr="Scripts Counted: ";
+	std::string name;
+	LLAvatarName avatar_name;
+	if (LLAvatarNameCache::get(targetID, &avatar_name))
+	{
+		static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+		switch (sPhoenixNameSystem)
+		{
+			case 0 : name = avatar_name.getLegacyName(); break;
+			case 1 : name = (avatar_name.mIsDisplayNameDefault ? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
+			case 2 : name = avatar_name.mDisplayName; break;
+			default : name = avatar_name.getLegacyName(); break;
+		}
+		resultStr="Scripts counted on " + name + ": ";
+	}
+	else
+	{
+		resultStr="Scripts Counted: ";
+	}
     sstr.str("");
     sstr << scriptcount;
     resultStr+=sstr.str();
@@ -159,7 +176,7 @@ public:
 		memory=atoi(data[1].asString().c_str());
 		ScriptCounter::scriptcount+=count;
 		ScriptCounter::scriptMemory+=memory;
-		ScriptCounter::checkCount();
+		ScriptCounter::checkCount(targetID);
 	    }
 	}
 
