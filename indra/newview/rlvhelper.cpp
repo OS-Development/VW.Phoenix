@@ -1,6 +1,6 @@
 /** 
  *
- * Copyright (c) 2009-2010, Kitty Barnett
+ * Copyright (c) 2009-2011, Kitty Barnett
  * 
  * The source code in this file is provided to you under the terms of the 
  * GNU General Public License, version 2.0, but WITHOUT ANY WARRANTY;
@@ -247,7 +247,7 @@ bool RlvCommandOptionGetPath::getItemIDs(const LLViewerJointAttachment* pAttachP
 }
 
 // Checked: 2010-11-30 (RLVa-1.3.0b) | Modified: RLVa-1.3.0b
-bool RlvCommandOptionGetPath::getItemIDs(LLWearableType::EType wtType, uuid_vec_t& idItems, bool fClear)
+bool RlvCommandOptionGetPath::getItemIDs(EWearableType wtType, uuid_vec_t& idItems, bool fClear)
 {
 	if (fClear)
 		idItems.clear();

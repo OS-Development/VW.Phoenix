@@ -1,6 +1,6 @@
 /** 
  *
- * Copyright (c) 2009-2010, Kitty Barnett
+ * Copyright (c) 2009-2011, Kitty Barnett
  * 
  * The source code in this file is provided to you under the terms of the 
  * GNU General Public License, version 2.0, but WITHOUT ANY WARRANTY;
@@ -80,7 +80,7 @@ RlvInventory::~RlvInventory()
 // Checked: 2011-03-28 (RLVa-1.3.0g) | Added: RLVa-1.3.0g
 void RlvInventory::changed(U32 mask)
 {
-	const LLInventoryModel::changed_items_t& idsChanged = gInventory.getChangedIDs();
+	const std::set<LLUUID>& idsChanged = gInventory.getChangedIDs();
 	if (std::find(idsChanged.begin(), idsChanged.end(), m_idRlvRoot) != idsChanged.end())
 	{
 		gInventory.removeObserver(this);

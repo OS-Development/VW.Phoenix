@@ -1,6 +1,6 @@
 /** 
  *
- * Copyright (c) 2009-2010, Kitty Barnett
+ * Copyright (c) 2009-2011, Kitty Barnett
  * 
  * The source code in this file is provided to you under the terms of the 
  * GNU General Public License, version 2.0, but WITHOUT ANY WARRANTY;
@@ -173,7 +173,7 @@ public:
 	const uuid_vec_t& getItemIDs() const { return m_idItems; }
 
 	static bool getItemIDs(const LLViewerJointAttachment* pAttachPt, uuid_vec_t& idItems, bool fClear = true);
-	static bool getItemIDs(LLWearableType::EType wtType, uuid_vec_t& idItems, bool fClear = true);
+	static bool getItemIDs(EWearableType wtType, uuid_vec_t& idItems, bool fClear = true);
 
 protected:
 	bool       m_fValid;

@@ -1,6 +1,6 @@
 /** 
  *
- * Copyright (c) 2009-2010, Kitty Barnett
+ * Copyright (c) 2009-2011, Kitty Barnett
  * 
  * The source code in this file is provided to you under the terms of the 
  * GNU General Public License, version 2.0, but WITHOUT ANY WARRANTY;
@@ -15,11 +15,9 @@
  */
 
 #include "llviewerprecompiledheaders.h"
-#include "llappearancemgr.h"
 #include "llattachmentsmgr.h"
-#include "llinventoryobserver.h"
-#include "lloutfitobserver.h"
 #include "llviewerobjectlist.h"
+#include "cofmgr.h"
 #include "pipeline.h"
 
 #include "rlvhelper.h"
@@ -944,7 +942,7 @@ RlvFolderLocks gRlvFolderLocks;
 RlvFolderLocks::RlvFolderLocks()
 	: m_fLookupDirty(false), m_fLockedRoot(false)
 {
-	LLOutfitObserver::instance().addCOFChangedCallback(boost::bind(&RlvFolderLocks::onNeedsLookupRefresh, this));
+	LLCOFObserver::instance().addCOFChangedCallback(boost::bind(&RlvFolderLocks::onNeedsLookupRefresh, this));
 	RlvInventory::instance().addSharedRootIDChangedCallback(boost::bind(&RlvFolderLocks::onNeedsLookupRefresh, this));
 }
 
@@ -1000,7 +998,7 @@ bool RlvFolderLocks::getLockedFolders(const folderlock_source_t& lockSource, LLI
 			break;
 		case ST_ROOTFOLDER:
 			{
-				LLViewerInventoryCategory* pFolder = gInventory.getCategory(gInventory.getRootFolderID());
+				LLViewerInventoryCategory* pFolder = gInventory.getCategory(gAgent.getInventoryRootID());
 				if (pFolder)
 					lockFolders.push_back(pFolder);
 			}
@@ -1017,13 +1015,13 @@ bool RlvFolderLocks::getLockedFolders(const folderlock_source_t& lockSource, LLI
 		case ST_WEARABLETYPE:
 			{
 				RLV_ASSERT( ((ST_ATTACHMENTPOINT == lockSource.first) && (typeid(S32) == lockSource.second.type())) || 
-					        ((ST_WEARABLETYPE == lockSource.first) && (typeid(LLWearableType::EType) == lockSource.second.type())) );
+					        ((ST_WEARABLETYPE == lockSource.first) && (typeid(EWearableType) == lockSource.second.type())) );
 
 				uuid_vec_t idItems;
 				if (ST_ATTACHMENTPOINT == lockSource.first)
 					RlvCommandOptionGetPath::getItemIDs(RlvAttachPtLookup::getAttachPoint(boost::get<S32>(lockSource.second)), idItems);
 				else if (ST_WEARABLETYPE == lockSource.first)
-					RlvCommandOptionGetPath::getItemIDs(boost::get<LLWearableType::EType>(lockSource.second), idItems);
+					RlvCommandOptionGetPath::getItemIDs(boost::get<EWearableType>(lockSource.second), idItems);
 
 				LLInventoryModel::cat_array_t itemFolders;
 				if (RlvInventory::instance().getPath(idItems, itemFolders))
@@ -1109,7 +1107,7 @@ bool RlvFolderLocks::isLockedFolder(const LLUUID& idFolder, ERlvLockMask eLockTy
 		refreshLockedLookups();
 
 	// Walk up the folder tree and check if anything has 'idFolder' locked
-	std::list<LLUUID> idsRlvObjRem, idsRlvObjAdd; const LLUUID& idFolderRoot = gInventory.getRootFolderID(); LLUUID idFolderCur = idFolder;
+	std::list<LLUUID> idsRlvObjRem, idsRlvObjAdd; const LLUUID& idFolderRoot = gAgent.getInventoryRootID(); LLUUID idFolderCur = idFolder;
 	while (idFolderRoot != idFolderCur)
 	{
 		// Iterate over any folder locks for 'idFolderCur'
@@ -1171,7 +1169,7 @@ void RlvFolderLocks::refreshLockedLookups() const
 	{
 		const folderlock_descr_t* pLockDescr = *itFolderLock;
 
-		LLInventoryModel::cat_array_t lockedFolders; const LLUUID& idFolderRoot = gInventory.getRootFolderID();
+		LLInventoryModel::cat_array_t lockedFolders; const LLUUID& idFolderRoot = gAgent.getInventoryRootID();
 		if (getLockedFolders(pLockDescr->lockSource, lockedFolders))
 		{
 			for (S32 idxFolder = 0, cntFolder = lockedFolders.count(); idxFolder < cntFolder; idxFolder++)
@@ -1193,7 +1191,7 @@ void RlvFolderLocks::refreshLockedLookups() const
 	m_LockedWearableRem.clear();
 
 	LLInventoryModel::item_array_t lockedItems;
-	if (getLockedItems(LLAppearanceMgr::instance().getCOF(), lockedItems, true))
+	if (getLockedItems(LLCOFMgr::instance().getCOF(), lockedItems, true))
 	{
 		for (S32 idxItem = 0, cntItem = lockedItems.count(); idxItem < cntItem; idxItem++)
 		{

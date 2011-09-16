@@ -1,6 +1,6 @@
 /** 
  *
- * Copyright (c) 2009-2010, Kitty Barnett
+ * Copyright (c) 2009-2011, Kitty Barnett
  * 
  * The source code in this file is provided to you under the terms of the 
  * GNU General Public License, version 2.0, but WITHOUT ANY WARRANTY;
@@ -301,7 +301,7 @@ public:
 		ST_ATTACHMENT = 0x01, ST_ATTACHMENTPOINT = 0x02, ST_FOLDER = 0x04, ST_ROOTFOLDER = 0x08,
 		ST_SHAREDPATH = 0x10, ST_WEARABLETYPE = 0x20, ST_NONE= 0x00, ST_MASK_ANY = 0xFF
 	};
-	typedef boost::variant<LLUUID, std::string, S32, LLWearableType::EType> lock_source_t;
+	typedef boost::variant<LLUUID, std::string, S32, EWearableType> lock_source_t;
 	typedef std::pair<ELockSourceType, lock_source_t> folderlock_source_t;
 	// Specifies options for the folder lock
 	enum ELockPermission { PERM_ALLOW = 0x1, PERM_DENY = 0x2, PERM_MASK_ANY = 0x3 };
@@ -394,7 +394,7 @@ extern RlvFolderLocks gRlvFolderLocks;
 // Checked: 2010-11-30 (RLVa-1.4.0b) | Added: RLVa-1.4.0b
 inline LLViewerJointAttachment* RlvAttachPtLookup::getAttachPoint(S32 idxAttachPt)
 {
-	return (isAgentAvatarValid()) ? get_if_there(gAgentAvatarp->mAttachmentPoints, idxAttachPt, (LLViewerJointAttachment*)NULL) : NULL;
+	return (gAgent.getAvatarObject()) ? get_if_there(gAgent.getAvatarObject()->mAttachmentPoints, idxAttachPt, (LLViewerJointAttachment*)NULL) : NULL;
 }
 
 // Checked: 2010-03-03 (RLVa-1.1.3a) | Modified: RLVa-0.2.0d
@@ -567,7 +567,7 @@ inline bool RlvWearableLocks::isLockedWearable(const LLWearable* pWearable) cons
 	RLV_ASSERT(pWearable);
 	return 
 		(pWearable) &&
-		( (isLockedWearableType(pWearable->getType(), RLV_LOCK_REMOVE)) || (gRlvFolderLocks.isLockedWearable(pWearable->getItemID())) );
+		( (isLockedWearableType(pWearable->getType(), RLV_LOCK_REMOVE)) || (gRlvFolderLocks.isLockedWearable(gAgent.getWearableItem(pWearable->getType()))) );
 }
 
 // Checked: 2010-03-19 (RLVa-1.2.0c) | Added: RLVa-1.2.0a

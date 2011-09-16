@@ -1,6 +1,6 @@
 /** 
  *
- * Copyright (c) 2009-2010, Kitty Barnett
+ * Copyright (c) 2009-2011, Kitty Barnett
  * 
  * The source code in this file is provided to you under the terms of the 
  * GNU General Public License, version 2.0, but WITHOUT ANY WARRANTY;
@@ -19,6 +19,7 @@
 
 #include "llmemory.h"
 #include "llviewerinventory.h"
+#include <boost/signals2.hpp>
 
 #include "rlvhelper.h"
 #include "rlvlocks.h"

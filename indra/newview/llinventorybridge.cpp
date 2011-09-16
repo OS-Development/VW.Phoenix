@@ -2011,7 +2011,7 @@ BOOL LLFolderBridge::isItemRenameable() const
 //	    cat->getOwnerID() == gAgent.getID())
 // [RLVa:KB] - Checked: 2011-03-29 (RLVa-1.3.0g) | Modified: RLVa-1.3.0g
 	if ( (cat && !LLFolderType::lookupIsProtectedType(cat->getPreferredType()) && cat->getOwnerID() == gAgent.getID()) &&
-		 ((!rlv_handler_t::isEnabled()) || (gRlvFolderLocks.canRenameFolder(id))) )
+		 ((!rlv_handler_t::isEnabled()) || (gRlvFolderLocks.canRenameFolder(mUUID))) )
 // [/RLVa:KB]
 	{
 		return TRUE;
