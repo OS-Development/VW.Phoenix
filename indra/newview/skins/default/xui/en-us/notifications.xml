@@ -5145,6 +5145,13 @@ Builds with extended hollow or extended hole size do not render properly on othe
 
   <notification
    icon="alertmodal.tga"
+   name="ShareInventory"
+   type="alertmodal">
+To share an item (or folder) with this avatar, drag it from your inventory to the 'Drop inventory item here' area in the avatar profile.
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
    name="ExportFailed"
    type="alertmodal">
 Bad permissions for the exported object. Export aborted.
