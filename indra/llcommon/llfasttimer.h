@@ -54,7 +54,7 @@ public:
 
 		// common messaging components
 		FTM_PUMP,
-		FTM_CURL,
+		FTM_ARES,
 		
 		// common simulation components
 		FTM_UPDATE_ANIMATION,

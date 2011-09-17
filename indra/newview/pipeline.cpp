@@ -2960,8 +2960,6 @@ void LLPipeline::postSort(LLCamera& camera)
 	
 	sSculptSurfaceAreaFrame = 0.0;
 
-	llpushcallstacks;
-
 	//rebuild drawable geometry
 	for (LLCullResult::sg_list_t::iterator i = sCull->beginDrawableGroups(); i != sCull->endDrawableGroups(); ++i)
 	{
@@ -2973,13 +2971,9 @@ void LLPipeline::postSort(LLCamera& camera)
 		}
 	}
 
-	llpushcallstacks;
-
 	//rebuild groups
 	sCull->assertDrawMapsEmpty();
 	rebuildPriorityGroups();
-
-	llpushcallstacks;
 
 	const S32 bin_count = 1024 * 8;
 
@@ -3084,8 +3078,6 @@ void LLPipeline::postSort(LLCamera& camera)
 		std::sort(sCull->beginAlphaGroups(), sCull->endAlphaGroups(), LLSpatialGroup::CompareDepthGreater());
 	}
 
-	llpushcallstacks;
-
 	// only render if the flag is set. The flag is only set if we are in edit mode or the toggle is set in the menus
 	static LLCachedControl<bool> beacons_always_on(gSavedSettings, "BeaconAlwaysOn");
 	if (beacons_always_on && !sShadowRender)
@@ -3169,8 +3161,6 @@ void LLPipeline::postSort(LLCamera& camera)
 			LLSelectMgr::getInstance()->getSelection()->applyToTEs(&func);
 		}
 	}
-
-	llpushcallstacks;
 }
 
 void render_hud_elements()
@@ -4037,64 +4027,6 @@ void LLPipeline::renderDebug()
 			bridge->renderDebug();
 			glPopMatrix();
 		}
-	}
-
-	static LLCachedControl<bool> debug_show_upload_cost(gSavedSettings, "DebugShowUploadCost");
-	if (debug_show_upload_cost)
-	{
-		std::set<LLUUID> textures;
-		std::set<LLUUID> sculpts;
-		std::set<LLUUID> meshes;
-
-		BOOL selected = TRUE;
-		if (LLSelectMgr::getInstance()->getSelection()->isEmpty())
-		{
-			selected = FALSE;
-		}
-
-		for (LLCullResult::sg_list_t::iterator iter = sCull->beginVisibleGroups(); iter != sCull->endVisibleGroups(); ++iter)
-		{
-			LLSpatialGroup* group = *iter;
-			LLSpatialGroup::OctreeNode* node = group->mOctreeNode;
-			for (LLSpatialGroup::OctreeNode::element_iter elem = node->getData().begin(); elem != node->getData().end(); ++elem)
-			{
-				LLDrawable* drawable = *elem;
-				LLVOVolume* volume = drawable->getVOVolume();
-				if (volume && volume->isSelected() == selected)
-				{
-					for (U32 i = 0; i < volume->getNumTEs(); ++i)
-					{
-						const LLTextureEntry* te = volume->getTE(i);
-						textures.insert(te->getID());
-					}
-
-					if (volume->isSculpted())
-					{
-						LLUUID sculpt_id = volume->getVolume()->getParams().getSculptID();
-						if (volume->isMesh())
-						{
-							meshes.insert(sculpt_id);
-						}
-						else
-						{
-							sculpts.insert(sculpt_id);
-						}
-					}
-				}
-			}
-		}
-
-		gPipeline.mDebugTextureUploadCost = textures.size() * 10;
-		gPipeline.mDebugSculptUploadCost = sculpts.size()*10;
-
-		U32 mesh_cost = 0;
-
-		for (std::set<LLUUID>::iterator iter = meshes.begin(); iter != meshes.end(); ++iter)
-		{
-			mesh_cost += gMeshRepo.getResourceCost(*iter)*10;
-		}
-
-		gPipeline.mDebugMeshUploadCost = mesh_cost;
 	}
 
 	if (hasRenderDebugMask(LLPipeline::RENDER_DEBUG_SHADOW_FRUSTA))

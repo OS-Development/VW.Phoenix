@@ -42,6 +42,7 @@
 #define LLCONVEXDECOMPINTER_STATIC 1
 
 #include "llconvexdecomposition.h"
+#include "lluploadfloaterobservers.h"
 
 class LLVOVolume;
 class LLMeshResponder;
@@ -97,6 +98,7 @@ public:
 	LLPointer<LLViewerFetchedTexture> mDiffuseMap;
 	std::string mDiffuseMapFilename;
 	std::string mDiffuseMapLabel;
+	std::string mBinding;
 	LLColor4 mDiffuseColor;
 	bool mFullbright;
 
@@ -105,7 +107,7 @@ public:
 	LLImportMaterial() 
 		: mFullbright(false) 
 	{ 
-		mDiffuseColor.set(1,1,1,1);
+		mDiffuseColor.set(1, 1, 1, 1);
 	}
 
 	LLImportMaterial(LLSD& data);
@@ -125,10 +127,13 @@ public:
 	S32 mLocalMeshID;
 
 	LLMatrix4 mTransform;
-	std::vector<LLImportMaterial> mMaterial;
+	std::map<std::string, LLImportMaterial> mMaterial;
 
-	LLModelInstance(LLModel* model, const std::string& label, LLMatrix4& transform, std::vector<LLImportMaterial>& materials)
-		: mModel(model), mLabel(label), mTransform(transform), mMaterial(materials)
+	LLModelInstance(LLModel* model,
+					const std::string& label,
+					LLMatrix4& transform,
+					std::map<std::string, LLImportMaterial>& materials)
+	:	mModel(model), mLabel(label), mTransform(transform), mMaterial(materials)
 	{
 		mLocalMeshID = -1;
 	}
@@ -166,6 +171,17 @@ public:
 		virtual void completed() = 0;
 
 		virtual void setStatusMessage(const std::string& msg);
+
+		bool isValid() const {return mPositions.size() > 2 && mIndices.size() > 2 ;}
+
+	protected:
+		//internal use
+		LLVector3 mBBox[2] ;
+		F32 mTriangleAreaThreshold ;
+
+		void assignData(LLModel* mdl) ;
+		void updateTriangleAreaThreshold() ;
+		bool isValidTriangle(U16 idx1, U16 idx2, U16 idx3) ;
 	};
 
 	LLCondition* mSignal;
@@ -184,7 +200,7 @@ public:
 	static S32 llcdCallback(const char*, S32, S32);
 	void cancel();
 
-	void setMeshData(LLCDMeshData& mesh);
+	void setMeshData(LLCDMeshData& mesh, bool vertex_based);
 	void doDecomposition();
 	void doDecompositionSingleHull();
 
@@ -211,10 +227,10 @@ public:
 	static S32 sActiveLODRequests;
 	static U32 sMaxConcurrentRequests;
 
-	LLCurlRequest* mCurlRequest;
-	LLMutex*	mMutex;
-	LLMutex*	mHeaderMutex;
-	LLCondition* mSignal;
+	LLCurlRequest*	mCurlRequest;
+	LLMutex*		mMutex;
+	LLMutex*		mHeaderMutex;
+	LLCondition*	mSignal;
 
 	bool mWaiting;
 
@@ -223,7 +239,6 @@ public:
 	mesh_header_map mMeshHeader;
 
 	std::map<LLUUID, U32> mMeshHeaderSize;
-	std::map<LLUUID, U32> mMeshResourceCost;
 
 	class HeaderRequest
 	{ 
@@ -326,7 +341,6 @@ public:
 
 	void notifyLoadedMeshes();
 	S32 getActualMeshLOD(const LLVolumeParams& mesh_params, S32 lod);
-	U32 getResourceCost(const LLUUID& mesh_params);
 
 	void loadMeshSkinInfo(const LLUUID& mesh_id);
 	void loadMeshDecomposition(const LLUUID& mesh_id);
@@ -347,6 +361,9 @@ public:
 
 class LLMeshUploadThread : public LLThread 
 {
+private:
+	S32 mMeshUploadTimeOut ; //maximum time in seconds to execute an uploading request.
+
 public:
 	class DecompRequest : public LLPhysicsDecomp::Request
 	{
@@ -376,52 +393,55 @@ public:
 
 	LLMutex*		mMutex;
 	LLCurlRequest*	mCurlRequest;
-	S32				mPendingConfirmations;
 	S32				mPendingUploads;
-	S32				mPendingCost;
 	LLVector3		mOrigin;
 	bool			mFinished;
 	bool			mUploadTextures;
 	bool			mUploadSkin;
 	bool			mUploadJoints;
-	BOOL            mDiscarded ;
+	BOOL            mDiscarded;
 
 	LLHost			mHost;
-	std::string		mUploadObjectAssetCapability;
-	std::string		mNewInventoryCapability;
+	std::string		mWholeModelFeeCapability;
+	std::string		mWholeModelUploadURL;
 
-	std::queue<LLMeshUploadData> mUploadQ;
-	std::queue<LLMeshUploadData> mConfirmedQ;
-	std::queue<LLModelInstance> mInstanceQ;
-
-	std::queue<LLTextureUploadData> mTextureQ;
-	std::queue<LLTextureUploadData> mConfirmedTextureQ;
-
-	std::map<LLViewerFetchedTexture*, LLTextureUploadData> mTextureMap;
-
-	LLMeshUploadThread(instance_list& data, LLVector3& scale, bool upload_textures,
-			bool upload_skin, bool upload_joints);
+	LLMeshUploadThread(instance_list& data,
+					   LLVector3& scale,
+					   bool upload_textures,
+					   bool upload_skin,
+					   bool upload_joints,
+					   std::string upload_url,
+					   bool do_upload = true,
+					   LLHandle<LLWholeModelFeeObserver> fee_observer = (LLHandle<LLWholeModelFeeObserver>()),
+					   LLHandle<LLWholeModelUploadObserver> upload_observer = (LLHandle<LLWholeModelUploadObserver>()));
 	~LLMeshUploadThread();
-
-	void uploadTexture(LLTextureUploadData& data);
-	void doUploadTexture(LLTextureUploadData& data);
-	void sendCostRequest(LLTextureUploadData& data);
-	void priceResult(LLTextureUploadData& data, const LLSD& content);
-	void onTextureUploaded(LLTextureUploadData& data);
-
-	void uploadModel(LLMeshUploadData& data);
-	void sendCostRequest(LLMeshUploadData& data);
-	void doUploadModel(LLMeshUploadData& data);
-	void onModelUploaded(LLMeshUploadData& data);
-	void createObjects(LLMeshUploadData& data);
-	LLSD createObject(LLModelInstance& instance);
-	void priceResult(LLMeshUploadData& data, const LLSD& content);
 
 	bool finished() { return mFinished; }
 	virtual void run();
 	void preStart();
 	void discard() ;
 	BOOL isDiscarded();
+
+	void generateHulls();
+
+	void doWholeModelUpload();
+	void requestWholeModelFee();
+
+	void wholeModelToLLSD(LLSD& dest, bool include_textures);
+
+	void decomposeMeshMatrix(LLMatrix4& transformation,
+							 LLVector3& result_pos,
+							 LLQuaternion& result_rot,
+							 LLVector3& result_scale);
+
+	void setFeeObserverHandle(LLHandle<LLWholeModelFeeObserver> observer_handle) { mFeeObserverHandle = observer_handle; }
+	void setUploadObserverHandle(LLHandle<LLWholeModelUploadObserver> observer_handle) { mUploadObserverHandle = observer_handle; }
+
+private:
+	LLHandle<LLWholeModelFeeObserver> mFeeObserverHandle;
+	LLHandle<LLWholeModelUploadObserver> mUploadObserverHandle;
+
+	bool mDoUpload; // if FALSE only model data will be requested, otherwise the model will be uploaded
 };
 
 class LLMeshRepository
@@ -454,12 +474,11 @@ public:
 
 	S32 getActualMeshLOD(const LLVolumeParams& mesh_params, S32 lod);
 	static S32 getActualMeshLOD(LLSD& header, S32 lod);
-	U32 getResourceCost(const LLUUID& mesh_params);
 	const LLMeshSkinInfo* getSkinInfo(const LLUUID& mesh_id, LLVOVolume* requesting_obj);
 	LLModel::Decomposition* getDecomposition(const LLUUID& mesh_id);
 	void fetchPhysicsShape(const LLUUID& mesh_id);
 	bool hasPhysicsShape(const LLUUID& mesh_id);
-	
+
 	void buildHull(const LLVolumeParams& params, S32 detail);
 	void buildPhysicsMesh(LLModel::Decomposition& decomp);
 
@@ -468,8 +487,15 @@ public:
 
 	LLSD& getMeshHeader(const LLUUID& mesh_id);
 
-	void uploadModel(std::vector<LLModelInstance>& data, LLVector3& scale, bool upload_textures,
-					 bool upload_skin, bool upload_joints);
+	void uploadModel(std::vector<LLModelInstance>& data,
+					 LLVector3& scale,
+					 bool upload_textures,
+					 bool upload_skin,
+					 bool upload_joints,
+					 std::string upload_url,
+					 bool do_upload = true,
+					 LLHandle<LLWholeModelFeeObserver> fee_observer = (LLHandle<LLWholeModelFeeObserver>()),
+					 LLHandle<LLWholeModelUploadObserver> upload_observer = (LLHandle<LLWholeModelUploadObserver>()));
 
 	S32 getMeshSize(const LLUUID& mesh_id, S32 lod);
 
@@ -508,13 +534,13 @@ public:
 	U32 mMeshThreadCount;
 
 	void cacheOutgoingMesh(LLMeshUploadData& data, LLSD& header);
-	
+
 	LLMeshRepoThread* mThread;
 	std::vector<LLMeshUploadThread*> mUploads;
 	std::vector<LLMeshUploadThread*> mUploadWaitList;
 
 	LLPhysicsDecomp* mDecompThread;
-	
+
 	class inventory_data
 	{
 	public:
@@ -540,4 +566,3 @@ public:
 extern LLMeshRepository gMeshRepo;
 
 #endif
-

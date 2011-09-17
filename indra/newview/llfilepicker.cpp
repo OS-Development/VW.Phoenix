@@ -123,7 +123,7 @@ const std::string LLFilePicker::getNextFile()
 {
 	if (mCurrentFile >= getFileCount())
 	{
-		mLocked = FALSE;
+		mLocked = false;
 		return std::string();
 	}
 	else
@@ -136,7 +136,7 @@ const std::string LLFilePicker::getCurFile()
 {
 	if (mCurrentFile >= getFileCount())
 	{
-		mLocked = FALSE;
+		mLocked = false;
 		return std::string();
 	}
 	else
@@ -147,7 +147,7 @@ const std::string LLFilePicker::getCurFile()
 
 void LLFilePicker::reset()
 {
-	mLocked = FALSE;
+	mLocked = false;
 	mFiles.clear();
 	mCurrentFile = 0;
 }

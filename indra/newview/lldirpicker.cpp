@@ -33,17 +33,17 @@
 #include "llviewerprecompiledheaders.h"
 
 #include "lldirpicker.h"
-//#include "llviewermessage.h"
-#include "llworld.h"
-#include "llviewerwindow.h"
-#include "llkeyboard.h"
+
 #include "lldir.h"
 #include "llframetimer.h"
-#include "lltrans.h"
+#include "llkeyboard.h"
 
 #if LL_LINUX || LL_SOLARIS
 # include "llfilepicker.h"
 #endif
+#include "lltrans.h"
+#include "llviewerwindow.h"
+#include "llworld.h"
 
 //
 // Globals
@@ -60,7 +60,9 @@ LLDirPicker LLDirPicker::sInstance;
 //
 #if LL_WINDOWS
 
-LLDirPicker::LLDirPicker() 
+LLDirPicker::LLDirPicker()
+:	mFileName(NULL),
+	mLocked(false)
 {
 }
 
@@ -125,6 +127,8 @@ std::string LLDirPicker::getDirName()
 #elif LL_DARWIN
 
 LLDirPicker::LLDirPicker() 
+:	mFileName(NULL),
+	mLocked(false)
 {
 	reset();
 
@@ -261,13 +265,15 @@ std::string LLDirPicker::getDirName()
 
 void LLDirPicker::reset()
 {
-	mLocked = FALSE;
+	mLocked = false;
 	mDir.clear();
 }
 
 #elif LL_LINUX || LL_SOLARIS
 
 LLDirPicker::LLDirPicker() 
+:	mFileName(NULL),
+	mLocked(false)
 {
 	mFilePicker = new LLFilePicker();
 	reset();

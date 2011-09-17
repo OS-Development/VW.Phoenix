@@ -666,20 +666,6 @@ public:
 			}
 		}
 
-		static LLCachedControl<bool> debug_show_upload_cost(gSavedSettings, "DebugShowUploadCost");
-		if (debug_show_upload_cost)
-		{
-			addText(xpos, ypos, llformat("       Meshes: L$%d", gPipeline.mDebugMeshUploadCost));
-			ypos += y_inc/2;
-			addText(xpos, ypos, llformat("    Sculpties: L$%d", gPipeline.mDebugSculptUploadCost));
-			ypos += y_inc/2;
-			addText(xpos, ypos, llformat("     Textures: L$%d", gPipeline.mDebugTextureUploadCost));
-			ypos += y_inc/2;
-			addText(xpos, ypos, "Upload Cost: ");
-
-			ypos += y_inc;
-		}
-
 		//temporary hack to give feedback on mesh upload progress
 		if (!gMeshRepo.mUploads.empty())
 		{
@@ -688,10 +674,7 @@ public:
 			{
 				LLMeshUploadThread* thread = *iter;
 
-				addText(xpos, ypos, llformat("Mesh Upload -- price quote: %d:%d | upload: %d:%d | create: %d", 
-						thread->mPendingConfirmations, thread->mUploadQ.size() + thread->mTextureQ.size(),
-						thread->mPendingUploads, thread->mConfirmedQ.size() + thread->mConfirmedTextureQ.size(),
-						thread->mInstanceQ.size()));
+				addText(xpos, ypos, llformat("Mesh Uploads: %d", thread->mPendingUploads));
 				ypos += y_inc;
 			}
 		}

@@ -184,7 +184,7 @@ private:
 
 	std::vector<std::string> mFiles;
 	S32 mCurrentFile;
-	BOOL mLocked;
+	bool mLocked;
 	BOOL mMultiFile;
 
 	static LLFilePicker sInstance;
@@ -200,5 +200,7 @@ public:
 	LLFilePicker();
 	~LLFilePicker();
 };
+
+const std::string upload_pick(void* data);
 
 #endif

@@ -1116,7 +1116,10 @@ bool LLAppViewer::mainLoop()
 					{
 						pingMainloopTimeout("Main:ServicePump");
 						LLFastTimer t4(LLFastTimer::FTM_PUMP);
-						gAres->process();
+						{
+							LLFastTimer t5(LLFastTimer::FTM_ARES);
+							gAres->process();
+						}
 						// this pump is necessary to make the login screen show up
 						gServicePump->pump();
 						gServicePump->callback();
@@ -4121,8 +4124,6 @@ static F32 CheckMessagesMaxTime = CHECK_MESSAGES_DEFAULT_MAX_TIME;
 void LLAppViewer::idleNetwork()
 {
 	pingMainloopTimeout("idleNetwork");
-	LLError::LLCallStacks::clear() ;
-	llpushcallstacks ;
 
 	gObjectList.mNumNewObjects = 0;
 	S32 total_decoded = 0;
@@ -4132,11 +4133,8 @@ void LLAppViewer::idleNetwork()
 	{
 		LLFastTimer t(LLFastTimer::FTM_IDLE_NETWORK); // decode
 
-		// deal with any queued name requests and replies.
-		gCacheName->processPending();
-		llpushcallstacks ;
 		LLTimer check_message_timer;
-		//  Read all available packets from network
+		// Read all available packets from network
 		stop_glerror();
 		const S64 frame_count = gFrameCount;  // U32->S64
 		F32 total_time = 0.0f;
@@ -4149,7 +4147,7 @@ void LLAppViewer::idleNetwork()
 				// server going down, so this is OK.
 				break;
 			}
-			stop_glerror();
+			//stop_glerror();
 
 			total_decoded++;
 			gPacketsIn++;
@@ -4189,7 +4187,7 @@ void LLAppViewer::idleNetwork()
 
 		// we want to clear the control after sending out all necessary agent updates
 		gAgent.resetControlFlags();
-		stop_glerror();
+		//stop_glerror();
 
 
 		// Decode enqueued messages...
@@ -4206,13 +4204,11 @@ void LLAppViewer::idleNetwork()
 			gPrintMessagesThisFrame = FALSE;
 		}
 	}
-	llpushcallstacks ;
 	gObjectList.mNumNewObjectsStat.addValue(gObjectList.mNumNewObjects);
 
 	// Retransmit unacknowledged packets.
 	gXferManager->retransmitUnackedPackets();
 	gAssetStorage->checkForTimeouts();
-	llpushcallstacks ;
 	gViewerThrottle.updateDynamicThrottle();
 
 	llpushcallstacks ;
@@ -4223,15 +4219,14 @@ void LLAppViewer::idleNetwork()
 	{
 		LLUUID this_region_id = agent_region->getRegionID();
 		bool this_region_alive = agent_region->isAlive();
-		if ((mAgentRegionLastAlive && !this_region_alive) // newly dead
-		    && (mAgentRegionLastID == this_region_id)) // same region
+		if (mAgentRegionLastAlive && !this_region_alive // newly dead
+		    && mAgentRegionLastID == this_region_id) // same region
 		{
 			forceDisconnect(LLTrans::getString("AgentLostConnection"));
 		}
 		mAgentRegionLastID = this_region_id;
 		mAgentRegionLastAlive = this_region_alive;
 	}
-	llpushcallstacks ;
 }
 
 void LLAppViewer::disconnectViewer()
