@@ -42,23 +42,23 @@
           <key>windows</key>
           <map>
             <key>md5sum</key>
-            <string>ef86f89a3ec330a98f29d2cc449adc1b</string>
+            <string>292b14bd3a480484c74b7ca4693b427a</string>
             <key>url</key>
-            <uri>http://sldev.free.fr/libraries/llconvexdecompositionstub-0.3-windows-vc80-20110826.tar.bz2</uri>
+            <uri>http://sldev.free.fr/libraries/llconvexdecompositionstub-0.3a-windows-vc80-20110826.tar.bz2</uri>
           </map>
           <key>darwin</key>
           <map>
             <key>md5sum</key>
-            <string>e6ddd0815d84733675c0fd324a8097b0</string>
+            <string>dd508e3feb5ab5346f3e5ddc35b6ba67</string>
             <key>url</key>
-            <uri>http://sldev.free.fr/libraries/llconvexdecompositionstub-0.3-darwin-20110421.tar.bz2</uri>
+            <uri>http://sldev.free.fr/libraries/llconvexdecompositionstub-0.3a-darwin-20110819.tar.bz2</uri>
           </map>
           <key>linux</key>
           <map>
             <key>md5sum</key>
-            <string>bf10609a8fbd5ef81855a18dbf110a9d</string>
+            <string>0271278d53c26d76994e347c255558c5</string>
             <key>url</key>
-            <uri>http://sldev.free.fr/libraries/llconvexdecompositionstub-0.3-linux-20110422.tar.bz2</uri>
+            <uri>http://sldev.free.fr/libraries/llconvexdecompositionstub-0.3a-linux-20110819.tar.bz2</uri>
           </map>
         </map>
       </map>
