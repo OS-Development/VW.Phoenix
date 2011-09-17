@@ -93,31 +93,4 @@ LLSD generate_new_resource_upload_capability_body(LLAssetType::EType asset_type,
 												  U32 everyone_perms);
 
 
-class LLFilePickerThread : public LLThread
-{	//multi-threaded file picker (runs system specific file picker in background and calls "notify" from main thread)
-public:
-
-	static std::queue<LLFilePickerThread*> sDeadQ;
-	static LLMutex* sMutex;
-
-	static void initClass();
-	static void cleanupClass();
-	static void clearDead();
-
-	std::string mFile; 
-
-	LLFilePicker::ELoadFilter mFilter;
-
-	LLFilePickerThread(LLFilePicker::ELoadFilter filter)
-	:	LLThread("file picker"), mFilter(filter)
-	{
-	}
-
-	void getFile();
-
-	virtual void run();
-
-	virtual void notify(const std::string& filename) = 0;
-};
-
 #endif
