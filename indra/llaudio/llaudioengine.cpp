@@ -34,20 +34,19 @@
 #include "linden_common.h"
 
 #include "llaudioengine.h"
-#include "llstreamingaudio.h"
+#include "llaudiodecodemgr.h"
+#include "llassetstorage.h"
+#include "lldir.h"
 
 #include "llerror.h"
 #include "llmath.h"
 
+#include "llstreamingaudio.h"
+#include "llvfs.h"
+
 #include "sound_ids.h"  // temporary hack for min/max distances
 
-#include "llvfs.h"
-#include "lldir.h"
-#include "llaudiodecodemgr.h"
-#include "llassetstorage.h"
-
-
-// necessary for grabbing sounds from sim (implemented in viewer)	
+// necessary for grabbing sounds from sim (implemented in viewer)
 extern void request_sound(const LLUUID &sound_guid);
 
 LLAudioEngine* gAudiop = NULL;
@@ -541,7 +540,7 @@ bool LLAudioEngine::updateBufferForData(LLAudioData *adp, const LLUUID &audio_uu
 		{
 			if (audio_uuid.notNull())
 			{
-				gAudioDecodeMgrp->addDecodeRequest(audio_uuid);
+				return (gAudioDecodeMgrp->addDecodeRequest(audio_uuid) == TRUE);
 			}
 		}
 		else
@@ -1261,7 +1260,7 @@ void LLAudioEngine::startNextTransfer()
 
 	if (asset_id.notNull())
 	{
-		llinfos << "Getting asset data for: " << asset_id << llendl;
+		LL_DEBUGS("Audio") << "Getting asset data for: " << asset_id << LL_ENDL;
 		gAudiop->mCurrentTransfer = asset_id;
 		gAudiop->mCurrentTransferTimer.reset();
 		gAssetStorage->getAssetData(asset_id, LLAssetType::AT_SOUND,
@@ -1269,7 +1268,7 @@ void LLAudioEngine::startNextTransfer()
 	}
 	else
 	{
-		//llinfos << "No pending transfers?" << llendl;
+		LL_DEBUGS("Audio") << "No pending transfers ?" << LL_ENDL;
 	}
 }
 
@@ -1279,7 +1278,9 @@ void LLAudioEngine::assetCallback(LLVFS *vfs, const LLUUID &uuid, LLAssetType::E
 {
 	if (result_code)
 	{
-		llinfos << "Boom, error in audio file transfer: " << LLAssetStorage::getErrorString( result_code ) << " (" << result_code << ")" << llendl;
+		LL_WARNS("Audio") << "Boom, error in audio file transfer: "
+						  << LLAssetStorage::getErrorString(result_code)
+						  << " (" << result_code << ")" << LL_ENDL;
 		// Need to mark data as bad to avoid constant rerequests.
 		LLAudioData *adp = gAudiop->getAudioData(uuid);
 		if (adp)
@@ -1295,7 +1296,8 @@ void LLAudioEngine::assetCallback(LLVFS *vfs, const LLUUID &uuid, LLAssetType::E
 		if (!adp)
         {
 			// Should never happen
-			llwarns << "Got asset callback without audio data for " << uuid << llendl;
+			LL_WARNS("Audio") << "Got asset callback without audio data for "
+							  << uuid << LL_ENDL;
         }
 		else
 		{
@@ -1470,8 +1472,9 @@ bool LLAudioSource::setupChannel()
 
 	if (!adp->getBuffer())
 	{
-		// We're not ready to play back the sound yet, so don't try and allocate a channel for it.
-		//llwarns << "Aborting, no buffer" << llendl;
+		// We're not ready to play back the sound yet, so don't try and
+		// allocate a channel for it.
+		LL_DEBUGS("Audio") << "Aborting, no buffer" << LL_ENDL;
 		return false;
 	}
 
@@ -1489,7 +1492,7 @@ bool LLAudioSource::setupChannel()
 		// Ugh, we don't have any free channels.
 		// Now we have to reprioritize.
 		// For now, just don't play the sound.
-		//llwarns << "Aborting, no free channels" << llendl;
+		LL_DEBUGS("Audio") << "Aborting, no free channels" << LL_ENDL;
 		return false;
 	}
 
@@ -1738,8 +1741,8 @@ LLAudioBuffer * LLAudioSource::getCurrentBuffer()
 //
 
 
-LLAudioChannel::LLAudioChannel() :
-	mCurrentSourcep(NULL),
+LLAudioChannel::LLAudioChannel()
+:	mCurrentSourcep(NULL),
 	mCurrentBufferp(NULL),
 	mLoopedThisFrame(false),
 	mWaiting(false),
@@ -1845,8 +1848,8 @@ bool LLAudioChannel::updateBuffer()
 //
 
 
-LLAudioData::LLAudioData(const LLUUID &uuid) :
-	mID(uuid),
+LLAudioData::LLAudioData(const LLUUID &uuid)
+:	mID(uuid),
 	mBufferp(NULL),
 	mHasLocalData(false),
 	mHasDecodedData(false),
