@@ -64,6 +64,7 @@ public:
 	static U32 scriptcount;
 	static U32 scriptMemory;
 	static U32 toCount;
+	static F32 scriptTime;
 
 private:
 	static void subserialize(LLViewerObject* linkset);

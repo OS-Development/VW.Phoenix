@@ -59,6 +59,7 @@ LLViewerObject* ScriptCounter::foo;
 void cmdline_printchat(std::string chat);
 std::stringstream ScriptCounter::sstr;
 int ScriptCounter::countingDone;
+F32 ScriptCounter::scriptTime;
 
 ScriptCounter::ScriptCounter()
 {
@@ -115,6 +116,7 @@ void ScriptCounter::checkCount(LLUUID targetID)
     resultStr+=" [";
     resultStr+=sstr.str();
     resultStr+="K]";
+    resultStr+=llformat(" [%.2f µSeconds]", scriptTime);
     cmdline_printchat(resultStr);
     init();
   }
@@ -172,10 +174,13 @@ public:
 	    {
 	      count=0;
 	      memory=0;
+	      time=0.f;
 		count=atoi(data[0].asString().c_str());
 		memory=atoi(data[1].asString().c_str());
+		LLStringUtil::convertToF32 (data[2].asString(), time);
 		ScriptCounter::scriptcount+=count;
 		ScriptCounter::scriptMemory+=memory;
+		ScriptCounter::scriptTime=time;
 		ScriptCounter::checkCount(targetID);
 	    }
 	}
@@ -184,6 +189,7 @@ private:
 	std::stringstream sstr;
 	U32 count;
 	U32 memory;
+	F32 time;
 	std::string temp;
 	LLUUID targetID;
 };
@@ -192,6 +198,7 @@ void ScriptCounter::radarScriptCount(LLUUID target)
 {
     scriptcount=0;
     scriptMemory=0;
+    scriptTime=0.f;
     toCount=1;
     JCLSLBridge::instance().bridgetolsl("script_count|"+target.asString(), new JCCountCallback(target));
 }

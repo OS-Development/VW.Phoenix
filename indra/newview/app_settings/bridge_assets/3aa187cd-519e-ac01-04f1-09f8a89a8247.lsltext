@@ -206,8 +206,8 @@ receive(string data)
 	}
 	else if(cmd == "script_count")
 	{
-		list lTemp;
-		send((string)id+"|"+(string)llList2Integer(lTemp,0)+"|"+(string)((integer)(llList2Integer(lTemp=llGetObjectDetails(llList2Key(instruction,2),[OBJECT_TOTAL_SCRIPT_COUNT,OBJECT_SCRIPT_MEMORY]),1)/1024.0)));
+		list lTemp = llGetObjectDetails(llList2Key(instruction,2),([OBJECT_TOTAL_SCRIPT_COUNT,OBJECT_SCRIPT_MEMORY,OBJECT_SCRIPT_TIME]));
+		send((string)id+"|"+(string)llList2Integer(lTemp,0)+"|"+(string)((integer)(llList2Integer(lTemp,1)/1024.0))+"|"+(string)(llList2Float(lTemp,2)*1000000));
 	}// End Else If
 }
 
