@@ -768,9 +768,9 @@
 					<key>linux</key>
 					<map>
 						<key>md5sum</key>
-						<string>9a2e99d79d9188f4d1d636c06bc3ba43</string>
+						<string>d5b78c3aa25f92a02c4442bcdca680da</string>
 						<key>url</key>
-						<uri>http://sldev.free.fr/libraries/google-perftools-1.7-linux-20110412.tar.bz2</uri>
+						<uri>http://sldev.free.fr/libraries/google-perftools-1.8.3-linux-20110917.tar.bz2</uri>
 					</map>
 					<key>windows</key>
 					<map>

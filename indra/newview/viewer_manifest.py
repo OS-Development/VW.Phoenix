@@ -960,7 +960,7 @@ class Linux_i686Manifest(LinuxManifest):
 #            self.path("libopenal.so", "libvivoxoal.so.1") # vivox's sdk expects this soname
             self.path("libtcmalloc.so", "libtcmalloc.so") #formerly called google perf tools
             self.path("libtcmalloc.so.0", "libtcmalloc.so.0") #formerly called google perf tools
-            self.path("libtcmalloc.so.0.1.0", "libtcmalloc.so.0.1.0") #formerly called google perf tools
+            self.path("libtcmalloc.so.0.2.2", "libtcmalloc.so.0.2.2") #formerly called google perf tools
             self.path("libcollada14dom.so", "libcollada14dom.so") # Mesh support
             self.path("libminizip.so", "libminizip.so") # Mesh support
             self.path("libglod.so", "libglod.so") # Mesh support
