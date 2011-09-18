@@ -192,7 +192,7 @@ class LLControlGroup : public LLInstanceTracker<LLControlGroup, std::string>
 {
 	LOG_CLASS(LLControlGroup);
 protected:
-	typedef std::map<std::string, LLPointer<LLControlVariable> > ctrl_name_table_t;
+	typedef std::map<std::string, LLControlVariablePtr> ctrl_name_table_t;
 	ctrl_name_table_t mNameTable;
 	std::set<std::string> mWarnings;
 	std::string mTypeString[TYPE_COUNT];

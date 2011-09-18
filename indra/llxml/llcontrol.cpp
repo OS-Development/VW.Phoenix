@@ -311,10 +311,10 @@ LLSD LLControlVariable::getSaveValue() const
 	return mValues[0];
 }
 
-LLPointer<LLControlVariable> LLControlGroup::getControl(const std::string& name)
+LLControlVariablePtr LLControlGroup::getControl(const std::string& name)
 {
 	ctrl_name_table_t::iterator iter = mNameTable.find(name);
-	return iter == mNameTable.end() ? LLPointer<LLControlVariable>() : iter->second;
+	return iter == mNameTable.end() ? LLControlVariablePtr() : iter->second;
 }
 
 
@@ -523,14 +523,14 @@ LLColor4 LLControlGroup::getColor(const std::string& name)
 			}
 			default:
 			{
-				CONTROL_ERRS << "Control " << name << " not a color" << llendl;
+				CONTROL_ERRS << "Control " << name << " not a color" << LL_ENDL;
 				return LLColor4::white;
 			}
 		}
 	}
 	else
 	{
-		CONTROL_ERRS << "Invalid getColor control " << name << llendl;
+		CONTROL_ERRS << "Invalid getColor control " << name << LL_ENDL;
 		return LLColor4::white;
 	}
 }
@@ -635,7 +635,7 @@ void LLControlGroup::setUntypedValue(const std::string& name, const LLSD& val)
 	}
 	else
 	{
-		CONTROL_ERRS << "Invalid control " << name << llendl;
+		CONTROL_ERRS << "Invalid control " << name << LL_ENDL;
 	}
 }
 
@@ -1113,22 +1113,33 @@ template<>
 bool convert_from_llsd<bool>(const LLSD& sd, eControlType type, const std::string& control_name)
 {
 	if (type == TYPE_BOOLEAN)
+	{
 		return sd.asBoolean();
+	}
 	else
 	{
-		CONTROL_ERRS << "Invalid BOOL value for " << control_name << ": " << sd << llendl;
-		return FALSE;
+		CONTROL_ERRS << "Invalid BOOL value for " << control_name << ": " << sd << LL_ENDL;
+		if (type == TYPE_S32 || type == TYPE_U32)
+		{
+			return sd.asInteger() != 0;
+		}
+		else
+		{
+			return FALSE;
+		}
 	}
 }
 
 template<>
 S32 convert_from_llsd<S32>(const LLSD& sd, eControlType type, const std::string& control_name)
 {
-	if (type == TYPE_S32)
+	if (type == TYPE_S32 || type == TYPE_U32)	// *HACK: TYPE_U32 needed for LLCachedControl<U32> !
+	{
 		return sd.asInteger();
+	}
 	else
 	{
-		CONTROL_ERRS << "Invalid S32 value for " << control_name << ": " << sd << llendl;
+		CONTROL_ERRS << "Invalid S32 value for " << control_name << ": " << sd << LL_ENDL;
 		return 0;
 	}
 }
@@ -1136,12 +1147,21 @@ S32 convert_from_llsd<S32>(const LLSD& sd, eControlType type, const std::string&
 template<>
 U32 convert_from_llsd<U32>(const LLSD& sd, eControlType type, const std::string& control_name)
 {
-	if (type == TYPE_U32)	
+	if (type == TYPE_U32)
+	{
 		return sd.asInteger();
+	}
 	else
 	{
-		CONTROL_ERRS << "Invalid U32 value for " << control_name << ": " << sd << llendl;
-		return 0;
+		CONTROL_ERRS << "Invalid U32 value for " << control_name << ": " << sd << LL_ENDL;
+		if (type == TYPE_S32 && sd.asInteger() >= 0)
+		{
+			return sd.asInteger();
+		}
+		else
+		{
+			return 0;
+		}
 	}
 }
 
@@ -1149,11 +1169,20 @@ template<>
 F32 convert_from_llsd<F32>(const LLSD& sd, eControlType type, const std::string& control_name)
 {
 	if (type == TYPE_F32)
+	{
 		return (F32) sd.asReal();
+	}
 	else
 	{
-		CONTROL_ERRS << "Invalid F32 value for " << control_name << ": " << sd << llendl;
-		return 0.0f;
+		CONTROL_ERRS << "Invalid F32 value for " << control_name << ": " << sd << LL_ENDL;
+		if (type == TYPE_S32 || type == TYPE_U32)
+		{
+			return (F32)sd.asInteger();
+		}
+		else
+		{
+			return 0.0f;
+		}
 	}
 }
 
@@ -1161,10 +1190,12 @@ template<>
 std::string convert_from_llsd<std::string>(const LLSD& sd, eControlType type, const std::string& control_name)
 {
 	if (type == TYPE_STRING)
+	{
 		return sd.asString();
+	}
 	else
 	{
-		CONTROL_ERRS << "Invalid string value for " << control_name << ": " << sd << llendl;
+		CONTROL_ERRS << "Invalid string value for " << control_name << ": " << sd << LL_ENDL;
 		return LLStringUtil::null;
 	}
 }
@@ -1179,10 +1210,12 @@ template<>
 LLVector3 convert_from_llsd<LLVector3>(const LLSD& sd, eControlType type, const std::string& control_name)
 {
 	if (type == TYPE_VEC3)
+	{
 		return (LLVector3)sd;
+	}
 	else
 	{
-		CONTROL_ERRS << "Invalid LLVector3 value for " << control_name << ": " << sd << llendl;
+		CONTROL_ERRS << "Invalid LLVector3 value for " << control_name << ": " << sd << LL_ENDL;
 		return LLVector3::zero;
 	}
 }
@@ -1191,10 +1224,12 @@ template<>
 LLVector3d convert_from_llsd<LLVector3d>(const LLSD& sd, eControlType type, const std::string& control_name)
 {
 	if (type == TYPE_VEC3D)
+	{
 		return (LLVector3d)sd;
+	}
 	else
 	{
-		CONTROL_ERRS << "Invalid LLVector3d value for " << control_name << ": " << sd << llendl;
+		CONTROL_ERRS << "Invalid LLVector3d value for " << control_name << ": " << sd << LL_ENDL;
 		return LLVector3d::zero;
 	}
 }
@@ -1203,10 +1238,12 @@ template<>
 LLRect convert_from_llsd<LLRect>(const LLSD& sd, eControlType type, const std::string& control_name)
 {
 	if (type == TYPE_RECT)
+	{
 		return LLRect(sd);
+	}
 	else
 	{
-		CONTROL_ERRS << "Invalid rect value for " << control_name << ": " << sd << llendl;
+		CONTROL_ERRS << "Invalid rect value for " << control_name << ": " << sd << LL_ENDL;
 		return LLRect::null;
 	}
 }
@@ -1239,7 +1276,7 @@ LLColor4 convert_from_llsd<LLColor4>(const LLSD& sd, eControlType type, const st
 	}
 	else
 	{
-		CONTROL_ERRS << "Control " << control_name << " not a color: " << type << llendl;
+		CONTROL_ERRS << "Control " << control_name << " not a color: " << type << LL_ENDL;
 		return LLColor4::white;
 	}
 }
@@ -1248,10 +1285,12 @@ template<>
 LLColor4U convert_from_llsd<LLColor4U>(const LLSD& sd, eControlType type, const std::string& control_name)
 {
 	if (type == TYPE_COL4U)
+	{
 		return LLColor4U(sd);
+	}
 	else
 	{
-		CONTROL_ERRS << "Invalid LLColor4U value for " << control_name << ": " << sd << llendl;
+		CONTROL_ERRS << "Invalid LLColor4U value for " << control_name << ": " << sd << LL_ENDL;
 		return LLColor4U::white;
 	}
 }
@@ -1260,10 +1299,12 @@ template<>
 LLColor3 convert_from_llsd<LLColor3>(const LLSD& sd, eControlType type, const std::string& control_name)
 {
 	if (type == TYPE_COL3)
+	{
 		return sd;
+	}
 	else
 	{
-		CONTROL_ERRS << "Invalid LLColor3 value for " << control_name << ": " << sd << llendl;
+		CONTROL_ERRS << "Invalid LLColor3 value for " << control_name << ": " << sd << LL_ENDL;
 		return LLColor3::white;
 	}
 }
