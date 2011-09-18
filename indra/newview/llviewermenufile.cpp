@@ -105,6 +105,85 @@ class LLFileEnableUpload : public view_listener_t
 	}
 };
 
+class LLFileEnableUploadModel : public view_listener_t
+{
+	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+	{
+#ifdef MESH_UPLOAD
+		bool new_value = gMeshRepo.meshUploadEnabled();
+#else
+		bool new_value = false;
+#endif
+ 		gMenuHolder->findControl(userdata["control"].asString())->setValue(new_value);
+ 		return true;
+ 	}
+};
+//============================================================================
+
+LLMutex* LLFilePickerThread::sMutex = NULL;
+std::queue<LLFilePickerThread*> LLFilePickerThread::sDeadQ;
+
+void LLFilePickerThread::getFile()
+{
+#if LL_WINDOWS
+	start();
+#else
+	run();
+#endif
+}
+
+//virtual 
+void LLFilePickerThread::run()
+{
+	LLFilePicker picker;
+#if LL_WINDOWS
+	if (picker.getOpenFile(mFilter, false))
+	{
+		mFile = picker.getFirstFile();
+	}
+#else
+	if (picker.getOpenFile(mFilter, true))
+	{
+		mFile = picker.getFirstFile();
+	}
+#endif
+
+	{
+		LLMutexLock lock(sMutex);
+		sDeadQ.push(this);
+	}
+}
+
+//static
+void LLFilePickerThread::initClass()
+{
+	sMutex = new LLMutex();
+}
+
+//static
+void LLFilePickerThread::cleanupClass()
+{
+	clearDead();
+	delete sMutex;
+	sMutex = NULL;
+}
+
+//static
+void LLFilePickerThread::clearDead()
+{
+	if (!sDeadQ.empty())
+	{
+		LLMutexLock lock(sMutex);
+		while (!sDeadQ.empty())
+		{
+			LLFilePickerThread* thread = sDeadQ.front();
+			thread->notify(thread->mFile);
+			delete thread;
+			sDeadQ.pop();
+		}
+	}
+}
+
 //============================================================================
 
 #if LL_WINDOWS
@@ -118,6 +197,7 @@ static std::string XML_EXTENSIONS = "xml";
 static std::string SLOBJECT_EXTENSIONS = "slobject";
 #endif
 static std::string ALL_FILE_EXTENSIONS = "*.*";
+static std::string MODEL_EXTENSIONS = "dae";
 
 std::string build_extensions_string(LLFilePicker::ELoadFilter filter)
 {
@@ -132,6 +212,8 @@ std::string build_extensions_string(LLFilePicker::ELoadFilter filter)
 		return ANIM_EXTENSIONS;
 	case LLFilePicker::FFLOAD_SLOBJECT:
 		return SLOBJECT_EXTENSIONS;
+	case LLFilePicker::FFLOAD_MODEL:
+		return MODEL_EXTENSIONS;
 #ifdef _CORY_TESTING
 	case LLFilePicker::FFLOAD_GEOMETRY:
 		return GEOMETRY_EXTENSIONS;
@@ -272,6 +354,22 @@ class LLFileUploadImage : public view_listener_t
 			LLFloaterImagePreview* floaterp = new LLFloaterImagePreview(filename);
 			LLUICtrlFactory::getInstance()->buildFloater(floaterp, "floater_image_preview.xml");
 		}
+		return TRUE;
+	}
+};
+
+class LLFileUploadModel : public view_listener_t
+{
+	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+	{
+		std::string filename = upload_pick((void *)LLFilePicker::FFLOAD_MODEL);
+#ifdef MESH_UPLOAD
+		LLFloaterModelPreview* fmp = new LLFloaterModelPreview(filename);
+		if (fmp)
+		{
+			fmp->loadModel(3);
+		}
+#endif
 		return TRUE;
 	}
 };
@@ -1269,4 +1367,7 @@ void init_menu_file()
 
 	(new LLFileEnableUpload())->registerListener(gMenuHolder, "File.EnableUpload");
 	(new LLFileEnableSaveAs())->registerListener(gMenuHolder, "File.EnableSaveAs");
+
+	(new LLFileUploadModel())->registerListener(gMenuHolder, "File.UploadModel");
+	(new LLFileEnableUploadModel())->registerListener(gMenuHolder, "File.EnableUploadModel");
 }

@@ -197,6 +197,7 @@
 	<string name="all_files">All Files</string>
 	<string name="sound_files">Sounds</string>
 	<string name="animation_files">Animations</string>
+	<string name="scene_files">Models</string>
 	<string name="image_files">Images</string>
 	<string name="save_file_verb">Save</string>
 	<string name="load_file_verb">Load</string>

@@ -115,6 +115,7 @@
 #include "lltrans.h"
 #include "lluitrans.h"
 #include "lltracker.h"
+#include "llviewermenufile.h"
 #include "llviewerparcelmgr.h"
 #include "llworldmapview.h"
 #include "llpostprocess.h"
@@ -1627,6 +1628,8 @@ bool LLAppViewer::cleanup()
 	sTextureFetch->shutDownTextureCacheThread() ;
 	sTextureFetch->shutDownImageDecodeThread() ;
 	
+	LLFilePickerThread::cleanupClass();
+
 	delete sTextureCache;
     sTextureCache = NULL;
 	delete sTextureFetch;
@@ -1749,6 +1752,8 @@ bool LLAppViewer::initThreads()
 
 	// Mesh streaming and caching
 	gMeshRepo.init();
+
+	LLFilePickerThread::initClass();
 
 	// *FIX: no error handling here!
 	return true;
@@ -3576,6 +3581,8 @@ void LLAppViewer::idle()
 	LLEventTimer::updateClass();
 	LLCriticalDamp::updateInterpolants();
 	LLMortician::updateClass();
+	LLFilePickerThread::clearDead();  //calls LLFilePickerThread::notify()
+
 	F32 dt_raw = idle_timer.getElapsedTimeAndResetF32();
 
 	// Cap out-of-control frame times

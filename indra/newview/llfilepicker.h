@@ -59,14 +59,19 @@
 #include <commdlg.h>
 #endif
 
+extern "C"
+{
 // mostly for Linux, possible on others
 #if LL_GTK
 # include "gtk/gtk.h"
 #endif // LL_GTK
+}
 
+#if 0
 // also mostly for Linux, for some X11-specific filepicker usability tweaks
 #if LL_X11
 #include "SDL/SDL_syswm.h"
+#endif
 #endif
 
 class LLFilePicker
@@ -93,7 +98,9 @@ public:
 		FFLOAD_RAW = 8,
 		FFLOAD_APP = 9,
 		FFLOAD_BLACKLIST = 10,
-		FFLOAD_MEDIA = 11
+		FFLOAD_MEDIA = 11,
+		FFLOAD_MODEL = 12,
+		FFLOAD_COLLADA = 13
 	};
 
 	enum ESaveFilter
@@ -118,9 +125,9 @@ public:
 	};
 
 	// open the dialog. This is a modal operation
-	BOOL getSaveFile( ESaveFilter filter = FFSAVE_ALL, const std::string& filename = LLStringUtil::null );
-	BOOL getOpenFile( ELoadFilter filter = FFLOAD_ALL );
-	BOOL getMultipleOpenFiles( ELoadFilter filter = FFLOAD_ALL );
+	BOOL getSaveFile(ESaveFilter filter = FFSAVE_ALL, const std::string& filename = LLStringUtil::null);
+	BOOL getOpenFile(ELoadFilter filter = FFLOAD_ALL, bool blocking = true);
+	BOOL getMultipleOpenFiles(ELoadFilter filter = FFLOAD_ALL);
 
 	// Get the filename(s) found. getFirstFile() sets the pointer to
 	// the start of the structure and allows the start of iteration.
@@ -185,7 +192,6 @@ private:
 	std::vector<std::string> mFiles;
 	S32 mCurrentFile;
 	bool mLocked;
-	BOOL mMultiFile;
 
 	static LLFilePicker sInstance;
 	

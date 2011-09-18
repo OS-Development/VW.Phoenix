@@ -82,34 +82,34 @@ BOOL LLDirPicker::getDir(std::string* filename)
 	// Modal, so pause agent
 	send_agent_pause();
 
-   BROWSEINFO bi;
-   memset(&bi, 0, sizeof(bi));
+	BROWSEINFO bi;
+	memset(&bi, 0, sizeof(bi));
 
-   bi.ulFlags   = BIF_USENEWUI;
-   bi.hwndOwner = (HWND)gViewerWindow->getPlatformWindow();
-   bi.lpszTitle = NULL;
+	bi.ulFlags   = BIF_USENEWUI;
+	bi.hwndOwner = (HWND)gViewerWindow->getPlatformWindow();
+	bi.lpszTitle = NULL;
 
-   ::OleInitialize(NULL);
+	::OleInitialize(NULL);
 
-   LPITEMIDLIST pIDL = ::SHBrowseForFolder(&bi);
+	LPITEMIDLIST pIDL = ::SHBrowseForFolder(&bi);
 
-   if(pIDL != NULL)
-   {
-      WCHAR buffer[_MAX_PATH] = {'\0'};
+	if (pIDL != NULL)
+	{
+	   WCHAR buffer[_MAX_PATH] = { '\0' };
 
-      if(::SHGetPathFromIDList(pIDL, buffer) != 0)
-      {
+	   if (::SHGetPathFromIDList(pIDL, buffer) != 0)
+	   {
 		  	// Set the string value.
 
-   			mDir = utf16str_to_utf8str(llutf16string(buffer));
+				mDir = utf16str_to_utf8str(llutf16string(buffer));
 	         success = TRUE;
-      }
+	   }
 
-      // free the item id list
-      CoTaskMemFree(pIDL);
-   }
+	   // free the item id list
+	   CoTaskMemFree(pIDL);
+	}
 
-   ::OleUninitialize();
+	::OleUninitialize();
 
 	send_agent_resume();
 
