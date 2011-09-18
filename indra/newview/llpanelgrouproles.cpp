@@ -41,16 +41,14 @@
 #include "lliconctrl.h"
 #include "lllineeditor.h"
 #include "llnamelistctrl.h"
-#include "llnotify.h"
+#include "llnotifications.h"
 #include "llpanelgrouproles.h"
 #include "llscrolllistctrl.h"
 #include "lltabcontainer.h"
-#include "lltextbox.h"
 #include "lltexteditor.h"
 #include "llviewercontrol.h"
 #include "llviewertexturelist.h"
 #include "llviewerwindow.h"
-#include "llfocusmgr.h"
 
 #include "roles_constants.h"
 

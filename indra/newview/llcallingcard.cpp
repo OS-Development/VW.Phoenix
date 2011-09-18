@@ -44,6 +44,7 @@
 
 #include "indra_constants.h"
 #include "llcachename.h"
+#include "llnotifications.h"
 #include "llstl.h"
 #include "lltimer.h"
 #include "lluuid.h"
@@ -51,9 +52,7 @@
 
 #include "llagent.h"
 #include "llbutton.h"
-//#include "llinventory.h"
 #include "llinventorymodel.h"
-#include "llnotify.h"
 #include "llresmgr.h"
 #include "llimview.h"
 #include "llviewercontrol.h"

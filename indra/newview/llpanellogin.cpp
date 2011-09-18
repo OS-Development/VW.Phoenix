@@ -39,45 +39,40 @@
 #include "hippogridmanager.h"
 
 #include "indra_constants.h"		// for key and mask constants
-#include "llfontgl.h"
+#include "llbutton.h"
+#include "llcheckboxctrl.h"
+#include "llcombobox.h"
+#include "llcurl.h"
+#include "llhttpclient.h"
+#include "lllineeditor.h"
 #include "llmd5.h"
+#include "llnotifications.h"
 #include "llsecondlifeurls.h"
+#include "lltextbox.h"
+#include "llui.h"
+#include "lluictrlfactory.h"
 #include "llversionviewer.h"
 #include "v4color.h"
 
-#include "llbutton.h"
-#include "llcheckboxctrl.h"
 #include "llcommandhandler.h"		// for secondlife:///app/login/
-#include "llcombobox.h"
-#include "llcurl.h"
-#include "llviewercontrol.h"
 #include "llfloaterabout.h"
-#include "llfloatertest.h"
+#include "llfloatermediabrowser.h"
 #include "llfloaterpreference.h"
-#include "llfocusmgr.h"
-#include "lllineeditor.h"
+#if !LL_RELEASE_FOR_DOWNLOAD
+#include "llfloatertos.h"
+#endif
+#include "llmediactrl.h"
 #include "llstartup.h"
-#include "lltextbox.h"
-#include "llui.h"
 #include "lluiconstants.h"
-#include "llurlhistory.h" // OGPX : regionuri text box has a history of region uris (if FN/LN are loaded at startup)
+#include "llurlhistory.h"			// OGPX : regionuri text box has a history of region uris (if FN/LN are loaded at startup)
 #include "llurlsimstring.h"
 #include "llviewerbuild.h"
-#include "llviewertexturelist.h"
+#include "llviewercontrol.h"
 #include "llviewermenu.h"			// for handle_preferences()
 #include "llviewernetwork.h"
+#include "llviewertexturelist.h"
 #include "llviewerwindow.h"			// to link into child list
-#include "llnotify.h"
-#include "llurlsimstring.h"
-#include "lluictrlfactory.h"
-#include "llhttpclient.h"
 #include "llweb.h"
-#include "llmediactrl.h"
-
-#include "llfloatermediabrowser.h"
-#include "llfloatertos.h"
-
-#include "llglheaders.h"
 
 #include "llappviewer.h"
 
@@ -512,42 +507,36 @@ void LLPanelLogin::draw()
 // virtual
 BOOL LLPanelLogin::handleKeyHere(KEY key, MASK mask)
 {
-	if (( KEY_RETURN == key ) && (MASK_ALT == mask))
+	if (key == KEY_RETURN && mask == MASK_ALT)
 	{
 		gViewerWindow->toggleFullscreen(FALSE);
 		return TRUE;
 	}
 
-	if (('P' == key) && (MASK_CONTROL == mask))
+	if (key == 'P' && mask == MASK_CONTROL)
 	{
 		LLFloaterPreference::show(NULL);
 		return TRUE;
 	}
 
-	if (('T' == key) && (MASK_CONTROL == mask))
-	{
-		new LLFloaterSimple("floater_test.xml");
-		return TRUE;
-	}
-
-	if ( KEY_F1 == key )
+	if (key == KEY_F1)
 	{
 		llinfos << "Spawning HTML help window" << llendl;
 		gViewerHtmlHelp.show();
 		return TRUE;
 	}
 
-# if !LL_RELEASE_FOR_DOWNLOAD
-	if ( KEY_F2 == key )
+#if !LL_RELEASE_FOR_DOWNLOAD
+	if (KEY_F2 == key && mask == MASK_NONE)
 	{
 		llinfos << "Spawning floater TOS window" << llendl;
-		LLFloaterTOS* tos_dialog = LLFloaterTOS::show(LLFloaterTOS::TOS_TOS,"");
+		LLFloaterTOS* tos_dialog = LLFloaterTOS::show(LLFloaterTOS::TOS_TOS, "");
 		tos_dialog->startModal();
 		return TRUE;
 	}
 #endif
 
-	if (KEY_RETURN == key && MASK_NONE == mask)
+	if (KEY_F2 == KEY_RETURN && mask == MASK_NONE)
 	{
 		// let the panel handle UICtrl processing: calls onClickConnect()
 		return LLPanel::handleKeyHere(key, mask);

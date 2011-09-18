@@ -32,40 +32,25 @@
 
 #include "llviewerprecompiledheaders.h"
 
-#include "llenum.h"
-
 #include "llpaneldirclassified.h"
 
-#include "llclassifiedflags.h"
-
 // linden library includes
-#include "llfontgl.h"
-#include "message.h"
+#include "llclassifiedflags.h"
+#include "lllineeditor.h"
 #include "llqueryflags.h"
+#include "lluictrlfactory.h"
+#include "message.h"
 
 // viewer project includes
 #include "llagent.h"
-#include "llbutton.h"
-#include "llcontrol.h"
-#include "llcombobox.h"
 #include "llclassifiedinfo.h"
-#include "lluiconstants.h"
-#include "llpaneldirbrowser.h"
-#include "lltextbox.h"
-
-#include "llcheckboxctrl.h"
-#include "llfloaterdirectory.h"
-#include "lllineeditor.h"
-#include "llpaneldirbrowser.h"
-#include "lltextbox.h"
-#include "llviewermessage.h"
-#include "lluictrlfactory.h"
-#include "llworldmap.h"
-
-//
 #include "llfloateravatarinfo.h"
+#include "llfloaterdirectory.h"
+#include "llpaneldirbrowser.h"
+#include "lluiconstants.h"
 #include "llviewermenu.h"
-#include "llnotify.h"
+#include "llviewermessage.h"
+#include "llworldmap.h"
 
 //-----------------------------------------------------------------------------
 // Constants

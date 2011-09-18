@@ -34,14 +34,14 @@
 
 #include "llwearablelist.h"
 
-#include "message.h"
 #include "llassetstorage.h"
+#include "llnotifications.h"
+#include "message.h"
+
 #include "llagent.h"
-#include "llvoavatar.h"
 #include "llviewerinventory.h"
-//#include "llfloaterchat.h"
 #include "llviewerstats.h"
-#include "llnotify.h"
+#include "llvoavatar.h"
 
 // Globals
 LLWearableList gWearableList; // Globally constructed; be careful that there's no dependency with gAgent.

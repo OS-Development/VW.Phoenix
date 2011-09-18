@@ -36,182 +36,125 @@
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
+#if LL_WINDOWS
+#include <tchar.h>							// For Unicode conversion methods
+#endif
 
-#include "llpanellogin.h"
-#include "llviewerkeyboard.h"
 #include "llviewerwindow.h"
 
-#include "llviewquery.h"
-#include "llxmltree.h"
-//#include "llviewercamera.h"
-#include "llrender.h"
-
-#include "llvoiceclient.h"	// for push-to-talk button handling
-
-
-//
-// TODO: Many of these includes are unnecessary.  Remove them.
-//
-
 // linden library includes
-#include "llaudioengine.h"		// mute on minimize
 #include "indra_constants.h"
-#include "llassetstorage.h"
+#include "llaudioengine.h"					// gAudiop
+#include "llbox.h"							// gBox
+#include "llfocusmgr.h"
 #include "llfontgl.h"
+#include "llimagebmp.h"
+#include "llimagej2c.h"
+#include "llimageworker.h"
+#include "llmenugl.h"
+#include "llmodaldialog.h"
 #include "llmousehandler.h"
+#include "llpostprocess.h"					// gPostProcess
 #include "llrect.h"
-#include "llsky.h"
+#include "llrender.h"
+#include "llrendersphere.h"					// gSphere
+#include "llrootview.h"
 #include "llstring.h"
+#include "lltextbox.h"
+#include "lltimer.h"
 #include "llui.h"
+#include "lluictrlfactory.h"
 #include "lluuid.h"
 #include "llview.h"
-#include "llxfermanager.h"
 #include "message.h"
-#include "object_flags.h"
-#include "lltimer.h"
-#include "timing.h"
-#include "llviewermenu.h"
 
 // newview includes
 #include "llagent.h"
-#include "llalertdialog.h"
-#include "llbox.h"
+#include "llappviewer.h"
 #include "llchatbar.h"
 #include "llconsole.h"
-#include "llviewercontrol.h"
-#include "llcylinder.h"
+#include "llcylinder.h"						// gCylinder and gCone
 #include "lldebugview.h"
-#include "lldir.h"
 #include "lldrawable.h"
 #include "lldrawpoolalpha.h"
 #include "lldrawpoolbump.h"
 #include "lldrawpoolwater.h"
-#include "llmaniptranslate.h"
 #include "llface.h"
 #include "llfeaturemanager.h"
 #include "llfilepicker.h"
-#include "llfloater.h"
-#include "llfloateractivespeakers.h"
-#include "llfloaterbuildoptions.h"
-#include "llfloaterbuyland.h"
-#include "llfloatercamera.h"
 #include "llfloaterchat.h"
 #include "llfloaterchatterbox.h"
 #include "llfloatercustomize.h"
-#include "llfloatereditui.h" // HACK JAMESDEBUG for ui editor
-#include "llfloaterland.h"
-#include "llfloaterinspect.h"
-#include "llfloaternamedesc.h"
-#include "llfloaterpreference.h"
+#include "llfloatereditui.h"				// HACK for ui editor
+#include "llfloaternotificationsconsole.h"
 #include "llfloatersnapshot.h"
 #include "llfloaterteleporthistory.h"
 #include "llfloatertools.h"
 #include "llfloaterworldmap.h"
-#include "llfocusmgr.h"
-#include "llframestatview.h"
 #include "llgesturemgr.h"
-#include "llglheaders.h"
 #include "llhoverview.h"
-#include "llhudmanager.h"
 #include "llhudview.h"
-#include "llimagebmp.h"
-#include "llimagej2c.h"
-#include "llimageworker.h"
-#include "llinventoryview.h"
-#include "llkeyboard.h"
-#include "lllineeditor.h"
-#include "llmenugl.h"
+#include "llmaniptranslate.h"
 #include "llmeshrepository.h"
-#include "llmodaldialog.h"
 #include "llmorphview.h"
-#include "llmoveview.h"
 #include "llnotify.h"
 #include "lloverlaybar.h"
-#include "llpreviewtexture.h"
+#include "llpanellogin.h"
 #include "llprogressview.h"
-#include "llresmgr.h"
-#include "llrootview.h"
 #include "llselectmgr.h"
-#include "llrendersphere.h"
+#include "llsky.h"							// gSky
 #include "llstartup.h"
 #include "llstatusbar.h"
-#include "llstatview.h"
 #include "llsurface.h"
-#include "llsurfacepatch.h"
-#include "llimview.h"
-#include "lltexlayer.h"
-#include "lltextbox.h"
 #include "lltexturecache.h"
 #include "lltexturefetch.h"
-#include "lltextureview.h"
-#include "lltool.h"
 #include "lltoolbar.h"
 #include "lltoolcomp.h"
 #include "lltooldraganddrop.h"
-#include "lltoolface.h"
 #include "lltoolfocus.h"
-#include "lltoolgrab.h"
 #include "lltoolmgr.h"
 #include "lltoolmorph.h"
 #include "lltoolpie.h"
-#include "lltoolplacer.h"
-#include "lltoolselectland.h"
-#include "lltoolview.h"
-#include "lluictrlfactory.h"
-#include "llurldispatcher.h"		// SLURL from other app instance
-#include "llvieweraudio.h"
+#include "llurldispatcher.h"				// SLURL from other app instance
+#include "llvieweraudio.h"					// audio_update_volume()
 #include "llviewercamera.h"
-#include "llviewergesture.h"
-#include "llviewertexturelist.h"
-#include "llviewerinventory.h"
+#include "llviewercontrol.h"
+#include "llviewerdisplay.h"
+#include "llviewergesture.h"				// gGestureList
 #include "llviewerkeyboard.h"
-#include "llviewermedia.h"
+#include "llviewerjoystick.h"
 #include "llviewermediafocus.h"
 #include "llviewermenu.h"
-#include "llviewermessage.h"
+#include "llviewermessage.h"				// send_sound_trigger()
 #include "llviewerobjectlist.h"
 #include "llviewerparcelmgr.h"
 #include "llviewerregion.h"
 #include "llviewershadermgr.h"
 #include "llviewerstats.h"
+#include "llviewertexturelist.h"
 #include "llvoavatar.h"
 #include "llvovolume.h"
 #include "llworld.h"
 #include "llworldmapview.h"
 #include "pipeline.h"
-#include "llappviewer.h"
-#include "llurlsimstring.h"
-#include "llviewerdisplay.h"
-#include "llspatialpartition.h"
-#include "llviewerjoystick.h"
-#include "llviewernetwork.h"
-#include "llpostprocess.h"
-
-#include "llfloatertest.h" // HACK!
-#include "llfloaternotificationsconsole.h"
 
 // [RLVa:KB]
 #include "rlvhandler.h"
 // [/RLVa:KB]
 
-#if LL_WINDOWS
-#include <tchar.h> // For Unicode conversion methods
-#endif
-
 //
 // Globals
 //
 void render_ui(F32 zoom_factor = 1.f, int subfield = 0);
-LLBottomPanel* gBottomPanel = NULL;
+LLBottomPanel*	gBottomPanel = NULL;
 
-extern BOOL gDebugClicks;
-extern BOOL gDisplaySwapBuffers;
-extern BOOL gDepthDirty;
-extern BOOL gResizeScreenTexture;
-extern S32 gJamesInt;
-
-LLViewerWindow	*gViewerWindow = NULL;
-LLVelocityBar	*gVelocityBar = NULL;
+extern BOOL		gDebugClicks;
+extern BOOL		gDisplaySwapBuffers;
+extern BOOL		gDepthDirty;
+extern BOOL		gResizeScreenTexture;
+ 
+LLViewerWindow*	gViewerWindow = NULL;
+LLVelocityBar*	gVelocityBar = NULL;
 
 
 BOOL			gDebugSelect = FALSE;
@@ -234,10 +177,10 @@ LLVector3		gDebugRaycastStart;
 LLVector3		gDebugRaycastEnd;
 
 // HUD display lines in lower right
-BOOL				gDisplayWindInfo = FALSE;
-BOOL				gDisplayCameraPos = FALSE;
-BOOL				gDisplayNearestWater = FALSE;
-BOOL				gDisplayFOV = FALSE;
+BOOL			gDisplayWindInfo = FALSE;
+BOOL			gDisplayCameraPos = FALSE;
+BOOL			gDisplayNearestWater = FALSE;
+BOOL			gDisplayFOV = FALSE;
 
 S32 CHAT_BAR_HEIGHT = 28; 
 S32 OVERLAY_BAR_HEIGHT = 20;
@@ -395,17 +338,25 @@ public:
 		if (gDisplayWindInfo)
 		{
 			wind_vel_text = llformat("Wind velocity %.2f m/s", gWindVec.magVec());
-			wind_vector_text = llformat("Wind vector   %.2f %.2f %.2f", gWindVec.mV[0], gWindVec.mV[1], gWindVec.mV[2]);
-			rwind_vel_text = llformat("RWind vel %.2f m/s", gRelativeWindVec.magVec());
-			rwind_vector_text = llformat("RWind vec   %.2f %.2f %.2f", gRelativeWindVec.mV[0], gRelativeWindVec.mV[1], gRelativeWindVec.mV[2]);
+			wind_vector_text = llformat("Wind vector   %.2f %.2f %.2f",
+										gWindVec.mV[0], gWindVec.mV[1],
+										gWindVec.mV[2]);
+			rwind_vel_text = llformat("RWind vel %.2f m/s",
+									  gRelativeWindVec.magVec());
+			rwind_vector_text = llformat("RWind vec   %.2f %.2f %.2f",
+										 gRelativeWindVec.mV[0],
+										 gRelativeWindVec.mV[1],
+										 gRelativeWindVec.mV[2]);
 
-			addText(xpos, ypos, wind_vel_text);  ypos += y_inc;
-			addText(xpos, ypos, wind_vector_text);  ypos += y_inc;
-			addText(xpos, ypos, rwind_vel_text);  ypos += y_inc;
-			addText(xpos, ypos, rwind_vector_text);  ypos += y_inc;
-		}
-		if (gDisplayWindInfo)
-		{
+			addText(xpos, ypos, wind_vel_text);
+			ypos += y_inc;
+			addText(xpos, ypos, wind_vector_text);
+			ypos += y_inc;
+			addText(xpos, ypos, rwind_vel_text);
+			ypos += y_inc;
+			addText(xpos, ypos, rwind_vector_text);
+			ypos += y_inc;
+
 			if (gAudiop)
 			{
 				audio_text= llformat("Audio for wind: %d", gAudiop->isWindEnabled());
@@ -2635,19 +2586,6 @@ BOOL LLViewerWindow::handleKey(KEY key, MASK mask)
 		return TRUE;
 	}
 
-	// handle escape key
-	//if (key == KEY_ESCAPE && mask == MASK_NONE)
-	//{
-
-		// *TODO: get this to play well with mouselook and hidden
-		// cursor modes, etc, and re-enable.
-		//if (gFocusMgr.getMouseCapture())
-		//{
-		//	gFocusMgr.setMouseCapture(NULL);
-		//	return TRUE;
-		//}
-	//}
-
 	// let menus handle navigation keys
 	if (gMenuBarView && gMenuBarView->handleKey(key, mask, TRUE))
 	{
@@ -2666,7 +2604,8 @@ BOOL LLViewerWindow::handleKey(KEY key, MASK mask)
 		// arrow keys move avatar while chatting hack
 		if (gChatBar && gChatBar->inputEditorHasFocus())
 		{
-			if (gChatBar->getCurrentChat().empty() || gSavedSettings.getBOOL("ArrowKeysMoveAvatar"))
+			static LLCachedControl<bool> arrow_keys_move_avatar(gSavedSettings, "ArrowKeysMoveAvatar");
+			if (gChatBar->getCurrentChat().empty() || arrow_keys_move_avatar)
 			{
 				switch(key)
 				{
@@ -3163,11 +3102,8 @@ BOOL LLViewerWindow::handlePerFrameHover()
 		{
 			gFloaterTools->setVisible(FALSE);
 		}
-		// In the future we may wish to hide the tools menu unless you
-		// are building. JC
-		//gMenuBarView->setItemVisible("Tools", gFloaterTools->getVisible());
-		//gMenuBarView->arrange();
 	}
+
 	if (gToolBar)
 	{
 		gToolBar->refresh();
@@ -3885,23 +3821,25 @@ LLViewerObject* LLViewerWindow::cursorIntersect(S32 mouse_x, S32 mouse_y, F32 de
 LLVector3 LLViewerWindow::mouseDirectionGlobal(const S32 x, const S32 y) const
 {
 	// find vertical field of view
-	F32			fov = LLViewerCamera::getInstance()->getView();
+	LLViewerCamera* camera = LLViewerCamera::getInstance();
+	F32	fov = camera->getView();
 
 	// find screen resolution
-	S32			height = getWindowHeight();
-	S32			width = getWindowWidth();
+	S32 height = getWindowHeight();
+	S32 width = getWindowWidth();
 
 	// calculate pixel distance to screen
-	F32			distance = (height / 2.f) / (tan(fov / 2.f));
+	F32 t = 2.0f * tan(fov / 2.f);
+	F32 distance = (t == 0.0f ? F32_MAX : height / t);
 
 	// calculate click point relative to middle of screen
-	F32			click_x = x - width / 2.f;
-	F32			click_y = y - height / 2.f;
+	F32	click_x = x - width / 2.f;
+	F32 click_y = y - height / 2.f;
 
 	// compute mouse vector
-	LLVector3	mouse_vector =	distance * LLViewerCamera::getInstance()->getAtAxis()
-								- click_x * LLViewerCamera::getInstance()->getLeftAxis()
-								+ click_y * LLViewerCamera::getInstance()->getUpAxis();
+	LLVector3 mouse_vector = distance * camera->getAtAxis() -
+							 click_x * camera->getLeftAxis() +
+							 click_y * camera->getUpAxis();
 
 	mouse_vector.normVec();
 

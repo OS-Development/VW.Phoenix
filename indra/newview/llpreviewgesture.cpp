@@ -37,40 +37,37 @@
 #include "llpreviewgesture.h"
 
 // libraries
-#include "lldatapacker.h"
-#include "lldarray.h"
-#include "llstring.h"
-#include "lldir.h"
-#include "llmultigesture.h"
-#include "llvfile.h"
-
-// newview
-#include "llagent.h"		// todo: remove
-#include "llassetuploadresponders.h"
 #include "llbutton.h"
 #include "llcheckboxctrl.h"
 #include "llcombobox.h"
-#include "lldelayedgestureerror.h"
-#include "llfloatergesture.h" // for some label constants
-#include "llgesturemgr.h"
-#include "llinventorymodel.h"
+#include "lldatapacker.h"
+#include "llstring.h"
+#include "lldir.h"
 #include "llkeyboard.h"
 #include "lllineeditor.h"
-#include "llnotify.h"
+#include "llmultigesture.h"
+#include "llnotifications.h"
 #include "llradiogroup.h"
+#include "llresmgr.h"
 #include "llscrolllistctrl.h"
 #include "lltextbox.h"
 #include "lluictrlfactory.h"
+#include "llvfile.h"
+
+// newview
+#include "llagent.h"					// todo: remove
+#include "llanimstatelabels.h"
+#include "llappviewer.h"				// gVFS
+#include "llassetuploadresponders.h"
+#include "lldelayedgestureerror.h"
+#include "llfloatergesture.h"			// for some label constants
+#include "llgesturemgr.h"
+#include "llinventorymodel.h"
 #include "llviewerinventory.h"
-#include "llviewerobject.h"
 #include "llviewerobjectlist.h"
 #include "llviewerregion.h"
 #include "llviewerstats.h"
-#include "llviewerwindow.h"		// busycount
-#include "llappviewer.h"			// gVFS
-#include "llanimstatelabels.h"
-#include "llresmgr.h"
-
+#include "llviewerwindow.h"				// busycount
 
 // *TODO: Translate?
 const std::string NONE_LABEL = "---";

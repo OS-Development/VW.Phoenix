@@ -26,6 +26,7 @@
 #ifndef LLFLOATERDISPLAYNAME_H
 #define LLFLOATERDISPLAYNAME_H
 
+#include "llfloater.h"
 
 class LLFloaterDisplayName : public LLFloater
 {

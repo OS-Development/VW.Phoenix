@@ -33,18 +33,19 @@
 
 #include "llvoiceremotectrl.h"
 
-#include "llagent.h"
-#include "llui.h"
 #include "llbutton.h"
+#include "lliconctrl.h"
+#include "lltextbox.h"
+#include "llui.h"
 #include "lluictrlfactory.h"
+
+#include "llagent.h"
+#include "llfloaterchatterbox.h"
+#include "llfloateractivespeakers.h"
+#include "llimpanel.h"
+#include "lloverlaybar.h"
 #include "llviewercontrol.h"
 #include "llvoiceclient.h"
-#include "llimpanel.h"
-#include "llfloateractivespeakers.h"
-#include "llfloaterchatterbox.h"
-#include "lliconctrl.h"
-#include "lloverlaybar.h"
-#include "lltextbox.h"
 
 LLVoiceRemoteCtrl::LLVoiceRemoteCtrl (const std::string& name) : LLPanel(name)
 {

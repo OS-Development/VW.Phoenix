@@ -32,13 +32,16 @@
  */
 
 #include "llviewerprecompiledheaders.h"
-#include "lldelayedgestureerror.h"
+
 #include <list>
-#include "llnotify.h"
+
+#include "lldelayedgestureerror.h"
+
+#include "llnotifications.h"
+
 #include "llcallbacklist.h"
-#include "llinventory.h"
-#include "llviewerinventory.h"
 #include "llinventorymodel.h"
+#include "llviewerinventory.h"
 
 const F32 MAX_NAME_WAIT_TIME = 5.0f;
 

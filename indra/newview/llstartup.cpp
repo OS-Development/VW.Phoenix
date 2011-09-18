@@ -35,16 +35,17 @@
 #include "llstartup.h"
 
 #if LL_WINDOWS
-#	include <process.h>		// _spawnl()
+#include <process.h>				// _spawnl()
 #else
-#	include <sys/stat.h>		// mkdir()
+#include <sys/stat.h>				// mkdir()
 #endif
 
-#include "llviewermedia_streamingaudio.h"
+#include "imageids.h"
+#include "llares.h"
 #include "llaudioengine.h"
 
 #ifdef LL_FMOD
-# include "llaudioengine_fmod.h"
+#include "llaudioengine_fmod.h"
 #endif
 
 #ifdef LL_OPENAL
@@ -54,59 +55,64 @@
 #include "hippogridmanager.h"
 #include "hippolimits.h"
 
-#include "llares.h"
 #include "llcachename.h"
-#include "llviewercontrol.h"
 #include "lldir.h"
-#include "lleventpoll.h" // OGPX for Agent Domain event queue
 #include "llerrorcontrol.h"
+#include "lleventpoll.h"			// OGPX for Agent Domain event queue
 #include "llfiltersd2xmlrpc.h"
 #include "llfocusmgr.h"
+#include "llhttpclient.h"
 #include "llhttpsender.h"
-#include "imageids.h"
 #include "llimageworker.h"
 #include "lllandmark.h"
 #include "llloginflags.h"
 #include "llmd5.h"
 #include "llmemorystream.h"
 #include "llmessageconfig.h"
-#include "llmoveview.h"
+#include "llnotifications.h"
+#include "llpostprocess.h"
 #include "llregionhandle.h"
 #include "llsd.h"
 #include "llsdserialize.h"
 #include "llsdutil.h"
 #include "llsdutil_math.h"
 #include "llsecondlifeurls.h"
+#include "llsocks5.h"
 #include "llstring.h"
+#include "llui.h"
 #include "lluserrelations.h"
 #include "llversionviewer.h"
 #include "llvfs.h"
-#include "llxorcipher.h"	// saved password, MAC address
+#include "llxorcipher.h"			// saved password, MAC address
 #include "message.h"
 #include "v3math.h"
 
 #include "llagent.h"
+#include "llagentlanguage.h"
 #include "llagentpilot.h"
-#include "llfloateravatarpicker.h"
+#include "llappviewer.h"
 #include "llcallbacklist.h"
 #include "llcallingcard.h"
 #include "llcolorscheme.h"
 #include "llconsole.h"
 #include "llcontainerview.h"
-#include "llfloaterstats.h"
 #include "lldebugview.h"
 #include "lldrawable.h"
 #include "lleventnotifier.h"
 #include "llface.h"
+#include "llfasttimerview.h"
 #include "llfeaturemanager.h"
 #include "llfirstuse.h"
 #include "llfloateractivespeakers.h"
+#include "llfloateravatarpicker.h"
 #include "llfloaterbeacons.h"
 #include "llfloatercamera.h"
 #include "llfloaterchat.h"
 #include "llfloatergesture.h"
 #include "llfloaterhud.h"
 #include "llfloaterland.h"
+#include "llfloatermap.h"
+#include "llfloaterstats.h"
 #include "llfloatertopobjects.h"
 #include "llfloatertos.h"
 #include "llfloaterworldmap.h"
@@ -116,15 +122,17 @@
 #include "llgroupmgr.h"
 #include "llhudeffecttrail.h"
 #include "llhudmanager.h"
-#include "llhttpclient.h"
 #include "llimagebmp.h"
 #include "llinventorymodel.h"
 #include "llinventoryview.h"
 #include "llkeyboard.h"
 #include "llloginhandler.h"			// gLoginHandler, SLURL support
+#include "llmoveview.h"
 #include "llpanellogin.h"
 #include "llmutelist.h"
-#include "llnotify.h"
+#include "llnamebox.h"
+#include "llnameeditor.h"
+#include "llnamelistctrl.h"
 #include "llpanelavatar.h"
 #include "llpaneldirbrowser.h"
 #include "llpaneldirfind.h"
@@ -138,19 +146,18 @@
 #include "llpreview.h"
 #include "llpreviewscript.h"
 #include "llproductinforequest.h"
-#include "llsdhttpserver.h" // OGPX might not need when EVENTHACK is sorted
+#include "llsdhttpserver.h"			// OGPX might not need when EVENTHACK is sorted
 #include "llsecondlifeurls.h"
 #include "llselectmgr.h"
 #include "llsky.h"
 #include "llsrv.h"
 #include "llstatview.h"
 #include "lltrans.h"
-#include "llstatusbar.h"		// sendMoneyBalanceRequest(), owns L$ balance
+#include "llstatusbar.h"			// sendMoneyBalanceRequest(), owns L$ balance
 #include "llsurface.h"
 #include "lltexturecache.h"
 #include "lltexturefetch.h"
 #include "lltoolmgr.h"
-#include "llui.h"
 #include "llurldispatcher.h"
 #include "llurlsimstring.h"
 #include "llurlhistory.h"
@@ -159,11 +166,13 @@
 #include "llvieweraudio.h"
 #include "llviewerassetstorage.h"
 #include "llviewercamera.h"
+#include "llviewercontrol.h"
 #include "llviewerdisplay.h"
 #include "llviewergenericmessage.h"
 #include "llviewergesture.h"
 #include "llviewertexturelist.h"
 #include "llviewermedia.h"
+#include "llviewermedia_streamingaudio.h"
 #include "llviewermenu.h"
 #include "llviewermessage.h"
 #include "llviewernetwork.h"
@@ -176,24 +185,14 @@
 #include "llviewerwindow.h"
 #include "llvoavatar.h"
 #include "llvoclouds.h"
+#include "llvoiceclient.h"
+#include "llwaterparammanager.h"
 #include "llweb.h"
+#include "llwlparammanager.h"
 #include "llworld.h"
 #include "llworldmapmessage.h"
 #include "llxfermanager.h"
 #include "pipeline.h"
-#include "llappviewer.h"
-#include "llfasttimerview.h"
-#include "llfloatermap.h"
-#include "llweb.h"
-#include "llvoiceclient.h"
-#include "llnamelistctrl.h"
-#include "llnamebox.h"
-#include "llnameeditor.h"
-#include "llpostprocess.h"
-#include "llwlparammanager.h"
-#include "llwaterparammanager.h"
-#include "llagentlanguage.h"
-#include "llsocks5.h"
 #include "floateravatarlist.h"
 #include "scriptcounter.h"
 #include "jcfloater_areasearch.h"
@@ -208,8 +207,8 @@
 // [/RLVa:KB]
 
 #if LL_WINDOWS
-#include "llwindebug.h"
 #include "lldxhardware.h"
+#include "llwindebug.h"
 #endif
 
 #include "jc_lslviewerbridge.h"

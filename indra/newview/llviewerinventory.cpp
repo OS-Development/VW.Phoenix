@@ -31,25 +31,26 @@
  */
 
 #include "llviewerprecompiledheaders.h"
+
 #include "llviewerinventory.h"
 
-#include "message.h"
 #include "indra_constants.h"
+#include "llnotifications.h"
+#include "message.h"
 
 #include "llagent.h"
-#include "llviewercontrol.h"
 #include "llconsole.h"
 #include "llinventorymodel.h"
-#include "llnotify.h"
 #include "llimview.h"
 #include "llgesturemgr.h"
 
 #include "llinventorybridge.h"
 #include "llinventoryview.h"
 
-#include "llviewerregion.h"
-#include "llviewerobjectlist.h"
+#include "llviewercontrol.h"
 #include "llpreviewgesture.h"
+#include "llviewerobjectlist.h"
+#include "llviewerregion.h"
 #include "llviewerwindow.h"
 
 ///----------------------------------------------------------------------------

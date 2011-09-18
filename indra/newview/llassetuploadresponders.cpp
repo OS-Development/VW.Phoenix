@@ -34,6 +34,13 @@
 
 #include "llassetuploadresponders.h"
 
+// library includes
+#include "lleconomy.h"
+#include "llfocusmgr.h"
+#include "llnotifications.h"
+#include "llscrolllistctrl.h"
+#include "llsdserialize.h"
+
 // viewer includes
 #include "llagent.h"
 #include "llcompilequeue.h"
@@ -56,12 +63,6 @@
 #include "llviewermenufile.h"
 #include "llviewerwindow.h"
 #include "lltexlayer.h"
-
-// library includes
-#include "lleconomy.h"
-#include "llfocusmgr.h"
-#include "llscrolllistctrl.h"
-#include "llsdserialize.h"
 
 // When uploading multiple files, don't display any of them when uploading more than this number.
 static const S32 FILE_COUNT_DISPLAY_THRESHOLD = 5;

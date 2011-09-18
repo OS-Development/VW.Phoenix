@@ -32,37 +32,34 @@
 
 #include "llviewerprecompiledheaders.h"
 
-#include "llfocusmgr.h"
 #include "llaudioengine.h"
+#include "llfocusmgr.h"
+#include "llfontgl.h"
+#include "llnotecard.h"
+#include "llmemorystream.h"
+//#include "llmenugl.h"
+#include "llnotifications.h"
+#include "llscrollbar.h"
+#include "lluictrlfactory.h"
+ 
 #include "llagent.h"
-#include "llinventory.h"
-#include "llinventoryicon.h"
-#include "llinventorymodel.h"
-#include "llinventoryview.h"
-#include "llinventorybridge.h"	// for landmark prefix string
-
-#include "llviewertexteditor.h"
-
+#include "llappviewer.h"		// for gPacificDaylightTime
 #include "llfloaterchat.h"
 #include "llfloaterworldmap.h"
-#include "llnotify.h"
+#include "llinventoryicon.h"
+#include "llinventoryview.h"
+#include "llinventorybridge.h"	// for landmark prefix string
 #include "llpreview.h"
-#include "llpreviewtexture.h"
-#include "llpreviewnotecard.h"
 #include "llpreviewlandmark.h"
-#include "llscrollbar.h"
+#include "llpreviewnotecard.h"
+#include "llpreviewtexture.h"
 #include "lltooldraganddrop.h"
 #include "llviewerassettype.h"
 #include "llviewercontrol.h"
+#include "llviewerinventory.h"
+#include "llviewertexteditor.h"
 #include "llviewertexturelist.h"
 #include "llviewerwindow.h"
-#include "llviewerinventory.h"
-#include "lluictrlfactory.h"
-#include "llnotecard.h"
-#include "llmemorystream.h"
-#include "llmenugl.h"
-
-#include "llappviewer.h" // for gPacificDaylightTime
 
 // [RLVa:KB]
 #include "rlvhandler.h"

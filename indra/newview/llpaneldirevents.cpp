@@ -37,20 +37,19 @@
 #include <sstream>
 
 // linden library includes
-#include "llenum.h"
-#include "message.h"
 #include "llqueryflags.h"
+#include "llresmgr.h"
+#include "message.h"
 
 // viewer project includes
 #include "llagent.h"
-#include "llviewercontrol.h"
-#include "lleventinfo.h"
-#include "llpaneldirbrowser.h"
-#include "llresmgr.h"
-#include "lluiconstants.h"
-#include "llpanelevent.h"
 #include "llappviewer.h"
-#include "llnotify.h"
+#include "lleventinfo.h"
+#include "llnotifications.h"
+#include "llpaneldirbrowser.h"
+#include "llpanelevent.h"
+#include "lluiconstants.h"
+#include "llviewercontrol.h"
 
 BOOL gDisplayEventHack = FALSE;
 

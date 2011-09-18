@@ -36,14 +36,14 @@
 
 // library includes
 #include "indra_constants.h"
+#include "llui.h"
 
 // viewer includes
-#include "llagent.h"	// for gAgent.inPrelude()
-#include "llnotify.h"
-#include "llviewercontrol.h"
-#include "llui.h"
+#include "llagent.h"			// for gAgent.inPrelude()
 #include "llappviewer.h"
+#include "llnotifications.h"
 #include "lltracker.h"
+#include "llviewercontrol.h"
 
 // static
 std::set<std::string> LLFirstUse::sConfigVariables;

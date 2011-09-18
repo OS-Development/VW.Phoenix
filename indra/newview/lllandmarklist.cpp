@@ -34,12 +34,12 @@
 
 #include "lllandmarklist.h"
 
-#include "message.h"
 #include "llassetstorage.h"
+#include "llvfile.h"
+#include "message.h"
 
 #include "llagent.h"
-#include "llnotify.h"
-#include "llvfile.h"
+#include "llnotifications.h"
 #include "llviewerstats.h"
 
 // Globals

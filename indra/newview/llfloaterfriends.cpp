@@ -55,7 +55,6 @@
 #include "llfloateravatarinfo.h"
 #include "llinventorymodel.h"
 #include "llnamelistctrl.h"
-#include "llnotify.h"
 #include "llresmgr.h"
 #include "llimview.h"
 #include "lluictrlfactory.h"

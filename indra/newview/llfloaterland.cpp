@@ -55,7 +55,6 @@
 #include "llfloatergroupinfo.h"
 #include "lllineeditor.h"
 #include "llnamelistctrl.h"
-#include "llnotify.h"
 #include "llpanellandaudio.h"
 #include "llpanellandmedia.h"
 #include "llradiogroup.h"
