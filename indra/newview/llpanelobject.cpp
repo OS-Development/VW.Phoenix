@@ -2506,9 +2506,9 @@ void LLPanelObject::onPasteSize(void* user_data)
 
 	if(mClipboardSize.isNull()) return;
 
-	mClipboardSize.mV[VX] = llclamp(mClipboardSize.mV[VX], MIN_PRIM_SCALE, DEFAULT_MAX_PRIM_SCALE);
-	mClipboardSize.mV[VY] = llclamp(mClipboardSize.mV[VY], MIN_PRIM_SCALE, DEFAULT_MAX_PRIM_SCALE);
-	mClipboardSize.mV[VZ] = llclamp(mClipboardSize.mV[VZ], MIN_PRIM_SCALE, DEFAULT_MAX_PRIM_SCALE);
+	mClipboardSize.mV[VX] = llclamp(mClipboardSize.mV[VX], MIN_PRIM_SCALE, gHippoLimits->getMaxPrimScale());
+	mClipboardSize.mV[VY] = llclamp(mClipboardSize.mV[VY], MIN_PRIM_SCALE, gHippoLimits->getMaxPrimScale());
+	mClipboardSize.mV[VZ] = llclamp(mClipboardSize.mV[VZ], MIN_PRIM_SCALE, gHippoLimits->getMaxPrimScale());
 
 	self->mCtrlScaleX->set( mClipboardSize.mV[VX] );
 	self->mCtrlScaleY->set( mClipboardSize.mV[VY] );
