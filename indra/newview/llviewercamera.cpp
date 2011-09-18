@@ -336,7 +336,8 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 		if (limit_select_distance)
 		{
 			// ...select distance from control
-			z_far = gSavedSettings.getF32("MaxSelectDistance");
+			static LLCachedControl<F32> max_select_distance(gSavedSettings, "MaxSelectDistance");
+			z_far = llclamp((F32)max_select_distance, 32.f, 512.f);
 		}
 		else
 		{

@@ -932,7 +932,8 @@ void LLToolGrab::handleHoverInactive(S32 x, S32 y, MASK mask)
 
 	// Look for cursor against the edge of the screen
 	// Only works in fullscreen
-	if (gSavedSettings.getBOOL("FullScreen"))
+	static LLCachedControl<bool> full_screen(gSavedSettings, "FullScreen");
+	if (full_screen)
 	{
 		if (gAgent.cameraThirdPerson() )
 		{
@@ -1068,7 +1069,9 @@ void LLToolGrab::onMouseCaptureLost()
 
 	stopGrab();
 	if (mSpinGrabbing)
-	stopSpin();
+	{
+		stopSpin();
+	}
 
 	mMode = GRAB_INACTIVE;
 

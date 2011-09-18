@@ -486,7 +486,6 @@ void LLTracker::renderBeacon(LLVector3d pos_global,
 							 LLHUDText* hud_textp, 
 							 const std::string& label )
 {
-	sCheesyBeacon = gSavedSettings.getBOOL("CheesyBeacon");
 	LLVector3d to_vec = pos_global - gAgent.getCameraPositionGlobal();
 
 	F32 dist = (F32)to_vec.magVec();

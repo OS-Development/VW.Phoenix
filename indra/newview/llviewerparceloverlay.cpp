@@ -313,17 +313,22 @@ void LLViewerParcelOverlay::uncompressLandOverlay(S32 chunk, U8 *packed_overlay)
 
 void LLViewerParcelOverlay::updatePropertyLines()
 {
-	if (!gSavedSettings.getBOOL("ShowPropertyLines"))
+	static LLCachedControl<bool> show_property_lines(gSavedSettings, "ShowPropertyLines");
+	if (!show_property_lines)
+	{
 		return;
+	}
 	
 	S32 row, col;
 
 	// Can do this because gColors are actually stored as LLColor4U
-	const LLColor4U self_coloru  = gColors.getColor4U("PropertyColorSelf");
-	const LLColor4U other_coloru = gColors.getColor4U("PropertyColorOther");
-	const LLColor4U group_coloru = gColors.getColor4U("PropertyColorGroup");
-	const LLColor4U for_sale_coloru = gColors.getColor4U("PropertyColorForSale");
-	const LLColor4U auction_coloru = gColors.getColor4U("PropertyColorAuction");
+	static LLCachedControl<LLColor4U> self_coloru(gColors, "PropertyColorSelf");
+	static LLCachedControl<LLColor4U> other_coloru(gColors, "PropertyColorOther");
+	static LLCachedControl<LLColor4U> group_coloru(gColors, "PropertyColorGroup");
+	static LLCachedControl<LLColor4U> for_sale_coloru(gColors, "PropertyColorForSale");
+	static LLCachedControl<LLColor4U> auction_coloru(gColors, "PropertyColorAuction");
+
+	LLColor4U color;
 
 	// Build into dynamic arrays, then copy into static arrays.
 	LLDynamicArray<LLVector3, 256> new_vertex_array;
@@ -339,48 +344,46 @@ void LLViewerParcelOverlay::updatePropertyLines()
 	{
 		for (col = 0; col < GRIDS_PER_EDGE; col++)
 		{
-			overlay = mOwnership[row*GRIDS_PER_EDGE+col];
+			overlay = mOwnership[row * GRIDS_PER_EDGE + col];
 
-			F32 left = col*GRID_STEP;
-			F32 right = left+GRID_STEP;
+			switch (overlay & PARCEL_COLOR_MASK)
+			{
+				case PARCEL_SELF:
+					color = self_coloru;
+					break;
+				case PARCEL_GROUP:
+					color = group_coloru;
+					break;
+				case PARCEL_OWNED:
+					color = other_coloru;
+					break;
+				case PARCEL_FOR_SALE:
+					color = for_sale_coloru;
+					break;
+				case PARCEL_AUCTION:
+					color = auction_coloru;
+					break;
+				default:
+					continue;
+			}
 
-			F32 bottom = row*GRID_STEP;
-			F32 top = bottom+GRID_STEP;
+			F32 left = col * GRID_STEP;
+			F32 right = left + GRID_STEP;
+
+			F32 bottom = row * GRID_STEP;
+			F32 top = bottom + GRID_STEP;
 
 			// West edge
 			if (overlay & PARCEL_WEST_LINE)
 			{
-				switch(overlay & PARCEL_COLOR_MASK)
-				{
-				case PARCEL_SELF:
-					addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
-						left, bottom, WEST, self_coloru);
-					break;
-				case PARCEL_GROUP:
-					addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
-						left, bottom, WEST, group_coloru);
-					break;
-				case PARCEL_OWNED:
-					addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
-						left, bottom, WEST, other_coloru);
-					break;
-				case PARCEL_FOR_SALE:
-					addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
-						left, bottom, WEST, for_sale_coloru);
-					break;
-				case PARCEL_AUCTION:
-					addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
-						left, bottom, WEST, auction_coloru);
-					break;
-				default:
-					break;
-				}
+				addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
+								left, bottom, WEST, color);
 			}
 
 			// East edge
-			if (col < GRIDS_PER_EDGE-1)
+			if (col < GRIDS_PER_EDGE - 1)
 			{
-				U8 east_overlay = mOwnership[row*GRIDS_PER_EDGE+col+1];
+				U8 east_overlay = mOwnership[row * GRIDS_PER_EDGE + col + 1];
 				add_edge = east_overlay & PARCEL_WEST_LINE;
 			}
 			else
@@ -390,68 +393,21 @@ void LLViewerParcelOverlay::updatePropertyLines()
 
 			if (add_edge)
 			{
-				switch(overlay & PARCEL_COLOR_MASK)
-				{
-				case PARCEL_SELF:
-					addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
-						right, bottom, EAST, self_coloru);
-					break;
-				case PARCEL_GROUP:
-					addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
-						right, bottom, EAST, group_coloru);
-					break;
-				case PARCEL_OWNED:
-					addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
-						right, bottom, EAST, other_coloru);
-					break;
-				case PARCEL_FOR_SALE:
-					addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
-						right, bottom, EAST, for_sale_coloru);
-					break;
-				case PARCEL_AUCTION:
-					addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
-						right, bottom, EAST, auction_coloru);
-					break;
-				default:
-					break;
-				}
+				addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
+								right, bottom, EAST, color);
 			}
 
 			// South edge
 			if (overlay & PARCEL_SOUTH_LINE)
 			{
-				switch(overlay & PARCEL_COLOR_MASK)
-				{
-				case PARCEL_SELF:
-					addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
-						left, bottom, SOUTH, self_coloru);
-					break;
-				case PARCEL_GROUP:
-					addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
-						left, bottom, SOUTH, group_coloru);
-					break;
-				case PARCEL_OWNED:
-					addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
-						left, bottom, SOUTH, other_coloru);
-					break;
-				case PARCEL_FOR_SALE:
-					addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
-						left, bottom, SOUTH, for_sale_coloru);
-					break;
-				case PARCEL_AUCTION:
-					addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
-						left, bottom, SOUTH, auction_coloru);
-					break;
-				default:
-					break;
-				}
+				addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
+								left, bottom, SOUTH, color);
 			}
 
-
 			// North edge
-			if (row < GRIDS_PER_EDGE-1)
+			if (row < GRIDS_PER_EDGE - 1)
 			{
-				U8 north_overlay = mOwnership[(row+1)*GRIDS_PER_EDGE+col];
+				U8 north_overlay = mOwnership[(row + 1) * GRIDS_PER_EDGE + col];
 				add_edge = north_overlay & PARCEL_SOUTH_LINE;
 			}
 			else
@@ -461,31 +417,8 @@ void LLViewerParcelOverlay::updatePropertyLines()
 
 			if (add_edge)
 			{
-				switch(overlay & PARCEL_COLOR_MASK)
-				{
-				case PARCEL_SELF:
-					addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
-						left, top, NORTH, self_coloru);
-					break;
-				case PARCEL_GROUP:
-					addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
-						left, top, NORTH, group_coloru);
-					break;
-				case PARCEL_OWNED:
-					addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
-						left, top, NORTH, other_coloru);
-					break;
-				case PARCEL_FOR_SALE:
-					addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
-						left, top, NORTH, for_sale_coloru);
-					break;
-				case PARCEL_AUCTION:
-					addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
-						left, top, NORTH, auction_coloru);
-					break;
-				default:
-					break;
-				}
+				addPropertyLine(new_vertex_array, new_color_array, new_coord_array,
+								left, top, NORTH, color);
 			}
 		}
 	}

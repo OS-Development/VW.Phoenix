@@ -125,7 +125,7 @@ void LLDrawPoolTerrain::prerender()
 	}
 	else
 	{
-		static LLCachedControl<bool> render_terrain_detail(gSavedSettings, "RenderTerrainDetail");
+		static LLCachedControl<S32> render_terrain_detail(gSavedSettings, "RenderTerrainDetail");
 		sDetailMode = render_terrain_detail;
 	}
 }

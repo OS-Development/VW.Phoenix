@@ -64,63 +64,62 @@
 
 #include "llviewerprecompiledheaders.h"
 
-#include "llvoavatar.h"
-
 #include <stdio.h>
 #include <ctype.h>
 
+#include "llvoavatar.h"
+
 #include "llaudioengine.h"
-#include "noise.h"
+#include "lleditingmotion.h"
+#include "llheadrotmotion.h"
+#include "llkeyframefallmotion.h"
+#include "llkeyframestandmotion.h"
+#include "llkeyframewalkmotion.h"
+#include "llquantize.h"
+#include "llregionhandle.h"
+#include "llresmgr.h"
 #include "llsdserialize.h"
+#include "lltargetingmotion.h"
 
 #include "cofmgr.h"
-#include "llagent.h" //  Get state values from here
-#include "llviewercontrol.h"
+#include "llagent.h"				// Get state values from here
+#include "llanimstatelabels.h"
 #include "lldrawpoolavatar.h"
 #include "lldriverparam.h"
-#include "lleditingmotion.h"
 #include "llemote.h"
 #include "llfirstuse.h"
-#include "llheadrotmotion.h"
+#include "llgesturemgr.h"			// needed to trigger the voice gesticulations
 #include "llhudeffecttrail.h"
 #include "llhudmanager.h"
 #include "llhudtext.h"
 #include "llinventorybridge.h"
 #include "llinventoryview.h"
-#include "llkeyframefallmotion.h"
-#include "llkeyframestandmotion.h"
-#include "llkeyframewalkmotion.h"
-#include "llmanip.h" //KC: needed for adjusting the rotation on attachments relocated from 2nd points
+#include "llmanipscale.h"			// for get_default_max_prim_scale()
 #include "llmeshrepository.h"
 #include "llmutelist.h"
-#include "llnotify.h"
-#include "llquantize.h"
-#include "llregionhandle.h"
-#include "llresmgr.h"
 #include "llselectmgr.h"
+#include "llsky.h"
 #include "llsprite.h"
-#include "lltargetingmotion.h"
 #include "lltexlayer.h"
-#include "lltoolgrab.h"	// for needsRenderBeam
-#include "lltoolmgr.h" // for needsRenderBeam
-#include "lltoolmorph.h" // for auto de-ruth
+#include "lltoolgrab.h"				// for needsRenderBeam
+#include "lltoolmgr.h"				// for needsRenderBeam
+#include "lltoolmorph.h"			// for auto de-ruth
 #include "llviewercamera.h"
+#include "llviewercontrol.h"
 #include "llviewergenericmessage.h"
-#include "llviewertexturelist.h"
 #include "llviewermedia.h"
 #include "llviewermenu.h"
 #include "llviewerobjectlist.h"
 #include "llviewerparcelmgr.h"
+#include "llviewershadermgr.h"
 #include "llviewerstats.h"
+#include "llviewertexturelist.h"
+#include "llvoiceclient.h"
+#include "llvoicevisualizer.h"		// Ventrella
 #include "llvovolume.h"
 #include "llworld.h"
+#include "noise.h"
 #include "pipeline.h"
-#include "llviewershadermgr.h"
-#include "llsky.h"
-#include "llanimstatelabels.h"
-#include "llgesturemgr.h" //needed to trigger the voice gesticulations
-#include "llvoiceclient.h"
-#include "llvoicevisualizer.h" // Ventrella
 #include "llsdserialize.h" // client resolver
 #include "floateravatarlist.h"
 #include "lggbeammaps.h"
@@ -3483,12 +3482,13 @@ void LLVOAvatar::idleUpdateNameTag(const LLVector3& root_pos_last)
 
 	static LLCachedControl<F32> NAME_SHOW_TIME(gSavedSettings, "RenderNameShowTime");	// seconds
 	static LLCachedControl<F32> FADE_DURATION(gSavedSettings, "RenderNameFadeDuration"); // seconds
+	static LLCachedControl<bool> use_chat_bubbles(gSavedSettings, "UseChatBubbles");
 
 	// [RLVa:KB] - Checked: 2010-04-04 (RLVa-1.2.2a) | Added: RLVa-0.2.0b
 	bool fRlvShowNames = gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES);
 // [/RLVa:KB]
 	BOOL visible_avatar = isVisible() || mNeedsAnimUpdate;
-	BOOL visible_chat = gSavedSettings.getBOOL("UseChatBubbles") && (mChats.size() || mTyping);
+	BOOL visible_chat = use_chat_bubbles && (mChats.size() || mTyping);
 	BOOL render_name =	visible_chat ||
 		                (visible_avatar &&
 // [RLVa:KB] - Checked: 2010-04-04 (RLVa-1.2.2a) | Added: RLVa-1.0.0h
@@ -4165,7 +4165,8 @@ void LLVOAvatar::idleUpdateBelowWater()
 	if ((avatar_height < water_height) != mBelowWater)
 	{
 		mBelowWater = avatar_height < water_height;
-		if ((mIsSelf) && gSavedPerAccountSettings.getBOOL("PhoenixAOEnabled"))
+		static LLCachedControl<bool> phoenix_ao_enabled(gSavedSettings, "PhoenixAOEnabled");
+		if ((mIsSelf) && phoenix_ao_enabled)
 		{
 			// update AO if mBelowWater changes..
 			LLFloaterAO::startAOMotion(LLFloaterAO::GetAnimIDFromState(LLFloaterAO::getAnimationState()), TRUE,FALSE);
@@ -5729,9 +5730,11 @@ BOOL LLVOAvatar::processSingleAnimationStateChange( const LLUUID& anim_id, BOOL 
 					//}
 					//else
 					{
-						if(gSavedSettings.getBOOL("PlayTypingSound"))
+						static LLCachedControl<bool> play_typing_sound(gSavedSettings, "PlayTypingSound");
+						if (play_typing_sound)
 						{
-							LLUUID sound_id = LLUUID(gSavedSettings.getString("UISndTyping"));
+							static LLCachedControl<std::string> ui_snd_typing(gSavedSettings, "UISndTyping");
+							LLUUID sound_id = LLUUID(ui_snd_typing);
 							gAudiop->triggerSound(sound_id, getID(), 1.0f, LLAudioEngine::AUDIO_TYPE_SFX, char_pos_global);
 						}
 					}
@@ -9356,7 +9359,8 @@ void LLVOAvatar::onFirstTEMessageReceived()
 //-----------------------------------------------------------------------------
 void LLVOAvatar::processAvatarAppearance( LLMessageSystem* mesgsys )
 {
-	if (gSavedSettings.getBOOL("BlockAvatarAppearanceMessages"))
+	static LLCachedControl<bool> block_avatar_appearance_messages(gSavedSettings, "BlockAvatarAppearanceMessages");
+	if (block_avatar_appearance_messages)
 	{
 		llwarns << "Blocking AvatarAppearance message" << llendl;
 		return;

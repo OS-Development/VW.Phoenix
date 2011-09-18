@@ -1031,7 +1031,8 @@ bool LLViewerJoystick::toggleFlycam()
 
 void LLViewerJoystick::scanJoystick()
 {
-	if (mDriverState != JDS_INITIALIZED || !gSavedSettings.getBOOL("JoystickEnabled"))
+	static LLCachedControl<bool> joystick_enabled(gSavedSettings, "JoystickEnabled");
+	if (mDriverState != JDS_INITIALIZED || !joystick_enabled)
 	{
 		return;
 	}

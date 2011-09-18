@@ -84,8 +84,10 @@ BOOL LLToolGun::handleHover(S32 x, S32 y, MASK mask)
 	{
 		const F32 NOMINAL_MOUSE_SENSITIVITY = 0.0025f;
 
-		F32 mouse_sensitivity = gSavedSettings.getF32("MouseSensitivity");
-		mouse_sensitivity = clamp_rescale(mouse_sensitivity, 0.f, 15.f, 0.5f, 2.75f) * NOMINAL_MOUSE_SENSITIVITY;
+		static LLCachedControl<F32> sensitivity(gSavedSettings, "MouseSensitivity");
+		F32 mouse_sensitivity = clamp_rescale((F32)sensitivity,
+											  0.f, 15.f, 0.5f, 2.75f)
+								* NOMINAL_MOUSE_SENSITIVITY;
 
 		// ...move the view with the mouse
 
@@ -96,7 +98,8 @@ BOOL LLToolGun::handleHover(S32 x, S32 y, MASK mask)
 		if (dx != 0 || dy != 0)
 		{
 			// ...actually moved off center
-			if (gSavedSettings.getBOOL("InvertMouse"))
+			static LLCachedControl<bool> invert_mouse(gSavedSettings, "InvertMouse");
+			if (invert_mouse)
 			{
 				gAgent.pitch(mouse_sensitivity * -dy);
 			}
@@ -126,7 +129,8 @@ BOOL LLToolGun::handleHover(S32 x, S32 y, MASK mask)
 
 void LLToolGun::draw()
 {
-	if( gSavedSettings.getBOOL("ShowCrosshairs") )
+	static LLCachedControl<bool> show_crosshairs(gSavedSettings, "ShowCrosshairs");
+	if (show_crosshairs)
 	{
 		LLUIImagePtr crosshair = LLUI::getUIImage("UIImgCrosshairsUUID");
 		crosshair->draw(

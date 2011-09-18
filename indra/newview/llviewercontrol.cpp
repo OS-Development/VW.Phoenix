@@ -36,9 +36,12 @@
 #include "llviewercontrol.h"
 
 #include "indra_constants.h"
+#include "llaudioengine.h"
+#include "llkeyboard.h"
+#include "llparcel.h"
+#include "llrender.h"
 
 // For Listeners
-#include "llaudioengine.h"
 #include "llagent.h"
 #include "llavatarnamecache.h"
 #include "llconsole.h"
@@ -62,18 +65,15 @@
 #include "pipeline.h"
 #include "llviewerjoystick.h"
 #include "llviewerparcelmgr.h"
-#include "llparcel.h"
-#include "llnotify.h"
-#include "llkeyboard.h"
 #include "llerrorcontrol.h"
 #include "llappviewer.h"
 #include "llvosurfacepatch.h"
 #include "llvowlsky.h"
-#include "llrender.h"
 #include "llfloaterchat.h"
 #include "llviewerparcelmedia.h"
 #include "llviewertexturelist.h"
 #include "llmeshrepository.h"
+#include "lltracker.h"
 
 #ifdef TOGGLE_HACKED_GODLIKE_VIEWER
 BOOL 				gHackGodmode = FALSE;
@@ -498,6 +498,12 @@ static bool handleAvatarPhysicsLODChanged(const LLSD& newvalue)
 	return true;
 }
 
+static bool handleCheesyBeaconChanged(const LLSD& newvalue)
+{
+	LLTracker::sCheesyBeacon = newvalue.asBoolean();
+	return true;
+}
+
 ////////////////////////////////////////////////////////////////////////////
 
 void settings_setup_listeners()
@@ -646,6 +652,7 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("LipSyncEnabled")->getSignal()->connect(boost::bind(&handleVoiceClientPrefsChanged, _2));	
 	gSavedSettings.getControl("TranslateChat")->getSignal()->connect(boost::bind(&handleTranslateChatPrefsChanged, _2));	
 	gSavedSettings.getControl("PhoenixBlockSpam")->getSignal()->connect(boost::bind(&handlePhoenixBlockSpam, _2));
+	gSavedSettings.getControl("CheesyBeacon")->getSignal()->connect(boost::bind(&handleCheesyBeaconChanged, _2));	
 
     // [Ansariel/Henri: Display name support]
 	gSavedSettings.getControl("PhoenixNameSystem")->getSignal()->connect(boost::bind(&handlePhoenixNameSystemChanged, _2));
