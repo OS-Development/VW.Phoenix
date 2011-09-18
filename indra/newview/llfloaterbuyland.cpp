@@ -48,7 +48,6 @@
 #include "llframetimer.h"
 #include "lliconctrl.h"
 #include "lllineeditor.h"
-#include "llnotify.h"
 #include "llparcel.h"
 #include "llstatusbar.h"
 #include "lltextbox.h"
@@ -300,7 +299,7 @@ LLFloaterBuyLandUI* LLFloaterBuyLandUI::soleInstance(bool createIfNeeded)
 		static bool observingCacheName = false;
 		if (!observingCacheName)
 		{
-			gCacheName->addObserver(cacheNameUpdateRefreshesBuyLand);
+			gCacheName->addObserver(&cacheNameUpdateRefreshesBuyLand);
 			observingCacheName = true;
 		}
 

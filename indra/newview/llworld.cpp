@@ -131,6 +131,12 @@ void LLWorld::destroyClass()
 		removeRegion(region_to_delete->getHost());
 	}
 	LLViewerPartSim::getInstance()->destroyClass();
+
+	mDefaultWaterTexturep = NULL;
+	for (S32 i = 0; i < 8; i++)
+	{
+		mEdgeWaterObjects[i] = NULL;
+	}
 }
 
 
