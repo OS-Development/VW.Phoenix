@@ -1804,5 +1804,22 @@ Requests name of an avatar.  When data is available the dataserver event will be
 	llSetAngularVelocity(vector force, integer local)
 	Applies rotational velocity with 'force' to object and 'local' a boolean (if TRUE uses local axis, if FALSE uses region axis).
   </string>
+  <string name="LSLTipText_llCastRay" translate="false">
+	list llCastRay(vector start, vector end, list options)
+	Cast a ray from start to end and report collision data for intersections with objects.
+  </string>
+  <string name="LSLTipText_llGetMassMKS" translate="false">
+	float llGetMassMKS()
+	Returns a float that is the mass in kilograms of the object the script is attached to.
+  </string>
+  <string name="LSLTipText_llSetPhysicsMaterial" translate="false">
+	llSetPhysicsMaterial(integer material_bits, float gravity_multiplier, float restitution, float friction, float density)
+	Sets the physics properties of the object the script is attached to.
+	material_bits is a bitwise combination of DENSITY, FRICTION, RESTITUTION and GRAVITY_MULTIPLIER, specifying which floats to actually apply.
+  </string>
+  <string name="LSLTipText_llGetPhysicsMaterial" translate="false">
+	list llGetPhysicsMaterial()
+	Returns a list of the object physics properties: [ float gravity_multiplier, float restitution, float friction, float density ]
+  </string>
 </strings>
 
