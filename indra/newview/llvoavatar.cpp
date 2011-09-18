@@ -4165,7 +4165,7 @@ void LLVOAvatar::idleUpdateBelowWater()
 	if ((avatar_height < water_height) != mBelowWater)
 	{
 		mBelowWater = avatar_height < water_height;
-		static LLCachedControl<bool> phoenix_ao_enabled(gSavedSettings, "PhoenixAOEnabled");
+		static LLCachedControl<bool> phoenix_ao_enabled(gSavedPerAccountSettings, "PhoenixAOEnabled");
 		if ((mIsSelf) && phoenix_ao_enabled)
 		{
 			// update AO if mBelowWater changes..
