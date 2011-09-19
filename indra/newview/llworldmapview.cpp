@@ -1535,10 +1535,10 @@ void LLWorldMapView::handleClick(S32 x, S32 y, MASK mask,
 	{
 		bool show_mature = gAgent.canAccessMature() && gSavedSettings.getBOOL("ShowMatureEvents");
 		bool show_adult = gAgent.canAccessAdult() && gSavedSettings.getBOOL("ShowAdultEvents");
-		BOOL show_land_for_sale = gSavedSettings.getBOOL("ShowAdultEvents");
+		BOOL show_land_for_sale = gSavedSettings.getBOOL("MapShowLandForSale");
 
 		// Test hits if trackable data are displayed, otherwise, we don't even bother
-		if (gSavedSettings.getBOOL("MapShowEvents") || show_mature || show_adult || gSavedSettings.getBOOL("MapShowLandForSale"))
+		if (gSavedSettings.getBOOL("MapShowEvents") || show_mature || show_adult || show_land_for_sale)
 		{
 			// Iterate through the visible regions
 			for (handle_list_t::iterator iter = mVisibleRegions.begin(); iter != mVisibleRegions.end(); ++iter)
