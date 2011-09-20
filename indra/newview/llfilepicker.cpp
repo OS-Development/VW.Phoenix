@@ -610,6 +610,7 @@ Boolean LLFilePicker::navOpenFilterProc(AEDesc *theItem, void *info, void *callB
  							{
  								result = false;
  							}
+						}
 #ifdef _CORY_TESTING
 						else if (filter == FFLOAD_GEOMETRY)
 						{
