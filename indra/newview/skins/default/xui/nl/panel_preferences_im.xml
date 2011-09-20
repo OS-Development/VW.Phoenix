@@ -1,32 +1,33 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <panel label="Communicatie" name="im">
-	<text name="text_box">
-		Mijn online status:
-	</text>
-	<check_box left="140" label="Allen mijn vrienden en groepen kunnen zien wanneer ik online ben" name="online_visibility"/>
-	<text name="text_box2">
-		IM opties:
-	</text>
-	<string name="log_in_to_change">
-		log in om te wijzigen
-	</string>
-	<check_box left="140" label="Stuur IM naar Email ([EMAIL])" name="send_im_to_email"/>
-	<check_box left="140" label="Voeg IM toe in chatconsole" name="include_im_in_chat_console"/>
-	<check_box left="140" label="Toon tijdstempels in IM" name="show_timestamps_check"/>
-	<check_box left="140" label="Toon melding bij vriend online" name="friends_online_notify_checkbox"/>
-	<text name="text_box3">
-		Antwoord bij
-Niet Storen:
-	</text>
-	<text name="text_box4">
-		Log opties:
-	</text>
-	<check_box label="Bewaar een log van IM op mijn computer" name="log_instant_messages"/>
-	<check_box label="Toon tijdstempels in IM-log" name="log_instant_messages_timestamp"/>
-	<check_box label="Toon het einde van de laatste IM conversatie" name="log_show_history"/>
-	<check_box label="Bewaar een log van lokale chat op mijn computer" name="log_chat"/>
-	<check_box label="Toon tijdstempels in lokale chatlog" name="log_chat_timestamp"/>
-	<check_box label="Toon binnenkomende IM in lokale chatlog" name="log_chat_IM"/>
-	<check_box label="Voeg datum toe aan tijdstempels" name="log_date_timestamp"/>
-	<button label="Wijzig pad" label_selected="Wijzig pad" name="log_path_button"/>
+<text name="text_box">
+  Mijn online status:
+  </text>
+  <check_box label="Alleen mijn vrienden en groepen kunnen zien of ik online ben." name="online_visibility" />
+  <text name="text_box2">
+IM-opties:
+  </text>
+  <string name="log_in_to_change">
+log in om te wijzigen
+  </string>
+  <check_box label="Stuur IM naar Email ([EMAIL])" name="send_im_to_email" />
+  <check_box label="IM in chatconsole weergeven" name="include_im_in_chat_console" />
+  <check_box label="IM in chatgeschiedenis weegeven" name="include_im_in_chat_history" />
+  <check_box label="Tijdstempels in IM weergeven" name="show_timestamps_check" />
+  <check_box label="Melding weergeven als vriend online is/komt." name="friends_online_notify_checkbox" />
+  <text name="text_box3">
+Antwoord als 'Bezig':
+  </text>
+  <text_editor name="busy_response" />
+  <text name="text_box4">
+Log-opties:
+  </text>
+  <check_box label="Bewaar een log van IMs op mijn computer" name="log_instant_messages" />
+  <check_box label="Toon tijdstempels in IM-log" name="log_instant_messages_timestamp" />
+  <check_box label="Toon het laatste stuk van het vorige IM gesprek" name="log_show_history" />
+  <check_box label="Bewaar een log van lokale chat op mijn computer" name="log_chat" />
+  <check_box label="Toon tijdstempels in lokale chatlog" name="log_chat_timestamp" />
+  <check_box label="Toon binnenkomende IMs in lokale chatlog" name="log_chat_IM" />
+  <check_box label="Datum aan tijdstempels bijvoegen" name="log_date_timestamp" />
+  <check_box label="Datum aan logbestandsnaam toevoegen" name="logfile_name_datestamp" />
 </panel>
