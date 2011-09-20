@@ -681,11 +681,10 @@ const LLVector3 *LLPolyMorphTarget::getFirstDistortion(U32 *index, LLPolyMesh **
 {
 	if (!mMorphData) return &LLVector3::zero;
 
-	LLVector3* resultVec;
 	mMorphData->mCurrentIndex = 0;
 	if (mMorphData->mNumIndices)
 	{
-		resultVec = &LLVector3(mMorphData->mCoords[mMorphData->mCurrentIndex]);
+		static LLVector3 resultVec = LLVector3(mMorphData->mCoords[mMorphData->mCurrentIndex]);
 		if (index != NULL)
 		{
 			*index = mMorphData->mVertexIndices[mMorphData->mCurrentIndex];
@@ -695,7 +694,7 @@ const LLVector3 *LLPolyMorphTarget::getFirstDistortion(U32 *index, LLPolyMesh **
 			*poly_mesh = mMesh;
 		}
 
-		return resultVec;
+		return &resultVec;
 	}
 	return NULL;
 }
@@ -707,11 +706,10 @@ const LLVector3 *LLPolyMorphTarget::getNextDistortion(U32 *index, LLPolyMesh **p
 {
 	if (!mMorphData) return &LLVector3::zero;
 
-	LLVector3* resultVec;
 	mMorphData->mCurrentIndex++;
 	if (mMorphData->mCurrentIndex < mMorphData->mNumIndices)
 	{
-		resultVec = &LLVector3(mMorphData->mCoords[mMorphData->mCurrentIndex]);
+		static LLVector3 resultVec = LLVector3(mMorphData->mCoords[mMorphData->mCurrentIndex]);
 		if (index != NULL)
 		{
 			*index = mMorphData->mVertexIndices[mMorphData->mCurrentIndex];
@@ -720,7 +718,7 @@ const LLVector3 *LLPolyMorphTarget::getNextDistortion(U32 *index, LLPolyMesh **p
 		{
 			*poly_mesh = mMesh;
 		}
-		return resultVec;
+		return &resultVec;
 	}
 	return NULL;
 }
