@@ -709,8 +709,6 @@ void LLPanelAvatarWeb::handleMediaEvent(LLPluginClassMedia* self, EMediaEvent ev
 	}
 }
 
-}
-
 //-----------------------------------------------------------------------------
 // LLPanelAvatarAdvanced
 //-----------------------------------------------------------------------------
