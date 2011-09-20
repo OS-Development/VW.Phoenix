@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<panel name="Phoenix panel">
+  <tab_container label="Phoenix voorkeuren" name="tabs" >
+
+	<!--Page 1-->
+	<tab_container label="Pagina 1" name="tab">
+
+	  <!--TP/Login-->
+	  <panel label="TP/Login" name="Teleport/Login">
+        <button label="?" name="PhoenixHelp_TeleportLogin" tool_tip="Klik hier voor hulp bij de instellingen op deze pagina."/>
+        <check_box label="Dubbelklik teleport" name="double_click_tp_toggle" tool_tip="Indien ingeschakeld, kunt u op een oppervlak dubbelklikken, waarna uw avatar naar deze plaats geteleporteerd zal worden."/>
+        <check_box label="Dubbelklik autom. piloot" name="double_click_ap_toggle" tool_tip="Indien ingeschakeld, kunt u op een oppervlak dubbelklikken, waarna uw avatar naar deze plaats zal lopen."/>
+        <check_box label="Stuur teleporteerdoel-coördinaten naar kanaal" name="mldct_toggle" tool_tip="Fluistert het teleporteerdoel op een privékanaal (Standaard uitgeschakeld)"/>
+        <spinner label_width="50" name="mldct_channel" tool_tip="Wordt gebruikt met movelocks, het fluistert het teleporteerdoel op een privékanaal, opgemaakt als: 128,128,128" />
+        <check_box label="Interpoleer snelheid bij dubbelklik-teleports" name="login_screen_toggle1" tool_tip="Verschuift uw teleporteerdoel met de helft van uw huidige snelheid. Bijv. dubbelklik tijdens het rennen vóór een muur, en u komt erachter terecht."/>
+        <check_box label="Positioneer camera achter avatar na dubbelklik-teleports" name="move_camaftertp_toggle" tool_tip="Plaatst, na het teleporteren, de camera achter de avatar."/>
+        <check_box label="Altijd vliegen na teleports" name="flyaftertp_toggle" tool_tip="Dit laat de avatar na het teleporteren automatisch zweven."/>
+        <spinner label="Dubbelklik-teleport Z-verschuiving" label_width="180" name="Double-click Teleport Z Offset" tool_tip="Bepaalt de verticale verschuiving voor dubbelklik-teleports" />
+        <check_box label="Extra verschuiving omhoog met de helft van de avatar's lengte" name="avcalc_toggle" tool_tip="De viewer zal proberen om het midden van de avatar op de exacte teleporteerdoel-coördinaten te plaatsen. Deze optie voegt daar de helft van de avatarlengte aan toe, en zal zo de voeten van uw avatar precies op het teleporteerdoel plaatsen."/>
+        <check_box label="Draai avatar volgens camera links/rechts draaiïng bij dubbelklik-teleport" name="avrot_toggle" tool_tip="Als uw camera op het zuiden is gericht als u teleporteert, zal uw avatar naar het zuiden kijken als het landt."/>
+        <check_box label="Geluidseffect bij teleporteren" name="TPSound-toggle" tool_tip="Schakelt het standaard teleporteergeluid aan/uit."/>
+        <check_box label="Teleporteerschermen uitschakelen" name="tp_screen_toggle" tool_tip="Schakelt het zwarte teleporteerscherm uit tijdens alle teleports."/>
+        <check_box label="Aanmeldvoortgangsscherm uitschakelen." name="login_screen_toggle" tool_tip="Schakelt het zwarte voortgangsscherm uit tijdens het aanmelden"/>
+        <check_box label="Afmeldvoortgangsscherm uitschakelen" name="logout_screen_toggle" tool_tip="Schakelt het zwarte voortgangsscherm uit tijdens het afmelden."/>
+        <check_box label="Meldingen over andere serverversies weergeven bij teleport/regio-overgang" name="PhoenixShowServerVersionChangeNotice" tool_tip="Melding weergeven bij het betreden van een regio waar een andere serverversie actief is."/>
+		<check_box label="Progressief zichtbereik gebruiken" name="progressive_draw_distance" tool_tip="Met progressief zichtbereik worden nabije avatars en objecten het eerst weergegeven door het zichtbereik te verminderen, en deze geleidelijk te vergroten."/>
+		<slider name="progressive_draw_distance_interval" tool_tip="Aantal seconden tussen elke verhoging van het zichtbereik"/>
+      </panel>
+
+	  <!--Shields-->
+      <panel label="Schilden" name="Shields">
+        <button label="?" name="PhoenixHelp_Shields" tool_tip="Klik hier voor hulp bij de instellingen op deze pagina." />
+        <panel name="antispam_options" width="210" >
+          <text name="antispam_text">Anti-spam maatregelen</text>
+          <check_box label="Dialoog" name="dialog_spam_prevention" />
+          <check_box label="Visitekaartjes" name="card_spam_prevention" />
+          <check_box label="Chat" name="chat_spam_prevention" />
+          <check_box label="IMs, meldingen, aanbiedingen, enz." name="general_spam_prevention" />
+        </panel>
+        <panel name="revokeperm_panel" width="210">
+          <text name="revperm_text">Toestemmingen intrekken</text>
+          <radio_group name="EmRevPerm-toggle">
+            <radio_item name="0" tool_tip="Standaardgedrag volgen.">Nooit (oorspronkelijk gedrag)</radio_item>
+              <radio_item name="1" tool_tip="Zal toestemming intrekken zodra u op een object zit.">Intrekken bij ZIT</radio_item>
+              <radio_item name="2" tool_tip="Zal toestemming intrekken zodra u van een object opstaat.">Intrekken bij OPSTAAN</radio_item>
+              <radio_item name="3" tool_tip="Zal toestemming intrekken zodra u op een object zit, of ervan opstaat.">Intrekken bij ZIT en OPSTAAN</radio_item>
+          </radio_group>
+        </panel>
+        <check_box label="URL-dialoogschermen weergeven" name="EmLoadURL-toggle" tool_tip="Indien uitgevinkt, verhindert dit scripts ervan om u dialoogschermen te sturen met behulp van llLoadURL. Dit kan gebruikt worden om u te spammen."/>
+        <check_box label="LLMapDestination niet toestaan" name="EmBlockMapTps-toggle" tool_tip="Voorkomt dat scripts met behulp van llMapDestination uw landkaartvenster kunnen openen. Ook bekend als kaart spam."/>
+        <check_box label="Viewereffecten uitzenden" name="EmBroadcastEffects-toggle" tool_tip="Viewereffecten zijn dingen als uw avatar die naar een object wijst als u het bewerkt. Uw ogen en hoofd die zich naar dingen draaien waar u uw camera op centreert, enz."/>
+        <check_box label="Camerafocus uitzenden" name="EmBroadcastPointers-toggle" tool_tip="Voorkomt dat andere gebruikers kunnen zien waar uw camera zich bevindt, en waar het op gericht is."/>
+        <check_box label="Aanwijsdoel uitzenden" name="EmBroadcastPointers-toggle2" tool_tip="Net als bij camerafocus, verhindert dit andere gebruikers ervan om te zien wat u bewerkt."/>
+      </panel>
+
+	  <!--IM-->
+      <panel label="IM" name="Misc">
+        <button label="?" name="PhoenixHelp_IM" tool_tip="Klik hier voor hulp bij de instellingen op deze pagina." />
+        <button name="otr_help_btn" label="Wat is OTR?"/>
+        <!--[$PLOTR$]-->
+        <radio_group name="PhoenixUseOTR">
+	  <radio_item name="0" tool_tip="Vereis gebruik van OTR in IMs">Vereis gebruik van OTR in IMs</radio_item>
+	  <radio_item name="1" tool_tip="Verzoek OTR indien beschikbaar.">Verzoek OTR indien beschikbaar</radio_item>
+    <radio_item name="2" tool_tip="Accepteer OTR verzoeken.">Accepteer OTR verzoeken</radio_item>
+	  <radio_item name="3" tool_tip="Weiger gebruik van OTR.">Weiger gebruik van OTR</radio_item>
+        </radio_group>
+        <check_box name="PhoenixOTRInTypingStop-toggle" tool_tip="Stop alle met OTR versleutelde berichten in IM_TYPING_STOP pakketjes. Niet compatible met voorgaande versies van OTR." label="Gebruik typing_stop voor OTR" />
+        <check_box label="Vertikale IM tabs (vereist herstart)" name="vertical-imtabs-toggle" tool_tip="Wijzigt de UI zodat IM tabs vertikaal, in plaats van horizontaal worden weergegeven." />
+        <!--[/$PLOTR$]-->
+        <view_border name="OTRBorder"/>
+        <check_box label="Binnenkomende IMs aankondigen" name="PhoenixInstantMessageAnnounceIncoming" tool_tip="Opent een IM-venster zodra iemand een bericht aan u begint te typen, en zegt “You sense a disturbance in the force... (User Name is typing). Dit waarschuwt u dat iemand u een IM zal sturen, nog voordat ze op 'Enter' drukken." />
+        <check_box label="Actief maken" name="PhoenixInstantMessageAnnounceStealFocus" tool_tip="Zodra iemand een IM aan u begint te typen, wordt het IM venster het actieve venster, in plaats van alle andere communicatieventers." />
+        <check_box label="Antwoordapparaat inschakelen" name="PhoenixInstantMessageResponseAnyone" tool_tip="Verstuurt een vooraf gemaakt, door u gekozen reactie zodra er iemand een IM stuurt. (Type uw antwoordbericht in het hierondergelegen 'Antwoordtekst' tekstveld)" />
+	<check_box label="Antwoordapparaat voor niet-vrienden" name="PhoenixInstantMessageResponseFriends" tool_tip="Verstuurt een vooraf gemaakt, door u gekozen reactie zodra iemand die niet op uw vriendenlijst staat u een IM stuurt. (Type uw antwoordbericht in het hierondergelegen 'Antwoordtekst' tekstveld)" />
+	<check_box label="Antwoordapparaat voor negeerlijst" name="PhoenixInstantMessageResponseMuted" tool_tip="Verstuurt een vooraf gemaakt, door u gekozen reactie zodra iemand die op uw negeerlijst staat u een IM stuurt. (Type uw antwoordbericht in het hierondergelegen 'Antwoordtekst' tekstveld)" />
+        <check_box label="Verstuur zodra men begint te typen" name="PhoenixInstantMessageShowOnTyping" />
+        <check_box label="Autom. beantwoorde IMs niet weergeven" name="PhoenixInstantMessageShowResponded" />
+        <check_box label="Automatisch antwoord op elk bericht" name="PhoenixInstantMessageResponseRepeat" />
+	<text name="text_box1" >Antwoordtekst: (Gebruik #f voor ontvanger's voornaam, #l voor achternaam, #t voor
+tijdsstempel, #r voor SLURL van uw locatie, #i voor tijd inactief. (bijv. "5 mins")):</text>
+        <text_editor name="im_response" />
+        <check_box label="Vertuur item met de antwoordtekst" name="PhoenixInstantMessageResponseItem" tool_tip="U kunt een item uit uw inventaris bijvoegen dat samen met uw antwoordtekst vertuurd zal worden, door deze vanuit uw inventaris naar het vak hieronder te verslepen."/>
+        <view_border name="im_give_drop_target_rect"/>
+        <text name="Give inventory" tool_tip="Sleep hier een inventaris-item heen om deze met de antwoordtekst mee te geven.">Sleep hier een inventaris-item heen</text>
+        <view_border name="im_give_disp_rect"/>
+        <text name="im_give_disp_rect_txt">Momenteel ingesteld op: ITEM</text>
+      </panel>
+
+	  <!--Chat-->
+      <panel label="Chat" name="Chat">
+        <button label="?" name="PhoenixHelp_Chat" tool_tip="Klik hier voor hulp bij de instellingen op deze pagina."/>
+        <check_box label="Gewijzigde scriptaantallen weergeven:" name="totalscriptjumps" tool_tip="Meldt wijzigingen in het aantal scripts in uw regio, afhankelijk van de drempelwaarde dat u hiernaast kiest."/>
+	<spinner label_width="0" name="ScriptJumpCount" tool_tip="Drempelwaarde voordat een verschil in scriptaantallen wordt gemeld [standaard: 100]"/>
+        <check_box label="Hoor typegeluid als er getyped wordt" name="typing-sound-toggle" />        
+        <check_box label="OOC-commentaar automatisch aanvullen." name="AutoCloseOOC-toggle" tool_tip="Voor gebruik tijdens rollenspellen. Vult automatisch “Out of Character Comments” aan. Voorbeeld: ((Dit is OOC. - resulteert in ((Dit is OOC)). De sluithaakjes worden automatisch toegevoegd."/>
+        <check_box label="MU* poses toestaan" name="AllowMUpose-toggle" tool_tip="Sta MU* pose stijl in chat en IM toe (waarbij ':' synoniem is aan '/me ')"/>
+	<check_box label="Ontvangen/uitgegeven geldbedragen in chat weergeven" name="EmMoneyChat-toggle" />
+	<check_box label="Seconden aan tijdsstempels in logbestanden toevoegen" name="PhoenixAddSecondsInLog-toggle" />
+	<check_box label="Seconden aan tijdsstempels in chatgeschiedenis toevoegen" name="PhoenixAddSecondsInHistory-toggle" />
+        <check_box label="Als 'Groepsberichten ontvangen' uitgeschakeld is, groepschat ook uitschakelen" name="PhoenixMuteGroupWhenNoticesDisabled-toggle" />
+        <check_box label="Schakel ALLE groepschats uit" name="PhoenixMuteAllGroups-toggle" />
+        <check_box label="Melden indien een groepschat is gedempt" name="PhoenixNotifyWhenMutingGroupChat-toggle" />
+        <check_box label="Vertalen met rechter muisklik vervangt tevens geselecteerde tekst" name="PhoenixTranslateReplace" />
+        <check_box label="Gebruik 'U' in plaats van uw naam in uw eigen chat" name="PhoenixUseYou" />
+	<check_box label="Chattekst van moderators in groepschat vetgedrukt weergeven" name="PhoenixBoldGroupMods" />
+		    <check_box label="Groepsnaam naast IM tonen indien getoond in geschiedenis (Lengte:                )" name="DiamondShowGroupNameInChatIM" />
+		    <spinner name="GroupNameLength"  tool_tip="Maximum lengte van de groepsnaam dat in de chat getoond moet worden (-1 voor volledige groepsnaam)."/>
+		    <check_box label="Namen automatisch aanvullen in lokale chat bij aanslaan van 'Tab' toets" name="TabAutoComplete" />
+        <check_box label="Toon kanaalselectie in chatbalk van de chatgeschiedenis." name="PhoenixShowChatChannel"/>
+        <check_box label="Alleen eigen scriptfouten in scriptwaarschuwingsvenster of lokale chat weergeven." name="PhoenixOnlyMyErrors" />
+	<button name="keyword_allert" label="Bewerk trefwoorden" tool_tip="Bewerk de trefwoorden die uw aandacht moeten trekken" />
+        <button name="ac_button" label="Bewerk instellingen voor autocorrectie" tool_tip="Bewerk de instellingen voor woorden die automatisch gecorrigeerd moeten worden" />
+      </panel>
+
+	  <!--Misc-->
+      <panel label="Div." name="AvatarEffects">
+        <button label="?" name="PhoenixHelp_Misc" tool_tip="Klik hier voor hulp bij de instellingen op deze pagina." />
+        <check_box label="Altijd-vliegen inschakelen" name="alwaysflytoggle"/>
+        <check_box label="Gebruik CTRL-ALT-P om zichtbaar ontastbaar te worden" name="allowphantomtoggle" />
+	<check_box label="Gebruik CTRL-ALT-S om op de grond te zitten" name="allowsittoggle" />
+        <check_box label="Verhinder zitten op objecten d.m.v. linker muisklik" name="sit-click-toggle" />
+        <check_box label="Agentnaam weergeven boven LookAt bakens" name="EmShowLookAtNames-toggle" />
+        <check_box label="Mijn eigen LookAt bakens verbergen" name="EmDontShowMyLook-toggle" />
+        <check_box label="ESC-toets herstelt camerapositie" name="EmResetCamOnEscape-toggle" tool_tip="Het uitschakelen van deze optie verhindert de camera ervan om zijn positie te herstellen als de 'Escape' toets wordt ingedrukt in de cameramodus (CTRL+1)."/>
+	<check_box label="Klikken op avatar herstelt camerapositie" name="ResetCamOnAvatar-toggle" tool_tip="Het uitschakelen van deze optie verhindert de camera ervan om zijn positie te herstellen als u op uw avatar klikt."/>
+        <check_box label="Meedraaiende mini-kaart" name="MinimapRotate" />
+        <check_box label="Zoekbalk weergeven" name="Search_bar-toggle" />
+        <check_box label="Indien mogelijk, objecten altijd onder de landgroep rezzen" name="grouplandrez" />
+        <check_box label="Minimum zoomafstand voor camera uitschakelen" name="EmMinZoomDist-toggle" />
+        <check_box label="Camera toestaan om zich ongehinderd door prims te verplaatsen. (vereist herstart)" name="EmIgnoreCamConstraints-toggle" />
+        <check_box label="Meldingen via Growl inschakelen" name="PhoenixEnableGrowl" />
+        <check_box label="Stream-informatie in chat weergeven" name="PhoenixShowStreamMetadata" tool_tip="Geeft de artiest, en de naam van het nu op de stream spelende nummer weer in lokale chat."/>
+        <check_box label="Melden als iemand een foto neemt" name="PhoenixAlertOnSnapshot" tool_tip="Geeft de naam van de fotograaf weer in lokale chat"/>
+        <check_box label="Gestures dempen" name="PhoenixMuteGestures" tool_tip="Gestures dempen"/>
+	<check_box label="Server's RC-kanaal in regionaam weergeven" name="PhoenixShowSimChannel" tool_tip="Dit toont de server's RC-kanaalversie als de regio waarin u zich bevindt op eentje draait. Meer info op: http://wiki.secondlife.com/wiki/Beta "/>
+        <check_box label="Vorige opslaan-op-schijf folder tussen sessies hergebruiken" name="PhoenixShapshotReuseLastDirCheck" />
+        <check_box label="Restrained Love [RLVa] features inschakelen (vereist herstart)" name="rlv-toggle" />
+        <view_border name="EmDivisorBridge" />
+        <check_box label="LSL-Client Bridge inschakelen" name="PhoenixBuildBridge" />
+        <check_box label="Radar gebruikt bridge" left_delta="10" name="PhoenixUseBridgeRadar" />
+        <check_box label="Echte online status in profielen" name="PhoenixUseBridgeOnline" />
+        <check_box label="Gebruik llMoveToTarget TP" name="PhoenixUseBridgeMoveToTarget" />
+      </panel>
+
+	  <!--CmdLine-->
+      <panel name="CmdLine">
+        <button label="?" name="PhoenixHelp_CmdLine" tool_tip="Klik hier voor hulp bij de instellingen op deze pagina."/>
+        <check_box label="Gebruik van chatbalk als commando-invoerregel inschakelen" name="chat_cmd_toggle" />
+        <text name="loltxt2">Teleporteer binnen sim (gebr.: cmd x y z)</text>
+        <line_editor name="PhoenixCmdLinePos" />
+        <text name="loltxt3">Teleporteer naar grond (gebruik: cmd)</text>
+        <line_editor name="PhoenixCmdLineGround" />
+        <text name="loltxt4">Teleporteer naar hoogte (gebr.: cmd z)</text>
+        <line_editor name="PhoenixCmdLineHeight" />
+        <text name="loltxt5">Telep. naar thuislocatie (gebr.: cmd)</text>
+        <line_editor name="PhoenixCmdLineTeleportHome" />
+        <text name="loltxt6">Rez een platform (gebruik: cmd 0 - 30)</text>
+        <line_editor name="PhoenixCmdLineRezPlatform" />
+        <slider name="PhoenixCmdLinePlatformSize" label="Afm." tool_tip="How big do you want the platform to appear to be?"/>
+        <text name="loltxt7" >Telep. naar sim x (gebr.: cmd simnaam)</text>
+        <line_editor name="PhoenixCmdLineMapTo" />
+        <check_box label="Naar dezelfde positie tussen sims" name="toggle" />
+        <text  name="loltxt8" >Calc. expressies (gebr.: cmd SIN(2+2))</text>
+        <line_editor name="PhoenixCmdLineCalc" />
+	<text  >Autocorrectie toev.(cmd lijst|fout|goed)</text>
+        <line_editor name="PhoenixCmdLineAutocorrect" />
+        <view_border name="EmDivisor" />
+        <text name="loltxt9" >Wijzig zichtafstand (gebruik: cmd meters)</text>
+        <line_editor name="PhoenixCmdLineDrawDistance" />
+        <text name="loltxt10" >Teleporteer naar cam positie (gebr: cmd)</text>
+        <line_editor name="PhoenixCmdTeleportToCam" />
+        <text name="loltxt11" >Vind avatarnaam a.h.v. key (gebr: cmd key)</text>
+        <line_editor name="PhoenixCmdLineKeyToName" />
+        <text name="loltxt12" >Avatar telep aanbieden (gebr: cmd key)</text>
+        <line_editor name="PhoenixCmdLineOfferTp" />
+        <text name="loltxt13" >Teleporteer naar avatar (gebr: cmd name)</text>
+        <line_editor tool_tip="De syntax van dit commando staat gedeeltelijke namen toe en is niet hoofdlettergevoelig. Betere resultaten woprden verkregen als de radar is geopend." name="PhoenixCmdLineTP2" />
+        <text name="loltxt14" >Zet AO aan/uit (gebr: cmd on/off)</text>
+        <line_editor name="PhoenixCmdLineAO" />
+        <text name="loltxt15" >Chatgeschiedenis wissen (gebr: cmd)</text>
+        <line_editor tool_tip="Wist uw chatgeschiedenis om lag-effecten van chatspammers tegen te gaan." name="PhoenixCmdLineClearChat" />
+        <text name="loltxt16" >Media URL instellen (gebr: cmd url type)</text>
+        <line_editor tool_tip="Stelt uw media stream in op de ingevoerde URL en speelt deze af" name="PhoenixCmdLineMedia" />
+        <text name="loltxt17" >Muziek stream URL instellen (gebr: cmd url)</text>
+	<line_editor tool_tip="Stelt uw muziek stream in op de ingevoerde URL en speelt deze af" name="PhoenixCmdLineMusic" />
+      </panel>
+
+	  <!--Avatar-->
+      <panel label="Avatar" name="wat!">
+        <button label="?" name="PhoenixHelp_Avatar" tool_tip="Klik hier voor hulp bij de instellingen op deze pagina."/>
+        <panel name="avatar_options" />
+        <spinner label="X-modifier" name="X Modifier" tool_tip="Gebruik dit om tot op zekere hoogte de bounding box rond uw avatar te manipuleren. Dit kan gebruikt worden om orbiters van de wijs te brengen, of om u hoger of lager te positioneren zonder uw figuur te wijzigen."/>
+	<spinner label="Y-modifier" name="Y Modifier" tool_tip="Gebruik dit om tot op zekere hoogte de bounding box rond uw avatar te manipuleren. Dit kan gebruikt worden om orbiters van de wijs te brengen, of om u hoger of lager te positioneren zonder uw figuur te wijzigen."/>
+	<spinner label="Z-modifier" name="Z Modifier" tool_tip="Gebruik dit om tot op zekere hoogte de bounding box rond uw avatar te manipuleren. Dit kan gebruikt worden om orbiters van de wijs te brengen, of om u hoger of lager te positioneren zonder uw figuur te wijzigen."/>
+        <check_box label="Avatar onzichtbaar maken" name="RenderAvInvisible" />
+        <check_box label="Uiterlijk tag en animatie in uiterlijk-modus weergeven" name="PhoenixAppearanceAnimate" />
+        <check_box label="Avatar staat op zodra uiterlijk-modus actief wordt" name="PhoenixAppearanceForceStand" />
+        <check_box label="Gebruik hurktoets in schakelmodus" name="PhoenixCrouchToggle" tool_tip="Indien aangevinkt, zal een enkele druk op de hurktoets omschakelen tussen hurken en normaal staan, in plaats van vasthouden om te hurken."/>
+        <check_box label="Stuur geen avatar physics naar server" name="PhoenixDontSendAvPhysicsParms" tool_tip="Schakelt het verturen van uw avatar physics informatie naar de Second Life server uit, voor compatibiliteit met oudere viewers"/>
+	<text name="BeamPrefs">Deeltjes-effecten voor selectiestraal </text>
+        <view_border name="EmDivisor"/>
+        <button name="PhoenixBeamPrev_rainbow"/>
+        <button name="PhoenixBeamPrev_Phoenix"/>
+        <view_border name="EmDivisor2"/>
+        <slider name="PhoenixMaxBeamsPerSecond" label="Straal-updates/sec:" tool_tip="Hoeveel straal-updates te versturen per seconde. Standaard 40"/>
+        <check_box label="Selectiestraal inschakelen" name="SLPartBeam" />
+        <check_box label="SL deeltjes-chat" name="PhoenixParticleChat" />
+        <combo_box name="BeamColor_combo" tool_tip="Kies de kleuren van de selectiestraal"/>
+	<combo_box left_delta="195" name="PhoenixBeamShape_combo" tool_tip="Kies de vorm van de selectiestraal"/>
+        <slider name="PhoenixBeamShapeScale" label="Schaal:" tool_tip="Wijzig de schaal van de vorm dat voor de Phoenix-vormige staal wordt gebruikt"/>
+        <button name="delete_beam" label="Wissen" tool_tip="Wis deze straal"/>
+        <button name="custom_beam_btn" label="Maak nieuw" tool_tip="Aangepaste straalvorm maken" />
+        <button name="refresh_beams" label="Ververs lijst" tool_tip="Ververs de straal-lijst" />
+	<button name="BeamColor_delete" label="Wissen" tool_tip="Wis deze voorinstelling" />
+	<button name="BeamColor_new" label="Maak nieuw" tool_tip="Aangepaste kleurvoorinstelling maken" />
+	<button name="BeamColor_refresh" label="Ververs lijst" tool_tip="Ververs de lijst met voorinstellingen" />
+      </panel>
+
+	  <!--Build-->
+      <panel label="Bouwen" name="Build">
+        <button label="?" name="PhoenixHelp_Build" tool_tip="Klik hier voor hulp bij de instellingen op deze pagina."/>
+        <text name="text_box3">Objectgrootte</text>
+        <text name="text_box4">Instellingen</text>
+        <text name="text_box5">Textuur</text>
+        <view_border name="SizeBorder"/>
+        <view_border name="SettingsBorder"/>
+        <view_border name="TextureBorder"/>
+	<spinner label="X-afm." name="X size" />
+	<spinner label="Y-afm." name="Y size" />
+        <spinner label="Z-afm." name="Z size" />
+        <check_box label="Fantoom" name="EmPhantomToggle" />
+        <check_box label="Fysiek" name="EmPhysicalToggle" />
+        <check_box label="Tijdelijk" name="EmTemporaryToggle" />
+        <combo_box  name="material">
+          <combo_item name="Stone" >Steen</combo_item>
+          <combo_item name="Metal" >Metaal</combo_item>
+          <combo_item name="Glass" >Glas</combo_item>
+          <combo_item name="Wood" >Hout</combo_item>
+          <combo_item name="Flesh" >Vlees</combo_item>
+          <combo_item name="Plastic" >Plastic</combo_item>
+          <combo_item name="Rubber" >Rubber</combo_item>
+        </combo_box>
+        <texture_picker label="Texture" name="texture control" tool_tip="Klik om een afbeelding te kiezen"/>
+        <color_swatch label="Color" name="colorswatch" tool_tip="Klik om de kleurkiezer te openen" />
+        <spinner label="Alpha" name="alpha" />
+        <spinner label="Gloed" name="glow" />
+        <check_box label="Totale felheid" name="EmFBToggle" />
+        <combo_box  name="combobox shininess" tool_tip="Set the amount of shine for the object" >
+          <combo_item name="None" >Geen</combo_item>
+          <combo_item name="Low" >Laag</combo_item>
+          <combo_item name="Medium" >Middel</combo_item>
+          <combo_item name="High" >Hoog</combo_item>
+        </combo_box>
+        <check_box name="PhoenixBuildPrefsEmbedItem" label="Voeg een item toe aan het nieuwe object" />
+        <view_border name="im_give_drop_target_rect" />
+        <text name="Give inventory" tool_tip="Zet hier een inventaris-item neer.">Zet hier een inventaris-item neer dat in de prim gestopt moet worden.</text>
+        <view_border name="build_item_add_disp_rect" />
+	<text name="build_item_add_disp_rect_txt">Momenteel ingesteld op: ITEM</text>
+        <view_border name="PivotBorder" />
+        <text name="text_box6">Draaipunt</text>
+        <spinner label="X-pos" name="X pos" width="120" />
+        <spinner label="Y-pos" name="Y pos" width="120" />
+        <spinner label="Z-pos" name="Z pos" width="120" />
+        <check_box label="Waarden zijn in %" tool_tip="Standaardinstellingen: Waarden zijn procenten, en elke as-instelling is 50" name="EmPivotPercToggle" />
+	<check_box label="Oplichten van geselecteerde prims inschakelen" tool_tip="Indien uitgeschakeld, worden de gele/blauwe randeffecten niet weergegeven, wat de prestaties verbetert bij het selecteren van grote hoeveelheden prims." name="EmBuildPrefsRenderHighlight_toggle" />
+        <check_box label="Toon as-pijlen op hoofdprim-positie" tool_tip="Standaardgedrag is om de as-pijlen weer te geven op het midden van de massa van een linkset. Indien ingeschakeld, zal in plaats daarvan de as op de hoofdprim van de linkset worden weergegeven." name="EmBuildPrefsActualRoot_toggle" />
+	<check_box label="64m prims onderst. (autom. voor regios met mesh onderst.)" tool_tip="Deze instelling is puur ter informatie." name="64mPrimSupport_toggle" />
+        <view_border name="NextOwnerBorder" />
+        <text bottom_delta="65" name="text_box7" >Volgende eigenaar mag:</text>
+	<check_box label="Kopiëren" tool_tip="Volgende eigenaar mag item kopiëren" name="next_owner_copy" />
+        <check_box label="Wijzigen" tool_tip="Volgende eigenaar mag item wijzigen" name="next_owner_modify" />
+	<check_box label="Doorgeven" tool_tip="Volgende eigenaar mag item doorgeven" name="next_owner_transfer" />
+        <text name="text_box8" >*Als "kopiëren" uit staat, moet "doorgeven" aan staan. Dit stelt ook de uploadpermissies in.</text>
+      </panel>
+
+	  <!--Tags-->
+	  <panel label="Tags" name="Tags">
+        <button label="?" name="PhoenixHelp_TeleportLogin" tool_tip="Klik hier voor hulp bij de instellingen op deze pagina." />
+		<text name="tag_text">Kleur van Phoenix tag</text>
+        <combo_box name="TagCombo" tool_tip="Kleur waarin the Phoenix tag moet worden weergegeven." />
+        <check_box label="Eigen kleur weergeven" name="PhShowOwnClientColor-toggle" tool_tip="Indien aangevinkt, zal uw tag in de gekozen kleur worden weergegeven."/>
+        <check_box label="Viewertags weergeven" name="DisplayTags_toggle" tool_tip="Laat u naast de gebruikersnaam, zien welke viewer men gebruikt (indien de viewer te identificeerbaar is)"/>
+        <check_box label="Naam-tags kleuren" name="ColorTags_toggle" tool_tip="Kleurt hun naam-tags."/>
+	<check_box label="Geef  dezelfde kleur aan naam-tags met dezelfde viewer" name="ColorTagsClient_toggle" tool_tip="Kleur de tags, afhankelijk van welke viewer ze gebruiken."/>
+        <check_box label="Alle viewertags weergeven (inclusief die van oudere viewers)" name="PhoenixClientTagsShowAny" />
+      <check_box label="Gebruik ouderwetse weergave van gebruikerssatus" name="OldStyleNameTagStatus_toggle" tool_tip="Geef de gebruikersstatus achter de avatarnaam weer, in plaats van erboven."/>
+      <check_box label="Andere kleur voor tags van vienden" name="ColorFriendsNameTags_toggle" tool_tip="Geeft de tag van vrienden in een andere kleur weer (hiermee wordt de viewertag-kleur voor vrienden tenietgedaan)"/>
+      <color_swatch name="friend_tag_color_swatch" tool_tip="Klik om kleurkiezer te openen" />
+      <check_box label="Andere kleur voor gebruikersnamen" name="ColorUserNameTags_toggle"  tool_tip="Geeft gebruikersnamen in een andere kleur weer (hiermee wordt de viewertag-kleur voor gebruikersnamen tenietgedaan)"/>
+      <color_swatch name="username_color_swatch" tool_tip="Klik om kleurkiezer te openen" />
+      <check_box label="Lijst met viewertags tijdens opstarten bijwerken" name="PhoenixDownloadClientTags_toggle" />
+    </panel>
+    </tab_container>
+
+	<!--Page 2-->
+    <tab_container label="Pagina 2" name="tab2">
+
+	  <!--IRC remved-->
+	  <panel label="IRC" name="IRC">
+        <button label="?" name="PhoenixHelp_IRC" tool_tip="Klik hier voor hulp bij de instellingen op deze pagina." />
+        <text name="IRC-colors" >Gebruikte kleuren voor IRC-berichten:</text>
+        <color_swatch label="Kanaal" left="2" name="colorswatch1" tool_tip="Klik om kleurkiezer te openen" />
+        <color_swatch label="Actie" name="colorswatch2" tool_tip="Klik om kleurkiezer te openen" />
+        <color_swatch label="Privé" name="colorswatch3" tool_tip="Klik om kleurkiezer te openen" />
+        <color_swatch label="Melding" name="colorswatch4" tool_tip="Klik om kleurkiezer te openen" />
+        <color_swatch label="Deelname" name="colorswatch5" tool_tip="Klik om kleurkiezer te openen" />
+        <color_swatch label="Stoppen" name="colorswatch6" tool_tip="Klik om kleurkiezer te openen" />
+        <color_swatch label="Schop" name="colorswatch7" tool_tip="Klik om kleurkiezer te openen" />
+        <color_swatch label="Bijnaam" name="colorswatch8" tool_tip="Klik om kleurkiezer te openen" />
+        <color_swatch label="Systeem" name="colorswatch9" tool_tip="Klik om kleurkiezer te openen" />
+        <check_box tool_tip="Deze berichten in het scherm weergeven?" name="PhIRC_ShowChannel"/>
+        <check_box tool_tip="Deze berichten in het scherm weergeven?" name="PhIRC_ShowAction"/>
+        <check_box tool_tip="Deze berichten in het scherm weergeven?" name="PhIRC_ShowPrivate"/>
+        <check_box tool_tip="Deze berichten in het scherm weergeven?" name="PhIRC_ShowNotice"/>
+        <check_box tool_tip="Deze berichten in het scherm weergeven?" name="PhIRC_ShowJoin"/>
+        <check_box tool_tip="Deze berichten in het scherm weergeven?" name="PhIRC_ShowQuit"/>
+        <check_box tool_tip="Deze berichten in het scherm weergeven?" name="PhIRC_ShowKick"/>
+        <check_box tool_tip="Deze berichten in het scherm weergeven?" name="PhIRC_ShowNick"/>
+        <check_box tool_tip="Deze berichten in het scherm weergeven?" name="PhIRC_ShowSystem"/>
+	<check_box label="Automatisch terugkeren" tool_tip="Probeer automatisch opnieuw te verbinden met het kanaal waarin u zich zojuist bevond als u daaruitgeschopt wordt. Somige netwerken houden hier echter niet van, en kunnen u hierom verbannen, dus wees voorzichtig!" name="PhoenixIRC_AutoReJoin"/>
+	<check_box  label="Automatisch verbinden tijdens aanmelden" tool_tip="Schakel deze optie in ome automatisch te verbinden met alle IRC-kanalen die u op automatisch verbinden hebt ingesteld. Als u deze optie uitschakelt, worden alle per-kanaalinstellingen genegeerd doordat automatisch verbinden volledig  uitgeschakeld wordt." name="PhoenixIRC_AutoConnect"/>
+      </panel>
+
+	  <!--Inventory-->
+      <panel label="Inventaris" name="Inventory">
+        <button label="?" name="PhoenixHelp_Inventory" tool_tip="Klik hier voor hulp bij de instellingen op deze pagina." />
+	<check_box label="Mirroren inschakelen" name="EnableMirror" />
+	<text name="Mirror_Location_Text">Mirror-locatie:</text>
+        <button label="Instellen" name="set_mirror" />
+        <line_editor name="mirror_location" />
+        <icon  name="icon_gesture" width="16"/>
+        <check_box label="Gebaren mirroren" name="check_gesture" />
+        <icon  name="icon_notecard" />
+        <check_box label="Notitiekaarten mirroren" name="check_notecard" />
+        <icon  name="icon_script" />
+        <check_box label="Scripts mirroren" name="check_script" />
+	<check_box label="Inventarisobjecten dragen bij dubbelklik" name="wear-inv-toggle" />
+        <check_box label="Objecten toevoegen in plaats van dragen" name="add-inv-toggle" />
+	<check_box label="Nieuwe objecten in mijn inventaris niet selecteren" name="sel-new-inv-toggle" />
+        <text name="impexp">Reservekopie-instellingen:</text>
+        <check_box label="Objecteigenschappen exporteren" name="EmExpProp" />
+        <check_box label="Objectinhoud exporteren" name="EmExpInv" />
+        <check_box label="Objecttexturen exporteren" name="EmExpTex" />
+        <check_box label="LSL preprocessor includes op bestandssysteem inschakelen" name="LSL_fs_includes" />
+        <text name="IncludeLocation">Include-locatie:</text>
+        <button label="Instellen" name="set_includeHDD" />
+        <line_editor name="include_location" />
+        <text name="ExternalEditorBin">Extern bewerkingsprogramma:</text>
+        <button label="Instellen" name="set_xed" />
+        <line_editor name="xed_location" />
+      </panel>
+
+	  <!--Effects -removed post 1080 build do to impmentation of LL v2 AV Physics
+      <panel bottom="-580" height="525" label="Effects" name="Effects" width="418">
+        <button bottom="-25" height="18" label="?" name="PhoenixHelp_Effects" tool_tip="Klik hier voor hulp bij de instellingen op deze pagina." right="490" width="18"/>
+        <check_box bottom="-20" label="Enable enhanced physics on avatar breasts" left="5" name="EmBreastsToggle" control_name="PhoenixBreastPhysicsToggle" width="126"/>
+        <slider left="5" name="PhoenixBoobMass" control_name="PhoenixBoobMass" height="18" label="Breast mass:" label_width="100" max_val="100" min_val="1" width="250" tool_tip=""/>
+        <slider name="PhoenixBoobHardness" control_name="PhoenixBoobHardness" height="18" label="Breast rebound:" label_width="100" max_val="100" min_val="1" width="250" tool_tip=""/>
+        <slider name="PhoenixBoobVelMax" control_name="PhoenixBoobVelMax" height="18" label="Breast max vel:" label_width="100" max_val="100" min_val="1" width="250" tool_tip=""/>
+        <slider name="PhoenixBoobFriction" control_name="PhoenixBoobFriction" height="18" label="Breast friction:" label_width="100" max_val="100" min_val="1" width="250" tool_tip=""/>
+        <slider name="PhoenixBoobVelMin" control_name="PhoenixBoobVelMin" height="18" label="Breast min vel:" label_width="100" max_val="100" min_val="1" width="250" tool_tip=""/>
+        <button height="20" label="Default Settings" name="PhoenixBreastReset" tool_tip="Revert the values to the default settings." left="150" width="100"/>
+      </panel>-->
+
+	  <!--Advanced Graphics-->
+      <panel label="Grafisch (uitgebreid)" name="Graphics">
+        <text name="TextText">Texturen</text>
+        <check_box label="Texturen animeren" name="AnimateTextures" />
+        <check_box label="Textuurcontrole" name="AuditTexture" />
+	<check_box label="Texturen via HTTP" name="HTTPGetTextures" />
+        <check_box label="Anisotropische filtering" name="Anosotropic" />
+        <text name="cache_size_label_l">Max HTTP textuurverzoeken:</text>
+        <slider name="ImagePipelineUseHTTPFetchMaxRequests" tool_tip="Hiermee wordt het maximumaantal gelijktijdige HTTP textuuroverdrachten ingesteld." />
+        <text name="vid_mem_lable">Videogeheugen vermenigvuldiger:</text>
+	<slider name="RenderTextureMemoryMultiple" tool_tip="Dit neemt de toegewezen hoeveelheid RAM onder Grafisch -> Hardware en vermenigvuldigt het met de ingestelde waarde." />
+        <text name="PerfText">Prestaties</text>
+        <check_box label="Dynamisch detailniveau (LOD)" name="DynamicLOD" />
+        <check_box label="Gebruik frame buffer objecten" name="RenderUseFBO" tool_tip="Het inschakelen van deze functie kan de prestaties van sommige grafische kaarten verbeteren."/>
+        <check_box label="Verberg objecten met elkaar" name="Occlusion" />
+        <check_box label="Snelle alpha" name="FastAlpha" />
+	<check_box label="Vol gamma / hardcoded 2" name="FullGamma" tool_tip="Bepaalt welke vorm van Totale Felheid u wilt gebruiken / (Aan - gebruikt 100% gamma) (Uit - gebruikt 2e ingeprogrammeerde waarde)" />
+        <check_box label="Water mip maps" name="MipMapWater" />
+        <check_box label="VSync uitschakelen" name="VSync" />
+        <check_box label="Bomen animeren" name="Animate Trees" />
+        <check_box label="Gloedeffecten weergeven" name="RenderGlow" tool_tip="Niet deactiveren met actieve uitgestelde renderer!" />
+        <slider label="Sterkte:" name="Strength" />
+        <text name="MiscText">Diversen</text>
+        <check_box label="Onvolledig geladen avatars weergeven" name="UnloadedAvatar" />
+        <check_box label="Lichtradius weergeven" name="LightRadius" tool_tip="Geeft de lichtradius weer als een bal" />
+        <check_box label="Meerdere threads gebruiken" name="Multiple Threads" />
+	<check_box label="Geluiden/Afbeeldingen niet vooraf laden" name="NoPreload" />
+	<check_box label="Render > Typen > Wolken standaard uitzetten" name="PhoenixKillTheClouds" />
+        <slider label="Achtergrondopbrengsttijd:" name="BackgroundYieldTime" />
+        <text name="ShadowsText" >Schaduwen</text>
+        <check_box label="Schaduwen inschakelen (vereist instelling Ultra)" name="PhoenixShadowsON" />
+        <check_box label="Vervaag schaduwen" name="BlurShadows" />
+        <slider label="Uitgestelde ruis:" name="Noise" />
+	
+        <slider label="Schaduwvervagingsafstand:" name="BlurDist" />
+	<slider label="Schaduwvervagingsgrootte:" name="BlurSize" />
+	<slider label="Vervaag vanaf afstand:" name="BlurSize2" />
+        
+	<spinner label="Vervagingsmonsters:" name="Samples" />
+        <slider label="SSAO-schaal:" name="SSAOScale" />
+        <slider label="SSAO max. schaal:" name="SSAOMaxScale" />
+        <slider label="SSAO-factor:" name="SSAOFactor" />
+      </panel>
+
+	  <!--Windlight-->
+      <panel label="Windlight" name="Windlight">
+		<text name="WLText">Algemeen</text>
+
+
+		<check_box label="Altijd omgevingsinstellingen van regio gebruiken *" name="UseEnvironmentFromRegionAlways" />
+		<check_box label="Klassieke wolken weergeven (kan regiowissel, of herstart vereisen om te voltooien)" name="SkyUseClassicClouds2" />
+
+		<check_box label="Omgevingsinstellingen voor lucht vloeien bij verandering in elkaar over." name="PhoenixInterpolateSky" tool_tip="Dit bepaalt of de fraaie overgang tussen WL instellingen bij verandering wordt weergegeven. Het effect kan voor langzamere computers gedurende enkele seconden een verlaging van FPS betekenen terwijl de instellingen worden veranderd. Schakel deze twee opties uit om het effect over te slaan en de nieuwe instelling direct toe te passen." />
+		<check_box label="Omgevingsinstellingen voor water vloeien bij verandering in elkaar over" name="PhoenixInterpolateWater" tool_tip="Hetzelfde als hierboven, maar dan voor water." />
+
+ <text height="12" name="ParcelWL" >Phoenix WL per perceel (experimenteel)</text>
+		<check_box label="Gebruik Phoenix's Windlight instellingen per perceel delen (experimenteel) *" name="PhoenixWLParcelEnabled" />
+           <check_box  left_delta="5" label="Automatisch omgevingsinstellingen toepassen van vriend's land" name="PhoenixWLWhitelistFriends" />
+	   <check_box label="Automatisch omgevingsinstellingen toepassen van mijn groep's land" name="PhoenixWLWhitelistGroups" />
+	   <check_box label="Automatisch omgevingsinstellingen toepassen op elk land" name="PhoenixWLWhitelistAll" />
+	   <check_box label="WL per perceel omgevingsinstellingen vloeien bij verandering in elkaar over." name="PhoenixInterpolateParcelWL" tool_tip="Hetzelfde als bovenstaande opties voor interpolatie, maar dan voor WL per perceel." />
+
+ <text_editor name="WL_Warning_Text" >
+   * Het aan- of uitzetten van deze opties zullen/horen de handmatig ingestelde omgevingswaarden tussen sessies als standaard behouden, en voorkomt dat ze automatisch veranderen als u van de ene regio/perceel naar de andere gaat.
+   </text_editor>
+	  </panel>
+
+	  <!--SpellCheck-->
+	  <panel label="Spellingscontrole" name="SpellCheck">
+        <button label="?" name="PhoenixHelp_SpellCheck" tool_tip="Klik hier voor hulp bij de instellingen op deze pagina." />
+        <text name="EmSpell_txt1" >Basistaal</text>
+        <combo_box  name="PhoenixSpellBase" />
+        <text name="EmSpell_txt2" >Extra geïnstalleerde woordenboeken</text>
+        <combo_box  name="EmSpell_Installed" />
+        <button label="Verwijderen" name="EmSpell_Remove" />
+        <text name="EmSpell_txt3" >Beschikbare woordenboeken</text>
+        <combo_box name="EmSpell_Avail" />
+        <button label="Installeer" name="EmSpell_Add" />
+        <button label="Get More!" name="EmSpell_GetMore" />
+        <check_box label="Foutgespelde woorden in rood weergeven" name="PhoenixSpellDisplay" />
+        <button label="Aangepast woordenboek bewerken" name="EmSpell_EditCustom" />
+        <text name="EmSpell_txt4" >Om spelling te controleren, klikt u met de
+rechtermuistoets op een foutgespeld woord 
+(rood of niet), en klik op de vervanger.</text>
+      </panel>
+    </tab_container>
+  </tab_container>
+</panel>
