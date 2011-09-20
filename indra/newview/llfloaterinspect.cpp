@@ -41,7 +41,7 @@
 #include "lltoolmgr.h"
 #include "llviewercontrol.h"
 #include "llviewerobject.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "lluictrlfactory.h"
 #include "lltexturectrl.h"
 #include "llviewerpartsource.h"
@@ -277,7 +277,7 @@ void LLFloaterInspect::onSelectObject(LLUICtrl* ctrl, void* user_data)
 				loader_tex.profilebtn = sInstance->getChild<LLButton>(llformat("profile_btn_%d",j));
 				sInstance->childSetAction(llformat("profile_btn_%d",j), onClickProfile,(void*)j);
 
-				LLViewerImage* img = node->getObject()->getTEImage(i);
+				LLViewerTexture* img = node->getObject()->getTEImage(i);
 				loader_tex.assetid = img->getID();
 
 
@@ -310,7 +310,7 @@ void LLFloaterInspect::onSelectObject(LLUICtrl* ctrl, void* user_data)
 				loader_tex.profilebtn = sInstance->getChild<LLButton>("profile_btn_s");
 				sInstance->childSetAction("profile_btn_s", onClickProfile,(void*)i);
 
-				LLViewerImage* img = gImageList.getImage(sculpt_id);
+				LLViewerTexture* img = LLViewerTextureManager::getFetchedTexture(sculpt_id);
 				loader_tex.assetid = sculpt_id;
 
 				mTex.push_back(loader_tex);
@@ -348,7 +348,7 @@ void LLFloaterInspect::onSelectObject(LLUICtrl* ctrl, void* user_data)
 				loader_tex.profilebtn = sInstance->getChild<LLButton>("profile_btn_p");
 				sInstance->childSetAction("profile_btn_p", onClickProfile,(void*)i);
 
-				LLViewerImage* img = node->getObject()->mPartSourcep->getImage();
+				LLViewerTexture* img = node->getObject()->mPartSourcep->getImage();
 				loader_tex.assetid = img->getID();
 
 				mTex.push_back(loader_tex);
@@ -367,40 +367,60 @@ void LLFloaterInspect::onSelectObject(LLUICtrl* ctrl, void* user_data)
 	}
 }
 
-void LLFloaterInspect::drawTextureEntry(const LLViewerImage* img, const U8 i)
+void LLFloaterInspect::drawTextureEntry(const LLViewerTexture* tex, const U8 i)
 {
 //	if (i > (U8)6) return; //fffffffffffffff
-	LLUUID image_id = img->getID();
+	LLUUID image_id = tex->getID();
 	if (image_id.notNull())
 	{
 		mTex[i].blacklistbtn->setVisible(TRUE);
 		if (mTex[i].ctrl)
 		{
-			std::map<std::string,std::string> decodedComment = img->mDecodedComment;
-			if (decodedComment.find("a")!=decodedComment.end())
+			LLViewerTexture* temptex = const_cast<LLViewerTexture*>(tex);
+			LLViewerFetchedTexture* ftex = LLViewerTextureManager::staticCastToFetchedTexture(temptex);
+			if (ftex)
 			{
-				mTex[i].uploaderkey = LLUUID(decodedComment["a"]);
-				gCacheName->get(mTex[i].uploaderkey, FALSE, callbackLoadAvatarName, mTex[i].line2);
-				if (decodedComment.find("z")!=decodedComment.end()) 
+				std::map<std::string,std::string> decodedComment = ftex->mDecodedComment;
+				if (decodedComment.find("a")!=decodedComment.end())
 				{
-					std::string strtime= decodedComment["z"];
-					std::string year = strtime.substr(0,4);
-					std::string month = strtime.substr(4,2);
-					std::string day = strtime.substr(6,2);
-					std::string hour = strtime.substr(8,2);
-					std::string minute = strtime.substr(10,2);
-					std::string second = strtime.substr(12,2);
-					mTex[i].time = llformat("%s/%s/%s - %s:%s:%s",year.c_str(),month.c_str(),day.c_str(),hour.c_str(),minute.c_str(),second.c_str());
-//					mTex[i].blacklistbtn->setVisible(TRUE);
-					mTex[i].profilebtn->setVisible(TRUE);
+					mTex[i].uploaderkey = LLUUID(decodedComment["a"]);
+
+					std::string uploadName;
+					if (!gCacheName->getFullName(mTex[i].uploaderkey, uploadName))
+					{
+						gCacheName->get(mTex[i].uploaderkey, false, boost::bind(&LLFloaterInspect::callbackLoadAvatarName, _1, _2, _3));
+					}
+					else
+					{
+						mTex[i].line2->setText(uploadName);
+					}
+
+					if (decodedComment.find("z")!=decodedComment.end()) 
+					{
+						std::string strtime= decodedComment["z"];
+						std::string year = strtime.substr(0,4);
+						std::string month = strtime.substr(4,2);
+						std::string day = strtime.substr(6,2);
+						std::string hour = strtime.substr(8,2);
+						std::string minute = strtime.substr(10,2);
+						std::string second = strtime.substr(12,2);
+						mTex[i].time = llformat("%s/%s/%s - %s:%s:%s",year.c_str(),month.c_str(),day.c_str(),hour.c_str(),minute.c_str(),second.c_str());
+	//					mTex[i].blacklistbtn->setVisible(TRUE);
+						mTex[i].profilebtn->setVisible(TRUE);
+					}
+					else
+					{
+						mTex[i].time = std::string("");
+	//					mTex[i].blacklistbtn->setVisible(FALSE);
+						mTex[i].profilebtn->setVisible(FALSE);
+					}
+					mTex[i].line3->setText(std::string(mTex[i].time));
 				}
 				else
 				{
-					mTex[i].time = std::string("");
-//					mTex[i].blacklistbtn->setVisible(FALSE);
+	//				mTex[i].blacklistbtn->setVisible(FALSE);
 					mTex[i].profilebtn->setVisible(FALSE);
 				}
-				mTex[i].line3->setText(std::string(mTex[i].time));
 			}
 			else
 			{
@@ -410,10 +430,10 @@ void LLFloaterInspect::drawTextureEntry(const LLViewerImage* img, const U8 i)
 
 			mTex[i].ctrl->setImageAssetID(image_id);
 
-			S32 height = img->getHeight();
-			S32 width = img->getWidth();
-			S32 components = img->getComponents();
-			S32 total_memory = (img->getWidth() * img->getHeight() * img->getComponents());
+			S32 height = tex->getHeight();
+			S32 width = tex->getWidth();
+			S32 components = tex->getComponents();
+			S32 total_memory = (tex->getWidth() * tex->getHeight() * tex->getComponents());
 			F32 mb_memory = (F32)total_memory;
 			mb_memory = mb_memory/1000000;
 
@@ -467,6 +487,7 @@ void LLFloaterInspect::onClickProfile(void* user_data)
 	
 }
 
+/*
 void LLFloaterInspect::callbackLoadAvatarName(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* data)
 {
 	if(!sInstance) return;
@@ -475,6 +496,12 @@ void LLFloaterInspect::callbackLoadAvatarName(const LLUUID& id, const std::strin
 	fullname << "Uploaded by " << first << " " << last;
 	LLTextBox* line = (LLTextBox*) data;
 	line->setText(fullname.str());
+}
+*/
+void LLFloaterInspect::callbackLoadAvatarName(const LLUUID& id, const std::string& fullname, bool is_group)
+{
+	if(!sInstance) return;
+	sInstance->setDirty();
 }
 
 LLUUID LLFloaterInspect::getSelectedUUID()

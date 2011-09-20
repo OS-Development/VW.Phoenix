@@ -56,7 +56,7 @@
 #include "llvoavatar.h"
 #include "pipeline.h"
 #include "lluictrlfactory.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llstring.h"
 #include "llviewercontrol.h"
 
@@ -145,9 +145,9 @@ LLFloaterImagePreview::~LLFloaterImagePreview()
 	clearAllPreviewTextures();
 
 	mRawImagep = NULL;
-	delete mAvatarPreview;
-	delete mSculptedPreview;
-	
+	mAvatarPreview = NULL;
+	mSculptedPreview = NULL;
+
 	mImagep = NULL ;
 }
 
@@ -243,7 +243,7 @@ void LLFloaterImagePreview::draw()
 		U32 selected = 0;
 		if (iface)
 			selected = iface->getFirstSelectedIndex();
-		
+
 		if (selected <= 0)
 		{
 			gl_rect_2d_checkerboard(mPreviewRect);
@@ -255,14 +255,14 @@ void LLFloaterImagePreview::draw()
 			}
 			else
 			{
-				mImagep = new LLImageGL(mRawImagep, FALSE) ;
-				
-				gGL.getTexUnit(0)->unbind(mImagep->getTarget()) ;
+				mImagep = LLViewerTextureManager::getLocalTexture(mRawImagep.get(), FALSE);
+
+				gGL.getTexUnit(0)->unbind(mImagep->getTarget());
 				gGL.getTexUnit(0)->bindManual(LLTexUnit::TT_TEXTURE, mImagep->getTexName());
 				stop_glerror();
 
 				gGL.getTexUnit(0)->setTextureFilteringOption(LLTexUnit::TFO_BILINEAR);
-				
+
 				gGL.getTexUnit(0)->setTextureAddressMode(LLTexUnit::TAM_CLAMP);
 				if (mAvatarPreview)
 				{
@@ -297,11 +297,11 @@ void LLFloaterImagePreview::draw()
 
 				if (selected == 9)
 				{
-					gGL.getTexUnit(0)->bind(mSculptedPreview->getTexture());
+					gGL.getTexUnit(0)->bind(mSculptedPreview);
 				}
 				else
 				{
-					gGL.getTexUnit(0)->bind(mAvatarPreview->getTexture());
+					gGL.getTexUnit(0)->bind(mAvatarPreview);
 				}
 
 				gGL.begin( LLRender::QUADS );
@@ -608,7 +608,7 @@ void LLFloaterImagePreview::onMouseCaptureLostImagePreview(LLMouseHandler* handl
 //-----------------------------------------------------------------------------
 // LLImagePreviewAvatar
 //-----------------------------------------------------------------------------
-LLImagePreviewAvatar::LLImagePreviewAvatar(S32 width, S32 height) : LLDynamicTexture(width, height, 3, ORDER_MIDDLE, FALSE)
+LLImagePreviewAvatar::LLImagePreviewAvatar(S32 width, S32 height) : LLViewerDynamicTexture(width, height, 3, ORDER_MIDDLE, FALSE)
 {
 	mNeedsUpdate = TRUE;
 	mTargetJoint = NULL;
@@ -637,6 +637,11 @@ LLImagePreviewAvatar::~LLImagePreviewAvatar()
 	mDummyAvatar->markDead();
 }
 
+//virtual
+S8 LLImagePreviewAvatar::getType() const
+{
+	return LLViewerDynamicTexture::LL_IMAGE_PREVIEW_AVATAR;
+}
 
 void LLImagePreviewAvatar::setPreviewTarget(const std::string& joint_name, const std::string& mesh_name, LLImageRaw* imagep, F32 distance, BOOL male) 
 { 
@@ -698,7 +703,7 @@ BOOL LLImagePreviewAvatar::render()
 	glMatrixMode(GL_PROJECTION);
 	gGL.pushMatrix();
 	glLoadIdentity();
-	glOrtho(0.0f, mWidth, 0.0f, mHeight, -1.0f, 1.0f);
+	glOrtho(0.0f, mFullWidth, 0.0f, mFullHeight, -1.0f, 1.0f);
 
 	glMatrixMode(GL_MODELVIEW);
 	gGL.pushMatrix();
@@ -707,7 +712,7 @@ BOOL LLImagePreviewAvatar::render()
 	LLGLSUIDefault def;
 	gGL.color4f(0.15f, 0.2f, 0.3f, 1.f);
 
-	gl_rect_2d_simple( mWidth, mHeight );
+	gl_rect_2d_simple(mFullWidth, mFullHeight);
 
 	glMatrixMode(GL_PROJECTION);
 	gGL.popMatrix();
@@ -722,16 +727,17 @@ BOOL LLImagePreviewAvatar::render()
 		LLQuaternion(mCameraYaw, LLVector3::z_axis);
 
 	LLQuaternion av_rot = avatarp->mPelvisp->getWorldRotation() * camera_rot;
-	LLViewerCamera::getInstance()->setOriginAndLookAt(
+	LLViewerCamera* camera = LLViewerCamera::getInstance();
+	camera->setOriginAndLookAt(
 		target_pos + ((LLVector3(mCameraDistance, 0.f, 0.f) + mCameraOffset) * av_rot),		// camera
 		LLVector3::z_axis,																	// up
-		target_pos + (mCameraOffset  * av_rot) );											// point of interest
+		target_pos + (mCameraOffset  * av_rot));											// point of interest
 
 	stop_glerror();
 
-	LLViewerCamera::getInstance()->setAspect((F32)mWidth / mHeight);
-	LLViewerCamera::getInstance()->setView(LLViewerCamera::getInstance()->getDefaultFOV() / mCameraZoom);
-	LLViewerCamera::getInstance()->setPerspective(FALSE, mOrigin.mX, mOrigin.mY, mWidth, mHeight, FALSE);
+	camera->setAspect((F32)mFullWidth / (F32)mFullHeight);
+	camera->setView(camera->getDefaultFOV() / mCameraZoom);
+	camera->setPerspective(FALSE, mOrigin.mX, mOrigin.mY, mFullWidth, mFullHeight, FALSE);
 
 	LLVertexBuffer::unbind();
 	avatarp->updateLOD();
@@ -789,7 +795,7 @@ void LLImagePreviewAvatar::pan(F32 right, F32 up)
 // LLImagePreviewSculpted
 //-----------------------------------------------------------------------------
 
-LLImagePreviewSculpted::LLImagePreviewSculpted(S32 width, S32 height) : LLDynamicTexture(width, height, 3, ORDER_MIDDLE, FALSE)
+LLImagePreviewSculpted::LLImagePreviewSculpted(S32 width, S32 height) : LLViewerDynamicTexture(width, height, 3, ORDER_MIDDLE, FALSE)
 {
 	mNeedsUpdate = TRUE;
 	mCameraDistance = 0.f;
@@ -811,6 +817,11 @@ LLImagePreviewSculpted::~LLImagePreviewSculpted()
 {
 }
 
+//virtual
+S8 LLImagePreviewSculpted::getType() const
+{
+	return LLViewerDynamicTexture::LL_IMAGE_PREVIEW_SCULPTED;
+}
 
 void LLImagePreviewSculpted::setPreviewTarget(LLImageRaw* imagep, F32 distance)
 { 
@@ -826,8 +837,8 @@ void LLImagePreviewSculpted::setPreviewTarget(LLImageRaw* imagep, F32 distance)
 	}
 
 	const LLVolumeFace &vf = mVolume->getVolumeFace(0);
-	U32 num_indices = vf.mIndices.size();
-	U32 num_vertices = vf.mVertices.size();
+	U32 num_indices = vf.mNumIndices;
+	U32 num_vertices = vf.mNumVertices;
 
 	mVertexBuffer = new LLVertexBuffer(LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_NORMAL, 0);
 	mVertexBuffer->allocateBuffer(num_vertices, num_indices, TRUE);
@@ -841,10 +852,15 @@ void LLImagePreviewSculpted::setPreviewTarget(LLImageRaw* imagep, F32 distance)
 	mVertexBuffer->getIndexStrider(index_strider);
 
 	// build vertices and normals
-	for (U32 i = 0; (S32)i < num_vertices; i++)
+	LLStrider<LLVector3> pos;
+	pos = (LLVector3*) vf.mPositions; pos.setStride(16);
+	LLStrider<LLVector3> norm;
+	norm = (LLVector3*) vf.mNormals; norm.setStride(16);
+		
+	for (U32 i = 0; i < num_vertices; i++)
 	{
-		*(vertex_strider++) = vf.mVertices[i].mPosition;
-		LLVector3 normal = vf.mVertices[i].mNormal;
+		*(vertex_strider++) = *pos++;
+		LLVector3 normal = *norm++;
 		normal.normalize();
 		*(normal_strider++) = normal;
 	}
@@ -872,7 +888,7 @@ BOOL LLImagePreviewSculpted::render()
 	glMatrixMode(GL_PROJECTION);
 	gGL.pushMatrix();
 	glLoadIdentity();
-	glOrtho(0.0f, mWidth, 0.0f, mHeight, -1.0f, 1.0f);
+	glOrtho(0.0f, mFullWidth, 0.0f, mFullHeight, -1.0f, 1.0f);
 
 	glMatrixMode(GL_MODELVIEW);
 	gGL.pushMatrix();
@@ -880,7 +896,7 @@ BOOL LLImagePreviewSculpted::render()
 		
 	gGL.color4f(0.15f, 0.2f, 0.3f, 1.f);
 
-	gl_rect_2d_simple( mWidth, mHeight );
+	gl_rect_2d_simple(mFullWidth, mFullHeight);
 
 	glMatrixMode(GL_PROJECTION);
 	gGL.popMatrix();
@@ -896,19 +912,20 @@ BOOL LLImagePreviewSculpted::render()
 		LLQuaternion(mCameraYaw, LLVector3::z_axis);
 
 	LLQuaternion av_rot = camera_rot;
-	LLViewerCamera::getInstance()->setOriginAndLookAt(
+	LLViewerCamera* camera = LLViewerCamera::getInstance();
+	camera->setOriginAndLookAt(
 		target_pos + ((LLVector3(mCameraDistance, 0.f, 0.f) + mCameraOffset) * av_rot),		// camera
 		LLVector3::z_axis,																	// up
 		target_pos + (mCameraOffset  * av_rot) );											// point of interest
 
 	stop_glerror();
 
-	LLViewerCamera::getInstance()->setAspect((F32) mWidth / mHeight);
-	LLViewerCamera::getInstance()->setView(LLViewerCamera::getInstance()->getDefaultFOV() / mCameraZoom);
-	LLViewerCamera::getInstance()->setPerspective(FALSE, mOrigin.mX, mOrigin.mY, mWidth, mHeight, FALSE);
+	camera->setAspect((F32)mFullWidth / (F32)mFullHeight);
+	camera->setView(camera->getDefaultFOV() / mCameraZoom);
+	camera->setPerspective(FALSE, mOrigin.mX, mOrigin.mY, mFullWidth, mFullHeight, FALSE);
 
 	const LLVolumeFace &vf = mVolume->getVolumeFace(0);
-	U32 num_indices = vf.mIndices.size();
+	U32 num_indices = vf.mNumIndices;
 	
 	mVertexBuffer->setBuffer(LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_NORMAL);
 

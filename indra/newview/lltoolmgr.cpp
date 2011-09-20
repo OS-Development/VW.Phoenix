@@ -239,12 +239,9 @@ bool LLToolMgr::inBuildMode()
 	// when entering mouselook inEdit() immediately returns true before 
 	// cameraMouselook() actually starts returning true.  Also, appearance edit
 	// sets build mode to true, so let's exclude that.
-	bool b=(inEdit() 
-			&& gSavedSettings.getBOOL("BuildBtnState")
-			&& !gAgent.cameraMouselook()
-			&& mCurrentToolset != gFaceEditToolset);
-	
-	return b;
+	static LLCachedControl<bool> build_btn_state(gSavedSettings, "BuildBtnState");
+	return inEdit() && build_btn_state && !gAgent.cameraMouselook() &&
+		   mCurrentToolset != gFaceEditToolset;
 }
 
 void LLToolMgr::setTransientTool(LLTool* tool)

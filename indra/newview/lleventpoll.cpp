@@ -33,9 +33,8 @@
 #include "llviewerprecompiledheaders.h"
 
 #include "lleventpoll.h"
-#include "llappviewer.h"
-#include "llagent.h"
 
+#include "lleventtimer.h"
 #include "llhttpclient.h"
 #include "llhttpstatuscodes.h"
 #include "llsdserialize.h"
@@ -44,6 +43,11 @@
 #include "llviewerregion.h"
 #include "message.h"
 #include "lltrans.h"
+#include "message.h"
+
+#include "llagent.h"
+#include "llappviewer.h"
+#include "llviewerregion.h"
 
 namespace
 {

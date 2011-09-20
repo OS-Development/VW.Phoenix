@@ -2925,13 +2925,13 @@ Wybierz Wycisz żeby wyciszyć dzwoniącą osobę.
 		</form>
 	</notification>
 	<notification name="AutoUnmuteByIM">
-		Wiadomość (IM) została wysłana do [FIRST] [LAST] i wyciszenie zostało automatycznie usunięte.
+		Wiadomość (IM) została wysłana do [NAME] i wyciszenie zostało automatycznie usunięte.
 	</notification>
 	<notification name="AutoUnmuteByMoney">
-		Pieniądze zostały przekazane do [FIRST] [LAST] i wyciszenie zostało automatycznie usunięte.
+		Pieniądze zostały przekazane do [NAME] i wyciszenie zostało automatycznie usunięte.
 	</notification>
 	<notification name="AutoUnmuteByInventory">
-		Oferta z szafy dla [FIRST] [LAST] automatycznie usunęła wyciszenie.
+		Oferta z szafy dla [NAME] automatycznie usunęła wyciszenie.
 	</notification>
 	<notification name="VoiceInviteGroup">
 		[NAME] zaczyna rozmowę z grupą [GROUP].

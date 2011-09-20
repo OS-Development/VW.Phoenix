@@ -39,8 +39,8 @@
 #include "llvertexbuffer.h"
 
 class LLFace;
-class LLImageGL;
-class LLViewerImage;
+class LLViewerTexture;
+class LLViewerFetchedTexture;
 class LLSpatialGroup;
 class LLDrawInfo;
 
@@ -53,21 +53,26 @@ public:
 	{
 		// Correspond to LLPipeline render type
 		POOL_SIMPLE = 1,
-		POOL_TERRAIN,	
-		POOL_TREE,
-		POOL_SKY,
-		POOL_WL_SKY,
 		POOL_GROUND,
-		POOL_GRASS,
 		POOL_FULLBRIGHT,
 		POOL_BUMP,
-		POOL_INVISIBLE,
+		POOL_TERRAIN,
+		POOL_SKY,
+		POOL_WL_SKY,
+		POOL_TREE,
+		POOL_GRASS,
+		POOL_INVISIBLE, // see below *
 		POOL_AVATAR,
 		POOL_VOIDWATER,
 		POOL_WATER,
 		POOL_GLOW,
 		POOL_ALPHA,
 		NUM_POOL_TYPES,
+		// * invisiprims work by rendering to the depth buffer but not the color buffer, occluding anything rendered after them
+		// - and the LLDrawPool types enum controls what order things are rendered in
+		// - so, it has absolute control over what invisprims block
+		// ...invisiprims being rendered in pool_invisible
+		// ...shiny/bump mapped objects in rendered in POOL_BUMP
 	};
 	
 	LLDrawPool(const U32 type);
@@ -78,7 +83,7 @@ public:
 	S32 getId() const { return mId; }
 	U32 getType() const { return mType; }
 
-	virtual LLViewerImage *getDebugTexture();
+	virtual LLViewerTexture *getDebugTexture();
 	virtual void beginRenderPass( S32 pass );
 	virtual void endRenderPass( S32 pass );
 	virtual S32	 getNumPasses();
@@ -104,9 +109,9 @@ public:
 	virtual BOOL verify() const { return TRUE; }		// Verify that all data in the draw pool is correct!
 	virtual S32 getVertexShaderLevel() const { return mVertexShaderLevel; }
 	
-	static LLDrawPool* createPool(const U32 type, LLViewerImage *tex0 = NULL);
+	static LLDrawPool* createPool(const U32 type, LLViewerTexture *tex0 = NULL);
 	virtual LLDrawPool *instancePool() = 0;	// Create an empty new instance of the pool.
-	virtual LLViewerImage* getTexture() = 0;
+	virtual LLViewerTexture* getTexture() = 0;
 	virtual BOOL isFacePool() { return FALSE; }
 	virtual void resetDrawOrders() = 0;
 
@@ -129,6 +134,7 @@ public:
 		PASS_FULLBRIGHT_SHINY,
 		PASS_SHINY,
 		PASS_BUMP,
+		PASS_POST_BUMP,
 		PASS_GLOW,
 		PASS_ALPHA,
 		PASS_ALPHA_MASK,
@@ -140,8 +146,8 @@ public:
 	LLRenderPass(const U32 type);
 	virtual ~LLRenderPass();
 	/*virtual*/ LLDrawPool* instancePool();
-	/*virtual*/ LLViewerImage* getDebugTexture() { return NULL; }
-	LLViewerImage* getTexture() { return NULL; }
+	/*virtual*/ LLViewerTexture* getDebugTexture() { return NULL; }
+	LLViewerTexture* getTexture() { return NULL; }
 	BOOL isDead() { return FALSE; }
 	void resetDrawOrders() { }
 
@@ -168,13 +174,10 @@ public:
 	LLFacePool(const U32 type);
 	virtual ~LLFacePool();
 	
-	virtual void renderForSelect() = 0;
 	BOOL isDead() { return mReferences.empty(); }
-	virtual void renderFaceSelected(LLFace *facep, LLImageGL *image, const LLColor4 &color,
-									const S32 index_offset = 0, const S32 index_count = 0);
 
-	virtual LLViewerImage *getTexture();
-	virtual void dirtyTextures(const std::set<LLViewerImage*>& textures);
+	virtual LLViewerTexture *getTexture();
+	virtual void dirtyTextures(const std::set<LLViewerFetchedTexture*>& textures);
 
 	virtual void enqueue(LLFace *face);
 	virtual BOOL addFace(LLFace *face);
@@ -184,8 +187,6 @@ public:
 	
 	virtual void resetDrawOrders();
 	void resetAll();
-
-	BOOL moveFace(LLFace *face, LLDrawPool *poolp, BOOL copy_data = FALSE);
 
 	void destroy();
 

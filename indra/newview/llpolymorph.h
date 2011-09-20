@@ -67,8 +67,8 @@ public:
 	U32					mNumIndices;
 	U32*				mVertexIndices;
 	U32					mCurrentIndex;
-	LLVector3*			mCoords;
-	LLVector3*			mNormals;
+	LLVector4*			mCoords;
+	LLVector4*			mNormals;
 	LLVector3*			mBinormals;
 	LLVector2*			mTexCoords;
 

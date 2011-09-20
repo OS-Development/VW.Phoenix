@@ -35,7 +35,7 @@
 #define LL_LLPRODUCTINFOREQUEST_H
 
 #include "llhttpclient.h"
-#include "llmemory.h"
+#include "llsingleton.h"
 
 /* 
  This is a singleton to manage a cache of information about land types.

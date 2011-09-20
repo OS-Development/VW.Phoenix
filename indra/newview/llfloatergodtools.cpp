@@ -67,7 +67,6 @@
 #include "llviewerwindow.h"
 #include "llworld.h"
 #include "llfloateravatarpicker.h"
-#include "llnotify.h"
 #include "llxfermanager.h"
 #include "llvlcomposition.h"
 #include "llsurface.h"

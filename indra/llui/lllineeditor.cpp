@@ -109,10 +109,10 @@ public :
 protected:
 	void handleResponse(const std::string &translation, const std::string &detectedLanguage)
 	{
-		static BOOL* rep = rebind_llcontrol<BOOL>("PhoenixTranslateReplace", &gSavedSettings, true);
-		if(*rep)
+		static LLCachedControl<bool> rep(gSavedSettings, "PhoenixTranslateReplace");
+		if(rep)
 			m_line->deleteSelection();
-		m_line->insert(((*rep)?"":" (") + translation + ((*rep)?"":")"),m_line->getCursor());
+		m_line->insert((rep?"":" (") + translation + (rep?"":")"),m_line->getCursor());
 	}
 	void handleFailure()
 	{
@@ -1840,8 +1840,8 @@ void LLLineEditor::doDelete()
 }
 void LLLineEditor::autoCorrectText()
 {
-	static BOOL *doAnything = rebind_llcontrol<BOOL>("PhoenixEnableAutoCorrect", &gSavedSettings, true);
-	if( (!mReadOnly) && (*doAnything) && (isSpellDirty()))
+	static LLCachedControl<bool> doAnything(gSavedSettings, "PhoenixEnableAutoCorrect");
+	if( (!mReadOnly) && doAnything && (isSpellDirty()))
 	{
 		S32 wordStart = 0;
 		S32 wordEnd = mCursorPos-1;

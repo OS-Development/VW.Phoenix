@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<panel name="Panel Avatar" width="470">
-	<tab_container name="tab" width="459">
+<panel name="Panel Avatar" width="480">
+	<tab_container name="tab" width="470">
 		<panel label="2. Leben" name="2nd Life" width="458">
 			<string name="CaptionTextAcctInfo">
 				[ACCTTYPE]
@@ -166,7 +166,7 @@
 			</text>
 			<text_editor name="about" width="370" />
 		</panel>
-		<panel label="Meine Notizen" name="My Notes" width="458">
+		<panel label="Notizen" name="My Notes" width="458">
 			<string name="Loading">
 				Wird geladen...
 			</string>
@@ -177,6 +177,7 @@ Die betreffende Person oder andere können sie nicht sehen.
 			</text>
 			<text_editor name="notes edit" width="430"/>
 		</panel>
+		<panel label="SLUM" name="SLUMfeed"/>
 	</tab_container>
 	<button label="OK" label_selected="OK" name="OK"/>
 	<button label="Abbrechen" label_selected="Abbrechen" name="Cancel"/>

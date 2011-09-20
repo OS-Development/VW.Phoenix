@@ -2912,13 +2912,13 @@ Klicken Sie auf „Akzeptieren“, um dem Gespräch beizutreten, oder auf „Abl
 		</form>
 	</notification>
 	<notification name="AutoUnmuteByIM">
-		[FIRST] [LAST] hat eine Instant Message erhalten; die Stummschaltung wurde aufgehoben.
+		[NAME] hat eine Instant Message erhalten; die Stummschaltung wurde aufgehoben.
 	</notification>
 	<notification name="AutoUnmuteByMoney">
-		[FIRST] [LAST] hat Geld erhalten; die Stummschaltung wurde aufgehoben.
+		[NAME] hat Geld erhalten; die Stummschaltung wurde aufgehoben.
 	</notification>
 	<notification name="AutoUnmuteByInventory">
-		[FIRST] [LAST] wurde ein Inventarobjekt angeboten; die Stummschaltung wurde aufgehoben.
+		[NAME] wurde ein Inventarobjekt angeboten; die Stummschaltung wurde aufgehoben.
 	</notification>
 	<notification name="VoiceInviteGroup">
 		[NAME] ist einem Voice-Chat mit der Gruppe [GROUP] beigetreten.

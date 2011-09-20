@@ -123,12 +123,12 @@ MODULE32_NEST	Module32Next_;
 #define	NL				L"\r\n"	//new line
 
 
-typedef struct STACK
+typedef struct WSTACK
 {
-	STACK *	Ebp;
+	WSTACK *	Ebp;
 	PBYTE	Ret_Addr;
 	DWORD	Param[0];
-} STACK, * PSTACK;
+} WSTACK, * PSTACK;
 
 BOOL WINAPI Get_Module_By_Ret_Addr(PBYTE Ret_Addr, LPWSTR Module_Name, PBYTE & Module_Addr);
 void WINAPI Get_Call_Stack(const EXCEPTION_RECORD* exception_record, 
@@ -392,7 +392,7 @@ void WINAPI Get_Call_Stack(const EXCEPTION_RECORD* exception_record,
 	int heuristic_walk_i = 0;
 	int Ret_Addr_I = 0;
 
-	STACK	Stack = {0, 0};
+	WSTACK	Stack = {0, 0};
 	PSTACK	Ebp;
 
 	if (exception_record && context_record)		//fake frame for exception address

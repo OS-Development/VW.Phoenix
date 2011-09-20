@@ -66,15 +66,18 @@ if (WINDOWS)
 
   add_definitions(
       /DLL_WINDOWS=1
+      /DDOM_DYNAMIC
       /DUNICODE
       /D_UNICODE 
       /GS
       /TP
-      /W3
+      /W2
       /c
       /Zc:forScope
       /nologo
       /Oy-
+      /Zc:wchar_t-
+      /arch:SSE2
       )
      
   if(MSVC80 OR MSVC90)
@@ -153,7 +156,8 @@ if (LINUX)
   # Let's actually get a numerical version of gxx's version
   STRING(REGEX REPLACE ".* ([0-9])\\.([0-9])\\.([0-9]).*" "\\1\\2\\3" CXX_VERSION ${CXX_VERSION})
   
-  #gcc 4.3 and above don't like the LL boost
+  # gcc 4.3 and above don't like the LL boost
+  # cause warnings due to our use of deprecated headers
   if(${CXX_VERSION} GREATER 429)
     add_definitions(-Wno-parentheses)
 	set(CMAKE_CXX_FLAGS "-Wno-deprecated ${CMAKE_CXX_FLAGS}")
@@ -169,6 +173,8 @@ if (LINUX)
       -fno-strict-aliasing
       -fsigned-char
       -g
+      -msse2
+      -mfpmath=sse
       -pthread
       )
 
@@ -237,7 +243,7 @@ endif (DARWIN)
 
 
 if (LINUX OR DARWIN)
-  set(GCC_WARNINGS "-Wall -Wno-sign-compare -Wno-trigraphs -Wno-non-virtual-dtor -Woverloaded-virtual -Wno-write-strings -Wno-deprecated-declarations")
+  set(GCC_WARNINGS "-Wall -Wno-sign-compare -Wno-trigraphs -Wno-non-virtual-dtor -Wno-write-strings -Wno-deprecated-declarations")
 
   if (NOT GCC_DISABLE_FATAL_WARNINGS)
     set(GCC_WARNINGS "${GCC_WARNINGS} -Werror")
@@ -245,7 +251,7 @@ if (LINUX OR DARWIN)
     # set(GCC_WARNINGS "${GCC_WARNINGS} -Werror -fdiagnostics-show-option")
   endif (NOT GCC_DISABLE_FATAL_WARNINGS)
 
-  set(GCC_CXX_WARNINGS "${GCC_WARNINGS} -Wno-reorder")
+  set(GCC_CXX_WARNINGS "${GCC_WARNINGS} -Wno-reorder -Wno-non-virtual-dtor")
 
   set(CMAKE_C_FLAGS "${GCC_WARNINGS} ${CMAKE_C_FLAGS}")
   set(CMAKE_CXX_FLAGS "${GCC_CXX_WARNINGS} ${CMAKE_CXX_FLAGS}")

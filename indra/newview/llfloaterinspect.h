@@ -54,7 +54,7 @@ public:
 	virtual void draw();
 	virtual void refresh();
 	virtual void updateDimensions();
-	static void drawTextureEntry(const LLViewerImage* img, const U8 i);
+	static void drawTextureEntry(const LLViewerTexture* tex, const U8 i);
 	static BOOL isVisible();
 	virtual void onFocusReceived();
 	static void onClickCreatorProfile(void* ctrl);
@@ -77,8 +77,9 @@ private:
 	static LLFloaterInspect* sInstance;
 	static void onClickBlacklist(void *user_data);
 	static void onClickProfile(void *user_data);
-	static void callbackLoadAvatarName(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* data);
-
+	//static void callbackLoadAvatarName(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* data);
+	static void callbackLoadAvatarName(const LLUUID& id, const std::string& fullname, bool is_group);
+	
 	LLSafeHandle<LLObjectSelection> mObjectSelection;
 	// <edit>
 	std::map<LLUUID,std::pair<S32,S32> > mInventoryNums; //<scripts,total>

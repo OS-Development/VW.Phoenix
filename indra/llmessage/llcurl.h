@@ -47,6 +47,7 @@
 #include "llbuffer.h"
 #include "lliopipe.h"
 #include "llsd.h"
+#include "llthread.h"
 
 class LLMutex;
 
@@ -66,6 +67,8 @@ class LLCurl
 public:
 	class Easy;
 	class Multi;
+
+	static bool sMultiThreaded;
 
 	struct TransferInfo
 	{
@@ -126,8 +129,19 @@ public:
 			// of the header can be parsed.  In the ::completed call above only the body is contained in the LLSD.
 			virtual void completedHeader(U32 status, const std::string& reason, const LLSD& content);
 
+			// Used internally to set the url for debugging later.
+			void setURL(const std::string& url);
+
+			virtual bool followRedir() 
+			{
+				return false;
+			}
+
 	public: /* but not really -- don't touch this */
 		U32 mReferenceCount;
+
+	private:
+		std::string mURL;
 	};
 	typedef boost::intrusive_ptr<Responder>	ResponderPtr;
 
@@ -160,7 +174,7 @@ public:
 	/**
 	 * @ brief Initialize LLCurl class
 	 */
-	static void initClass();
+	static void initClass(bool multi_threaded = false);
 
 	/**
 	 * @ brief Cleanup LLCurl class
@@ -182,6 +196,7 @@ public:
 private:
 	static std::string sCAPath;
 	static std::string sCAFile;
+	static const unsigned int MAX_REDIRECTS;
 };
 
 namespace boost
@@ -201,7 +216,9 @@ public:
 
 	void get(const std::string& url, LLCurl::ResponderPtr responder);
 	bool getByteRange(const std::string& url, const headers_t& headers, S32 offset, S32 length, LLCurl::ResponderPtr responder);
-	bool post(const std::string& url, const headers_t& headers, const LLSD& data, LLCurl::ResponderPtr responder);
+	bool post(const std::string& url, const headers_t& headers, const LLSD& data, LLCurl::ResponderPtr responder, S32 time_out = 0);
+	bool post(const std::string& url, const headers_t& headers, const std::string& data, LLCurl::ResponderPtr responder, S32 time_out = 0);
+
 	S32  process();
 	S32  getQueued();
 
@@ -215,6 +232,7 @@ private:
 	curlmulti_set_t mMultiSet;
 	LLCurl::Multi* mActiveMulti;
 	S32 mActiveRequestCount;
+	BOOL mProcessing;
 	U32 mThreadID; // debug
 };
 
@@ -229,10 +247,11 @@ public:
 	void setHeaderCallback(curl_header_callback callback, void* userdata);
 	void setWriteCallback(curl_write_callback callback, void* userdata);
 	void setReadCallback(curl_read_callback callback, void* userdata);
+	void setSSLCtxCallback(curl_ssl_ctx_callback callback, void* userdata);
 	void slist_append(const char* str);
 	void sendRequest(const std::string& url);
 	void requestComplete();
-	S32 perform();
+	void perform();
 	bool getResult(CURLcode* result, LLCurl::TransferInfo* info = NULL);
 	std::string getErrorString();
 

@@ -10,7 +10,7 @@
 		Fizetés ennek a lakónak:
 	</text>
 	<text type="string" length="1" name="payee_name" left="145">
-		[FIRST] [LAST]
+		[NAME]
 	</text>
 	<text type="string" length="1" name="fastpay text">
 		Gyorsfizetés:

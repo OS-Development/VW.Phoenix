@@ -53,10 +53,10 @@
 #include "llchatbar.h"
 #include "lldelayedgestureerror.h"
 #include "llinventorymodel.h"
-#include "llnotify.h"
+#include "llnotifications.h"
 #include "llviewermessage.h"
-#include "llvoavatar.h"
 #include "llviewerstats.h"
+#include "llvoavatar.h"
 
 #include "chatbar_as_cmdline.h"
 

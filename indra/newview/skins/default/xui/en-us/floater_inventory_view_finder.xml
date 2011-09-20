@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <floater bottom="-495" can_close="true" can_drag_on_left="false" can_minimize="false"
-     can_resize="false" can_tear_off="true" enabled="true" height="408"
-     left="457" min_height="408" min_width="160" mouse_opaque="true"
+     can_resize="false" can_tear_off="true" enabled="true" height="428"
+     left="457" min_height="428" min_width="160" mouse_opaque="true"
      name="Inventory Finder" title="inventory_recent_items" width="160">
-	<icon bottom="370" color="1 1 1 1" enabled="true" follows="left|top" height="16"
+	<icon bottom="390" color="1 1 1 1" enabled="true" follows="left|top" height="16"
 	     image_name="inv_item_animation.tga" left="8" mouse_opaque="true"
 	     name="icon_animation" width="16" />
 	<check_box bottom_delta="0" enabled="true" follows="left|top" font="SansSerifSmall"
@@ -70,6 +70,12 @@
   <check_box bottom_delta="0" enabled="true" follows="left|top" font="SansSerifSmall"
 	     height="16" initial_value="false" label="Snapshots" left="26"
 	     mouse_opaque="true" name="check_snapshot" radio_style="false" width="126" />
+  <icon bottom_delta="-20" color="1 1 1 1" enabled="true" follows="left|top" height="16"
+	     image_name="inv_item_mesh.tga" left="8" mouse_opaque="true"
+	     name="icon_mesh" width="16" />
+  <check_box bottom_delta="0" enabled="true" follows="left|top" font="SansSerifSmall"
+	     height="16" initial_value="false" label="Meshes" left="26"
+	     mouse_opaque="true" name="check_mesh" radio_style="false" width="126" />
 	<button bottom_delta="-24" enabled="true" follows="left|top" font="SansSerif"
 	     halign="center" height="20" label="All" label_selected="All" left="8"
 	     mouse_opaque="true" name="All" scale_image="true" width="100" />

@@ -290,15 +290,16 @@ class WindowsManifest(ViewerManifest):
                 print "WARNING: not copying VC runtimes to staging area, this will fail if you make an installer from this staging"
 
             # For google-perftools tcmalloc allocator.
-            try:
-                if self.args['configuration'].lower() == 'debug':
-                    self.path('libtcmalloc_minimal-debug.dll')
-                else:
-                    self.path('libtcmalloc_minimal.dll')
-            except:
-                print "Skipping libtcmalloc_minimal.dll"
+            if self.prefix(src="../../libraries/i686-win32/lib/release", dst=""):
+                try:
+                    if self.args['configuration'].lower() == 'debug':
+                        self.path('libtcmalloc_minimal-debug.dll')
+                    else:
+                        self.path('libtcmalloc_minimal.dll')
+                except:
+                    print "Skipping libtcmalloc_minimal.dll"
 
-            self.end_prefix()
+                self.end_prefix()
 
         self.path(src="licenses-win32.txt", dst="licenses.txt")
         self.path("featuretable.txt")
@@ -312,6 +313,17 @@ class WindowsManifest(ViewerManifest):
         except:
             print("Skipping FMOD not found")
         
+        # Mesh 3rd party libs needed for auto LOD and collada reading
+        try:
+            if self.args['configuration'].lower() == 'debug':
+                self.path("libcollada14dom21-d.dll")
+            else:
+                self.path("libcollada14dom21.dll")
+            self.path("glod.dll")
+        except RuntimeError, err:
+            print err.message
+            print "Skipping COLLADA and GLOD libraries (assumming linked statically)"
+
         # Vivox runtimes
         if self.prefix(src="vivox-runtime/i686-win32", dst=""):
             self.path("SLVoice.exe")
@@ -641,6 +653,15 @@ class DarwinManifest(ViewerManifest):
                                 "libaprutil-1.0.3.8.dylib",
                                 "libexpat.0.5.0.dylib"):
                     self.path(os.path.join(libdir, libfile), libfile)
+
+                # Mesh 3rd party libs needed for auto LOD and collada reading
+                try:
+                    for libfile in ("libcollada14dom.dylib",
+                                    "libGLOD.dylib"):
+                        self.path(os.path.join(libdir, libfile), libfile)
+                except RuntimeError, err:
+                    print err.message
+                    print "Skipping COLLADA and GLOD libraries (assumming linked statically)"
                 
                 #libfmodwrapper.dylib
                 self.path(self.args['configuration'] + "/libfmodwrapper.dylib", "libfmodwrapper.dylib")
@@ -937,6 +958,12 @@ class Linux_i686Manifest(LinuxManifest):
             self.path("libalut.so")
             self.path("libopenal.so", "libopenal.so.1")
 #            self.path("libopenal.so", "libvivoxoal.so.1") # vivox's sdk expects this soname
+            self.path("libtcmalloc.so", "libtcmalloc.so") #formerly called google perf tools
+            self.path("libtcmalloc.so.0", "libtcmalloc.so.0") #formerly called google perf tools
+            self.path("libtcmalloc.so.0.2.2", "libtcmalloc.so.0.2.2") #formerly called google perf tools
+            self.path("libcollada14dom.so", "libcollada14dom.so") # Mesh support
+            self.path("libminizip.so", "libminizip.so") # Mesh support
+            self.path("libglod.so", "libglod.so") # Mesh support
             
             # Phoenix-specific addons
             self.path("libotr.so.2.2.0", "libotr.so.2")

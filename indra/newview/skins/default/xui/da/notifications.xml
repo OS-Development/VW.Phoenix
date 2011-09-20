@@ -1099,13 +1099,13 @@ Klik for at acceptere at koble dig på samtalen eller Afvis for at afvise invita
 		</form>
 	</notification>
 	<notification name="AutoUnmuteByIM">
-		[FIRST] [LAST] har fået en personlig besked (IM) og er automatisk ikke blokeret mere.
+		[NAME] har fået en personlig besked (IM) og er automatisk ikke blokeret mere.
 	</notification>
 	<notification name="AutoUnmuteByMoney">
-		[FIRST] [LAST] har fået penge og er automatisk ikke blokeret mere.
+		[NAME] har fået penge og er automatisk ikke blokeret mere.
 	</notification>
 	<notification name="AutoUnmuteByInventory">
-		[FIRST] [LAST] har fået tilbudt genstande og er automatisk ikke blokeret mere.
+		[NAME] har fået tilbudt genstande og er automatisk ikke blokeret mere.
 	</notification>
 	<notification name="VoiceInviteGroup">
 		[NAME] har tilsluttet sig stemme-chat med gruppen [GROUP].

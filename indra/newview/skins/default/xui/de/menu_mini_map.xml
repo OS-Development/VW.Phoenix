@@ -9,7 +9,7 @@
 	<menu_item_call label="Mit Kamera verfolgen" name="Camfollow" />
 	<menu name="Mark" label="Markieren">
 		<menu_item_call label="Rot" name="Red" />
-		<menu_item_call label="Grün" name="Green" />
+		<menu_item_call label="GrÃ¼n" name="Green" />
 		<menu_item_call label="Blau" name="Blue" />
 		<menu_item_call label="Gelb" name="Yellow" />
 		<menu_item_call label="Benutzerdefiniert..." name="Custom" />

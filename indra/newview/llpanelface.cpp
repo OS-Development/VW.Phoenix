@@ -382,6 +382,11 @@ struct LLPanelFaceSetAlignedTEFunctor : public LLSelectedTEFunctor
 			return true;
 		}
 
+		if (facep->getViewerObject()->getVolume()->getNumVolumeFaces() <= te)
+		{	//volume face does not exist, can't be aligned
+			return true;
+		}
+
 		bool set_aligned = true;
 		if (facep == mCenterFace)
 		{
@@ -424,6 +429,12 @@ struct LLPanelFaceGetIsAlignedTEFunctor : public LLSelectedTEFunctor
 		{
 			return false;
 		}
+
+		if (facep->getViewerObject()->getVolume()->getNumVolumeFaces() <= te)
+		{	//volume face does not exist, can't be aligned
+			return false;
+		}
+
 		if (facep == mCenterFace)
 		{
 			return true;
@@ -534,7 +545,7 @@ void LLPanelFace::getState()
 			{
 				LLUUID get(LLViewerObject* object, S32 te)
 				{
-					LLViewerImage* image = object->getTEImage(te);
+					LLViewerTexture* image = object->getTEImage(te);
 					return image ? image->getID() : LLUUID::null;
 				}
 			} func;

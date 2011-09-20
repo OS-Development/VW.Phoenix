@@ -91,16 +91,16 @@ class LLMediaCtrl :
 		// Javascript or some other mechanism.  However, we need the search
 		// floater and login page to handle these URLs.  Those are safe
 		// because we control the page content.  See DEV-9530.  JC.
-		void setTrusted( bool valIn );
+		void setTrusted(bool valIn);
+		bool isTrusted() { return mTrusted; }
 
 		void setHomePageUrl( const std::string urlIn );
 		std::string getHomePageUrl();
 		
 		void setTarget(const std::string& target);
 
-		// set/clear URL to visit when a 404 page is reached
-		void set404RedirectUrl( std::string redirect_url );
-		void clr404RedirectUrl();
+		// set URL to visit when a 404 page is reached
+		void set404RedirectUrl(std::string redirect_url);
 
 		// accessor/mutator for flag that indicates if frequent updates to texture happen
 		bool getFrequentUpdates() { return mFrequentUpdates; };
@@ -144,7 +144,7 @@ class LLMediaCtrl :
 		static bool onClickLinkExternalTarget( const LLSD&, const LLSD& );
 
 		const S32 mTextureDepthBytes;
-		LLWebBrowserTexture* mWebBrowserImage;
+		LLPointer<LLWebBrowserTexture> mWebBrowserImage;
 		LLViewBorder* mBorder;
 		bool mFrequentUpdates;
 		bool mForceUpdate;
@@ -152,6 +152,7 @@ class LLMediaCtrl :
 		std::string mHomePageUrl;
 		std::string mCurrentNavUrl;
 		std::string mTarget;
+		std::string mErrorPageURL;
 		bool mIgnoreUIScale;
 		bool mAlwaysRefresh;
 		viewer_media_t mMediaSource;
@@ -165,7 +166,7 @@ class LLMediaCtrl :
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-class LLWebBrowserTexture : public LLDynamicTexture
+class LLWebBrowserTexture : public LLViewerDynamicTexture
 {
 LOG_CLASS(LLWebBrowserTexture);
 	public:

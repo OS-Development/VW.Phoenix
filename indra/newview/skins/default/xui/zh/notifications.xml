@@ -3119,13 +3119,13 @@ Sculpted 元件需要特殊的材质来指定其形状。
 		</form>
 	</notification>
 	<notification name="AutoUnmuteByIM">
-		您向 [FIRST] [LAST] 发送了一条即时消息，所以他已经被自动解除屏蔽。
+		您向 [NAME] 发送了一条即时消息，所以他已经被自动解除屏蔽。
 	</notification>
 	<notification name="AutoUnmuteByMoney">
-		您向 [FIRST] [LAST] 付款，所以他已经被自动解除屏蔽。
+		您向 [NAME] 付款，所以他已经被自动解除屏蔽。
 	</notification>
 	<notification name="AutoUnmuteByInventory">
-		您正给与 [FIRST] [LAST] 库存物品，所以他已经被自动解除屏蔽。
+		您正给与 [NAME] 库存物品，所以他已经被自动解除屏蔽。
 	</notification>
 	<notification name="VoiceInviteGroup">
 		[NAME] 加入了与 [GROUP] 社团的语音聊天。

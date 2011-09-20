@@ -35,7 +35,7 @@
 
 #include "v3math.h"
 #include "llpanel.h"
-#include "llmemory.h"
+#include "llpointer.h"
 #include "llvolume.h"
 
 class LLSpinCtrl;
@@ -74,31 +74,23 @@ public:
 	static void		onLightCancelColor(LLUICtrl* ctrl, void* userdata);
 	static void		onLightSelectColor(LLUICtrl* ctrl, void* userdata);
 
+	static void		onLightCancelTexture(LLUICtrl* ctrl, void* userdata);
+	static void		onLightSelectTexture(LLUICtrl* ctrl, void* userdata);
+
+	static void		sendPhysicsShapeType(LLUICtrl* ctrl, void* userdata);
+	static void		sendPhysicsGravity(LLUICtrl* ctrl, void* userdata);
+	static void		sendPhysicsFriction(LLUICtrl* ctrl, void* userdata);
+	static void		sendPhysicsRestitution(LLUICtrl* ctrl, void* userdata);
+	static void		sendPhysicsDensity(LLUICtrl* ctrl, void* userdata);
+
 protected:
 	void			getState();
+	void			refreshCost();
 
 protected:
-/*
-	LLTextBox*		mLabelSelectSingleMessage;
-	// Light
-	LLCheckBoxCtrl*	mCheckLight;
-	LLCheckBoxCtrl*	mCheckFlexible1D;
-	LLTextBox*		mLabelColor;
-	LLColorSwatchCtrl* mLightColorSwatch;
-	LLSpinCtrl*		mLightIntensity;
-	LLSpinCtrl*		mLightRadius;
-	LLSpinCtrl*		mLightFalloff;
-	LLSpinCtrl*		mLightCutoff;
-	// Flexibile
-	LLSpinCtrl*		mSpinSections;
-	LLSpinCtrl*		mSpinGravity;
-	LLSpinCtrl*		mSpinTension;
-	LLSpinCtrl*		mSpinFriction;
-	LLSpinCtrl*		mSpinWind;
-	LLSpinCtrl*		mSpinForce[3];
-*/
 
 	LLColor4		mLightSavedColor;
+	LLUUID			mLightSavedTexture;
 	LLPointer<LLViewerObject> mObject;
 	LLPointer<LLViewerObject> mRootObject;
 };

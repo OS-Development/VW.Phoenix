@@ -39,13 +39,14 @@
 #include "llerror.h"
 #include "llbutton.h"
 #include "llhttpclient.h"
-#include "llsdutil.h"
+#include "llsdutil_math.h"
 #include "llstring.h"
 #include "lluictrlfactory.h"
 
 #include "llagent.h"
 #include "llcallingcard.h"
 #include "llchat.h"
+#include "llcommandhandler.h"
 #include "llresmgr.h"
 #include "llfloaterchat.h"
 #include "llfloaterchatterbox.h"
@@ -59,13 +60,13 @@
 #include "llmutelist.h"
 #include "llresizehandle.h"
 #include "llkeyboard.h"
+#include "llnotifications.h"
 #include "llui.h"
 #include "llviewermenu.h"
 #include "llcallingcard.h"
 #include "lltoolbar.h"
 #include "llviewermessage.h"
 #include "llviewerwindow.h"
-#include "llnotify.h"
 #include "llviewerregion.h"
 
 #include "llfirstuse.h"
@@ -98,6 +99,49 @@ static LLUIString sInviteMessage;
 std::map<std::string,std::string> LLFloaterIM::sEventStringsMap;
 std::map<std::string,std::string> LLFloaterIM::sErrorStringsMap;
 std::map<std::string,std::string> LLFloaterIM::sForceCloseSessionMap;
+
+// Global command handler
+
+class LLVoiceCallAvatarHandler : public LLCommandHandler
+{
+public: 
+	// requires trusted browser to trigger
+	LLVoiceCallAvatarHandler() : LLCommandHandler("voicecallavatar", true) 
+	{ 
+	}
+
+	bool handle(const LLSD& params, const LLSD& query_map, LLMediaCtrl* web)
+	{
+		//Make sure we have some parameters
+		if (params.size() == 0)
+		{
+			return false;
+		}
+
+		//Get the ID
+		LLUUID id;
+		if (!id.set(params[0], FALSE))
+		{
+			return false;
+		}
+
+		std::string name;
+		if (gIMMgr && gCacheName->getFullName(id, name))
+		{
+			// Once the IM panel will be opened, and provided that both
+			// the caller and the recipient are voice-enabled, the user
+			// will be only one click away from an actual voice call...
+			// When no voice is available, this action is still consistent
+			// With the "Call" link it is associated with in web profiles.
+			gIMMgr->setFloaterOpen(TRUE);
+			gIMMgr->addSession(name, IM_NOTHING_SPECIAL, id);
+			make_ui_sound("UISndStartIM");
+		}
+
+		return true;
+	}
+};
+LLVoiceCallAvatarHandler gVoiceCallAvatarHandler;
 
 //
 // Helper Functions
@@ -575,17 +619,22 @@ void LLIMMgr::addMessage(
 
 	BOOL is_linden = LLMuteList::getInstance()->isLinden(other_participant_id);
 
+	// replace interactive system message marker with correct from string value
+	std::string from_name = from;
+	if (from == INTERACTIVE_SYSTEM_FROM)
+	{
+		from_name = SYSTEM_FROM;
+	}
+
 	// don't process muted IMs
-	if (LLMuteList::getInstance()->isMuted(
-			other_participant_id,
+	if (LLMuteList::getInstance()->isMuted(other_participant_id,
 			LLMute::flagTextChat) && !is_linden)
 	{
 		return;
 	}
 
-	//not sure why...but if it is from ourselves we set the target_id
-	//to be NULL
-	if( other_participant_id == gAgent.getID() )
+	//not sure why...but if it is from ourselves we set the target_id to be NULL
+	if (other_participant_id == gAgent.getID())
 	{
 		other_participant_id = LLUUID::null;
 	}
@@ -609,33 +658,26 @@ void LLIMMgr::addMessage(
 	}
 	
 	// create IM window as necessary
-	if(!floater)
+	if (!floater)
 	{
-		std::string name = from;
+		std::string name = from_name;
 		if(!session_name.empty() && session_name.size()>1)
 		{
 			name = session_name;
 		}
-
 		
-		floater = createFloater(
-			new_session_id,
-			other_participant_id,
-			name,
-			dialog,
-			FALSE);
+		floater = createFloater(new_session_id, other_participant_id, name, dialog, FALSE);
 
 		// When we get a new IM, and if you are a god, display a bit
 		// of information about the source. This is to help liaisons
 		// when answering questions.
-		if(gAgent.isGodlike())
+		if (gAgent.isGodlike())
 		{
 			// *TODO:translate (low priority, god ability)
 			std::ostringstream bonus_info;
-			bonus_info << "*** parent estate: "
-				<< parent_estate_id
-				<< ((parent_estate_id == 1) ? ", mainland" : "")
-				<< ((parent_estate_id == 5) ? ", teen" : "");
+			bonus_info << "*** parent estate: " << parent_estate_id
+					   << (parent_estate_id == 1 ? ", mainland" : "")
+					   << (parent_estate_id == 5 ? ", teen" : "");
 
 			// once we have web-services (or something) which returns
 			// information about a region id, we can print this out
@@ -650,12 +692,13 @@ void LLIMMgr::addMessage(
 	}
 
 	// now add message to floater
-	bool is_from_system = target_id.isNull() || (from == SYSTEM_FROM);
+	bool is_from_system = (target_id.isNull() || from == SYSTEM_FROM);
 	bool is_encrypted = (msg.substr(0, 3) == "\xe2\x80\xa7");
 	LLColor4 color;
 	//Phoenix:KC - color chat from friends. taking care not to color when RLV hide names is in effect, lol
-	static BOOL* sPhoenixColorFriendsChat = rebind_llcontrol<BOOL>("PhoenixColorFriendsChat", &gSavedSettings, true);
-	static BOOL* sPhoenixColorLindensChat = rebind_llcontrol<BOOL>("PhoenixColorLindensChat", &gSavedSettings, true);
+	static LLCachedControl<bool> sPhoenixColorFriendsChat(gSavedSettings, "PhoenixColorFriendsChat");
+	static LLCachedControl<bool> sPhoenixColorLindensChat(gSavedSettings, "PhoenixColorLindensChat");
+
 	if (is_from_system)
 	{
 		color = gSavedSettings.getColor4("SystemChatColor");
@@ -668,7 +711,7 @@ void LLIMMgr::addMessage(
 	{
 		color = gSavedSettings.getColor("UserChatColor");
 	}
-	else if (*sPhoenixColorFriendsChat
+	else if (sPhoenixColorFriendsChat
 		&& (LLAvatarTracker::instance().isBuddy(other_participant_id))
 	&& (!rlv_handler_t::isEnabled()
 	|| !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES)))
@@ -681,7 +724,7 @@ void LLIMMgr::addMessage(
 	{
 		color=LGGContactSets::getInstance()->getFriendColor(other_participant_id);
 	}
-	else if (*sPhoenixColorLindensChat && is_linden)
+	else if (sPhoenixColorLindensChat && is_linden)
 	{
 		color = gSavedSettings.getColor4("PhoenixLindensChatColor");
 	}
@@ -690,18 +733,18 @@ void LLIMMgr::addMessage(
 		color = gSavedSettings.getColor4("IMChatColor");
 	}
 	
-	if ( !link_name )
+	if (!link_name)
 	{
-		floater->addHistoryLine(msg,color); // No name to prepend, so just add the message normally
+		floater->addHistoryLine(msg, color); // No name to prepend, so just add the message normally
 	}
 	else
 	{
-		floater->addHistoryLine(msg, color, true, other_participant_id, from); // Insert linked name to front of message
+		floater->addHistoryLine(msg, color, true, other_participant_id, from_name); // Insert linked name to front of message
 	}
 
 	LLFloaterChatterBox* chat_floater = LLFloaterChatterBox::getInstance(LLSD());
 
-	if( !chat_floater->getVisible() && !floater->getVisible())
+	if (!chat_floater->getVisible() && !floater->getVisible())
 	{
 		//if the IM window is not open and the floater is not visible (i.e. not torn off)
 		LLFloater* previouslyActiveFloater = chat_floater->getActiveFloater();
@@ -712,7 +755,7 @@ void LLIMMgr::addMessage(
 
 		//there was a previously unseen IM, make that old tab flashing
 		//it is assumed that the most recently unseen IM tab is the one current selected/active
-		if ( previouslyActiveFloater && getIMReceived() )
+		if (previouslyActiveFloater && getIMReceived())
 		{
 			chat_floater->setFloaterFlashing(previouslyActiveFloater, TRUE);
 		}
@@ -993,7 +1036,8 @@ void LLIMMgr::inviteToSession(
 	{
 		if (caller_name.empty())
 		{
-			gCacheName->getName(caller_id, onInviteNameLookup, new LLSD(payload));
+			gCacheName->get(caller_id, false,
+							boost::bind(&LLIMMgr::onInviteNameLookup, _1, _2, _3, payload));
 		}
 		else
 		{
@@ -1033,16 +1077,13 @@ void LLIMMgr::inviteToSession(
 }
 
 //static 
-void LLIMMgr::onInviteNameLookup(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* userdata)
+void LLIMMgr::onInviteNameLookup(const LLUUID& id, const std::string& full_name, bool is_group, LLSD payload)
 {
-	LLSD payload = *(LLSD*)userdata;
-	delete (LLSD*)userdata;
-
-	payload["caller_name"] = first + " " + last;
+	payload["caller_name"] = full_name;
 	payload["session_name"] = payload["caller_name"].asString();
 
 	LLSD args;
-	args["NAME"] = payload["caller_name"].asString();
+	args["NAME"] = full_name;
 
 	LLNotifications::instance().add(
 		payload["notify_box_type"].asString(),
@@ -1611,8 +1652,8 @@ public:
 // [/RLVa:KB]
 
 			//Kadah - PHOE-277: fix for group chat still coming thru on console when disabled
-			static LLCachedControl<BOOL> PhoenixMuteAllGroups("PhoenixMuteAllGroups", 0);
-			static LLCachedControl<BOOL> PhoenixMuteGroupWhenNoticesDisabled("PhoenixMuteGroupWhenNoticesDisabled", 0);
+			static LLCachedControl<bool> PhoenixMuteAllGroups(gSavedSettings, "PhoenixMuteAllGroups");
+			static LLCachedControl<bool> PhoenixMuteGroupWhenNoticesDisabled(gSavedSettings, "PhoenixMuteGroupWhenNoticesDisabled");
 			LLGroupData group_data;
 			if (gAgent.getGroupData(session_id, group_data))
 			{

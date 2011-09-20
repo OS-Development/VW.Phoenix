@@ -72,7 +72,7 @@ LLNameListCtrl::~LLNameListCtrl()
 
 // public
 BOOL LLNameListCtrl::addNameItem(const LLUUID& agent_id, EAddPosition pos,
-								 BOOL enabled, std::string& suffix)
+								 BOOL enabled, const std::string& suffix)
 {
 	//llinfos << "LLNameListCtrl::addNameItem " << agent_id << llendl;
 
@@ -235,22 +235,8 @@ void LLNameListCtrl::removeNameItem(const LLUUID& agent_id)
 }
 
 // public
-void LLNameListCtrl::refresh(const LLUUID& id, const std::string& first, 
-							 const std::string& last, BOOL is_group)
+void LLNameListCtrl::refresh(const LLUUID& id, const std::string& fullname, bool is_group)
 {
-	//llinfos << "LLNameListCtrl::refresh " << id << " '" << first << " "
-	//	<< last << "'" << llendl;
-
-	std::string fullname;
-	if (!is_group)
-	{
-		fullname = first + " " + last;
-	}
-	else
-	{
-		fullname = first;
-	}
-
 	// TODO: scan items for that ID, fix if necessary
 	item_list::iterator iter;
 	for (iter = getItemList().begin(); iter != getItemList().end(); iter++)
@@ -261,7 +247,7 @@ void LLNameListCtrl::refresh(const LLUUID& id, const std::string& first,
 			LLScrollListCell* cell = (LLScrollListCell*)item->getColumn(0);
 			cell = (LLScrollListCell*)item->getColumn(mNameColumnIndex);
 
-			((LLScrollListText*)cell)->setText( fullname );
+			((LLScrollListText*)cell)->setText(fullname);
 		}
 	}
 
@@ -270,8 +256,7 @@ void LLNameListCtrl::refresh(const LLUUID& id, const std::string& first,
 
 
 // static
-void LLNameListCtrl::refreshAll(const LLUUID& id, const std::string& first,
-								const std::string& last, BOOL is_group)
+void LLNameListCtrl::refreshAll(const LLUUID& id, const std::string& fullname, bool is_group)
 {
 	std::set<LLNameListCtrl*>::iterator it;
 	for (it = LLNameListCtrl::sInstances.begin();
@@ -279,7 +264,7 @@ void LLNameListCtrl::refreshAll(const LLUUID& id, const std::string& first,
 		 ++it)
 	{
 		LLNameListCtrl* ctrl = *it;
-		ctrl->refresh(id, first, last, is_group);
+		ctrl->refresh(id, fullname, is_group);
 	}
 }
 

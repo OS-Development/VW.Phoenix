@@ -35,23 +35,21 @@
 #include "llpaneldirland.h"
 
 // linden library includes
-#include "llfontgl.h"
+#include "llcheckboxctrl.h"
+#include "lllineeditor.h"
 #include "llparcel.h"
 #include "llqueryflags.h"
+#include "llscrolllistctrl.h"
 #include "message.h"
 
 // viewer project includes
 #include "llagent.h"
-#include "llcheckboxctrl.h"
-#include "llcombobox.h"
-#include "lllineeditor.h"
-#include "llscrolllistctrl.h"
+#include "llnotifications.h"
 #include "llstatusbar.h"
 #include "lluiconstants.h"
-#include "lltextbox.h"
 #include "llviewercontrol.h"
 #include "llviewermessage.h"
-#include "llnotify.h"
+
 //-----------------------------------------------------------------------------
 // Constants
 //-----------------------------------------------------------------------------

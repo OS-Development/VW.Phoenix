@@ -34,7 +34,7 @@
 #define LL_SOCKS5_H
 
 #include "llhost.h"
-#include "llmemory.h"
+#include "llsingleton.h"
 #include <string>
 
 // Error codes returned from the StartProxy method

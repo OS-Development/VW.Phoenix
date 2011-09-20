@@ -40,6 +40,7 @@
 
 #include "lldarray.h"
 #include "llwind.h"
+#include "llbbox.h"
 #include "llcloud.h"
 #include "llstat.h"
 #include "v3dmath.h"
@@ -270,6 +271,12 @@ public:
 
 	void getInfo(LLSD& info);
 
+	bool meshRezEnabled() const;
+	bool meshUploadEnabled() const;
+
+	void getSimulatorFeatures(LLSD& info);	
+	void setSimulatorFeatures(const LLSD& info);
+
 	// handle a full update message
 	void cacheFullUpdate(LLViewerObject* objectp, LLDataPackerBinaryBuffer &dp);
 	LLDataPacker *getDP(U32 local_id, U32 crc);
@@ -289,6 +296,8 @@ public:
 	U32 getNetDetailsForLCD();
 
 	LLSpatialPartition* getSpatialPartition(U32 type);
+
+	bool objectIsReturnable(const LLVector3& pos, const std::vector<LLBBox>& boxes) const;
 public:
 	struct CompareDistance
 	{
@@ -415,6 +424,8 @@ private:
 	LLHTTPClient::ResponderPtr  mHttpResponderPtr ;
 
 	BOOL mReleaseNotesRequested;
+
+	LLSD mSimulatorFeatures;
 };
 
 inline BOOL LLViewerRegion::getAllowDamage() const

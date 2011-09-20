@@ -59,8 +59,6 @@
 #include "llstl.h"
 #include "lltimer.h"
 
-extern apr_thread_mutex_t* gCallStacksLogMutexp;
-
 namespace {
 #if !LL_WINDOWS
 	class RecordToSyslog : public LLError::Recorder
@@ -294,7 +292,7 @@ namespace
 	public:
 		static LogControlFile& fromDirectory(const std::string& dir);
 		
-		virtual void loadFile();
+		virtual bool loadFile();
 		
 	private:
 		LogControlFile(const std::string &filename)
@@ -322,7 +320,7 @@ namespace
 			// NB: This instance is never freed
 	}
 	
-	void LogControlFile::loadFile()
+	bool LogControlFile::loadFile()
 	{
 		LLSD configuration;
 
@@ -338,12 +336,13 @@ namespace
 				llwarns << filename() << " missing, ill-formed,"
 							" or simply undefined; not changing configuration"
 						<< llendl;
-				return;
+				return false;
 			}
 		}
 		
 		LLError::configure(configuration);
 		llinfos << "logging reconfigured from " << filename() << llendl;
+		return true;
 	}
 
 
@@ -874,6 +873,9 @@ You get:
 	
 */
 
+extern apr_thread_mutex_t* gLogMutexp;
+extern apr_thread_mutex_t* gCallStacksLogMutexp;
+
 namespace {
 	bool checkLevelMap(const LevelMap& map, const std::string& key,
 						LLError::ELevel& level)
@@ -1248,17 +1250,31 @@ namespace LLError
 	char** LLCallStacks::sBuffer = NULL ;
 	S32    LLCallStacks::sIndex  = 0 ;
 
+#define SINGLE_THREADED 1
+
 	class CallStacksLogLock
 	{
 	public:
 		CallStacksLogLock();
 		~CallStacksLogLock();
+#if SINGLE_THREADED
+		bool ok() const { return true; }
+#else
 		bool ok() const { return mOK; }
 	private:
 		bool mLocked;
 		bool mOK;
+#endif
 	};
 	
+#if SINGLE_THREADED
+	CallStacksLogLock::CallStacksLogLock()
+	{
+	}
+	CallStacksLogLock::~CallStacksLogLock()
+	{
+	}
+#else
 	CallStacksLogLock::CallStacksLogLock()
 		: mLocked(false), mOK(false)
 	{
@@ -1294,6 +1310,7 @@ namespace LLError
 			apr_thread_mutex_unlock(gCallStacksLogMutexp);
 		}
 	}
+#endif
 
 	//static
    void LLCallStacks::push(const char* function, const int line)

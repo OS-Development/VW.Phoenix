@@ -34,6 +34,7 @@
 #define LL_LLIMAGEWORKER_H
 
 #include "llimage.h"
+#include "llpointer.h"
 #include "llworkerthread.h"
 
 class LLImageDecodeThread : public LLQueuedThread
@@ -78,6 +79,8 @@ public:
 	
 public:
 	LLImageDecodeThread(bool threaded = true);
+	virtual ~LLImageDecodeThread();
+
 	handle_t decodeImage(LLImageFormatted* image,
 						 U32 priority, S32 discard, BOOL needs_aux,
 						 Responder* responder);
@@ -101,7 +104,7 @@ private:
 	};
 	typedef std::list<creation_info> creation_list_t;
 	creation_list_t mCreationList;
-	LLMutex* mCreationMutex;
+	LLMutex mCreationMutex;
 };
 
 #endif

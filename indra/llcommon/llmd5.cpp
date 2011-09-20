@@ -74,20 +74,15 @@ documentation and/or software.
 
  */
 
-
-
-
-
 #include "linden_common.h"
 
 #include "llmd5.h"
 
 #include <cassert>
-#include <iostream>
+#include <iostream>		// cerr
 
 // how many bytes to grab at a time when checking files
 const int LLMD5::BLOCK_LEN = 4096;
-
 
 // LLMD5 simple initialization method
 
@@ -95,9 +90,6 @@ LLMD5::LLMD5()
 {
   init();
 }
-
-
-
 
 // MD5 block update operation. Continues an MD5 message-digest
 // operation, processing another message block, and updating the
@@ -154,8 +146,6 @@ void LLMD5::update (const uint1 *input, const uint4 input_length) {
   memcpy(buffer+buffer_index, input+input_index, input_length-input_index);		/* Flawfinder: ignore */
 }
 
-
-
 // MD5 update for files.
 // Like above, except that it works on files (and uses above as a primitive.)
 
@@ -171,15 +161,11 @@ void LLMD5::update(FILE* file){
 
 }
 
-
-
-
-
-
 // MD5 update for istreams.
 // Like update for files; see above.
 
-void LLMD5::update(std::istream& stream){
+void LLMD5::update(std::istream& stream)
+{
 
   unsigned char buffer[BLOCK_LEN];		/* Flawfinder: ignore */
   int len;
@@ -192,13 +178,13 @@ void LLMD5::update(std::istream& stream){
 
 }
 
-
-
-
+void  LLMD5::update(const std::string& s)
+{
+	update((unsigned char *)s.c_str(),s.length());
+}
 
 // MD5 finalization. Ends an MD5 message-digest operation, writing the
 // the message digest and zeroizing the context.
-
 
 void LLMD5::finalize (){
 
@@ -236,18 +222,12 @@ void LLMD5::finalize (){
 
 }
 
-
-
-
 LLMD5::LLMD5(FILE *file){
 
   init();  // must be called be all constructors
   update(file);
   finalize ();
 }
-
-
-
 
 LLMD5::LLMD5(std::istream& stream){
 
@@ -277,7 +257,7 @@ LLMD5::LLMD5(const unsigned char *s)
 	finalize();
 }
 
-void LLMD5::raw_digest(unsigned char *s)
+void LLMD5::raw_digest(unsigned char *s) const
 {
 	if (!finalized)
 	{
@@ -291,9 +271,7 @@ void LLMD5::raw_digest(unsigned char *s)
 	return;
 }
 
-
-
-void LLMD5::hex_digest(char *s)
+void LLMD5::hex_digest(char *s) const
 {
 	int i;
 
@@ -315,10 +293,6 @@ void LLMD5::hex_digest(char *s)
 	return;
 }
 
-
-
-
-
 std::ostream& operator<<(std::ostream &stream, LLMD5 context)
 {
 	char s[33];		/* Flawfinder: ignore */
@@ -327,12 +301,24 @@ std::ostream& operator<<(std::ostream &stream, LLMD5 context)
 	return stream;
 }
 
+bool operator==(const LLMD5& a, const LLMD5& b)
+{
+	unsigned char a_guts[16];
+	unsigned char b_guts[16];
+	a.raw_digest(a_guts);
+	b.raw_digest(b_guts);
+	if (memcmp(a_guts, b_guts,16) == 0)
+		return true;
+	else
+		return false;
+}
 
-
+bool operator!=(const LLMD5& a, const LLMD5& b)
+{
+	return !(a == b);
+}
 
 // PRIVATE METHODS:
-
-
 
 void LLMD5::init(){
   finalized=0;  // we just started!
@@ -347,8 +333,6 @@ void LLMD5::init(){
   state[2] = 0x98badcfe;
   state[3] = 0x10325476;
 }
-
-
 
 // Constants for MD5Transform routine.
 // Although we could use C++ style constants, defines are actually better,
@@ -408,8 +392,6 @@ Rotation is separate from addition to prevent recomputation.
  (a) = ROTATE_LEFT ((a), (s)); \
  (a) += (b); \
   }
-
-
 
 // LLMD5 basic transformation. Transforms state based on block.
 void LLMD5::transform (const U8 block[64]){
@@ -502,8 +484,6 @@ void LLMD5::transform (const U8 block[64]){
 
 }
 
-
-
 // Encodes input (UINT4) into output (unsigned char). Assumes len is
 // a multiple of 4.
 void LLMD5::encode (uint1 *output, const uint4 *input, const uint4 len) {
@@ -517,9 +497,6 @@ void LLMD5::encode (uint1 *output, const uint4 *input, const uint4 len) {
     output[j+3] = (uint1) ((input[i] >> 24) & 0xff);
   }
 }
-
-
-
 
 // Decodes input (unsigned char) into output (UINT4). Assumes len is
 // a multiple of 4.

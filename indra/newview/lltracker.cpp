@@ -32,23 +32,19 @@
 
 #include "llviewerprecompiledheaders.h"
 
+#include "lltracker.h"
+
 // library includes
 #include "llcoord.h"
-#include "lldarray.h"
 #include "llfontgl.h"
 #include "llgl.h"
 #include "llrender.h"
 #include "llinventory.h"
-#include "llmemory.h"
-#include "llstring.h"
-#include "lluuid.h"
 #include "v3math.h"
-#include "v3dmath.h"
 #include "v4color.h"
 
 // viewer includes
 #include "llappviewer.h"
-#include "lltracker.h"
 #include "llagent.h"
 #include "llcallingcard.h"
 #include "llcolorscheme.h"
@@ -490,7 +486,6 @@ void LLTracker::renderBeacon(LLVector3d pos_global,
 							 LLHUDText* hud_textp, 
 							 const std::string& label )
 {
-	sCheesyBeacon = gSavedSettings.getBOOL("CheesyBeacon");
 	LLVector3d to_vec = pos_global - gAgent.getCameraPositionGlobal();
 
 	F32 dist = (F32)to_vec.magVec();

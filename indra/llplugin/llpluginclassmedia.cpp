@@ -64,9 +64,13 @@ LLPluginClassMedia::~LLPluginClassMedia()
 	reset();
 }
 
-bool LLPluginClassMedia::init(const std::string &launcher_filename, const std::string &plugin_filename, bool debug)
+bool LLPluginClassMedia::init(const std::string &launcher_filename,
+							  const std::string &plugin_dir,
+							  const std::string &plugin_filename,
+							  bool debug)
 {	
 	LL_DEBUGS("Plugin") << "launcher: " << launcher_filename << LL_ENDL;
+	LL_DEBUGS("Plugin") << "dir: " << plugin_dir << LL_ENDL;
 	LL_DEBUGS("Plugin") << "plugin: " << plugin_filename << LL_ENDL;
 	
 	mPlugin = new LLPluginProcessParent(this);
@@ -77,7 +81,7 @@ bool LLPluginClassMedia::init(const std::string &launcher_filename, const std::s
 	message.setValue("target", mTarget);
 	sendMessage(message);
 	
-	mPlugin->init(launcher_filename, plugin_filename, debug);
+	mPlugin->init(launcher_filename, plugin_dir, plugin_filename, debug);
 
 	return true;
 }
@@ -143,8 +147,10 @@ void LLPluginClassMedia::reset()
 	mStatusText.clear();
 	mProgressPercent = 0;	
 	mClickURL.clear();
+	mClickNavType.clear();
 	mClickTarget.clear();
 	mClickUUID.clear();
+	mStatusCode = 0;
 	
 	// media_time class
 	mCurrentTime = 0.0f;
@@ -160,7 +166,7 @@ void LLPluginClassMedia::idle(void)
 		mPlugin->idle();
 	}
 	
-	if((mMediaWidth == -1) || (!mTextureParamsReceived) || (mPlugin == NULL) || (mPlugin->isBlocked()))
+	if((mMediaWidth == -1) || (!mTextureParamsReceived) || (mPlugin == NULL) || (mPlugin->isBlocked()) || (mOwner == NULL))
 	{
 		// Can't process a size change at this time
 	}
@@ -387,7 +393,7 @@ bool LLPluginClassMedia::textureValid(void)
 
 bool LLPluginClassMedia::getDirty(LLRect *dirty_rect)
 {
-	bool result = !mDirtyRect.isNull();
+	bool result = !mDirtyRect.isEmpty();
 
 	if(dirty_rect != NULL)
 	{
@@ -523,6 +529,14 @@ bool LLPluginClassMedia::keyEvent(EKeyEventType type, int key_code, MASK modifie
 		break;
 	}
 	
+#if LL_DARWIN
+	if (modifiers & MASK_ALT)
+	{
+		// Option-key modified characters should be handled by the unicode input path instead of this one.
+		result = false;
+	}
+#endif
+
 	if(result)
 	{
 		LLPluginMessage message(LLPLUGIN_MESSAGE_CLASS_MEDIA, "key_event");
@@ -674,7 +688,21 @@ void LLPluginClassMedia::sendPickFileResponse(const std::string &file)
 {
 	LLPluginMessage message(LLPLUGIN_MESSAGE_CLASS_MEDIA, "pick_file_response");
 	message.setValue("file", file);
-	if(mPlugin->isBlocked())
+	if (mPlugin && mPlugin->isBlocked())
+	{
+		// If the plugin sent a blocking pick-file request, the response should unblock it.
+		message.setValueBoolean("blocking_response", true);
+	}
+	sendMessage(message);
+}
+
+void LLPluginClassMedia::sendAuthResponse(bool ok, const std::string &username, const std::string &password)
+{
+	LLPluginMessage message(LLPLUGIN_MESSAGE_CLASS_MEDIA, "auth_response");
+	message.setValueBoolean("ok", ok);
+	message.setValue("username", username);
+	message.setValue("password", password);
+	if (mPlugin && mPlugin->isBlocked())
 	{
 		// If the plugin sent a blocking pick-file request, the response should unblock it.
 		message.setValueBoolean("blocking_response", true);
@@ -798,7 +826,7 @@ void LLPluginClassMedia::receivePluginMessage(const LLPluginMessage &message)
 					newDirtyRect.mBottom = temp;
 				}
 				
-				if(mDirtyRect.isNull())
+				if(mDirtyRect.isEmpty())
 				{
 					mDirtyRect = newDirtyRect;
 				}
@@ -967,6 +995,12 @@ void LLPluginClassMedia::receivePluginMessage(const LLPluginMessage &message)
 		{
 			mediaEvent(LLPluginClassMediaOwner::MEDIA_EVENT_PICK_FILE_REQUEST);
 		}
+		else if (message_name == "auth_request")
+		{
+			mAuthURL = message.getValue("url");
+			mAuthRealm = message.getValue("realm");
+			mediaEvent(LLPluginClassMediaOwner::MEDIA_EVENT_AUTH_REQUEST);
+		}
 		else
 		{
 			LL_WARNS("Plugin") << "Unknown " << message_name << " class message: " << message_name << LL_ENDL;
@@ -1015,8 +1049,14 @@ void LLPluginClassMedia::receivePluginMessage(const LLPluginMessage &message)
 		else if(message_name == "click_nofollow")
 		{
 			mClickURL = message.getValue("uri");
+			mClickNavType = message.getValue("nav_type");
 			mClickTarget.clear();
 			mediaEvent(LLPluginClassMediaOwner::MEDIA_EVENT_CLICK_LINK_NOFOLLOW);
+		}
+		else if (message_name == "navigate_error_page")
+		{
+			mStatusCode = message.getValueS32("status_code");
+			mediaEvent(LLPluginClassMediaOwner::MEDIA_EVENT_NAVIGATE_ERROR_PAGE);
 		}
 		else if(message_name == "cookie_set")
 		{
@@ -1038,6 +1078,15 @@ void LLPluginClassMedia::receivePluginMessage(const LLPluginMessage &message)
 			mGeometryHeight = message.getValueS32("height");
 				
 			mediaEvent(LLPluginClassMediaOwner::MEDIA_EVENT_GEOMETRY_CHANGE);
+		}
+		else if (message_name == "link_hovered")
+		{
+			// text is not currently used -- the tooltip hover text is taken from the "title".
+			mHoverLink = message.getValue("link");
+			mHoverText = message.getValue("title");
+			// message.getValue("text");
+
+			mediaEvent(LLPluginClassMediaOwner::MEDIA_EVENT_LINK_HOVERED);
 		}
 		else
 		{

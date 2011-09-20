@@ -45,16 +45,14 @@
 #include "xform.h"
 #include "lldarrayptr.h"
 #include "llvertexbuffer.h"
-#include "llviewerimage.h"
-#include "llstat.h"
+#include "llviewertexture.h"
 #include "lldrawable.h"
 
 class LLFacePool;
 class LLVolume;
-class LLViewerImage;
 class LLTextureEntry;
 class LLVertexProgram;
-class LLViewerImage;
+class LLViewerTexture;
 class LLGeometryManager;
 
 const F32 MIN_ALPHA_SIZE = 1024.f;
@@ -64,6 +62,17 @@ class LLFace
 {
 public:
 
+	LLFace(const LLFace& rhs)
+	{
+		*this = rhs;
+	}
+
+	const LLFace& operator=(const LLFace& rhs)
+	{
+		llerrs << "Illegal operation!" << llendl;
+		return *this;
+	}
+
 	enum EMasks
 	{
 		LIGHT			= 0x0001,
@@ -72,6 +81,7 @@ public:
 		HUD_RENDER		= 0x0008,
 		USE_FACE_COLOR	= 0x0010,
 		TEXTURE_ANIM	= 0x0020, 
+		RIGGED			= 0x0040,
 	};
 
 	static void initClass();
@@ -82,13 +92,14 @@ public:
 
 	const LLMatrix4& getWorldMatrix()	const	{ return mVObjp->getWorldMatrix(mXform); }
 	const LLMatrix4& getRenderMatrix() const;
-	U32				getIndicesCount()	const	{ return mIndicesCount; };
-	S32				getIndicesStart()	const	{ return mIndicesIndex; };
+	U32				getIndicesCount()	const	{ return mIndicesCount; }
+	S32				getIndicesStart()	const	{ return mIndicesIndex; }
 	U16				getGeomCount()		const	{ return mGeomCount; }		// vertex count for this face
 	U16				getGeomIndex()		const	{ return mGeomIndex; }		// index into draw pool
 	U16				getGeomStart()		const	{ return mGeomIndex; }		// index into draw pool
-	LLViewerImage*	getTexture()		const	{ return mTexture; }
-	void			setTexture(LLViewerImage* tex) ;
+	void			setTexture(LLViewerTexture* tex);
+	void            switchTexture(LLViewerTexture* new_texture);
+	void            dirtyTexture();
 	LLXformMatrix*	getXform()			const	{ return mXform; }
 	BOOL			hasGeometry()		const	{ return mGeomCount > 0; }
 	LLVector3		getPositionAgent()	const;
@@ -106,6 +117,9 @@ public:
 	F32				getVirtualSize() const { return mVSize; }
 	F32				getPixelArea() const { return mPixelArea; }
 
+	S32				getIndexInTex() const		{ return mIndexInTex; }
+	void			setIndexInTex(S32 index)	{ mIndexInTex = index ; }
+
 	void			renderSetColor() const;
 	S32				renderElements(const U16 *index_array) const;
 	S32				renderIndexed ();
@@ -120,17 +134,16 @@ public:
 	LLDrawable*		getDrawable()		const	{ return mDrawablep; }
 	LLViewerObject*	getViewerObject()	const	{ return mVObjp; }
 	S32				getLOD()			const	{ return mVObjp.notNull() ? mVObjp->getLOD() : 0; }
-	LLVertexBuffer* getVertexBuffer()	const	{ return mVertexBuffer; }
 	void			setPoolType(U32 type)		{ mPoolType = type; }
 	S32				getTEOffset()				{ return mTEOffset; }
-	LLViewerImage*	getTexture()				{ return mTexture; }
+	LLViewerTexture*	getTexture() const;
 
 	void			setViewerObject(LLViewerObject* object);
-	void			setPool(LLFacePool *pool, LLViewerImage *texturep);
+	void			setPool(LLFacePool *pool, LLViewerTexture *texturep);
+	void			setPool(LLFacePool* pool);
 	
 	void			setDrawable(LLDrawable *drawable);
 	void			setTEOffset(const S32 te_offset);
-	
 
 	void			setFaceColor(const LLColor4& color); // override material color
 	void			unsetFaceColor(); // switch back to material color
@@ -140,14 +153,16 @@ public:
 
 	//for volumes
 	void updateRebuildFlags();
+	bool canRenderAsMask(); // logic helper
 	BOOL getGeometryVolume(const LLVolume& volume,
 						const S32 &f,
-						const LLMatrix4& mat_vert, const LLMatrix3& mat_normal,
-						const U16 &index_offset);
+						   const LLMatrix4& mat_vert,
+						   const LLMatrix3& mat_normal,
+						   const U16 &index_offset,
+						   bool force_rebuild = false);
 
 	// For avatar
-	U16			 getGeometryAvatar(
-									LLStrider<LLVector3> &vertices,
+	U16 getGeometryAvatar(LLStrider<LLVector3> &vertices,
 									LLStrider<LLVector3> &normals,
 								    LLStrider<LLVector2> &texCoords,
 									LLStrider<F32>		 &vertex_weights,
@@ -162,7 +177,7 @@ public:
 	S32 getColors(LLStrider<LLColor4U> &colors);
 	S32 getIndices(LLStrider<U16> &indices);
 
-	void		setSize(const S32 numVertices, const S32 num_indices = 0);
+	void		setSize(S32 numVertices, S32 num_indices = 0, bool align = false);
 	
 	BOOL		genVolumeBBoxes(const LLVolume &volume, S32 f,
 								   const LLMatrix4& mat, const LLMatrix3& inv_trans_mat, BOOL global_volume = FALSE);
@@ -174,8 +189,7 @@ public:
 	void		updateCenterAgent(); // Update center when xform has changed.
 	void		renderSelectedUV();
 
-	void		renderForSelect(U32 data_mask = LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0);
-	void		renderSelected(LLImageGL *image, const LLColor4 &color);
+	void		renderSelected(LLViewerTexture *image, const LLColor4 &color);
 
 	F32			getKey()					const	{ return mDistance; }
 
@@ -185,14 +199,32 @@ public:
 	BOOL		verify(const U32* indices_array = NULL) const;
 	void		printDebugInfo() const;
 
-	void		setGeomIndex(U16 idx) { mGeomIndex = idx; }
-	void		setIndicesIndex(S32 idx) { mIndicesIndex = idx; }
+	void		setGeomIndex(U16 idx);
+	void		setIndicesIndex(S32 idx);
 	void		setDrawInfo(LLDrawInfo* draw_info);
 
-	F32         getTextureVirtualSize() ;
-	F32         getImportanceToCamera()const {return mImportanceToCamera ;}
+	F32         getTextureVirtualSize();
+	F32         getImportanceToCamera()const {return mImportanceToCamera;}
 
-private:	
+#ifdef MEDIA_ON_PRIM
+	void        setHasMedia(bool has_media)  { mHasMedia = has_media; }
+	BOOL        hasMedia() const;
+#endif
+
+	//vertex buffer tracking
+	void setVertexBuffer(LLVertexBuffer* buffer);
+	void clearVertexBuffer();					//sets mVertexBuffer and mLastVertexBuffer to NULL
+	LLVertexBuffer* getVertexBuffer() const		{ return mVertexBuffer; }
+	U32 getRiggedVertexBufferDataMask() const;
+	S32 getRiggedIndex(U32 type) const;
+	void setRiggedIndex(U32 type, S32 index);
+
+	static U32 getRiggedDataMask(U32 type);
+
+public: //aligned members
+	LLVector4a		mExtents[2];
+
+private:
 	F32         adjustPartialOverlapPixelArea(F32 cos_angle_to_view_dir, F32 radius );
 	BOOL        calcPixelArea(F32& cos_angle_to_view_dir, F32& radius);
 public:
@@ -203,19 +235,18 @@ public:
 	
 	LLVector3		mCenterLocal;
 	LLVector3		mCenterAgent;
-	LLVector3		mExtents[2];
+
 	LLVector2		mTexExtents[2];
 	F32				mDistance;
-	LLPointer<LLVertexBuffer> mVertexBuffer;
-	LLPointer<LLVertexBuffer> mLastVertexBuffer;
 	F32			mLastUpdateTime;
+	F32			mLastSkinTime;
 	F32			mLastMoveTime;
 	LLMatrix4*	mTextureMatrix;
 	LLDrawInfo* mDrawInfo;
 
 private:
-	friend class LLGeometryManager;
-	friend class LLVolumeGeometryManager;
+	LLPointer<LLVertexBuffer> mVertexBuffer;
+	LLPointer<LLVertexBuffer> mLastVertexBuffer;
 
 	U32			mState;
 	LLFacePool*	mDrawPoolp;
@@ -226,6 +257,7 @@ private:
 	U16			mGeomIndex;			// index into draw pool
 	U32			mIndicesCount;
 	U32			mIndicesIndex;		// index into draw pool for indices (yeah, I know!)
+	S32			mIndexInTex;
 
 	//previous rebuild's geometry info
 	U16			mLastGeomCount;
@@ -234,20 +266,25 @@ private:
 	U32			mLastIndicesIndex;
 
 	LLXformMatrix* mXform;
-	LLPointer<LLViewerImage> mTexture;
+	LLPointer<LLViewerTexture> mTexture;
 	LLPointer<LLDrawable> mDrawablep;
 	LLPointer<LLViewerObject> mVObjp;
 	S32			mTEOffset;
 
 	S32			mReferenceIndex;
+	std::vector<S32> mRiggedIndex;
+
 	F32			mVSize;
 	F32			mPixelArea;
 
 	//importance factor, in the range [0, 1.0].
 	//1.0: the most important.
 	//based on the distance from the face to the view point and the angle from the face center to the view direction.
-	F32         mImportanceToCamera ; 
-	F32         mBoundingSphereRadius ;
+	F32         mImportanceToCamera; 
+	F32         mBoundingSphereRadius;
+#ifdef MEDIA_ON_PRIM
+	bool        mHasMedia;
+#endif
 
 protected:
 	static BOOL	sSafeRenderSelect;
@@ -257,7 +294,7 @@ public:
 	{
 		bool operator()(const LLFace* const& lhs, const LLFace* const& rhs)
 		{
-			return lhs->mDistance > rhs->mDistance; // farthest = first
+			return !lhs || (rhs && (lhs->mDistance > rhs->mDistance)); // farthest = first
 		}
 	};
 	

@@ -288,7 +288,8 @@ void LLToolBar::reshape(S32 width, S32 height, BOOL called_from_parent)
 // Per-frame updates of visibility
 void LLToolBar::refresh()
 {
-	BOOL show = gSavedSettings.getBOOL("ShowToolBar");
+	//BOOL show = gSavedSettings.getBOOL("ShowToolBar");
+	static LLCachedControl<bool> show(gSavedSettings, "ShowToolBar");
 	BOOL mouselook = gAgent.cameraMouselook();
 	setVisible(show && !mouselook);
 

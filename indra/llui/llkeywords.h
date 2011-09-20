@@ -60,7 +60,7 @@ public:
 
 	S32					getLength() const		{ return mToken.size(); }
 	S32					getLength2() const		{ return mDelimiter.size(); }
-	BOOL				isHead(const llwchar* s) const;
+	BOOL				isHead(const llwchar* s, bool search_end_c_comment = false) const;
 	BOOL				isTail(const llwchar* s) const;
 	const LLWString&	getToken() const		{ return mToken; }
 	const LLColor3&		getColor() const		{ return mColor; }

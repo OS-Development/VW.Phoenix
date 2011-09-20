@@ -35,7 +35,7 @@
 
 #include <map>
 //#include "lllocalidhashmap.h"
-#include "llmemory.h"
+#include "llpointer.h"
 #include "llstl.h"
 
 #include "llimagegl.h"
@@ -151,6 +151,8 @@ public:
 	F32 getXKerning(const llwchar char_left, const llwchar char_right) const; // Get the kerning between the two characters
 	F32 getXKerning(const LLFontGlyphInfo* left_fgi, const LLFontGlyphInfo* right_fgi) const;
 	virtual void reset() = 0;
+
+	static bool sOpenGLcrashOnRestart;
 
 protected:
 	virtual BOOL hasGlyph(const llwchar wch) const;		// Has a glyph for this character

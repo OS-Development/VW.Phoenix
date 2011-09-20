@@ -103,12 +103,14 @@ public:
 	static void initClass(); // Initialize data that's only init'd once per class.
 	static void cleanupClass();	// Cleanup data that's only init'd once per class.
 	static BOOL parseSkeletonFile(const std::string& filename);
+	virtual void updateGL();
+	virtual	LLVOAvatar* asAvatar();
 	virtual U32 processUpdateMessage(LLMessageSystem *mesgsys,
 									 void **user_data,
 									 U32 block_num,
 									 const EObjectUpdateType update_type,
 									 LLDataPacker *dp);
-	/*virtual*/ BOOL idleUpdate(LLAgent &agent, LLWorld &world, const F64 &time);
+	virtual BOOL idleUpdate(LLAgent &agent, LLWorld &world, const F64 &time);
 	void idleUpdateVoiceVisualizer(bool voice_enabled);
 	void idleUpdateMisc(bool detailed_update);
 	void idleUpdateAppearanceAnimation();
@@ -138,9 +140,11 @@ public:
 
 	// Graphical stuff for objects - maybe broken out into render class later?
 	U32 renderFootShadows();
-	U32 renderImpostor(LLColor4U color = LLColor4U(255,255,255,255));
+	U32 renderImpostor(LLColor4U color = LLColor4U(255,255,255,255), S32 diffuse_channel = 0);
 	U32 renderRigid();
 	U32 renderSkinned(EAvatarRenderPass pass);
+	F32 getLastSkinTime()	{ return mLastSkinTime; }
+	U32 renderSkinnedAttachments();
 	U32 renderTransparent(BOOL first_pass);
 	void renderCollisionVolumes();
 	
@@ -157,7 +161,7 @@ public:
 	/*virtual*/ void updateTextures();
 	// If setting a baked texture, need to request it from a non-local sim.
 	/*virtual*/ S32 setTETexture(const U8 te, const LLUUID& uuid);
-	/*virtual*/ void onShift(const LLVector3& shift_vector);
+	/*virtual*/ void onShift(const LLVector4a& shift_vector);
 	virtual U32 getPartitionType() const;
 	
 	void updateVisibility();
@@ -176,18 +180,19 @@ public:
 
 	/*virtual*/ void setPixelAreaAndAngle(LLAgent &agent);
 	BOOL updateJointLODs();
+	void updateLODRiggedAttachments(void);
 
 	virtual void updateRegion(LLViewerRegion *regionp);
 	
 	virtual const LLVector3 getRenderPosition() const;
 	virtual void updateDrawable(BOOL force_damped);
-	void updateSpatialExtents(LLVector3& newMin, LLVector3 &newMax);
-	void getSpatialExtents(LLVector3& newMin, LLVector3& newMax);
+	void updateSpatialExtents(LLVector4a& newMin, LLVector4a &newMax);
+	void getSpatialExtents(LLVector4a& newMin, LLVector4a& newMax);
 	BOOL isImpostor() const;
 	BOOL needsImpostorUpdate() const;
 	const LLVector3& getImpostorOffset() const;
 	const LLVector2& getImpostorDim() const;
-	void getImpostorValues(LLVector3* extents, LLVector3& angle, F32& distance) const;
+	void getImpostorValues(LLVector4a* extents, LLVector3& angle, F32& distance) const;
 	void cacheImpostorValues();
 	void setImpostorDim(const LLVector2& dim);
 
@@ -197,6 +202,11 @@ public:
 public:
 	virtual const char *getAnimationPrefix() { return "avatar"; }
 	virtual LLJoint *getRootJoint() { return &mRoot; }
+
+	void resetJointPositions(void);
+	void resetJointPositionsToDefault(void);
+	void resetSpecificJointPosition(const std::string& name);
+
 	virtual LLVector3 getCharacterPosition();
 	virtual LLQuaternion getCharacterRotation();
 	virtual LLVector3 getCharacterVelocity();
@@ -271,10 +281,18 @@ public:
 	// Returns "FirstName LastName"
 	std::string		getFullname() const;
 
+private: //aligned members
+	LLVector4a	mImpostorExtents[2];
+
+public:
 	BOOL updateCharacter(LLAgent &agent);
 	void updateHeadOffset();
 
 	F32 getPelvisToFoot() const { return mPelvisToFoot; }
+	void setPelvisOffset(bool hasOffset, const LLVector3& translation, F32 offset);
+	bool hasPelvisOffset(void)		{ return mHasPelvisOffset; }
+	void postPelvisSetRecalc(void);
+	void setPelvisOffset(F32 pelvixFixupAmount);
 
 public:
 	BOOL isAnyAnimationSignaled(const LLUUID *anim_array, const S32 num_anims);
@@ -285,6 +303,7 @@ protected:
 
 public:
 	void resolveHeightGlobal(const LLVector3d &inPos, LLVector3d &outPos, LLVector3 &outNorm);
+	bool distanceToGround(const LLVector3d &startPoint, LLVector3d &collisionPoint, F32 distToIntersectionAlongRay);
 	void resolveHeightAgent(const LLVector3 &inPos, LLVector3 &outPos, LLVector3 &outNorm);
 	void resolveRayCollisionAgent(const LLVector3d start_pt, const LLVector3d end_pt, LLVector3d &out_pos, LLVector3 &out_norm);
 	
@@ -294,7 +313,6 @@ public:
 	void processAvatarAppearance( LLMessageSystem* mesgsys );
 	void onFirstTEMessageReceived();
 	void updateSexDependentLayerSets( BOOL set_by_user );
-	void dirtyMesh(); // Dirty the avatar mesh
 	LLPolyMesh* getMesh( LLPolyMeshSharedData *shared_data );
 	void hideSkirt();
 
@@ -308,7 +326,9 @@ public:
 // [/RLVa:KB]
 	BOOL attachObject(LLViewerObject *viewer_object);
 	BOOL detachObject(LLViewerObject *viewer_object);
+	void cleanupAttachedMesh(LLViewerObject* pVO);
 	void lazyAttach();
+	void rebuildRiggedAttachments(void);
 
 	static BOOL	detachAttachmentIntoInventory(const LLUUID& item_id);
 
@@ -330,18 +350,17 @@ public:
 	// texture compositing (used only by the LLTexLayer series of classes)
 	//--------------------------------------------------------------------
 public:
-	LLColor4		getGlobalColor( const std::string& color_name );
-	BOOL			isLocalTextureDataAvailable( LLTexLayerSet* layerset );
-	BOOL			isLocalTextureDataFinal( LLTexLayerSet* layerset );
-	LLVOAvatarDefines::ETextureIndex	getBakedTE( LLTexLayerSet* layerset );
+	LLColor4		getGlobalColor(const std::string& color_name);
+	BOOL			isLocalTextureDataAvailable(LLTexLayerSet* layerset);
+	BOOL			isLocalTextureDataFinal(LLTexLayerSet* layerset);
+	LLVOAvatarDefines::ETextureIndex getBakedTE(LLTexLayerSet* layerset);
 	void			updateComposites();
-	void			onGlobalColorChanged( LLTexGlobalColor* global_color, BOOL set_by_user );
-	BOOL			getLocalTextureRaw( LLVOAvatarDefines::ETextureIndex index, LLImageRaw* image_raw_pp );
-	BOOL			getLocalTextureGL( LLVOAvatarDefines::ETextureIndex index, LLImageGL** image_gl_pp );
-	const LLUUID&	getLocalTextureID( LLVOAvatarDefines::ETextureIndex index );
-	LLGLuint		getScratchTexName( LLGLenum format, U32* texture_bytes );
-	BOOL			bindScratchTexture( LLGLenum format );
-	void			invalidateComposite( LLTexLayerSet* layerset, BOOL set_by_user );
+	void			onGlobalColorChanged(LLTexGlobalColor* global_color, BOOL set_by_user);
+	BOOL			getLocalTextureGL(LLVOAvatarDefines::ETextureIndex index, LLViewerTexture** image_gl_pp);
+	const LLUUID&	getLocalTextureID(LLVOAvatarDefines::ETextureIndex index);
+	LLGLuint		getScratchTexName(LLGLenum format, U32* texture_bytes);
+	BOOL			bindScratchTexture(LLGLenum format);
+	void			invalidateComposite(LLTexLayerSet* layerset, BOOL set_by_user);
 	void			invalidateAll();
 	void			forceBakeAllTextures(bool slam_for_debug = false);
 	static void		processRebakeAvatarTextures(LLMessageSystem* msg, void**);
@@ -350,8 +369,8 @@ public:
 	void			releaseUnnecessaryTextures();
 	void			requestLayerSetUploads();
 	bool			hasPendingBakedUploads();
-	static void		onLocalTextureLoaded( BOOL succcess, LLViewerImage *src_vi, LLImageRaw* src, LLImageRaw* aux_src, S32 discard_level, BOOL final, void* userdata );
-	static void		dumpArchetypeXML( void* );
+	static void		onLocalTextureLoaded(BOOL succcess, LLViewerFetchedTexture *src_vi, LLImageRaw* src, LLImageRaw* aux_src, S32 discard_level, BOOL final, void* userdata);
+	static void		dumpArchetypeXML(void*);
 	static void		dumpScratchTextureByteCount();
 	static void		dumpBakedStatus();
 	static void		deleteCachedImages(bool clearAll=true);
@@ -380,7 +399,7 @@ public:
 	// texture compositing
 	//--------------------------------------------------------------------
 public:
-	void			setLocTexTE( U8 te, LLViewerImage* image, BOOL set_by_user );
+	void			setLocTexTE(U8 te, LLViewerTexture* image, BOOL set_by_user);
 	void			setupComposites();
 
 	typedef std::map<S32,std::string> lod_mesh_map_t;
@@ -446,7 +465,6 @@ private:
 	LLVector3		mImpostorOffset;
 	LLVector2		mImpostorDim;
 	BOOL			mNeedsAnimUpdate;
-	LLVector3		mImpostorExtents[2];
 	LLVector3		mImpostorAngle;
 	F32				mImpostorDistance;
 	F32				mImpostorPixelArea;
@@ -481,7 +499,7 @@ public:
 private:
 	LLFace* mShadow0Facep;
 	LLFace* mShadow1Facep;
-	LLPointer<LLViewerImage> mShadowImagep;
+	LLPointer<LLViewerFetchedTexture> mShadowImagep;
 
 	//--------------------------------------------------------------------
 	// Keeps track of foot step state for generating sounds
@@ -605,6 +623,13 @@ public:
 public:
 	BOOL			mInAir;
 	LLFrameTimer	mTimeInAir;
+
+	bool			mHasPelvisOffset;
+	LLVector3		mPelvisOffset;
+	F32				mLastPelvisToFoot;
+	F32				mPelvisFixup;
+	F32				mLastPelvisFixup;
+
 	LLVector3 mHeadOffset; // current head position
 	LLViewerJoint mRoot; // avatar skeleton
 	BOOL mIsSitting; // sitting state
@@ -623,7 +648,6 @@ private:
 	BOOL mSupportsAlphaLayers; // For backwards compatibility, TRUE for 1.23+ clients
 	
 	// LLFrameTimer mUpdateLODTimer; // controls frequency of LOD change calculations
-	BOOL mDirtyMesh;
 	BOOL mTurning; // controls hysteresis on avatar rotation
 	F32	mSpeed; // misc. animation repeated state
 
@@ -728,6 +752,8 @@ private:
 	LLTexGlobalColor*	mTexEyeColor;
 
 	BOOL				mNeedsSkin;  //if TRUE, avatar has been animated and verts have not been updated
+	F32					mLastSkinTime; //value of gFrameTimeSeconds at last skin update
+
 	S32					mUpdatePeriod;
 
 	//--------------------------------------------------------------------
@@ -756,13 +782,13 @@ protected:
 	BOOL			isFullyBaked();
 	void			deleteLayerSetCaches(bool clearAll = true);
 	static BOOL		areAllNearbyInstancesBaked(S32& grey_avatars);
-	static void		onBakedTextureMasksLoaded(BOOL success, LLViewerImage *src_vi, LLImageRaw* src, LLImageRaw* aux_src, S32 discard_level, BOOL final, void* userdata);
-	void			setLocalTexture(LLVOAvatarDefines::ETextureIndex i, LLViewerImage* tex, BOOL baked_version_exits);
+	static void		onBakedTextureMasksLoaded(BOOL success, LLViewerFetchedTexture *src_vi, LLImageRaw* src, LLImageRaw* aux_src, S32 discard_level, BOOL final, void* userdata);
+	void			setLocalTexture(LLVOAvatarDefines::ETextureIndex i, LLViewerFetchedTexture* tex, BOOL baked_version_exits);
 	void			requestLayerSetUpdate(LLVOAvatarDefines::ETextureIndex i);
-	void			addLocalTextureStats(LLVOAvatarDefines::ETextureIndex i, LLViewerImage* imagep, F32 texel_area_ratio, BOOL rendered, BOOL covered_by_baked);
-	void			addBakedTextureStats( LLViewerImage* imagep, F32 pixel_area, F32 texel_area_ratio, S32 boost_level);
-	static void		onInitialBakedTextureLoaded( BOOL success, LLViewerImage *src_vi, LLImageRaw* src, LLImageRaw* aux_src, S32 discard_level, BOOL final, void* userdata );
-	static void		onBakedTextureLoaded(BOOL success, LLViewerImage *src_vi, LLImageRaw* src, LLImageRaw* aux_src, S32 discard_level, BOOL final, void* userdata);
+	void			addLocalTextureStats(LLVOAvatarDefines::ETextureIndex i, LLViewerTexture* imagep, F32 texel_area_ratio, BOOL rendered, BOOL covered_by_baked);
+	void			addBakedTextureStats(LLViewerFetchedTexture* imagep, F32 pixel_area, F32 texel_area_ratio, S32 boost_level);
+	static void		onInitialBakedTextureLoaded(BOOL success, LLViewerFetchedTexture *src_vi, LLImageRaw* src, LLImageRaw* aux_src, S32 discard_level, BOOL final, void* userdata);
+	static void		onBakedTextureLoaded(BOOL success, LLViewerFetchedTexture *src_vi, LLImageRaw* src, LLImageRaw* aux_src, S32 discard_level, BOOL final, void* userdata);
 	void			useBakedTexture(const LLUUID& id);
 	void			dumpAvatarTEs(const std::string& context);
 	void			removeMissingBakedTextures();
@@ -803,10 +829,10 @@ private:
 
 	struct LocalTextureData
 	{
-		LocalTextureData() : mIsBakedReady(FALSE), mDiscard(MAX_DISCARD_LEVEL+1), mImage(NULL)
+		LocalTextureData() : mIsBakedReady(false), mDiscard(MAX_DISCARD_LEVEL+1), mImage(NULL)
 		{}
-		LLPointer<LLViewerImage> mImage;
-		BOOL mIsBakedReady;
+		LLPointer<LLViewerFetchedTexture> mImage;
+		bool mIsBakedReady;
 		S32 mDiscard;
 	};
 	typedef std::map<LLVOAvatarDefines::ETextureIndex, LocalTextureData> localtexture_map_t;
@@ -828,6 +854,14 @@ private:
 	static LLVOAvatarDefines::LLVOAvatarDictionary *sAvatarDictionary;
 	static LLVOAvatarSkeletonInfo* sAvatarSkeletonInfo;
 	static LLVOAvatarXmlInfo* sAvatarXmlInfo;
+
+public:
+	void dirtyMesh(); // Dirty the avatar mesh
+
+private:
+	void dirtyMesh(S32 priority);	// Dirty the avatar mesh, with priority
+	S32 mDirtyMesh; 				// 0 -- not dirty, 1 -- morphed, 2 -- LOD
+	BOOL mMeshTexturesDirty;
 
 	//-----------------------------------------------------------------------------------------------
 	// Diagnostics

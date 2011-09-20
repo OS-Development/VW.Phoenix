@@ -37,7 +37,6 @@
 #include "lldrawable.h"
 #include "llface.h"
 #include "llsky.h"
-#include "llviewerwindow.h"
 #include "llvotree.h"
 #include "pipeline.h"
 #include "llviewercamera.h"
@@ -48,11 +47,10 @@
 S32 LLDrawPoolTree::sDiffTex = 0;
 static LLGLSLShader* shader = NULL;
 
-LLDrawPoolTree::LLDrawPoolTree(LLViewerImage *texturep) :
+LLDrawPoolTree::LLDrawPoolTree(LLViewerTexture *texturep) :
 	LLFacePool(POOL_TREE),
 	mTexturep(texturep)
 {
-	gGL.getTexUnit(0)->bind(mTexturep.get());
 	mTexturep->setAddressMode(LLTexUnit::TAM_WRAP);
 }
 
@@ -102,9 +100,9 @@ void LLDrawPoolTree::render(S32 pass)
 	LLGLEnable test(GL_ALPHA_TEST);
 	LLOverrideFaceColor color(this, 1.f, 1.f, 1.f, 1.f);
 
-	static BOOL* sRenderAnimateTrees = rebind_llcontrol<BOOL>("RenderAnimateTrees", &gSavedSettings, true);
-	
-	if (*sRenderAnimateTrees)
+	static LLCachedControl<bool> sRenderAnimateTrees(gSavedSettings, "RenderAnimateTrees");
+
+	if (sRenderAnimateTrees)
 	{
 		renderTree();
 	}
@@ -116,9 +114,13 @@ void LLDrawPoolTree::render(S32 pass)
 			 iter != mDrawFace.end(); iter++)
 		{
 			LLFace *face = *iter;
-			face->mVertexBuffer->setBuffer(LLDrawPoolTree::VERTEX_DATA_MASK);
-			face->mVertexBuffer->drawRange(LLRender::TRIANGLES, 0, face->mVertexBuffer->getRequestedVerts()-1, face->mVertexBuffer->getRequestedIndices(), 0); 
-			gPipeline.addTrianglesDrawn(face->mVertexBuffer->getRequestedIndices()/3);
+			LLVertexBuffer* buff = face->getVertexBuffer();
+			if (buff)
+			{
+				buff->setBuffer(LLDrawPoolTree::VERTEX_DATA_MASK);
+				buff->drawRange(LLRender::TRIANGLES, 0, buff->getRequestedVerts() - 1, buff->getRequestedIndices(), 0); 
+				gPipeline.addTrianglesDrawn(buff->getRequestedIndices());
+			}
 		}
 	}
 }
@@ -140,7 +142,7 @@ void LLDrawPoolTree::endRenderPass(S32 pass)
 void LLDrawPoolTree::beginDeferredPass(S32 pass)
 {
 	LLFastTimer t(LLFastTimer::FTM_RENDER_TREES);
-	gGL.setAlphaRejectSettings(LLRender::CF_GREATER, 0.5f);
+	gGL.setAlphaRejectSettings(LLRender::CF_GREATER, 0.f);
 		
 	shader = &gDeferredTreeProgram;
 	shader->bind();
@@ -166,6 +168,10 @@ void LLDrawPoolTree::beginShadowPass(S32 pass)
 {
 	LLFastTimer t(LLFastTimer::FTM_SHADOW_TREE);
 	gGL.setAlphaRejectSettings(LLRender::CF_GREATER, 0.5f);
+	static LLCachedControl<F32> shadow_offset(gSavedSettings, "RenderDeferredTreeShadowOffset");
+	static LLCachedControl<F32> shadow_bias(gSavedSettings, "RenderDeferredTreeShadowBias");
+	glPolygonOffset(shadow_offset, shadow_bias);
+
 	gDeferredShadowProgram.bind();
 }
 
@@ -178,72 +184,11 @@ void LLDrawPoolTree::endShadowPass(S32 pass)
 {
 	LLFastTimer t(LLFastTimer::FTM_SHADOW_TREE);
 	gGL.setAlphaRejectSettings(LLRender::CF_DEFAULT);
-	gDeferredShadowProgram.unbind();
-}
-
-
-void LLDrawPoolTree::renderForSelect()
-{
-	if (mDrawFace.empty())
-	{
-		return;
-	}
-
-	LLOverrideFaceColor color(this, 1.f, 1.f, 1.f, 1.f);
-
-	LLGLSObjectSelectAlpha gls_alpha;
-	gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
-
-	gGL.setSceneBlendType(LLRender::BT_REPLACE);
-	gGL.setAlphaRejectSettings(LLRender::CF_GREATER, 0.5f);
-
-	gGL.getTexUnit(0)->setTextureColorBlend(LLTexUnit::TBO_REPLACE, LLTexUnit::TBS_PREV_COLOR);
-	gGL.getTexUnit(0)->setTextureAlphaBlend(LLTexUnit::TBO_MULT, LLTexUnit::TBS_TEX_ALPHA, LLTexUnit::TBS_VERT_ALPHA);
-
-	static BOOL* sRenderAnimateTrees = rebind_llcontrol<BOOL>("RenderAnimateTrees", &gSavedSettings, true);
-	
-	if (*sRenderAnimateTrees)
-	{
-		renderTree(TRUE);
-	}
-	else
-	{
-		gGL.getTexUnit(sDiffTex)->bind(mTexturep);
+	static LLCachedControl<F32> shadow_offset(gSavedSettings, "RenderDeferredSpotShadowOffset");
+	static LLCachedControl<F32> shadow_bias(gSavedSettings, "RenderDeferredSpotShadowBias");
+	glPolygonOffset(shadow_offset, shadow_bias);
 				
-		for (std::vector<LLFace*>::iterator iter = mDrawFace.begin();
-			 iter != mDrawFace.end(); iter++)
-		{
-			LLFace *face = *iter;
-			LLDrawable *drawablep = face->getDrawable();
-
-			if (drawablep->isDead() || face->mVertexBuffer.isNull())
-			{
-				continue;
-			}
-
-			// Render each of the trees
-			LLVOTree *treep = (LLVOTree *)drawablep->getVObj().get();
-
-			LLColor4U color(255,255,255,255);
-
-			if (treep->mGLName != 0)
-			{
-				S32 name = treep->mGLName;
-				color = LLColor4U((U8)(name >> 16), (U8)(name >> 8), (U8)name, 255);
-				
-				LLFacePool::LLOverrideFaceColor col(this, color);
-				
-				face->mVertexBuffer->setBuffer(LLDrawPoolTree::VERTEX_DATA_MASK);
-				face->mVertexBuffer->drawRange(LLRender::TRIANGLES, 0, face->mVertexBuffer->getRequestedVerts()-1, face->mVertexBuffer->getRequestedIndices(), 0); 
-				gPipeline.addTrianglesDrawn(face->mVertexBuffer->getRequestedIndices()/3);
-			}
-		}
-	}
-
-	gGL.setAlphaRejectSettings(LLRender::CF_DEFAULT);
-	gGL.setSceneBlendType(LLRender::BT_ALPHA);
-
-	gGL.getTexUnit(0)->setTextureBlendType(LLTexUnit::TB_MULT);
+	//gDeferredShadowProgram.unbind();
 }
 
 void LLDrawPoolTree::renderTree(BOOL selecting)
@@ -263,13 +208,13 @@ void LLDrawPoolTree::renderTree(BOOL selecting)
 		LLFace *face = *iter;
 		LLDrawable *drawablep = face->getDrawable();
 
-		if (drawablep->isDead() || face->mVertexBuffer.isNull())
+		if (drawablep->isDead() || !face->getVertexBuffer())
 		{
 			continue;
 		}
 
-		face->mVertexBuffer->setBuffer(LLDrawPoolTree::VERTEX_DATA_MASK);
-		U16* indicesp = (U16*) face->mVertexBuffer->getIndicesPointer();
+		face->getVertexBuffer()->setBuffer(LLDrawPoolTree::VERTEX_DATA_MASK);
+		U16* indicesp = (U16*) face->getVertexBuffer()->getIndicesPointer();
 
 		// Render each of the trees
 		LLVOTree *treep = (LLVOTree *)drawablep->getVObj().get();
@@ -331,7 +276,7 @@ void LLDrawPoolTree::renderTree(BOOL selecting)
 			S32 stop_depth = 0;
 			F32 app_angle = treep->getAppAngle()*LLVOTree::sTreeFactor;
 			F32 alpha = 1.0;
-			S32 trunk_LOD = 0;
+			S32 trunk_LOD = LLVOTree::sMAX_NUM_TREE_LOD_LEVELS;
 
 			for (S32 j = 0; j < 4; j++)
 			{
@@ -342,6 +287,10 @@ void LLDrawPoolTree::renderTree(BOOL selecting)
 					break;
 				}
 			} 
+			if (trunk_LOD >= LLVOTree::sMAX_NUM_TREE_LOD_LEVELS)
+			{
+				continue;	// do not render.
+			}
 
 			if (app_angle < (THRESH_ANGLE_FOR_BILLBOARD - BLEND_RANGE_FOR_BILLBOARD))
 			{
@@ -381,12 +330,12 @@ BOOL LLDrawPoolTree::verify() const
 	return TRUE;
 }
 
-LLViewerImage *LLDrawPoolTree::getTexture()
+LLViewerTexture *LLDrawPoolTree::getTexture()
 {
 	return mTexturep;
 }
 
-LLViewerImage *LLDrawPoolTree::getDebugTexture()
+LLViewerTexture *LLDrawPoolTree::getDebugTexture()
 {
 	return mTexturep;
 }

@@ -34,10 +34,9 @@
 #define LL_LLVIEWERJOINTMESH_H
 
 #include "llviewerjoint.h"
-#include "llviewerimage.h"
+#include "llviewertexture.h"
 #include "llpolymesh.h"
 #include "v4color.h"
-#include "llapr.h"
 
 class LLDrawable;
 class LLFace;
@@ -72,7 +71,7 @@ protected:
 	LLColor4					mColor;			// color value
 // 	LLColor4					mSpecular;		// specular color (always white for now)
 	F32							mShiny;			// shiny value
-	LLPointer<LLViewerImage>	mTexture;		// ptr to a global texture
+	LLPointer<LLViewerTexture>	mTexture;		// ptr to a global texture
 	LLTexLayerSet*				mLayerSet;		// ptr to a layer set owned by the avatar
 	U32 						mTestImageName;		// handle to a temporary texture for previewing uploads
 	LLPolyMesh*					mMesh;			// ptr to a global polymesh
@@ -110,7 +109,7 @@ public:
 	void setSpecular( const LLColor4& color, F32 shiny ) { /*mSpecular = color;*/ mShiny = shiny; };
 
 	// Sets the shape texture
-	void setTexture( LLViewerImage *texture );
+	void setTexture(LLViewerTexture *texture);
 
 	void setTestTexture( U32 name ) { mTestImageName = name; }
 
@@ -141,7 +140,7 @@ public:
 	/*virtual*/ U32 drawShape( F32 pixelArea, BOOL first_pass, BOOL is_dummy );
 
 	/*virtual*/ void updateFaceSizes(U32 &num_vertices, U32& num_indices, F32 pixel_area);
-	/*virtual*/ void updateFaceData(LLFace *face, F32 pixel_area, BOOL damp_wind = FALSE);
+	/*virtual*/ void updateFaceData(LLFace *face, F32 pixel_area, BOOL damp_wind = FALSE, bool terse_update = false);
 	/*virtual*/ BOOL updateLOD(F32 pixel_area, BOOL activate);
 	/*virtual*/ void updateJointGeometry();
 	/*virtual*/ void dump();

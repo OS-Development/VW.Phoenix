@@ -107,8 +107,10 @@ std::string get_shared_secret();
 class LLMessagePollInfo
 {
 public:
+	LLMessagePollInfo(void) : mPool(LLThread::tldata().mRootPool) { }
 	apr_socket_t *mAPRSocketp;
 	apr_pollfd_t mPollFD;
+	LLAPRPool mPool;
 };
 
 namespace
@@ -257,6 +259,8 @@ LLMessageSystem::LLMessageSystem(const std::string& filename, U32 port,
 {
 	init();
 
+	mSendSize = 0;
+
 	mSystemVersionMajor = version_major;
 	mSystemVersionMinor = version_minor;
 	mSystemVersionPatch = version_patch;
@@ -295,20 +299,13 @@ LLMessageSystem::LLMessageSystem(const std::string& filename, U32 port,
 	}
 //	LL_DEBUGS("Messaging") <<  << "*** port: " << mPort << llendl;
 
-	//
-	// Create the data structure that we can poll on
-	//
-	if (!gAPRPoolp)
-	{
-		LL_ERRS("Messaging") << "No APR pool before message system initialization!" << llendl;
-		ll_init_apr();
-	}
-	apr_socket_t *aprSocketp = NULL;
-	apr_os_sock_put(&aprSocketp, (apr_os_sock_t*)&mSocket, gAPRPoolp);
-
 	mPollInfop = new LLMessagePollInfo;
+
+	apr_socket_t *aprSocketp = NULL;
+	apr_os_sock_put(&aprSocketp, (apr_os_sock_t*)&mSocket, mPollInfop->mPool());
+
 	mPollInfop->mAPRSocketp = aprSocketp;
-	mPollInfop->mPollFD.p = gAPRPoolp;
+	mPollInfop->mPollFD.p = mPollInfop->mPool();
 	mPollInfop->mPollFD.desc_type = APR_POLL_SOCKET;
 	mPollInfop->mPollFD.reqevents = APR_POLLIN;
 	mPollInfop->mPollFD.rtnevents = 0;
@@ -327,6 +324,8 @@ LLMessageSystem::LLMessageSystem(const std::string& filename, U32 port,
 	mMaxMessageTime   = 1.f;
 
 	mTrueReceiveSize = 0;
+
+	mReceiveTime = 0.f;
 }
 
 
@@ -557,15 +556,15 @@ BOOL LLMessageSystem::checkMessages( S64 frame_count )
 		S32 acks = 0;
 		S32 true_rcv_size = 0;
 
-		U8* buffer = mTrueReceiveBuffer.buffer;
+		U8* buffer = mTrueReceiveBuffer;
 
-		mTrueReceiveSize = mPacketRing.receivePacket(mSocket, (char *)mTrueReceiveBuffer.buffer);			
+		mTrueReceiveSize = mPacketRing.receivePacket(mSocket, (char *)mTrueReceiveBuffer);			
+		// If you want to dump all received packets into SecondLife.log, uncomment this
+		//dumpPacketToLog();
+
 		receive_size = mTrueReceiveSize;
 		mLastSender = mPacketRing.getLastSender();
 		mLastReceivingIF = mPacketRing.getLastReceivingInterface();
-		
-		// If you want to dump all received packets into SecondLife.log, uncomment this
-		//dumpPacketToLog();
 		
  		// <edit>
  		if(mTrueReceiveSize)
@@ -632,7 +631,7 @@ BOOL LLMessageSystem::checkMessages( S64 frame_count )
 				for(S32 i = 0; i < acks; ++i)
 				{
 					true_rcv_size -= sizeof(TPACKETID);
-					memcpy(&mem_id, &buffer[true_rcv_size], /* Flawfinder: ignore*/
+					memcpy(&mem_id, &mTrueReceiveBuffer[true_rcv_size], /* Flawfinder: ignore*/
 					     sizeof(TPACKETID));
 					packet_id = ntohl(mem_id);
 					//LL_INFOS("Messaging") << "got ack: " << packet_id << llendl;
@@ -2460,12 +2459,12 @@ void dump_prehash_files()
 			" * Generated from message template version number %.3f\n"
 			" */\n",
 			gMessageSystem->mMessageFileVersionNumber);
-		fprintf(fp, "\n\nextern F32 gPrehashVersionNumber;\n\n");
+		fprintf(fp, "\n\nextern F32 const gPrehashVersionNumber;\n\n");
 		for (i = 0; i < MESSAGE_NUMBER_OF_HASH_BUCKETS; i++)
 		{
 			if (!LLMessageStringTable::getInstance()->mEmpty[i] && LLMessageStringTable::getInstance()->mString[i][0] != '.')
 			{
-				fprintf(fp, "extern char * _PREHASH_%s;\n", LLMessageStringTable::getInstance()->mString[i]);
+				fprintf(fp, "extern char const* const _PREHASH_%s;\n", LLMessageStringTable::getInstance()->mString[i]);
 			}
 		}
 		fprintf(fp, "\n\n#endif\n");
@@ -2490,12 +2489,12 @@ void dump_prehash_files()
 			gMessageSystem->mMessageFileVersionNumber);
 		fprintf(fp, "#include \"linden_common.h\"\n");
 		fprintf(fp, "#include \"message.h\"\n\n");
-		fprintf(fp, "\n\nF32 gPrehashVersionNumber = %.3ff;\n\n", gMessageSystem->mMessageFileVersionNumber);
+		fprintf(fp, "\n\nF32 const gPrehashVersionNumber = %.3ff;\n\n", gMessageSystem->mMessageFileVersionNumber);
 		for (i = 0; i < MESSAGE_NUMBER_OF_HASH_BUCKETS; i++)
 		{
 			if (!LLMessageStringTable::getInstance()->mEmpty[i] && LLMessageStringTable::getInstance()->mString[i][0] != '.')
 			{
-				fprintf(fp, "char * _PREHASH_%s = LLMessageStringTable::getInstance()->getString(\"%s\");\n", LLMessageStringTable::getInstance()->mString[i], LLMessageStringTable::getInstance()->mString[i]);
+				fprintf(fp, "char const* const _PREHASH_%s = LLMessageStringTable::getInstance()->getString(\"%s\");\n", LLMessageStringTable::getInstance()->mString[i], LLMessageStringTable::getInstance()->mString[i]);
 			}
 		}
 		fclose(fp);
@@ -3396,7 +3395,7 @@ void LLMessageSystem::dumpPacketToLog()
 	{
 		S32 offset = cur_line_pos * 3;
 		snprintf(line_buffer + offset, sizeof(line_buffer) - offset,
-				 "%02x ", mTrueReceiveBuffer.buffer[i]);	/* Flawfinder: ignore */
+				 "%02x ", mTrueReceiveBuffer[i]);	/* Flawfinder: ignore */
 		cur_line_pos++;
 		if (cur_line_pos >= 16)
 		{

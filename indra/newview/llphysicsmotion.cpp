@@ -489,7 +489,7 @@ F32 LLPhysicsMotion::calculateAcceleration_local(const F32 velocity_local)
 BOOL LLPhysicsMotionController::onUpdate(F32 time, U8* joint_mask)
 {
         // Skip if disabled globally.
-		static LLCachedControl<bool> avatar_physics("AvatarPhysics",false);
+		static LLCachedControl<bool> avatar_physics(gSavedSettings, "AvatarPhysics");
         if (!avatar_physics || (!((LLVOAvatar*)mCharacter)->isSelf() && !((LLVOAvatar*)mCharacter)->mSupportsPhysics))
         {
 			if(!mIsDefault)
@@ -748,7 +748,7 @@ BOOL LLPhysicsMotion::onUpdate(F32 time)
 		const F32 area_for_max_settings = 0.0;
 		const F32 area_for_min_settings = 1400.0;
 		const F32 area_for_this_setting = area_for_max_settings + (area_for_min_settings-area_for_max_settings)*(1.0-lod_factor);
-		const F32 pixel_area = fsqrtf(mCharacter->getPixelArea());
+		const F32 pixel_area = (F32)sqrt(mCharacter->getPixelArea());
         
 		const BOOL is_self = (dynamic_cast<LLVOAvatar *>(mCharacter) != NULL && ((LLVOAvatar*)mCharacter)->isSelf());
 		if ((pixel_area > area_for_this_setting) || is_self)

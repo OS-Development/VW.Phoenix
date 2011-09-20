@@ -63,6 +63,12 @@ LLCubeMap::LLCubeMap()
 	  mTextureCoordStage(0),
 	  mMatrixStage(0)
 {
+	mTargets[0] = GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB;
+	mTargets[1] = GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB;
+	mTargets[2] = GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB;
+	mTargets[3] = GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB;
+	mTargets[4] = GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB;
+	mTargets[5] = GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB;
 }
 
 LLCubeMap::~LLCubeMap()
@@ -75,18 +81,11 @@ void LLCubeMap::initGL()
 
 	if (gGLManager.mHasCubeMap && LLCubeMap::sUseCubeMaps)
 	{
-		mTargets[0] = GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB;
-		mTargets[1] = GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB;
-		mTargets[2] = GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB;
-		mTargets[3] = GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB;
-		mTargets[4] = GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB;
-		mTargets[5] = GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB;
-		
 		// Not initialized, do stuff.
 		if (mImages[0].isNull())
 		{
 			U32 texname = 0;
-			
+
 			LLImageGL::generateTextures(1, &texname);
 
 			for (int i = 0; i < 6; i++)
@@ -94,8 +93,8 @@ void LLCubeMap::initGL()
 				mImages[i] = new LLImageGL(64, 64, 4, (use_cube_mipmaps? TRUE : FALSE));
 				mImages[i]->setTarget(mTargets[i], LLTexUnit::TT_CUBE_MAP);
 				mRawImages[i] = new LLImageRaw(64, 64, 4);
-				mImages[i]->createGLTexture(0, mRawImages[i], texname, TRUE);
-				
+				mImages[i]->createGLTexture(0, mRawImages[i], texname);
+
 				gGL.getTexUnit(0)->bindManual(LLTexUnit::TT_CUBE_MAP, texname); 
 				mImages[i]->setAddressMode(LLTexUnit::TAM_CLAMP);
 				stop_glerror();
@@ -115,7 +114,7 @@ void LLCubeMap::initRawData(const std::vector<LLPointer<LLImageRaw> >& rawimages
 	bool flip_x[6] =	{ false, true,  false, false, true,  false };
 	bool flip_y[6] = 	{ true,  true,  true,  false, true,  true  };
 	bool transpose[6] = { false, false, false, false, true,  true  };
-	
+
 	// Yes, I know that this is inefficient! - djs 08/08/02
 	for (int i = 0; i < 6; i++)
 	{
@@ -208,7 +207,7 @@ void LLCubeMap::enableTextureCoords(S32 stage)
 		{
 			gGL.getTexUnit(stage)->activate();
 		}
-		
+
 		glEnable(GL_TEXTURE_GEN_R);
 		glEnable(GL_TEXTURE_GEN_S);
 		glEnable(GL_TEXTURE_GEN_T);
@@ -266,7 +265,7 @@ void LLCubeMap::setMatrix(S32 stage)
 	
 	if (mMatrixStage < 0) return;
 	
-	if (stage > 0)
+	//if (stage > 0)
 	{
 		gGL.getTexUnit(stage)->activate();
 	}
@@ -284,29 +283,29 @@ void LLCubeMap::setMatrix(S32 stage)
 	glPushMatrix();
 	glLoadMatrixf((F32 *)trans.mMatrix);
 	glMatrixMode(GL_MODELVIEW);
-	
-	if (stage > 0)
+
+	/*if (stage > 0)
 	{
 		gGL.getTexUnit(0)->activate();
-	}
+	}*/
 }
 
 void LLCubeMap::restoreMatrix()
 {
 	if (mMatrixStage < 0) return;
 
-	if (mMatrixStage > 0)
+	//if (mMatrixStage > 0)
 	{
 		gGL.getTexUnit(mMatrixStage)->activate();
 	}
 	glMatrixMode(GL_TEXTURE);
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
-	
-	if (mMatrixStage > 0)
+
+	/*if (mMatrixStage > 0)
 	{
 		gGL.getTexUnit(0)->activate();
-	}
+	}*/
 }
 
 void LLCubeMap::setReflection (void)
@@ -362,7 +361,6 @@ LLVector3 LLCubeMap::map(U8 side, U16 v_val, U16 h_val) const
 	return dir;
 }
 
-
 BOOL LLCubeMap::project(F32& v_val, F32& h_val, BOOL& outside,
 						U8 side, const LLVector3& dir) const
 {
@@ -385,7 +383,6 @@ BOOL LLCubeMap::project(F32& v_val, F32& h_val, BOOL& outside,
 	ray.mV[curr_coef] = side_dir;
 	ray.mV[i_coef] = dir.mV[i_coef] / norm_val;
 	ray.mV[j_coef] = dir.mV[j_coef] / norm_val;
-
 
 	const F32 i_val = (ray.mV[i_coef] + 1) * 0.5f * RESOLUTION;
 	const F32 j_val = (ray.mV[j_coef] + 1) * 0.5f * RESOLUTION;
@@ -458,7 +455,6 @@ BOOL LLCubeMap::project(F32& v_min, F32& v_max, F32& h_min, F32& h_max,
 	return !fully_outside;
 }
 
-
 void LLCubeMap::paintIn(LLVector3 dir[4], const LLColor4U& col)
 {
 	F32 v_min, v_max, h_min, h_max;
@@ -471,16 +467,17 @@ void LLCubeMap::paintIn(LLVector3 dir[4], const LLColor4U& col)
 			continue;
 
 		U8 *td = mRawImages[side]->getData();
-		
+
 		U16 v_minu = (U16) v_min;
 		U16 v_maxu = (U16) (ceil(v_max) + 0.5);
 		U16 h_minu = (U16) h_min;
 		U16 h_maxu = (U16) (ceil(h_max) + 0.5);
 
 		for (U16 v = v_minu; v < v_maxu; ++v)
+		{
 			for (U16 h = h_minu; h < h_maxu; ++h)
-		//for (U16 v = 0; v < RESOLUTION; ++v)
-		//	for (U16 h = 0; h < RESOLUTION; ++h)
+			//for (U16 v = 0; v < RESOLUTION; ++v)
+			//	for (U16 h = 0; h < RESOLUTION; ++h)
 			{
 				const LLVector3 ray = map(side, v, h);
 				if (ray * center > 0.999)
@@ -490,6 +487,7 @@ void LLCubeMap::paintIn(LLVector3 dir[4], const LLColor4U& col)
 						td[offset + cc] = U8((td[offset + cc] + col.mV[cc]) * 0.5);
 				}
 			}
+		}
 		mImages[side]->setSubImage(mRawImages[side], 0, 0, 64, 64);
 	}
 }

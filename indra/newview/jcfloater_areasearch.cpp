@@ -311,9 +311,9 @@ void JCFloaterAreaSearch::results()
 }
 
 // static
-void JCFloaterAreaSearch::callbackLoadOwnerName(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* data)
+void callbackLoadOwnerName(const LLUUID&, const std::string&, bool)
 {
-	results();
+	JCFloaterAreaSearch::results();
 }
 
 // static
@@ -335,8 +335,8 @@ void JCFloaterAreaSearch::processObjectPropertiesFamily(LLMessageSystem* msg, vo
 		msg->getUUIDFast(_PREHASH_ObjectData, _PREHASH_GroupID, details->group_id);
 		msg->getStringFast(_PREHASH_ObjectData, _PREHASH_Name, details->name);
 		msg->getStringFast(_PREHASH_ObjectData, _PREHASH_Description, details->desc);
-		gCacheName->get(details->owner_id, FALSE, callbackLoadOwnerName);
-		gCacheName->get(details->group_id, TRUE, callbackLoadOwnerName);
+		gCacheName->get(details->owner_id, false, boost::bind(&callbackLoadOwnerName, _1, _2, _3));
+		gCacheName->get(details->group_id, true, boost::bind(&callbackLoadOwnerName, _1, _2, _3));
 		//llinfos << "Got info for " << (exists ? "requested" : "unknown") << " object " << object_id << llendl;
 	}
 }

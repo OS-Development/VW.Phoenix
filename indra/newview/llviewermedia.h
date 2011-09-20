@@ -45,7 +45,7 @@
 
 class LLViewerMediaImpl;
 class LLUUID;
-class LLViewerImage;
+class LLViewerTexture;
 class LLPluginCookieStore;
 
 typedef LLPointer<LLViewerMediaImpl> viewer_media_t;
@@ -244,7 +244,10 @@ public:
 	/*virtual*/ BOOL	canPaste() const;
 	 
 	void setBackgroundColor(LLColor4 color);
-	
+
+	bool isTrustedBrowser() { return mTrustedBrowser; }
+	void setTrustedBrowser(bool trusted) { mTrustedBrowser = trusted; }
+
 	typedef enum 
 	{
 		MEDIANAVSTATE_NONE,										// State is outside what we need to track for navigation.
@@ -301,7 +304,7 @@ public:
 	std::string mTarget;
 
 private:
-	LLViewerImage *updatePlaceholderImage();
+	LLViewerTexture* updatePlaceholderImage(); // Should really return a LLViewerMediaTexture*
 };
 
 #endif	// LLVIEWERMEDIA_H

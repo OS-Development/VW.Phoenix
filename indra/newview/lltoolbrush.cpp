@@ -468,7 +468,8 @@ void LLToolBrushLand::render()
 			spot.mdV[VX] = floor( spot.mdV[VX] + 0.5 );
 			spot.mdV[VY] = floor( spot.mdV[VY] + 0.5 );
 
-			mBrushSize = gSavedSettings.getF32("LandBrushSize");
+			static LLCachedControl<F32> land_brush_size(gSavedSettings, "LandBrushSize");
+			mBrushSize = land_brush_size;
 			
 			region_list_t regions;
 			determineAffectedRegions(regions, spot);
@@ -522,9 +523,9 @@ void LLToolBrushLand::renderOverlay(LLSurface& land, const LLVector3& pos_region
 	S32 i = (S32) pos_region.mV[VX];
 	S32 j = (S32) pos_region.mV[VY];
 	S32 half_edge = llfloor(mBrushSize);
-	S32 radioAction = gSavedSettings.getS32("RadioLandBrushAction");
-	F32 force = gSavedSettings.getF32("LandBrushForce"); // .1 to 100?
-	
+	static LLCachedControl<S32> radioAction(gSavedSettings, "RadioLandBrushAction");
+	static LLCachedControl<F32> force(gSavedSettings, "LandBrushForce");
+
 	gGL.begin(LLRender::LINES);
 	for(S32 di = -half_edge; di <= half_edge; di++)
 	{

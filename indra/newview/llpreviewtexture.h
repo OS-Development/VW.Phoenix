@@ -36,7 +36,7 @@
 #include "llpreview.h"
 #include "llbutton.h"
 #include "llframetimer.h"
-#include "llviewerimage.h"
+#include "llviewertexture.h"
 
 class LLComboBox;
 class LLImageRaw;
@@ -44,48 +44,47 @@ class LLImageRaw;
 class LLPreviewTexture : public LLPreview
 {
 public:
+	LLPreviewTexture(const std::string& name,
+					const LLRect& rect,
+					const std::string& title,
+					const LLUUID& item_uuid,
+					const LLUUID& object_id,
+					BOOL show_keep_discard = FALSE);
 	LLPreviewTexture(
-		const std::string& name,
-		const LLRect& rect,
-		const std::string& title,
-		const LLUUID& item_uuid,
-		const LLUUID& object_id,
-		BOOL show_keep_discard = FALSE);
-	LLPreviewTexture(
-		const std::string& name,
-		const LLRect& rect,
-		const std::string& title,
-		const LLUUID& asset_id,
-		BOOL copy_to_inv = FALSE,
-		BOOL copyable = TRUE);
+					const std::string& name,
+					const LLRect& rect,
+					const std::string& title,
+					const LLUUID& asset_id,
+					BOOL copy_to_inv = FALSE,
+					BOOL copyable = TRUE);
 	~LLPreviewTexture();
 
-	virtual void		draw();
+	virtual void			draw();
 
-	virtual BOOL		canSaveAs() const;
-	virtual void		saveAs();
-	virtual void		saveAs(bool is_png);
+	virtual BOOL			canSaveAs() const;
+	virtual void			saveAs();
+	virtual void			saveAs(bool is_png);
 
-	virtual void		loadAsset();
+	virtual void			loadAsset();
 	virtual EAssetStatus	getAssetStatus();
 
-	static void			saveToFile(void* userdata);
-	static void			onFileLoadedForSaveTGA( 
-							BOOL success,
-							LLViewerImage *src_vi,
-							LLImageRaw* src, 
-							LLImageRaw* aux_src,
-							S32 discard_level, 
-							BOOL final,
-							void* userdata );
-	static void			onFileLoadedForSavePNG( 
-							BOOL success,
-							LLViewerImage *src_vi,
-							LLImageRaw* src, 
-							LLImageRaw* aux_src,
-							S32 discard_level, 
-							BOOL final,
-							void* userdata );
+	static void				saveToFile(void* userdata);
+	static void				onFileLoadedForSaveTGA( 
+								BOOL success,
+								LLViewerFetchedTexture *src_vi,
+								LLImageRaw* src, 
+								LLImageRaw* aux_src,
+								S32 discard_level, 
+								BOOL final,
+								void* userdata);
+	static void				onFileLoadedForSavePNG( 
+								BOOL success,
+								LLViewerFetchedTexture *src_vi,
+								LLImageRaw* src, 
+								LLImageRaw* aux_src,
+								S32 discard_level, 
+								BOOL final,
+								void* userdata);
 	static LLPreviewTexture* getInstance(){ return sInstance; }
 
 	LLUUID uploaderkey;
@@ -98,12 +97,13 @@ protected:
 	bool				setAspectRatio(const F32 width, const F32 height);
 	static void			onAspectRatioCommit(LLUICtrl*,void* userdata);
 
-	virtual const char *getTitleName() const { return "Texture"; }
+	virtual const char*	getTitleName() const { return "Texture"; }
 	
 private:
 	void				updateDimensions();
-	LLUUID						mImageID;
-	LLPointer<LLViewerImage>		mImage;
+	LLPointer<LLViewerFetchedTexture> mImage;
+	LLUUID				mImageID;
+	S32                 mImageOldBoostLevel;
 	BOOL				mLoadingFullImage;
 	std::string			mSaveFileName;
 	LLFrameTimer		mSavedFileTimer;
@@ -112,7 +112,10 @@ private:
 
 	static LLPreviewTexture* sInstance;
 	static void			onClickProfile(void* userdata);
-	static void callbackLoadAvatarName(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* data);
+	
+	// Ansariel: Changed to boost::bind callback
+	//static void callbackLoadAvatarName(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* data);
+	static void callbackLoadAvatarName(const LLUUID& id, const std::string& fullname, bool is_group);
 
 	// This is stored off in a member variable, because the save-as
 	// button and drag and drop functionality need to know.
@@ -121,6 +124,8 @@ private:
 	S32 mLastHeight;
 	S32 mLastWidth;
 	F32 mAspectRatio;	// 0 = Unconstrained
+
+	LLLoadedCallbackEntry::source_callback_list_t mCallbackTextureList; 
 };
 
 

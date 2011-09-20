@@ -60,7 +60,7 @@ S32 LLDrawPool::sNumDrawPools = 0;
 //=============================
 // Draw Pool Implementation
 //=============================
-LLDrawPool *LLDrawPool::createPool(const U32 type, LLViewerImage *tex0)
+LLDrawPool *LLDrawPool::createPool(const U32 type, LLViewerTexture *tex0)
 {
 	LLDrawPool *poolp = NULL;
 	switch (type)
@@ -130,7 +130,7 @@ LLDrawPool::~LLDrawPool()
 
 }
 
-LLViewerImage *LLDrawPool::getDebugTexture()
+LLViewerTexture *LLDrawPool::getDebugTexture()
 {
 	return NULL;
 }
@@ -245,13 +245,8 @@ void LLFacePool::destroy()
 	}
 }
 
-void LLFacePool::dirtyTextures(const std::set<LLViewerImage*>& textures)
+void LLFacePool::dirtyTextures(const std::set<LLViewerFetchedTexture*>& textures)
 {
-}
-
-BOOL LLFacePool::moveFace(LLFace *face, LLDrawPool *poolp, BOOL copy_data)
-{
-	return TRUE;
 }
 
 // static
@@ -296,13 +291,6 @@ void LLFacePool::drawLoop()
 	}
 }
 
-void LLFacePool::renderFaceSelected(LLFace *facep, 
-									LLImageGL *image, 
-									const LLColor4 &color,
-									const S32 index_offset, const S32 index_count)
-{
-}
-
 void LLFacePool::enqueue(LLFace* facep)
 {
 	mDrawFace.push_back(facep);
@@ -331,7 +319,7 @@ void LLFacePool::resetDrawOrders()
 	mDrawFace.resize(0);
 }
 
-LLViewerImage *LLFacePool::getTexture()
+LLViewerTexture *LLFacePool::getTexture()
 {
 	return NULL;
 }
@@ -437,7 +425,8 @@ void LLRenderPass::renderGroup(LLSpatialGroup* group, U32 type, U32 mask, BOOL t
 	for (LLSpatialGroup::drawmap_elem_t::iterator k = draw_info.begin(); k != draw_info.end(); ++k)	
 	{
 		LLDrawInfo *pparams = *k;
-		if (pparams) {
+		if (pparams)
+		{
 			pushBatch(*pparams, mask, texture);
 		}
 	}
@@ -482,7 +471,8 @@ void LLRenderPass::pushBatch(LLDrawInfo& params, U32 mask, BOOL texture)
 	{
 		if (params.mTexture.notNull())
 		{
-			gGL.getTexUnit(0)->bind(params.mTexture.get(), TRUE);
+			params.mTexture->addTextureStats(params.mVSize);
+			gGL.getTexUnit(0)->bind(params.mTexture, TRUE);
 			if (params.mTextureMatrix)
 			{
 				glMatrixMode(GL_TEXTURE);
@@ -503,8 +493,8 @@ void LLRenderPass::pushBatch(LLDrawInfo& params, U32 mask, BOOL texture)
 			params.mGroup->rebuildMesh();
 		}
 		params.mVertexBuffer->setBuffer(mask);
-		params.mVertexBuffer->drawRange(LLRender::TRIANGLES, params.mStart, params.mEnd, params.mCount, params.mOffset);
-		gPipeline.addTrianglesDrawn(params.mCount/3);
+		params.mVertexBuffer->drawRange(params.mDrawMode, params.mStart, params.mEnd, params.mCount, params.mOffset);
+		gPipeline.addTrianglesDrawn(params.mCount, params.mDrawMode);
 	}
 
 	if (params.mTextureMatrix && texture && params.mTexture.notNull())

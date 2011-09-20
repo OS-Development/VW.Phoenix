@@ -34,7 +34,7 @@
 #define LL_LLPANELLOGIN_H
 
 #include "llpanel.h"
-#include "llmemory.h"			// LLPointer<>
+#include "llpointer.h"
 #include "llmediactrl.h"	// LLMediaCtrlObserver
 #include "llsavedlogins.h"
 

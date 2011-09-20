@@ -33,8 +33,7 @@
 #ifndef LL_LLHUDTEXT_H
 #define LL_LLHUDTEXT_H
 
-#include "llmemory.h"
-#include "lldarrayptr.h"
+#include "llpointer.h"
 
 #include "llhudobject.h"
 #include "v4color.h"
@@ -45,7 +44,6 @@
 #include "llfontgl.h"
 #include <set>
 #include <vector>
-#include "lldarray.h"
 
 // Renders a 2D text billboard floating at the location specified.
 class LLDrawable;
@@ -144,8 +142,7 @@ protected:
 	LLHUDText(const U8 type);
 
 	/*virtual*/ void render();
-	/*virtual*/ void renderForSelect();
-	void renderText(BOOL for_select);
+	void renderText();
 	static void updateAll();
 	void setLOD(S32 lod);
 	S32 getMaxLines();

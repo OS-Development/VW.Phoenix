@@ -328,6 +328,15 @@ void LLCloudLayer::setRegion(LLViewerRegion *regionp)
 
 void LLCloudLayer::destroy()
 {
+	reset();
+
+	delete [] mDensityp;
+	mDensityp = NULL;
+	mWindp = NULL;
+}
+
+void LLCloudLayer::reset()
+{
 	// Kill all of the existing puffs
 	S32 i, j;
 	
@@ -338,15 +347,6 @@ void LLCloudLayer::destroy()
 			mCloudGroups[i][j].cleanup();
 		}
 	}
-
-	delete [] mDensityp;
-	mDensityp = NULL;
-	mWindp = NULL;
-}
-
-
-void LLCloudLayer::reset()
-{
 }
 
 

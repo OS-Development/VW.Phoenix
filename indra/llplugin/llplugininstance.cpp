@@ -29,8 +29,11 @@
 #include "linden_common.h"
 
 #include "llplugininstance.h"
+#include "llthread.h"			// Needed for LLThread::tldata().mRootPool
 
-#include "llapr.h"
+#if LL_WINDOWS
+#include "direct.h"	// needed for _chdir()
+#endif
 
 /** Virtual destructor. */
 LLPluginInstanceMessageListener::~LLPluginInstanceMessageListener()
@@ -48,6 +51,7 @@ const char *LLPluginInstance::PLUGIN_INIT_FUNCTION_NAME = "LLPluginInitEntryPoin
  * @param[in] owner Plugin instance. TODO:DOC is this a good description of what "owner" is?
  */
 LLPluginInstance::LLPluginInstance(LLPluginInstanceMessageListener *owner) :
+	mDSOHandlePool(LLThread::tldata().mRootPool),
 	mDSOHandle(NULL),
 	mPluginUserData(NULL),
 	mPluginSendMessageFunction(NULL)
@@ -73,13 +77,27 @@ LLPluginInstance::~LLPluginInstance()
  * @param[in] plugin_file Name of plugin dll/dylib/so. TODO:DOC is this correct? see .h
  * @return 0 if successful, APR error code or error code from the plugin's init function on failure.
  */
-int LLPluginInstance::load(std::string &plugin_file)
+int LLPluginInstance::load(const std::string& plugin_dir, std::string &plugin_file)
 {
 	pluginInitFunction init_function = NULL;
 	
+	if ( plugin_dir.length() )
+	{
+#if LL_WINDOWS
+		// VWR-21275:
+		// *SOME* Windows systems fail to load the Qt plugins if the current working
+		// directory is not the same as the directory with the Qt DLLs in.
+		// This should not cause any run time issues since we are changing the cwd for the
+		// plugin shell process and not the viewer.
+		// Changing back to the previous directory is not necessary since the plugin shell
+		// quits once the plugin exits.
+		_chdir( plugin_dir.c_str() );	
+#endif
+	};
+
 	int result = apr_dso_load(&mDSOHandle,
 					  plugin_file.c_str(),
-					  gAPRPoolp);
+					  mDSOHandlePool());
 	if(result != APR_SUCCESS)
 	{
 		char buf[1024];

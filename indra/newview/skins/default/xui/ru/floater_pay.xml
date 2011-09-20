@@ -10,7 +10,7 @@
 		Заплатить резиденту:
 	</text>
 	<text type="string" length="1" name="payee_name" left="145">
-		[FIRST] [LAST]
+		[NAME]
 	</text>
 	<text type="string" length="1" name="fastpay text" width="100" halign="left">
 		Быстрая оплата:

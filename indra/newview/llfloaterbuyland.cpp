@@ -35,6 +35,7 @@
 #include "llfloaterbuyland.h"
 
 // viewer includes
+#include "llxmlrpctransaction.h" // must be before llagent.h or "error: multiple types in one declaration" will happen.
 #include "llagent.h"
 #include "llbutton.h"
 #include "llcachename.h"
@@ -47,7 +48,6 @@
 #include "llframetimer.h"
 #include "lliconctrl.h"
 #include "lllineeditor.h"
-#include "llnotify.h"
 #include "llparcel.h"
 #include "llstatusbar.h"
 #include "lltextbox.h"
@@ -62,7 +62,7 @@
 #include "llweb.h"
 #include "llwindow.h"
 #include "llworld.h"
-#include "llxmlrpctransaction.h"
+
 #include "llviewernetwork.h"
 #include "roles_constants.h"
 
@@ -198,8 +198,9 @@ private:
 	};
 };
 
-static void cacheNameUpdateRefreshesBuyLand(const LLUUID&,
-	const std::string&, const std::string&, BOOL, void* data)
+//static void cacheNameUpdateRefreshesBuyLand(const LLUUID&,
+//	const std::string&, const std::string&, BOOL, void* data)
+static void cacheNameUpdateRefreshesBuyLand(const LLUUID&, const std::string&, bool)
 {
 	LLFloaterBuyLandUI* ui = LLFloaterBuyLandUI::soleInstance(false);
 	if (ui)
@@ -298,7 +299,7 @@ LLFloaterBuyLandUI* LLFloaterBuyLandUI::soleInstance(bool createIfNeeded)
 		static bool observingCacheName = false;
 		if (!observingCacheName)
 		{
-			gCacheName->addObserver(cacheNameUpdateRefreshesBuyLand);
+			gCacheName->addObserver(&cacheNameUpdateRefreshesBuyLand);
 			observingCacheName = true;
 		}
 

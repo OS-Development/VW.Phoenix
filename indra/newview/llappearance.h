@@ -34,20 +34,34 @@
 #define LL_LLAPPEARANCE_H
 
 #include "lluuid.h"
+#include "llvoavatardefines.h"
 
 class LLAppearance
 {
 public:
-	LLAppearance()										{}
-	~LLAppearance()										{ mParamMap.clear(); } 
+	LLAppearance() { }
+	~LLAppearance() { mParamMap.clear(); } 
 
-	void	addParam( S32 id, F32 value )				{ mParamMap[id] = value; }
-	F32		getParam( S32 id, F32 defval )				{ return get_if_there(mParamMap, id, defval ); }
+	void addParam(S32 id, F32 value) { mParamMap[id] = value; }
+	F32 getParam(S32 id, F32 defval) { return get_if_there(mParamMap, id, defval); }
 
-	void	addTexture( S32 te, const LLUUID& uuid )	{ if( te < LLVOAvatarDefines::TEX_NUM_INDICES ) mTextures[te] = uuid; }
-	const LLUUID& getTexture( S32 te )					{ return ( te < LLVOAvatarDefines::TEX_NUM_INDICES ) ? mTextures[te] : LLUUID::null; }
-	
-	void	clear()										{ mParamMap.clear(); for( S32 i=0; i<LLVOAvatarDefines::TEX_NUM_INDICES; i++ ) mTextures[i].setNull(); }
+	void addTexture(S32 te, const LLUUID& uuid)
+	{
+		if (te < LLVOAvatarDefines::TEX_NUM_INDICES)
+			mTextures[te] = uuid;
+	}
+
+	const LLUUID& getTexture(S32 te)
+	{
+		return te < LLVOAvatarDefines::TEX_NUM_INDICES ? mTextures[te] : LLUUID::null;
+	}
+
+	void clear()
+	{
+		mParamMap.clear();
+		for (S32 i = 0; i < LLVOAvatarDefines::TEX_NUM_INDICES; i++)
+			mTextures[i].setNull();
+	}
 
 	typedef std::map<S32, F32> param_map_t;
 	param_map_t mParamMap;

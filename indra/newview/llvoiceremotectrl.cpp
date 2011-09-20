@@ -33,18 +33,19 @@
 
 #include "llvoiceremotectrl.h"
 
-#include "llagent.h"
-#include "llui.h"
 #include "llbutton.h"
+#include "lliconctrl.h"
+#include "lltextbox.h"
+#include "llui.h"
 #include "lluictrlfactory.h"
+
+#include "llagent.h"
+#include "llfloaterchatterbox.h"
+#include "llfloateractivespeakers.h"
+#include "llimpanel.h"
+#include "lloverlaybar.h"
 #include "llviewercontrol.h"
 #include "llvoiceclient.h"
-#include "llimpanel.h"
-#include "llfloateractivespeakers.h"
-#include "llfloaterchatterbox.h"
-#include "lliconctrl.h"
-#include "lloverlaybar.h"
-#include "lltextbox.h"
 
 LLVoiceRemoteCtrl::LLVoiceRemoteCtrl (const std::string& name) : LLPanel(name)
 {
@@ -108,17 +109,17 @@ void LLVoiceRemoteCtrl::draw()
 	mTalkBtn->setEnabled(voice_active);
 	mTalkLockBtn->setEnabled(voice_active);
 
-	static BOOL *sPTTCurrentlyEnabled = rebind_llcontrol<BOOL>("PTTCurrentlyEnabled", &gSavedSettings, true);
+	static LLCachedControl<bool> sPTTCurrentlyEnabled(gSavedSettings, "PTTCurrentlyEnabled");
 
 
 	// propagate ptt state to button display,
 	if (!mTalkBtn->hasMouseCapture())
 	{
 		// not in push to talk mode, or push to talk is active means I'm talking
-		mTalkBtn->setToggleState(!(*sPTTCurrentlyEnabled) || gVoiceClient->getUserPTTState());
+		mTalkBtn->setToggleState(!sPTTCurrentlyEnabled || gVoiceClient->getUserPTTState());
 	}
 	mSpeakersBtn->setToggleState(LLFloaterActiveSpeakers::instanceVisible(LLSD()));
-	mTalkLockBtn->setToggleState(!(*sPTTCurrentlyEnabled));
+	mTalkLockBtn->setToggleState(!sPTTCurrentlyEnabled);
 
 	std::string talk_blip_image;
 	if (gVoiceClient->getIsSpeaking(gAgent.getID()))

@@ -10,7 +10,7 @@
 		Einwohner bezahlen:
 	</text>
 	<text type="string" length="1" name="payee_name" left="130">
-		[FIRST] [LAST]
+		[NAME]
 	</text>
 	<text type="string" length="1" name="fastpay text">
 		Schnellzahlung:

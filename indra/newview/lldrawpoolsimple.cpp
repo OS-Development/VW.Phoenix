@@ -35,7 +35,6 @@
 #include "lldrawpoolsimple.h"
 
 #include "llviewercamera.h"
-#include "llagent.h"
 #include "lldrawable.h"
 #include "llface.h"
 #include "llsky.h"
@@ -53,6 +52,10 @@ void LLDrawPoolGlow::render(S32 pass)
 	LLFastTimer t(LLFastTimer::FTM_RENDER_GLOW);
 	LLGLEnable blend(GL_BLEND);
 	LLGLDisable test(GL_ALPHA_TEST);
+	gGL.flush();
+	/// Get rid of z-fighting with non-glow pass.
+	LLGLEnable polyOffset(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(-1.0f, -1.0f);
 	gGL.setSceneBlendType(LLRender::BT_ADD);
 	
 	U32 shader_level = LLViewerShaderMgr::instance()->getVertexShaderLevel(LLViewerShaderMgr::SHADER_OBJECT);
@@ -146,6 +149,9 @@ void LLDrawPoolSimple::render(S32 pass)
 
 		if (LLPipeline::sRenderDeferred)
 		{
+			// If deferred rendering is enabled, bump faces aren't registered
+			// as simple render bump faces here as simple so bump faces will
+			// appear under water
 			renderTexture(LLRenderPass::PASS_BUMP, getVertexDataMask());
 		}
 	}
@@ -259,7 +265,7 @@ void LLDrawPoolGrass::endDeferredPass(S32 pass)
 
 void LLDrawPoolGrass::renderDeferred(S32 pass)
 {
-	gGL.setAlphaRejectSettings(LLRender::CF_GREATER, 0.5f);
+	gGL.setAlphaRejectSettings(LLRender::CF_GREATER, 0.f);
 
 	{
 		LLFastTimer t(LLFastTimer::FTM_RENDER_GRASS);

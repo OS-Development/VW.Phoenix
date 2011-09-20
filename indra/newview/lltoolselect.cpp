@@ -57,8 +57,6 @@
 // [/RLVa:KB]
 
 // Globals
-extern BOOL gAllowSelectAvatar;
-
 const F32 SELECTION_ROTATION_TRESHOLD = 0.1f;
 
 LLToolSelect::LLToolSelect( LLToolComposite* composite )
@@ -137,7 +135,7 @@ LLObjectSelectionHandle LLToolSelect::handleObjectSelection(const LLPickInfo& pi
 	BOOL select_movable = gSavedSettings.getBOOL("SelectMovableOnly");
 	
 	// *NOTE: These settings must be cleaned up at bottom of function.
-	if (temp_select || gAllowSelectAvatar)
+	if (temp_select || LLSelectMgr::getInstance()->mAllowSelectAvatar)
 	{
 		gSavedSettings.setBOOL("SelectOwnedOnly", FALSE);
 		gSavedSettings.setBOOL("SelectMovableOnly", FALSE);
@@ -267,7 +265,7 @@ LLObjectSelectionHandle LLToolSelect::handleObjectSelection(const LLPickInfo& pi
 	} //if(!object)
 
 	// Cleanup temp select settings above.
-	if (temp_select || gAllowSelectAvatar)
+	if (temp_select || LLSelectMgr::getInstance()->mAllowSelectAvatar)
 	{
 		gSavedSettings.setBOOL("SelectOwnedOnly", select_owned);
 		gSavedSettings.setBOOL("SelectMovableOnly", select_movable);

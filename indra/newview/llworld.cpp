@@ -46,8 +46,7 @@
 #include "llregionhandle.h"
 #include "llsurface.h"
 #include "llviewercamera.h"
-#include "llviewerimage.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llviewernetwork.h"
 #include "llviewerobjectlist.h"
 #include "llviewerparceloverlay.h"
@@ -115,8 +114,8 @@ LLWorld::LLWorld() :
 	*(default_texture++) = MAX_WATER_COLOR.mV[2];
 	*(default_texture++) = MAX_WATER_COLOR.mV[3];
 	
-	mDefaultWaterTexturep = new LLViewerImage(raw, FALSE);
-	gGL.getTexUnit(0)->bind(mDefaultWaterTexturep.get());
+	mDefaultWaterTexturep = LLViewerTextureManager::getLocalTexture(raw.get(), FALSE);
+	gGL.getTexUnit(0)->bind(mDefaultWaterTexturep);
 	mDefaultWaterTexturep->setAddressMode(LLTexUnit::TAM_CLAMP);
 
 }
@@ -132,6 +131,12 @@ void LLWorld::destroyClass()
 		removeRegion(region_to_delete->getHost());
 	}
 	LLViewerPartSim::getInstance()->destroyClass();
+
+	mDefaultWaterTexturep = NULL;
+	for (S32 i = 0; i < 8; i++)
+	{
+		mEdgeWaterObjects[i] = NULL;
+	}
 }
 
 
@@ -193,6 +198,7 @@ LLViewerRegion* LLWorld::addRegion(const U64 &region_handle, const LLHost &host)
 
 	mRegionList.push_back(regionp);
 	mActiveRegionList.push_back(regionp);
+	mActiveRegionOrderedList.push_back(regionp);
 	mCulledRegionList.push_back(regionp);
 
 
@@ -273,6 +279,7 @@ void LLWorld::removeRegion(const LLHost &host)
 
 	mRegionList.remove(regionp);
 	mActiveRegionList.remove(regionp);
+	mActiveRegionOrderedList.remove(regionp);
 	mCulledRegionList.remove(regionp);
 	mVisibleRegionList.remove(regionp);
 	
@@ -377,16 +384,23 @@ LLVector3d	LLWorld::clipToVisibleRegions(const LLVector3d &start_pos, const LLVe
 		clip_factor = (region_coord.mV[VY] - region_width) / delta_pos_abs.mdV[VY];
 	}
 
-	// clamp to < 256 to stay in sim
+	// clamp to within region dimensions
 	LLVector3d final_region_pos = LLVector3d(region_coord) - (delta_pos * clip_factor);
 	// clamp x, y to [0,256[ and z to [0,REGION_HEIGHT_METERS] (the clamp function cannot be used here)
-	if (final_region_pos.mdV[VX] < 0) final_region_pos.mdV[VX] = 0.0;
-	if (final_region_pos.mdV[VY] < 0) final_region_pos.mdV[VY] = 0.0;
-	if (final_region_pos.mdV[VZ] < 0) final_region_pos.mdV[VZ] = 0.0;
-	if (final_region_pos.mdV[VX] > 255.999) final_region_pos.mdV[VX] = 255.999; 
-	if (final_region_pos.mdV[VY] > 255.999) final_region_pos.mdV[VY] = 255.999;
-	if (final_region_pos.mdV[VZ] > REGION_HEIGHT_METERS) final_region_pos.mdV[VZ] = REGION_HEIGHT_METERS;
+	//if (final_region_pos.mdV[VX] < 0) final_region_pos.mdV[VX] = 0.0;
+	//if (final_region_pos.mdV[VY] < 0) final_region_pos.mdV[VY] = 0.0;
+	//if (final_region_pos.mdV[VZ] < 0) final_region_pos.mdV[VZ] = 0.0;
+	//if (final_region_pos.mdV[VX] > 255.999) final_region_pos.mdV[VX] = 255.999; 
+	//if (final_region_pos.mdV[VY] > 255.999) final_region_pos.mdV[VY] = 255.999;
+	//if (final_region_pos.mdV[VZ] > REGION_HEIGHT_METERS) final_region_pos.mdV[VZ] = REGION_HEIGHT_METERS;
 	//final_region_pos.clamp(0.0, 255.999);
+	final_region_pos.mdV[VX] = llclamp(final_region_pos.mdV[VX], 0.0,
+									   (F64)(region_width - F_ALMOST_ZERO));
+	final_region_pos.mdV[VY] = llclamp(final_region_pos.mdV[VY], 0.0,
+									   (F64)(region_width - F_ALMOST_ZERO));
+	final_region_pos.mdV[VZ] = llclamp(final_region_pos.mdV[VZ], 0.0,
+									   (F64)(LLWorld::getInstance()->getRegionMaxHeight() - F_ALMOST_ZERO));
+
 	return regionp->getPosGlobalFromRegion(LLVector3(final_region_pos));
 }
 
@@ -599,7 +613,7 @@ void LLWorld::updateVisibilities()
 		region_list_t::iterator curiter = iter++;
 		LLViewerRegion* regionp = *curiter;
 		F32 height = regionp->getLand().getMaxZ() - regionp->getLand().getMinZ();
-		F32 radius = 0.5f*fsqrtf(height * height + diagonal_squared);
+		F32 radius = 0.5f * (F32)sqrt(height * height + diagonal_squared);
 		if (!regionp->getLand().hasZData()
 			|| LLViewerCamera::getInstance()->sphereInFrustum(regionp->getCenterAgent(), radius))
 		{
@@ -620,7 +634,7 @@ void LLWorld::updateVisibilities()
 		}
 
 		F32 height = regionp->getLand().getMaxZ() - regionp->getLand().getMinZ();
-		F32 radius = 0.5f*fsqrtf(height * height + diagonal_squared);
+		F32 radius = 0.5f * (F32)sqrt(height * height + diagonal_squared);
 		if (LLViewerCamera::getInstance()->sphereInFrustum(regionp->getCenterAgent(), radius))
 		{
 			regionp->calculateCameraDistance();
@@ -645,18 +659,41 @@ void LLWorld::updateVisibilities()
 void LLWorld::updateRegions(F32 max_update_time)
 {
 	LLTimer update_timer;
-	BOOL did_one = FALSE;
-	
-	// Perform idle time updates for the regions (and associated surfaces)
-	for (region_list_t::iterator iter = mRegionList.begin();
-		 iter != mRegionList.end(); ++iter)
+	static LLCachedControl<U32> region_update_fraction(gSavedSettings, "RegionUpdateFraction");
+	F32 fraction = (F32)llclamp((S32)region_update_fraction, 2, 20);
+	F32 max_time = max_update_time / fraction;
+	LLViewerRegion* agent_region = gAgent.getRegion();
+	if (agent_region)
 	{
-		LLViewerRegion* regionp = *iter;
-		F32 max_time = max_update_time - update_timer.getElapsedTimeF32();
-		if (did_one && max_time <= 0.f)
-			break;
-		max_time = llmin(max_time, max_update_time*.1f);
-		did_one |= regionp->idleUpdate(max_update_time);
+		// Always perform an update on the agent region first.
+		agent_region->idleUpdate(max_time);
+	}
+	if (mActiveRegionOrderedList.size())
+	{
+		// Perform idle time updates for the other active regions
+		// (and associated surfaces)
+		for (region_list_t::iterator iter = mActiveRegionOrderedList.begin();
+			 iter != mActiveRegionOrderedList.end(); ++iter)
+		{
+			LLViewerRegion* regionp = *iter;
+			if (regionp == agent_region) continue;	// Already dealt with.
+			if (max_time > 0.f)
+			{
+				max_time = llmin(max_time, max_update_time / fraction);
+				regionp->idleUpdate(max_time);
+			}
+			max_time = max_update_time - update_timer.getElapsedTimeF32();
+		}
+		if (mActiveRegionOrderedList.size() > 1)
+		{
+			// Give the highest priority for the next pass to the region which
+			// was updated the longest time ago.
+			// Note that this reordering is the reason why we use a duplicate
+			// active region list: reordering the main list would make the
+			// mini-map flicker badly...
+			mActiveRegionOrderedList.push_front(mActiveRegionOrderedList.back());
+			mActiveRegionOrderedList.pop_back();
+		}
 	}
 }
 
@@ -667,19 +704,19 @@ void LLWorld::updateParticles()
 
 void LLWorld::updateClouds(const F32 dt)
 {
-	static BOOL* sFreezeTime = rebind_llcontrol<BOOL>("FreezeTime", &gSavedSettings, true);
-	if (*sFreezeTime)
+	static LLCachedControl<bool> sFreezeTime(gSavedSettings, "FreezeTime");
+	if (sFreezeTime)
 	{
 		// don't move clouds in snapshot mode
 		return;
 	}
 
-	static BOOL* sSkyUseClassicClouds = rebind_llcontrol<BOOL>("SkyUseClassicClouds2", &gSavedSettings, true);
-	if (mClassicCloudsEnabled != (*sSkyUseClassicClouds))
+	static LLCachedControl<bool> sSkyUseClassicClouds(gSavedSettings, "SkyUseClassicClouds2");
+	if (mClassicCloudsEnabled != (BOOL)sSkyUseClassicClouds)
 	{
 		// The classic cloud toggle has been flipped
 		// gotta update all of the cloud layers
-		mClassicCloudsEnabled = (*sSkyUseClassicClouds);
+		mClassicCloudsEnabled = (BOOL)sSkyUseClassicClouds;
 
 		if (!mClassicCloudsEnabled && mActiveRegionList.size())
 		{
@@ -1195,7 +1232,7 @@ void LLWorld::shiftRegions(const LLVector3& offset)
 	LLViewerPartSim::getInstance()->shift(offset);
 }
 
-LLViewerImage* LLWorld::getDefaultWaterTexture()
+LLViewerTexture* LLWorld::getDefaultWaterTexture()
 {
 	return mDefaultWaterTexturep;
 }

@@ -111,7 +111,7 @@ LLSD LLSaleInfo::asLLSD() const
 	return sd;
 }
 
-bool LLSaleInfo::fromLLSD(LLSD& sd, BOOL& has_perm_mask, U32& perm_mask)
+bool LLSaleInfo::fromLLSD(const LLSD& sd, BOOL& has_perm_mask, U32& perm_mask)
 {
 	const char *w;
 
@@ -135,6 +135,7 @@ bool LLSaleInfo::fromLLSD(LLSD& sd, BOOL& has_perm_mask, U32& perm_mask)
 	return true;
 }
 
+/*
 LLXMLNode *LLSaleInfo::exportFileXML() const
 {
 	LLXMLNode *ret = new LLXMLNode("sale_info", FALSE);
@@ -167,6 +168,7 @@ BOOL LLSaleInfo::importXML(LLXMLNode* node)
 	}
 	return success;
 }
+*/
 
 BOOL LLSaleInfo::importFile(LLFILE* fp, BOOL& has_perm_mask, U32& perm_mask)
 {

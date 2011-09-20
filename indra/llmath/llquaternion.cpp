@@ -32,9 +32,10 @@
 
 #include "linden_common.h"
 
+#include "llmath.h"	// for F_PI
+
 #include "llquaternion.h"
 
-#include "llmath.h"	// for F_PI
 //#include "vmath.h"
 #include "v3math.h"
 #include "v3dmath.h"
@@ -121,7 +122,7 @@ void	LLQuaternion::quantize16(F32 lower, F32 upper)
 	mQ[VZ] = z;
 	mQ[VS] = s;
 
-	normQuat();
+	normalize();
 }
 
 void	LLQuaternion::quantize8(F32 lower, F32 upper)
@@ -131,7 +132,7 @@ void	LLQuaternion::quantize8(F32 lower, F32 upper)
 	mQ[VZ] = U8_to_F32(F32_to_U8_ROUND(mQ[VZ], lower, upper), lower, upper);
 	mQ[VS] = U8_to_F32(F32_to_U8_ROUND(mQ[VS], lower, upper), lower, upper);
 
-	normQuat();
+	normalize();
 }
 
 // LLVector3 Magnitude and Normalization Functions
@@ -346,7 +347,7 @@ const LLQuaternion&	LLQuaternion::setQuat(const LLMatrix4 &mat)
 //    mQ[VZ] = (F32)(cosX*cosY*sinZ - sinX*sinY*cosZ);
 //#endif
 //
-//	normQuat();
+//	normalize();
 //	return (*this);
 }
 

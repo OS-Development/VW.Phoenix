@@ -198,7 +198,7 @@ public:
 	}
 };
 
-F32 *LLViewerThrottle::sThrottleBandwidthKBPS;
+F32 LLViewerThrottle::sThrottleBandwidthKBPS;
 
 LLViewerThrottle::LLViewerThrottle() :
 	mMaxBandwidth(0.f),
@@ -229,7 +229,9 @@ void LLViewerThrottle::setMaxBandwidth(F32 kbits_per_second, BOOL from_event)
 
 void LLViewerThrottle::load()
 {
-	mMaxBandwidth = *LLViewerThrottle::sThrottleBandwidthKBPS*1024;
+	static LLCachedControl<F32> ThrottleBandwidthKBPS(gSavedSettings, "ThrottleBandwidthKBPS");
+	LLViewerThrottle::sThrottleBandwidthKBPS = ThrottleBandwidthKBPS;
+	mMaxBandwidth = LLViewerThrottle::sThrottleBandwidthKBPS*1024;
 	resetDynamicThrottle();
 	mCurrent.dump();
 }

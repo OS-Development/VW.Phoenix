@@ -81,6 +81,7 @@ F32 calc_desired_size(LLViewerCamera* camera, LLVector3 pos, LLVector2 scale)
 LLViewerPart::LLViewerPart() :
 	mPartID(0),
 	mLastUpdateTime(0.f),
+	mSkipOffset(0.f),
 	mVPCallback(NULL),
 	mImagep(NULL)
 {
@@ -98,7 +99,7 @@ LLViewerPart::~LLViewerPart()
 	--LLViewerPartSim::sParticleCount2 ;
 }
 
-void LLViewerPart::init(LLPointer<LLViewerPartSource> sourcep, LLViewerImage *imagep, LLVPCallback cb)
+void LLViewerPart::init(LLPointer<LLViewerPartSource> sourcep, LLViewerTexture *imagep, LLVPCallback cb)
 {
 	LLMemType mt(LLMemType::MTYPE_PARTICLES);
 	mPartID = LLViewerPart::sNextPartID;
@@ -160,8 +161,8 @@ LLViewerPartGroup::LLViewerPartGroup(const LLVector3 &center_agent, const F32 bo
 
 	if (group != NULL)
 	{
-		LLVector3 center(group->mOctreeNode->getCenter());
-		LLVector3 size(group->mOctreeNode->getSize());
+		LLVector3 center(group->mOctreeNode->getCenter().getF32ptr());
+		LLVector3 size(group->mOctreeNode->getSize().getF32ptr());
 		size += LLVector3(0.01f, 0.01f, 0.01f);
 		mMinObjPos = center - size;
 		mMaxObjPos = center + size;

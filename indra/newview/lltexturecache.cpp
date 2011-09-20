@@ -501,9 +501,7 @@ bool LLTextureCacheRemoteWorker::doRead()
 			mReadData = data;
 
 			// Read the data at last
-			S32 bytes_read = LLAPRFile::readEx(filename, 
-											 mReadData + data_offset,
-											 file_offset, file_size);
+			S32 bytes_read = LLAPRFile::readEx(filename, mReadData + data_offset, file_offset, file_size);
 			if (bytes_read != file_size)
 			{
 				LL_DEBUGS("TextureCache") << "LLTextureCacheWorker: "  << mID
@@ -657,9 +655,7 @@ bool LLTextureCacheRemoteWorker::doWrite()
 			// build the cache file name from the UUID
 			std::string filename = mCache->getTextureFileName(mID);			
 // 			llinfos << "Writing Body: " << filename << " Bytes: " << file_offset+file_size << llendl;
-			S32 bytes_written = LLAPRFile::writeEx(	filename, 
-													mWriteData + TEXTURE_CACHE_ENTRY_SIZE,
-													0, file_size);
+			S32 bytes_written = LLAPRFile::writeEx(filename, mWriteData + TEXTURE_CACHE_ENTRY_SIZE,0, file_size);
 			if (bytes_written <= 0)
 			{
 				llwarns << "LLTextureCacheWorker: "  << mID
@@ -756,9 +752,6 @@ void LLTextureCacheWorker::endWork(S32 param, bool aborted)
 
 LLTextureCache::LLTextureCache(bool threaded)
 	: LLWorkerThread("TextureCache", threaded),
-	  mWorkersMutex(NULL),
-	  mHeaderMutex(NULL),
-	  mListMutex(NULL),
 	  mHeaderAPRFile(NULL),
 	  mReadOnly(TRUE), //do not allow to change the texture cache until setReadOnly() is called.
 	  mTexturesSizeTotal(0),
@@ -1022,7 +1015,9 @@ LLAPRFile* LLTextureCache::openHeaderEntriesFile(bool readonly, S32 offset)
 {
 	llassert_always(mHeaderAPRFile == NULL);
 	apr_int32_t flags = readonly ? APR_READ|APR_BINARY : APR_READ|APR_WRITE|APR_BINARY;
-	mHeaderAPRFile = new LLAPRFile(mHeaderEntriesFileName, flags, LLAPRFile::local);
+	// All code calling openHeaderEntriesFile, immediately calls closeHeaderEntriesFile,
+	// so this file is very short-lived.
+	mHeaderAPRFile = new LLAPRFile(mHeaderEntriesFileName, flags);
 	if(offset > 0)
 	{
 		mHeaderAPRFile->seek(APR_SET, offset);
@@ -1047,8 +1042,8 @@ void LLTextureCache::readEntriesHeader()
 	llassert_always(mHeaderAPRFile == NULL);
 	if (LLAPRFile::isExist(mHeaderEntriesFileName))
 	{
-		LLAPRFile::readEx(mHeaderEntriesFileName, (U8*)&mHeaderEntriesInfo, 0, sizeof(EntriesInfo));
-						  
+		LLAPRFile::readEx(mHeaderEntriesFileName, (U8*)&mHeaderEntriesInfo, 0,
+						  sizeof(EntriesInfo));
 	}
 	else //create an empty entries header.
 	{
@@ -1063,8 +1058,8 @@ void LLTextureCache::writeEntriesHeader()
 	llassert_always(mHeaderAPRFile == NULL);
 	if (!mReadOnly)
 	{
-		LLAPRFile::writeEx(mHeaderEntriesFileName, (U8*)&mHeaderEntriesInfo, 0, sizeof(EntriesInfo));
-						   
+		LLAPRFile::writeEx(mHeaderEntriesFileName, (U8*)&mHeaderEntriesInfo, 0,
+						   sizeof(EntriesInfo));
 	}
 }
 

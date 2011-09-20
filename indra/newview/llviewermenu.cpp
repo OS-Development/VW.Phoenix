@@ -41,47 +41,61 @@
 #include <sstream>
 
 // linden library includes
-#include "llaudioengine.h"
 #include "indra_constants.h"
+#include "llaudioengine.h"
 #include "llassetstorage.h"
 #include "llchat.h"
+#include "llclipboard.h"
 #include "llfeaturemanager.h"
 #include "llfocusmgr.h"
-#include "llfontgl.h"
+#include "llimage.h"
+#include "llimagebmp.h"
+#include "llimagej2c.h"
+#include "llimagetga.h"
 #include "llinstantmessage.h"
+#include "llkeyboard.h"
+#include "llmenugl.h"
+#include "llnotifications.h"
+#include "llnotify.h"
+#include "llparcel.h"
 #include "llpermissionsflags.h"
+#include "llprimitive.h"
 #include "llrect.h"
+#include "llresmgr.h"
 #include "llsecondlifeurls.h"
+#include "llsdserialize.h"
+#include "llstring.h"
+#include "lltimer.h"
 #include "lltransactiontypes.h"
 #include "llui.h"
+#include "lluictrlfactory.h"
+#include "lluuid.h"
+#include "llvfile.h"
 #include "llview.h"
+#include "llvolume.h"
+#include "llvolumemgr.h"
 #include "llxfermanager.h"
 #include "message.h"
+#include "object_flags.h"
 #include "raytrace.h"
-#include "llsdserialize.h"
-#include "lltimer.h"
-#include "llvfile.h"
-#include "llvolumemgr.h"
+#include "roles_constants.h"
 
 // newview includes
 #include "llagent.h"
-
 #include "llagentpilot.h"
+#include "llappviewer.h"
 #include "llbox.h"
 #include "llcallingcard.h"
-#include "llclipboard.h"
 #include "llcompilequeue.h"
 #include "llconsole.h"
-#include "llviewercontrol.h"
 #include "lldebugview.h"
-#include "lldir.h"
 #include "lldrawable.h"
 #include "lldrawpoolalpha.h"
 #include "lldrawpooltree.h"
 #include "llenvmanager.h"
 #include "llface.h"
+#include "llfasttimerview.h"
 #include "llfirstuse.h"
-#include "llfloater.h"
 #include "llfloaterabout.h"
 #include "llfloaterbuycurrency.h"
 #include "llfloateractivespeakers.h"
@@ -93,15 +107,15 @@
 #include "llfloaterbump.h"
 #include "llfloaterbuy.h"
 #include "llfloaterbuycontents.h"
-#include "llfloaterbuycurrency.h"
 #include "llfloaterbuyland.h"
 #include "llfloatercamera.h"
 #include "llfloaterchat.h"
+#include "llfloaterchatterbox.h"
 #include "llfloatercustomize.h"
 #include "llfloaterdaycycle.h"
 #include "llfloaterdirectory.h"
 #include "llfloatereditui.h"
-#include "llfloaterchatterbox.h"
+#include "llfloaterenvsettings.h"
 #include "llfloaterfriends.h"
 #include "llfloaterfonttest.h"
 #include "llfloatergesture.h"
@@ -110,7 +124,6 @@
 #include "llfloatergroupinvite.h"
 #include "llfloatergroups.h"
 #include "llfloaterhtmlcurrency.h"
-#include "llfloatermediabrowser.h"			// gViewerHtmlHelp
 #include "llfloaterhtmlsimple.h"
 #include "llfloaterhud.h"
 #include "llfloaterinspect.h"
@@ -118,59 +131,49 @@
 #include "llfloaterland.h"
 #include "llfloaterlandholdings.h"
 #include "llfloatermap.h"
+#include "llfloatermediabrowser.h"
+#include "llfloatermemleak.h"
 #include "llfloatermute.h"
+#include "llfloaternotificationsconsole.h"
 #include "llfloateropenobject.h"
+#include "llfloaterpay.h"
 #include "llfloaterpermissionsmgr.h"
 #include "llfloaterperms.h"
 #include "llfloaterpostprocess.h"
 #include "llfloaterpreference.h"
+#include "llfloaterregiondebugconsole.h"
 #include "llfloaterregioninfo.h"
 #include "llfloaterreporter.h"
 #include "llfloaterscriptdebug.h"
 #include "llfloatersettingsdebug.h"
-#include "llfloaterenvsettings.h"
 #include "llfloaterstats.h"
 #include "llfloatertest.h"
 #include "llfloatertools.h"
 #include "llfloaterwater.h"
 #include "llfloaterwindlight.h"
 #include "llfloaterworldmap.h"
-#include "llfloatermemleak.h"
 #include "llframestats.h"
 #include "llframestatview.h"
-#include "llfasttimerview.h"
-#include "llmemoryview.h"
-#include "llgivemoney.h"
 #include "llgroupmgr.h"
 #include "llhoverview.h"
 #include "llhudeffecttrail.h"
 #include "llhudmanager.h"
-#include "llimage.h"
-#include "llimagebmp.h"
-#include "llimagej2c.h"
-#include "llimagetga.h"
-#include "llinventorymodel.h"
+#include "llimview.h"
 #include "llinventoryview.h"
-#include "llkeyboard.h"
-#include "llpanellogin.h"
+#include "llmemoryview.h"
 #include "llmenucommands.h"
-#include "llmenugl.h"
 #include "llmimetypes.h"
 #include "llmorphview.h"
 #include "llmoveview.h"
 #include "llmutelist.h"
-#include "llnotify.h"
+#include "llpanellogin.h"
 #include "llpanelobject.h"
-#include "llparcel.h"
-#include "llprimitive.h"
-#include "llresmgr.h"
 #include "llselectmgr.h"
 #include "llsky.h"
 #include "llstatusbar.h"
 #include "llstatview.h"
-#include "llstring.h"
 #include "llsurfacepatch.h"
-#include "llimview.h"
+#include "lltexlayer.h"
 #include "lltextureview.h"
 #include "lltool.h"
 #include "lltoolbar.h"
@@ -181,17 +184,16 @@
 #include "lltoolpie.h"
 #include "lltoolplacer.h"
 #include "lltoolselectland.h"
-#include "lluictrlfactory.h"
 #include "lluploaddialog.h"
 #include "lluserauth.h"
-#include "lluuid.h"
 #include "llvelocitybar.h"
 #include "llviewercamera.h"
+#include "llviewercontrol.h"
 #include "llviewergenericmessage.h"
 #include "llviewergesture.h"
-#include "llviewerimagelist.h"	// gImageList
 #include "llviewerinventory.h"
-#include "llviewermenufile.h"	// init_menu_file()
+#include "llviewerjoystick.h"
+#include "llviewermenufile.h"			// init_menu_file()
 #include "llviewermessage.h"
 #include "llviewernetwork.h"
 #include "llviewerobjectlist.h"
@@ -199,24 +201,16 @@
 #include "llviewerparceloverlay.h"
 #include "llviewerregion.h"
 #include "llviewerstats.h"
+#include "llviewertexturelist.h"		// gTextureList
 #include "llviewerwindow.h"
 #include "llvoavatar.h"
-#include "llvolume.h"
+#include "llwaterparammanager.h"
 #include "llweb.h"
-#include "llworld.h"
-#include "llworldmap.h"
-#include "object_flags.h"
-#include "pipeline.h"
-#include "llappviewer.h"
-#include "roles_constants.h"
-#include "llviewerjoystick.h"
 #include "llwlanimator.h"
 #include "llwlparammanager.h"
-#include "llwaterparammanager.h"
-#include "llfloaternotificationsconsole.h"
-
-#include "lltexlayer.h"
-
+#include "llworld.h"
+#include "llworldmap.h"
+#include "pipeline.h"
 #include "llpolymesh.h"
 #include "floaterexploreanimations.h"
 #include "floaterexploresounds.h"
@@ -266,12 +260,9 @@ void handle_test_load_url(void*);
 //
 // Evil hackish imported globals
 //
-extern BOOL	gRenderLightGlows;
 extern BOOL gRenderAvatar;
-extern BOOL	gHideSelectedObjects;
 extern BOOL gShowOverlayTitle;
 extern BOOL gOcclusionCull;
-extern BOOL gAllowSelectAvatar;
 
 //
 // Globals
@@ -328,6 +319,7 @@ void handle_dump_focus(void*);
 
 // Advanced->Consoles menu
 void handle_show_notifications_console(void*);
+void handle_region_debug_console(void*);
 void handle_region_dump_settings(void*);
 void handle_region_dump_temp_asset_data(void*);
 void handle_region_clear_temp_asset_data(void*);
@@ -810,7 +802,8 @@ void init_client_menu(LLMenuGL* menu)
 		// Debugging view for unified notifications
 		sub->append(new LLMenuItemCallGL("Notifications Console...",
 						 &handle_show_notifications_console, NULL, NULL, '5', MASK_CONTROL|MASK_SHIFT ));
-		
+		sub->append(new LLMenuItemCallGL("Region Debug Console", 
+					&handle_region_debug_console, NULL, NULL, 'C', MASK_CONTROL|MASK_SHIFT));		
 
 		sub->appendSeparator();
 
@@ -1108,7 +1101,6 @@ void handle_export_menus_to_xml(void*)
 extern BOOL gDebugClicks;
 extern BOOL gDebugWindowProc;
 extern BOOL gDebugTextEditorTips;
-extern BOOL gDebugSelectMgr;
 
 void init_debug_ui_menu(LLMenuGL* menu)
 {
@@ -1137,7 +1129,7 @@ void init_debug_ui_menu(LLMenuGL* menu)
 		(void*)"DoubleClickTeleport"));
 	menu->appendSeparator();
 //	menu->append(new LLMenuItemCallGL( "Print Packets Lost",			&print_packets_lost, NULL, NULL, 'L', MASK_SHIFT ));
-	menu->append(new LLMenuItemToggleGL("Debug SelectMgr", &gDebugSelectMgr));
+	menu->append(new LLMenuItemCheckGL("Debug SelectMgr", menu_toggle_control, NULL, menu_check_control, (void*)"DebugSelectMgr"));
 	menu->append(new LLMenuItemToggleGL("Debug Clicks", &gDebugClicks));
 	menu->append(new LLMenuItemToggleGL("Debug Views", &LLView::sDebugRects));
 	menu->append(new LLMenuItemCheckGL("Show Name Tooltips", toggle_show_xui_names, NULL, check_show_xui_names, NULL));
@@ -1275,63 +1267,102 @@ void init_debug_rendering_menu(LLMenuGL* menu)
 	sub_menu = new LLMenuGL("Info Displays");
 	menu->appendMenu(sub_menu);
 
-	sub_menu->append(new LLMenuItemCheckGL("Verify",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_VERIFY));
-	sub_menu->append(new LLMenuItemCheckGL("BBoxes",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_BBOXES));
-	sub_menu->append(new LLMenuItemCheckGL("Points",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_POINTS));
-	sub_menu->append(new LLMenuItemCheckGL("Octree",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_OCTREE));
-	sub_menu->append(new LLMenuItemCheckGL("Shadow Frusta",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_SHADOW_FRUSTA));
-	sub_menu->append(new LLMenuItemCheckGL("Occlusion",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_OCCLUSION));
-	sub_menu->append(new LLMenuItemCheckGL("Render Batches", &LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_BATCH_SIZE));
-	sub_menu->append(new LLMenuItemCheckGL("Animated Textures",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_TEXTURE_ANIM));
-	sub_menu->append(new LLMenuItemCheckGL("Texture Priority",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_TEXTURE_PRIORITY));
-	sub_menu->append(new LLMenuItemCheckGL("Avatar Rendering Cost",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_SHAME));
-	sub_menu->append(new LLMenuItemCheckGL("Texture Area (sqrt(A))",&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_TEXTURE_AREA));
-	sub_menu->append(new LLMenuItemCheckGL("Texture Comments",&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_TEXTURE_COMMENT));
-	sub_menu->append(new LLMenuItemCheckGL("Face Area (sqrt(A))",&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_FACE_AREA));
-	sub_menu->append(new LLMenuItemCheckGL("Lights",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_LIGHTS));
-	sub_menu->append(new LLMenuItemCheckGL("Particles",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_PARTICLES));
-	sub_menu->append(new LLMenuItemCheckGL("Composition", &LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_COMPOSITION));
-	sub_menu->append(new LLMenuItemCheckGL("Glow",&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_GLOW));
-	sub_menu->append(new LLMenuItemCheckGL("Raycasting",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_RAYCAST));
-	sub_menu->append(new LLMenuItemCheckGL("Sculpt",	&LLPipeline::toggleRenderDebug, NULL,
-													&LLPipeline::toggleRenderDebugControl,
-													(void*)LLPipeline::RENDER_DEBUG_SCULPTED));
+	sub_menu->append(new LLMenuItemCheckGL("Verify",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_VERIFY));
+	sub_menu->append(new LLMenuItemCheckGL("BBoxes",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_BBOXES));
+	sub_menu->append(new LLMenuItemCheckGL("Normals",
+										   &LLPipeline::toggleRenderDebug, NULL,
+										   &LLPipeline::toggleRenderDebugControl,
+										   (void*)LLPipeline::RENDER_DEBUG_NORMALS));
+	sub_menu->append(new LLMenuItemCheckGL("Points",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_POINTS));
+	sub_menu->append(new LLMenuItemCheckGL("Octree",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_OCTREE));
+	sub_menu->append(new LLMenuItemCheckGL("Shadow Frusta",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_SHADOW_FRUSTA));
+	sub_menu->append(new LLMenuItemCheckGL("Physics Shapes",
+										   &LLPipeline::toggleRenderDebug, NULL,
+										   &LLPipeline::toggleRenderDebugControl,
+										   (void*)LLPipeline::RENDER_DEBUG_PHYSICS_SHAPES));
+	sub_menu->append(new LLMenuItemCheckGL("Occlusion",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_OCCLUSION));
+	sub_menu->append(new LLMenuItemCheckGL("Render Batches",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_BATCH_SIZE));
+	sub_menu->append(new LLMenuItemCheckGL("Update Type",
+										   &LLPipeline::toggleRenderDebug, NULL,
+										   &LLPipeline::toggleRenderDebugControl,
+										   (void*)LLPipeline::RENDER_DEBUG_UPDATE_TYPE));
+	sub_menu->append(new LLMenuItemCheckGL("Animated Textures",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_TEXTURE_ANIM));
+	sub_menu->append(new LLMenuItemCheckGL("Texture Priority",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_TEXTURE_PRIORITY));
+	sub_menu->append(new LLMenuItemCheckGL("Avatar Rendering Cost",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_SHAME));
+	sub_menu->append(new LLMenuItemCheckGL("Texture Area (sqrt(A))",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_TEXTURE_AREA));
+	sub_menu->append(new LLMenuItemCheckGL("Texture Comments",
+											&LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_TEXTURE_COMMENT));
+	sub_menu->append(new LLMenuItemCheckGL("Face Area (sqrt(A))",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_FACE_AREA));
+	sub_menu->append(new LLMenuItemCheckGL("LOD Info",
+										   &LLPipeline::toggleRenderDebug, NULL,
+										   &LLPipeline::toggleRenderDebugControl,
+										   (void*)LLPipeline::RENDER_DEBUG_LOD_INFO));
+	sub_menu->append(new LLMenuItemCheckGL("Build Queue",
+										   &LLPipeline::toggleRenderDebug, NULL,
+										   &LLPipeline::toggleRenderDebugControl,
+										   (void*)LLPipeline::RENDER_DEBUG_BUILD_QUEUE));
+	sub_menu->append(new LLMenuItemCheckGL("Lights",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_LIGHTS));
+	sub_menu->append(new LLMenuItemCheckGL("Particles",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_PARTICLES));
+	sub_menu->append(new LLMenuItemCheckGL("Composition",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_COMPOSITION));
+	sub_menu->append(new LLMenuItemCheckGL("Glow",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_GLOW));
+	sub_menu->append(new LLMenuItemCheckGL("Raycasting",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_RAYCAST));
+	sub_menu->append(new LLMenuItemCheckGL("Sculpt",
+										   &LLPipeline::toggleRenderDebug, NULL,
+											&LLPipeline::toggleRenderDebugControl,
+											(void*)LLPipeline::RENDER_DEBUG_SCULPTED));
 		
 	sub_menu->append(new LLMenuItemCallGL("Vectorize Perf Test", &run_vectorize_perf_test));
 
@@ -1358,7 +1389,7 @@ void init_debug_rendering_menu(LLMenuGL* menu)
 //	menu->append(new LLMenuItemCheckGL("Cull Small Objects", toggle_cull_small, NULL, menu_check_control, (void*)"RenderCullBySize"));
 
 	menu->appendSeparator();
-	menu->append(new LLMenuItemToggleGL("Hide Selected", &gHideSelectedObjects));
+	menu->append(new LLMenuItemCheckGL("Hide Selected Objects", menu_toggle_control, NULL, menu_check_control, (void*)"HideSelectedObjects"));
 	menu->appendSeparator();
 	menu->append(new LLMenuItemCheckGL("Tangent Basis", menu_toggle_control, NULL, menu_check_control, (void*)"ShowTangentBasis"));
 	menu->append(new LLMenuItemCallGL("Selected Texture Info", handle_selected_texture_info, NULL, NULL, 'T', MASK_CONTROL|MASK_SHIFT|MASK_ALT));
@@ -1374,17 +1405,20 @@ void init_debug_rendering_menu(LLMenuGL* menu)
 
 	item = new LLMenuItemCheckGL("Debug GL", menu_toggle_control, NULL, menu_check_control, (void*)"RenderDebugGL");
 	menu->append(item);
-	
+
 	item = new LLMenuItemCheckGL("Debug Pipeline", menu_toggle_control, NULL, menu_check_control, (void*)"RenderDebugPipeline");
 	menu->append(item);
-	
-	item = new LLMenuItemCheckGL("Fast Alpha", menu_toggle_control, NULL, menu_check_control, (void*)"RenderFastAlpha");
+
+	item = new LLMenuItemCheckGL("Automatic Alpha Masks (non-deferred)", menu_toggle_control, NULL, menu_check_control, (void*)"RenderAutoMaskAlphaNonDeferred");
 	menu->append(item);
-	
+
+	item = new LLMenuItemCheckGL("Automatic Alpha Masks (deferred)", menu_toggle_control, NULL, menu_check_control, (void*)"RenderAutoMaskAlphaDeferred");
+	menu->append(item);
+
 	item = new LLMenuItemCheckGL("Animate Textures", menu_toggle_control, NULL, menu_check_control, (void*)"AnimateTextures");
 	menu->append(item);
-	
-	item = new LLMenuItemCheckGL("Disable Textures", menu_toggle_variable, NULL, menu_check_variable, (void*)&LLViewerImage::sDontLoadVolumeTextures);
+
+	item = new LLMenuItemCheckGL("Disable Textures", menu_toggle_variable, NULL, menu_check_variable, (void*)&LLViewerTexture::sDontLoadVolumeTextures);
 	menu->append(item);
 	
 #if 1 //ndef LL_RELEASE_FOR_DOWNLOAD
@@ -1405,6 +1439,9 @@ void init_debug_rendering_menu(LLMenuGL* menu)
 	menu->append(item);
 
 	item = new LLMenuItemCheckGL("Audit Texture", menu_toggle_control, NULL, menu_check_control, (void*)"AuditTexture");
+	menu->append(item);
+
+	item = new LLMenuItemCheckGL("Load Meshes At Max LOD", menu_toggle_control, NULL, menu_check_control, (void*)"MeshLoadHighLOD");
 	menu->append(item);
 
 #ifndef LL_RELEASE_FOR_DOWNLOAD
@@ -1446,7 +1483,8 @@ void init_debug_avatar_menu(LLMenuGL* menu)
 
 	sub_menu->append(new LLMenuItemCallGL("Toggle PG", handle_toggle_pg));
 
-	sub_menu->append(new LLMenuItemToggleGL("Allow Select Avatar", &gAllowSelectAvatar));
+	sub_menu->append(new LLMenuItemCheckGL("Allow Select Avatar", menu_toggle_control, NULL, menu_check_control, (void*)"AllowSelectAvatar"));
+
 	sub_menu->createJumpKeys();
 
 	menu->appendMenu(sub_menu);
@@ -1482,7 +1520,6 @@ void init_debug_avatar_menu(LLMenuGL* menu)
 	LLMenuItemCallGL* mesh_item = new LLMenuItemCallGL("Meshes And Morphs...", handle_meshes_and_morphs);
 	mesh_item->setUserData((void*)mesh_item);  // So we can remove it later
 	menu->append(mesh_item);
-
 	menu->createJumpKeys();
 }
 
@@ -2714,18 +2751,17 @@ bool callback_freeze(const LLSD& notification, const LLSD& response)
 		}
 
 		LLMessageSystem* msg = gMessageSystem;
-		LLViewerObject* avatar = gObjectList.findObject(avatar_id);
-
-		if (avatar)
+		LLVOAvatar* avatarp = gObjectList.findAvatar(avatar_id);
+		if (avatarp && avatarp->getRegion())
 		{
 			msg->newMessage("FreezeUser");
 			msg->nextBlock("AgentData");
 			msg->addUUID("AgentID", gAgent.getID());
 			msg->addUUID("SessionID", gAgent.getSessionID());
 			msg->nextBlock("Data");
-			msg->addUUID("TargetID", avatar_id );
-			msg->addU32("Flags", flags );
-			msg->sendReliable( avatar->getRegion()->getHost() );
+			msg->addUUID("TargetID", avatar_id);
+			msg->addU32("Flags", flags);
+			msg->sendReliable(avatarp->getRegion()->getHost());
 		}
 	}
 	return false;
@@ -2825,40 +2861,38 @@ bool callback_eject(const LLSD& notification, const LLSD& response)
 	{
 		// Eject button
 		LLMessageSystem* msg = gMessageSystem;
-		LLViewerObject* avatar = gObjectList.findObject(avatar_id);
-
-		if (avatar)
+		LLVOAvatar* avatarp = gObjectList.findAvatar(avatar_id);
+		if (avatarp && avatarp->getRegion())
 		{
 			U32 flags = 0x0;
 			msg->newMessage("EjectUser");
 			msg->nextBlock("AgentData");
-			msg->addUUID("AgentID", gAgent.getID() );
-			msg->addUUID("SessionID", gAgent.getSessionID() );
+			msg->addUUID("AgentID", gAgent.getID());
+			msg->addUUID("SessionID", gAgent.getSessionID());
 			msg->nextBlock("Data");
-			msg->addUUID("TargetID", avatar_id );
-			msg->addU32("Flags", flags );
-			msg->sendReliable( avatar->getRegion()->getHost() );
+			msg->addUUID("TargetID", avatar_id);
+			msg->addU32("Flags", flags);
+			msg->sendReliable(avatarp->getRegion()->getHost());
 		}
 	}
 	else if (ban_enabled)
 	{
 		// This is tricky. It is similar to say if it is not an 'Eject' button,
-		// and it is also not an 'Cancle' button, and ban_enabled==ture, 
+		// and it is also not an 'Cancel' button, and ban_enabled==true, 
 		// it should be the 'Eject and Ban' button.
 		LLMessageSystem* msg = gMessageSystem;
-		LLViewerObject* avatar = gObjectList.findObject(avatar_id);
-
-		if (avatar)
+		LLVOAvatar* avatarp = gObjectList.findAvatar(avatar_id);
+		if (avatarp && avatarp->getRegion())
 		{
 			U32 flags = 0x1;
 			msg->newMessage("EjectUser");
 			msg->nextBlock("AgentData");
-			msg->addUUID("AgentID", gAgent.getID() );
-			msg->addUUID("SessionID", gAgent.getSessionID() );
+			msg->addUUID("AgentID", gAgent.getID());
+			msg->addUUID("SessionID", gAgent.getSessionID());
 			msg->nextBlock("Data");
-			msg->addUUID("TargetID", avatar_id );
+			msg->addUUID("TargetID", avatar_id);
 			msg->addU32("Flags", flags );
-			msg->sendReliable( avatar->getRegion()->getHost() );
+			msg->sendReliable(avatarp->getRegion()->getHost());
 		}
 	}
 	return false;
@@ -3194,6 +3228,11 @@ void handle_dump_group_info(void *)
 	llinfos << "powers " << gAgent.mGroupPowers << llendl;
 	llinfos << "title   " << gAgent.mGroupTitle << llendl;
 	//llinfos << "insig   " << gAgent.mGroupInsigniaID << llendl;
+}
+
+void handle_region_debug_console(void *)
+{
+	LLFloaterRegionDebugConsole::showInstance();
 }
 
 void handle_dump_capabilities_info(void *)
@@ -3970,7 +4009,7 @@ void god_force_inv_owner_permissive(LLViewerObject* object,
 	for ( ; inv_it != inv_end; ++inv_it)
 	{
 		if(((*inv_it)->getType() != LLAssetType::AT_CATEGORY)
-		   && ((*inv_it)->getType() != LLAssetType::AT_ROOT_CATEGORY))
+		   && ((*inv_it)->getType() != LLFolderType::FT_ROOT_CATEGORY))
 		{
 			LLInventoryObject* obj = *inv_it;
 			LLPointer<LLViewerInventoryItem> new_item = new LLViewerInventoryItem((LLViewerInventoryItem*)obj);
@@ -4289,7 +4328,7 @@ class LLToolsTakeCopy : public view_listener_t
 		if ( (gRlvHandler.hasBehaviour(RLV_BHVR_UNSIT)) && (!rlvCanDeleteOrReturn()) ) return true;
 // [/RLVa:KB]
 
-		const LLUUID& category_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_OBJECT);
+		const LLUUID& category_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_OBJECT);
 		derez_objects(DRD_ACQUIRE_TO_AGENT_INVENTORY, category_id);
 
 		return true;
@@ -4362,9 +4401,7 @@ class LLObjectEnableReturn : public view_listener_t
 					{
 						virtual bool apply(LLViewerObject* obj)
 						{
-							return (obj->isOverAgentOwnedLand() ||
-									obj->isOverGroupOwnedLand() ||
-									obj->permModify());
+							return obj->permModify() || obj->isReturnable();
 						}
 					} func;
 					const bool firstonly = true;
@@ -4384,7 +4421,7 @@ class LLObjectEnableReturn : public view_listener_t
 void force_take_copy(void*)
 {
 	if (LLSelectMgr::getInstance()->getSelection()->isEmpty()) return;
-	const LLUUID& category_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_OBJECT);
+	const LLUUID& category_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_OBJECT);
 	derez_objects(DRD_FORCE_TO_GOD_INVENTORY, category_id);
 }
 
@@ -4449,7 +4486,7 @@ void handle_take()
 		{
 		        // check trash
 			LLUUID trash;
-			trash = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+			trash = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 			if(category_id == trash || gInventory.isObjectDescendentOf(category_id, trash))
 			{
 				category_id.setNull();
@@ -4465,7 +4502,7 @@ void handle_take()
 	}
 	if(category_id.isNull())
 	{
-		category_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_OBJECT);
+		category_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_OBJECT);
 	}
 	LLSD payload;
 	payload["folder_id"] = category_id;
@@ -5638,7 +5675,7 @@ class LLWorldCreateLandmark : public view_listener_t
 		}
 
 		LLUUID folder_id;
-		folder_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_LANDMARK);
+		folder_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_LANDMARK);
 		std::string pos_string;
 		gAgent.buildLocationString(pos_string);
 		
@@ -7216,7 +7253,7 @@ void handle_selected_texture_info(void*)
 		{
 			if (!node->isTESelected(i)) continue;
 
-			LLViewerImage* img = node->getObject()->getTEImage(i);
+			LLViewerTexture* img = node->getObject()->getTEImage(i);
 			LLUUID image_id = img->getID();
 			faces_per_texture[image_id].push_back(i);
 		}
@@ -7226,7 +7263,7 @@ void handle_selected_texture_info(void*)
 		{
 			LLUUID image_id = it->first;
 			U8 te = it->second[0];
-			LLViewerImage* img = node->getObject()->getTEImage(te);
+			LLViewerTexture* img = node->getObject()->getTEImage(te);
 			S32 height = img->getHeight();
 			S32 width = img->getWidth();
 			S32 components = img->getComponents();
@@ -7246,7 +7283,7 @@ void handle_selected_texture_info(void*)
 
 void handle_dump_image_list(void*)
 {
-	gImageList.dump();
+	gTextureList.dump();
 }
 
 void handle_test_male(void*)
@@ -7693,9 +7730,9 @@ class LLViewEnableMouselook : public view_listener_t
 	{
 		// You can't go directly from customize avatar to mouselook.
 		// TODO: write code with appropriate dialogs to handle this transition.
-		static BOOL* sFreezeTime = rebind_llcontrol<BOOL>("FreezeTime", &gSavedSettings, true);
+		static LLCachedControl<bool> sFreezeTime(gSavedSettings, "FreezeTime");
 
-		bool new_value = (CAMERA_MODE_CUSTOMIZE_AVATAR != gAgent.getCameraMode() && !(*sFreezeTime));
+		bool new_value = (CAMERA_MODE_CUSTOMIZE_AVATAR != gAgent.getCameraMode() && !sFreezeTime);
 		gMenuHolder->findControl(userdata["control"].asString())->setValue(new_value);
 		return true;
 	}
@@ -7868,9 +7905,9 @@ class LLToolsShowSelectionHighlights : public view_listener_t
 	{
 		//LLSelectMgr::enableSilhouette = !LLSelectMgr::enableSilhouette;
 		//gSavedSettings.setBOOL("PhoenixRenderHighlightSelections",!gSavedSettings.getBOOL("PhoenixRenderHighlightSelections"));
-		LLSelectMgr::sRenderSelectionHighlights = !LLSelectMgr::sRenderSelectionHighlights;
+		//LLSelectMgr::sRenderSelectionHighlights = !LLSelectMgr::sRenderSelectionHighlights;
 		
-		gSavedSettings.setBOOL("PhoenixRenderHighlightSelections", LLSelectMgr::sRenderSelectionHighlights);
+		gSavedSettings.setBOOL("PhoenixRenderHighlightSelections", !gSavedSettings.getBOOL("PhoenixRenderHighlightSelections"));
 		return true;
 	}
 };
@@ -8292,7 +8329,7 @@ void handle_grab_texture(void* data)
 		LL_INFOS("texture") << "Adding baked texture " << asset_id << " to inventory." << llendl;
 		LLAssetType::EType asset_type = LLAssetType::AT_TEXTURE;
 		LLInventoryType::EType inv_type = LLInventoryType::IT_TEXTURE;
-		LLUUID folder_id(gInventory.findCategoryUUIDForType(asset_type));
+		LLUUID folder_id(gInventory.findCategoryUUIDForType(LLFolderType::FT_TEXTURE));
 		if(folder_id.notNull())
 		{
 			std::string name = "Baked ";
@@ -8563,7 +8600,7 @@ void handle_load_from_xml(void*)
 
 void handle_web_browser_test(void*)
 {
-	LLWeb::loadURL("http://secondlife.com/app/search/slurls.html");
+	LLFloaterMediaBrowser::showInstance("http://secondlife.com/app/search/slurls.html");
 }
 
 void handle_buy_currency_test(void*)

@@ -35,25 +35,26 @@
 #include "llvograss.h"
 
 #include "imageids.h"
-#include "llviewercontrol.h"
-
-#include "llagent.h"
-#include "llviewerwindow.h"
-#include "lldrawable.h"
-#include "llface.h"
-#include "llsky.h"
-#include "llsurface.h"
-#include "llsurfacepatch.h"
-#include "llvosky.h"
-#include "llviewercamera.h"
-#include "llviewerimagelist.h"
-#include "llviewerregion.h"
-#include "pipeline.h"
-#include "llselectmgr.h"
-#include "llspatialpartition.h"
-#include "llworld.h"
 #include "lldir.h"
 #include "llxmltree.h"
+
+#include "llagent.h"
+#include "lldrawable.h"
+#include "llface.h"
+#include "llselectmgr.h"
+#include "llsky.h"
+#include "llspatialpartition.h"
+#include "llsurface.h"
+#include "llsurfacepatch.h"
+#include "llviewercamera.h"
+#include "llviewercontrol.h"
+#include "llviewerregion.h"
+#include "llviewertexturelist.h"
+#include "llviewerwindow.h"
+#include "llvotree.h"
+#include "llvosky.h"
+#include "llworld.h"
+#include "pipeline.h"
 
 const S32 GRASS_MAX_BLADES =	32;
 const F32 GRASS_BLADE_BASE =	0.25f;			//  Width of grass at base
@@ -107,7 +108,7 @@ void LLVOGrass::updateSpecies()
 		SpeciesMap::const_iterator it = sSpeciesTable.begin();
 		mSpecies = (*it).first;
 	}
-	setTEImage(0, gImageList.getImage(sSpeciesTable[mSpecies]->mTextureID));
+	setTEImage(0, LLViewerTextureManager::getFetchedTexture(sSpeciesTable[mSpecies]->mTextureID, TRUE, LLViewerTexture::BOOST_NONE, LLViewerTexture::LOD_TEXTURE));
 }
 
 
@@ -172,7 +173,7 @@ void LLVOGrass::initClass()
 
 			static LLStdStringHandle texture_name_string = LLXmlTree::addAttributeString("texture_name");
 			success &= grass_def->getFastAttributeString(texture_name_string, textureName);
-			LLViewerImage* grass_image = gImageList.getImageFromFile(textureName);
+			LLViewerTexture* grass_image = LLViewerTextureManager::getFetchedTextureFromFile(textureName);
 			newGrass->mTextureID = grass_image->getID();
 		}
 
@@ -294,7 +295,7 @@ BOOL LLVOGrass::isActive() const
 
 BOOL LLVOGrass::idleUpdate(LLAgent &agent, LLWorld &world, const F64 &time)
 {
- 	if (mDead || !(gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_GRASS)))
+ 	if (mDead || !gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_GRASS))
 	{
 		return TRUE;
 	}
@@ -305,14 +306,30 @@ BOOL LLVOGrass::idleUpdate(LLAgent &agent, LLWorld &world, const F64 &time)
 		return TRUE;
 	}
 
-	if (mPatch && (mLastPatchUpdateTime != mPatch->getLastUpdateTime()))
+	if (LLVOTree::isTreeRenderingStopped()) //stop rendering grass
+	{
+		if (mNumBlades)
+		{
+			mNumBlades = 0 ;
+			gPipeline.markRebuild(mDrawable, LLDrawable::REBUILD_ALL, TRUE);
+		}
+		return TRUE ;
+	}
+	else if (!mNumBlades)//restart grass rendering
+	{
+		mNumBlades = GRASS_MAX_BLADES ;
+		gPipeline.markRebuild(mDrawable, LLDrawable::REBUILD_ALL, TRUE);
+
+		return TRUE;
+	}
+
+	if (mPatch && mLastPatchUpdateTime != mPatch->getLastUpdateTime())
 	{
 		gPipeline.markRebuild(mDrawable, LLDrawable::REBUILD_VOLUME, TRUE);
 	}
 
 	return TRUE;
 }
-
 
 void LLVOGrass::setPixelAreaAndAngle(LLAgent &agent)
 {
@@ -339,7 +356,7 @@ void LLVOGrass::updateTextures()
 	{
 		if (gPipeline.hasRenderDebugMask(LLPipeline::RENDER_DEBUG_TEXTURE_AREA))
 		{
-			setDebugText(llformat("%4.0f", fsqrtf(mPixelArea)));
+			setDebugText(llformat("%4.0f", (F32)sqrt(mPixelArea)));
 		}
 		getTEImage(0)->addTextureStats(mPixelArea);
 	}
@@ -350,6 +367,19 @@ BOOL LLVOGrass::updateLOD()
 	if (mDrawable->getNumFaces() <= 0)
 	{
 		return FALSE;
+	}
+	if (LLVOTree::isTreeRenderingStopped())
+	{
+		if (mNumBlades)
+		{
+			mNumBlades = 0 ;
+			gPipeline.markRebuild(mDrawable, LLDrawable::REBUILD_ALL, TRUE);
+		}
+		return TRUE ;
+	}
+	if (!mNumBlades)
+	{
+		mNumBlades = GRASS_MAX_BLADES;
 	}
 	
 	LLFace* face = mDrawable->getFace(0);
@@ -396,8 +426,24 @@ LLDrawable* LLVOGrass::createDrawable(LLPipeline *pipeline)
 BOOL LLVOGrass::updateGeometry(LLDrawable *drawable)
 {
 	LLFastTimer ftm(LLFastTimer::FTM_UPDATE_GRASS);
+
 	dirtySpatialGroup();
-	plantBlades();
+
+	if (!mNumBlades)	//stop rendering grass
+	{
+		if (mDrawable->getNumFaces() > 0)
+		{
+			LLFace* facep = mDrawable->getFace(0);
+			if (facep)
+			{
+				facep->setSize(0, 0);			
+			}
+		}
+	}
+	else
+	{		
+		plantBlades();
+	}
 	return TRUE;
 }
 
@@ -421,7 +467,7 @@ void LLVOGrass::plantBlades()
 	face->setTexture(getTEImage(0));
 	face->setState(LLFace::GLOBAL);
 	face->setSize(mNumBlades * 8, mNumBlades * 12);
-	face->mVertexBuffer = NULL;
+	face->setVertexBuffer(NULL);
 	face->setTEOffset(0);
 	face->mCenterLocal = mPosition + mRegionp->getOriginAgent();
 	
@@ -438,6 +484,11 @@ void LLVOGrass::getGeometry(S32 idx,
 								LLStrider<LLColor4U>& colorsp, 
 								LLStrider<U16>& indicesp)
 {
+	if (!mNumBlades)	//stop rendering grass
+	{
+		return;
+	}
+
 	mPatch = mRegionp->getLand().resolvePatchRegion(getPositionRegion());
 	if (mPatch)
 		mLastPatchUpdateTime = mPatch->getLastUpdateTime();
@@ -657,23 +708,23 @@ BOOL LLVOGrass::lineSegmentIntersect(const LLVector3& start, const LLVector3& en
 
 		U32 idx0 = 0,idx1 = 0,idx2 = 0;
 
-		if (LLTriangleRayIntersect(v[0], v[1], v[2], start, dir, &a, &b, &t, FALSE))
+		if (LLTriangleRayIntersect(v[0], v[1], v[2], start, dir, a, b, t, FALSE))
 		{
 			hit = TRUE;
 			idx0 = 0; idx1 = 1; idx2 = 2;
 		}
-		else if (LLTriangleRayIntersect(v[1], v[3], v[2], start, dir, &a, &b, &t, FALSE))
+		else if (LLTriangleRayIntersect(v[1], v[3], v[2], start, dir, a, b, t, FALSE))
 		{
 			hit = TRUE;
 			idx0 = 1; idx1 = 3; idx2 = 2;
 		}
-		else if (LLTriangleRayIntersect(v[2], v[1], v[0], start, dir, &a, &b, &t, FALSE))
+		else if (LLTriangleRayIntersect(v[2], v[1], v[0], start, dir, a, b, t, FALSE))
 		{
 			normal1 = -normal1;
 			hit = TRUE;
 			idx0 = 2; idx1 = 1; idx2 = 0;
 		}
-		else if (LLTriangleRayIntersect(v[2], v[3], v[1], start, dir, &a, &b, &t, FALSE))
+		else if (LLTriangleRayIntersect(v[2], v[3], v[1], start, dir, a, b, t, FALSE))
 		{
 			normal1 = -normal1;
 			hit = TRUE;
@@ -719,19 +770,17 @@ BOOL LLVOGrass::lineSegmentIntersect(const LLVector3& start, const LLVector3& en
 
 void LLVOGrass::generateSilhouetteVertices(std::vector<LLVector3> &vertices,
 										   std::vector<LLVector3> &normals,
-										   std::vector<S32> &segments,
 										   const LLVector3& obj_cam_vec,
 										   const LLMatrix4& mat,
 										   const LLMatrix3& norm_mat)
 {
 	vertices.clear();
 	normals.clear();
-	segments.clear();
 	
 	F32 width  = sSpeciesTable[mSpecies]->mBladeSizeX;
 	F32 height = sSpeciesTable[mSpecies]->mBladeSizeY;
 
-	for (S32 i = 0;  i < mNumBlades; i++)
+	for (S32 i = 0; i < mNumBlades; i++)
 	{
 		F32 x   = exp_x[i] * mScale.mV[VX];
 		F32 y   = exp_y[i] * mScale.mV[VY];
@@ -767,32 +816,28 @@ void LLVOGrass::generateSilhouetteVertices(std::vector<LLVector3> &vertices,
 		position4.mV[2] += blade_height;
 
 
-		LLVector3 normal = (position1-position2) % (position2 - position3);
+		LLVector3 normal = (position1 - position2) % (position2 - position3);
 		normal.normalize();
 
 		vertices.push_back(position1 + mRegionp->getOriginAgent());
 		normals.push_back(normal);
 		vertices.push_back(position2 + mRegionp->getOriginAgent());
 		normals.push_back(normal);
-		segments.push_back(vertices.size());
 
 		vertices.push_back(position2 + mRegionp->getOriginAgent());
 		normals.push_back(normal);
 		vertices.push_back(position4 + mRegionp->getOriginAgent());
 		normals.push_back(normal);
-		segments.push_back(vertices.size());
 
 		vertices.push_back(position4 + mRegionp->getOriginAgent());
 		normals.push_back(normal);
 		vertices.push_back(position3 + mRegionp->getOriginAgent());
 		normals.push_back(normal);
-		segments.push_back(vertices.size());
 
 		vertices.push_back(position3 + mRegionp->getOriginAgent());
 		normals.push_back(normal);
 		vertices.push_back(position1 + mRegionp->getOriginAgent());
 		normals.push_back(normal);
-		segments.push_back(vertices.size());
 	}
 }
 	
@@ -801,10 +846,8 @@ void LLVOGrass::generateSilhouetteVertices(std::vector<LLVector3> &vertices,
 void LLVOGrass::generateSilhouette(LLSelectNode* nodep, const LLVector3& view_point)
 {
 	generateSilhouetteVertices(nodep->mSilhouetteVertices, nodep->mSilhouetteNormals,
-							   nodep->mSilhouetteSegments,
-							   LLVector3(0,0,0), LLMatrix4(), LLMatrix3());
+							   LLVector3(0, 0, 0), LLMatrix4(), LLMatrix3());
 
 	nodep->mSilhouetteExists = TRUE;
 	
 }
-

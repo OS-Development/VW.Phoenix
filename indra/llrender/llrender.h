@@ -43,14 +43,16 @@
 #include "v2math.h"
 #include "v3math.h"
 #include "v4coloru.h"
+#include "v4math.h"
 #include "llstrider.h"
-#include "llmemory.h"
+#include "llpointer.h"
 #include "llglheaders.h"
 
 class LLVertexBuffer;
 class LLCubeMap;
 class LLImageGL;
 class LLRenderTarget;
+class LLTexture;
 
 class LLTexUnit
 {
@@ -58,10 +60,10 @@ class LLTexUnit
 public:
 	typedef enum
 	{
-		TT_TEXTURE = 0,			// Standard 2D Texture
+		TT_TEXTURE = 0,		// Standard 2D Texture
 		TT_RECT_TEXTURE,	// Non power of 2 texture
 		TT_CUBE_MAP,		// 6-sided cube map texture
-		TT_NONE 		// No texture type is currently enabled
+		TT_NONE 			// No texture type is currently enabled
 	} eTextureType;
 
 	typedef enum
@@ -149,6 +151,7 @@ public:
 	// Binds the LLImageGL to this texture unit 
 	// (automatically enables the unit for the LLImageGL's texture type)
 	bool bind(LLImageGL* texture, bool for_rendering = false, bool forceBind = false);
+	bool bind(LLTexture* texture, bool for_rendering = false, bool forceBind = false);
 
 	// Binds a cubemap to this texture unit 
 	// (automatically enables the texture unit for cubemaps)
@@ -216,6 +219,41 @@ protected:
 	void setTextureCombiner(eTextureBlendOp op, eTextureBlendSrc src1, eTextureBlendSrc src2, bool isAlpha = false);
 };
 
+class LLLightState
+{
+public:
+	LLLightState(S32 index);
+
+	void enable();
+	void disable();
+	void setDiffuse(const LLColor4& diffuse);
+	void setAmbient(const LLColor4& ambient);
+	void setSpecular(const LLColor4& specular);
+	void setPosition(const LLVector4& position);
+	void setConstantAttenuation(const F32& atten);
+	void setLinearAttenuation(const F32& atten);
+	void setQuadraticAttenuation(const F32& atten);
+	void setSpotExponent(const F32& exponent);
+	void setSpotCutoff(const F32& cutoff);
+	void setSpotDirection(const LLVector3& direction);
+
+protected:
+	S32 mIndex;
+	bool mEnabled;
+	LLColor4 mDiffuse;
+	LLColor4 mAmbient;
+	LLColor4 mSpecular;
+	LLVector4 mPosition;
+	LLVector3 mSpotDirection;
+
+	F32 mConstantAtten;
+	F32 mLinearAtten;
+	F32 mQuadraticAtten;
+
+	F32 mSpotExponent;
+	F32 mSpotCutoff;
+};
+
 class LLRender
 {
 	friend class LLTexUnit;
@@ -268,7 +306,9 @@ public:
 		BF_DEST_ALPHA,
 		BF_SOURCE_ALPHA,
 		BF_ONE_MINUS_DEST_ALPHA,
-		BF_ONE_MINUS_SOURCE_ALPHA
+		BF_ONE_MINUS_SOURCE_ALPHA,
+
+		BF_UNDEF
 	} eBlendFactor;
 
 	LLRender();
@@ -305,13 +345,23 @@ public:
 	void color3fv(const GLfloat* c);
 	void color4ubv(const GLubyte* c);
 
+	void vertexBatchPreTransformed(LLVector3* verts, S32 vert_count);
+	void vertexBatchPreTransformed(LLVector3* verts, LLVector2* uvs, S32 vert_count);
+	void vertexBatchPreTransformed(LLVector3* verts, LLVector2* uvs, LLColor4U*, S32 vert_count);
+
 	void setColorMask(bool writeColor, bool writeAlpha);
 	void setColorMask(bool writeColorR, bool writeColorG, bool writeColorB, bool writeAlpha);
 	void setSceneBlendType(eBlendType type);
 
 	void setAlphaRejectSettings(eCompareFunc func, F32 value = 0.01f);
 
+	// applies blend func to both color and alpha
 	void blendFunc(eBlendFactor sfactor, eBlendFactor dfactor);
+	// applies separate blend functions to color and alpha
+	void blendFunc(eBlendFactor color_sfactor, eBlendFactor color_dfactor,
+				   eBlendFactor alpha_sfactor, eBlendFactor alpha_dfactor);
+
+	LLLightState* getLight(U32 index);
 
 	LLTexUnit* getTexUnit(U32 index);
 
@@ -333,12 +383,12 @@ public:
 public:
 
 private:
-	bool				mDirty;
+	bool			mDirty;
 	U32				mCount;
 	U32				mMode;
 	U32				mCurrTextureUnitIndex;
-	bool				mCurrColorMask[4];
-	eCompareFunc			mCurrAlphaFunc;
+	bool			mCurrColorMask[4];
+	eCompareFunc	mCurrAlphaFunc;
 	F32				mCurrAlphaFuncVal;
 
 	LLPointer<LLVertexBuffer>	mBuffer;
@@ -346,13 +396,20 @@ private:
 	LLStrider<LLVector2>		mTexcoordsp;
 	LLStrider<LLColor4U>		mColorsp;
 	std::vector<LLTexUnit*>		mTexUnits;
-	LLTexUnit*			mDummyTexUnit;
+	LLTexUnit*					mDummyTexUnit;
+	std::vector<LLLightState*> mLightState;
+
+	eBlendFactor mCurrBlendColorSFactor;
+	eBlendFactor mCurrBlendColorDFactor;
+	eBlendFactor mCurrBlendAlphaSFactor;
+	eBlendFactor mCurrBlendAlphaDFactor;
 
 	F32				mMaxAnisotropy;
 };
 
 extern F64 gGLModelView[16];
 extern F64 gGLLastModelView[16];
+extern F64 gGLLastProjection[16];
 extern F64 gGLProjection[16];
 extern S32 gGLViewport[4];
 

@@ -340,10 +340,10 @@ void LLHUDEffectLookAt::unpackData(LLMessageSystem *mesgsys, S32 blocknum)
 	
 	htonmemcpy(source_id.mData, &(packed_data[SOURCE_AVATAR]), MVT_LLUUID, 16);
 
-	LLViewerObject *objp = gObjectList.findObject(source_id);
-	if (objp && objp->isAvatar())
+	LLVOAvatar* avatarp = gObjectList.findAvatar(source_id);
+	if (avatarp)
 	{
-		setSourceObject(objp);
+		setSourceObject(avatarp);
 	}
 	else
 	{
@@ -353,7 +353,7 @@ void LLHUDEffectLookAt::unpackData(LLMessageSystem *mesgsys, S32 blocknum)
 
 	htonmemcpy(target_id.mData, &(packed_data[TARGET_OBJECT]), MVT_LLUUID, 16);
 
-	objp = gObjectList.findObject(target_id);
+	LLViewerObject* objp = gObjectList.findObject(target_id);
 
 	htonmemcpy(new_target.mdV, &(packed_data[TARGET_POS]), MVT_LLVector3d, 24);
 
@@ -509,9 +509,9 @@ void LLHUDEffectLookAt::setSourceObject(LLViewerObject* objectp)
 //-----------------------------------------------------------------------------
 void LLHUDEffectLookAt::render()
 {
-	static BOOL *sPhoenixDontShowMyLookAt = rebind_llcontrol<BOOL>("PhoenixDontShowMyLookAt", &gSavedSettings, true);
+	static LLCachedControl<bool> sPhoenixDontShowMyLookAt(gSavedSettings, "PhoenixDontShowMyLookAt");
 	
-	if (*sPhoenixDontShowMyLookAt &&
+	if (sPhoenixDontShowMyLookAt &&
         (gAgent.getAvatarObject() == ((LLVOAvatar*)(LLViewerObject*)mSourceObject))) return;
 		if (sDebugLookAt && mSourceObject.notNull())
 		{
@@ -537,8 +537,8 @@ void LLHUDEffectLookAt::render()
 			} gGL.end();
 			gGL.popMatrix();
 
-			static BOOL *sPhoenixShowLookAtNames = rebind_llcontrol<BOOL>("PhoenixShowLookAtNames", &gSavedSettings, true);
-			if (*sPhoenixShowLookAtNames)
+			static LLCachedControl<bool> sPhoenixShowLookAtNames(gSavedSettings, "PhoenixShowLookAtNames");
+			if (sPhoenixShowLookAtNames)
 				{
 					const LLFontGL* fontp = LLResMgr::getInstance()->getRes( LLFONT_SANSSERIF_SMALL );
 					LLGLEnable color_mat(GL_COLOR_MATERIAL);
@@ -579,9 +579,9 @@ void LLHUDEffectLookAt::render()
 //-----------------------------------------------------------------------------
 void LLHUDEffectLookAt::update()
 {
-	static BOOL *sPersistShowLookAt = rebind_llcontrol<BOOL>("PersistShowLookAt", &gSavedSettings, true);
+	static LLCachedControl<bool> sPersistShowLookAt(gSavedSettings, "PersistShowLookAt");
 	
-	LLHUDEffectLookAt::sDebugLookAt = *sPersistShowLookAt;
+	LLHUDEffectLookAt::sDebugLookAt = (BOOL)sPersistShowLookAt;
 	// If the target object is dead, set the target object to NULL
 	if (!mTargetObject.isNull() && mTargetObject->isDead())
 	{

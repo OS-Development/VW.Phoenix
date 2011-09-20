@@ -223,8 +223,8 @@ void LLPanelAvatarSecondLife::updatePartnerName()
 		if (LLAvatarNameCache::get(mPartnerID, &avatar_name))
 		{
 			std::string name;
-			static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-			switch (*sPhoenixNameSystem)
+			static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+			switch (sPhoenixNameSystem)
 			{
 				case 0 : name = avatar_name.getLegacyName(); break;
 				case 1 : name = (avatar_name.mIsDisplayNameDefault ? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
@@ -245,7 +245,7 @@ void LLPanelAvatarSecondLife::updatePartnerName()
 //-----------------------------------------------------------------------------
 void LLPanelAvatarSecondLife::clearControls()
 {
-	LLTextureCtrl*	image_ctrl = getChild<LLTextureCtrl>("img");
+	LLTextureCtrl* image_ctrl = getChild<LLTextureCtrl>("img");
 	if(image_ctrl)
 	{
 		image_ctrl->setImageAssetID(LLUUID::null);
@@ -291,7 +291,7 @@ void LLPanelAvatarFirstLife::onClickImage(void* data)
 {
 	LLPanelAvatarFirstLife* self = (LLPanelAvatarFirstLife*)data;
 	
-	LLTextureCtrl*	image_ctrl = self->getChild<LLTextureCtrl>("img");
+	LLTextureCtrl* image_ctrl = self->getChild<LLTextureCtrl>("img");
 	if(image_ctrl)
 	{ 
 		LLUUID mUUID = image_ctrl->getImageAssetID();
@@ -327,7 +327,7 @@ void LLPanelAvatarSecondLife::onClickImage(void* data)
 	{
 		std::string name_text = name_ctrl->getText();	
 	
-		LLTextureCtrl*	image_ctrl = self->getChild<LLTextureCtrl>("img");
+		LLTextureCtrl* image_ctrl = self->getChild<LLTextureCtrl>("img");
 		if(image_ctrl)
 		{ 
 			LLUUID mUUID = image_ctrl->getImageAssetID();
@@ -709,6 +709,7 @@ void LLPanelAvatarWeb::handleMediaEvent(LLPluginClassMedia* self, EMediaEvent ev
 	}
 }
 
+}
 
 //-----------------------------------------------------------------------------
 // LLPanelAvatarAdvanced
@@ -1302,7 +1303,7 @@ LLPanelAvatar::LLPanelAvatar(
 	mPanelFirstLife(NULL),
 	mPanelWeb(NULL),
 	mDropTarget(NULL),
-	mAvatarID( LLUUID::null ),	// mAvatarID is set with 'setAvatar' or 'setAvatarID'
+	mAvatarID(LLUUID::null),	// mAvatarID is set with 'setAvatarID()'
 	mHaveProperties(FALSE),
 	mHaveStatistics(FALSE),
 	mHaveNotes(false),
@@ -1371,6 +1372,7 @@ BOOL LLPanelAvatar::canClose()
 	return mPanelClassified && mPanelClassified->canClose();
 }
 
+/*
 void LLPanelAvatar::setAvatar(LLViewerObject *avatarp)
 {
 	// find the avatar and grab the name
@@ -1394,6 +1396,7 @@ void LLPanelAvatar::setAvatar(LLViewerObject *avatarp)
 	// If we have an avatar pointer, they must be online.
 	setAvatarID(avatarp->getID(), name, ONLINE_STATUS_YES);
 }
+*/
 
 class JCProfileCallback : public JCBridgeCallback
 {
@@ -1741,9 +1744,10 @@ void LLPanelAvatar::resetGroupList()
 				row["columns"][0]["font"] = "SANSSERIF_SMALL";
 				if (!group_data.mListInProfile)
 				{
-					static LLColor4 *sScrollUnselectedColor = rebind_llcontrol<LLColor4>("ScrollUnselectedColor", LLUI::sColorsGroup, true);
+					static LLCachedControl<LLColor4U> sScrollUnselectedColor((*LLUI::sColorsGroup), "ScrollUnselectedColor");
 
-					row["columns"][0]["color"] = (*sScrollUnselectedColor).getValue();
+					LLColor4 tmpcol = (LLColor4)sScrollUnselectedColor;
+					row["columns"][0]["color"] = tmpcol.getValue();
 				}
 				row["columns"][0]["width"] = 0;
 				group_list->addElement(row);
@@ -2174,7 +2178,7 @@ void LLPanelAvatar::processAvatarPropertiesReply(LLMessageSystem *msg, void**)
 
 		self->mPanelWeb->setWebURL(profile_url);
 
-		LLTextureCtrl*	image_ctrl = self->mPanelSecondLife->getChild<LLTextureCtrl>("img");
+		LLTextureCtrl* image_ctrl = self->mPanelSecondLife->getChild<LLTextureCtrl>("img");
 		if(image_ctrl)
 		{
 			image_ctrl->setImageAssetID(image_id);
@@ -2199,7 +2203,7 @@ void LLPanelAvatar::processAvatarPropertiesReply(LLMessageSystem *msg, void**)
 				aboutfl_txtctrl->setText(fl_about_text);
 			else //Cause url parsing is weird like this -KC
 				aboutfl_txtctrl->appendColoredText(fl_about_text, false, false, aboutfl_txtctrl->getReadOnlyFgColor());
-			LLTextureCtrl*	image_ctrl = self->mPanelFirstLife->getChild<LLTextureCtrl>("img");
+			LLTextureCtrl* image_ctrl = self->mPanelFirstLife->getChild<LLTextureCtrl>("img");
 			if(image_ctrl)
 			{
 				image_ctrl->setImageAssetID(fl_image_id);
@@ -2337,9 +2341,10 @@ void LLPanelAvatar::processAvatarGroupsReply(LLMessageSystem *msg, void**)
 				// Set unselected color if found and group is not visible in profile
 				if (group_data && !group_data->mListInProfile)
 				{
-					static LLColor4 *sScrollUnselectedColor = rebind_llcontrol<LLColor4>("ScrollUnselectedColor", LLUI::sColorsGroup, true);
+					static LLCachedControl<LLColor4U> sScrollUnselectedColor((*LLUI::sColorsGroup), "ScrollUnselectedColor");
 
-					row["columns"][0]["color"] = (*sScrollUnselectedColor).getValue();
+					LLColor4 tmpcol = (LLColor4)sScrollUnselectedColor;
+					row["columns"][0]["color"] = tmpcol.getValue();
 				}
 				if (group_list)
 				{
@@ -2347,7 +2352,7 @@ void LLPanelAvatar::processAvatarGroupsReply(LLMessageSystem *msg, void**)
 				}
 			}
 		}
-		if(group_list) group_list->sortByColumnIndex(0, TRUE);
+		if (group_list) group_list->sortByColumnIndex(0, TRUE);
 	}
 }
 
@@ -2388,7 +2393,7 @@ void LLPanelAvatar::sendAvatarPropertiesUpdate()
 	if (mPanelFirstLife)
 	{
 		first_life_about_text = mPanelFirstLife->childGetValue("about").asString();
-		LLTextureCtrl*	image_ctrl = mPanelFirstLife->getChild<LLTextureCtrl>("img");
+		LLTextureCtrl* image_ctrl = mPanelFirstLife->getChild<LLTextureCtrl>("img");
 		if(image_ctrl)
 		{
 			first_life_image_id = image_ctrl->getImageAssetID();
@@ -2405,7 +2410,7 @@ void LLPanelAvatar::sendAvatarPropertiesUpdate()
 	msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID() );
 	msg->nextBlockFast(_PREHASH_PropertiesData);
 	
-	LLTextureCtrl*	image_ctrl = mPanelSecondLife->getChild<LLTextureCtrl>("img");
+	LLTextureCtrl* image_ctrl = mPanelSecondLife->getChild<LLTextureCtrl>("img");
 	if(image_ctrl)
 	{
 		msg->addUUIDFast(	_PREHASH_ImageID,	image_ctrl->getImageAssetID());

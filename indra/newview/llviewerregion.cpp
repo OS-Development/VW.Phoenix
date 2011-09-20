@@ -37,6 +37,7 @@
 #include "indra_constants.h"
 #include "llmath.h"
 #include "llhttpclient.h"
+#include "llsdserialize.h"
 #include "llregionflags.h"
 #include "llregionhandle.h"
 #include "llsurface.h"
@@ -76,6 +77,8 @@ extern BOOL gNoRender;
 
 const F32 WATER_TEXTURE_SCALE = 8.f;			//  Number of times to repeat the water texture across a region
 const S16 MAX_MAP_DIST = 10;
+const F32 CAP_REQUEST_TIMEOUT = 18;
+const S32 MAX_CAP_REQUEST_ATTEMPTS = 30;
 
 class BaseCapabilitiesComplete : public LLHTTPClient::Responder
 {
@@ -1072,6 +1075,20 @@ void LLViewerRegion::getInfo(LLSD& info)
 	info["Region"]["Handle"]["y"] = (LLSD::Integer)y;
 }
 
+void LLViewerRegion::getSimulatorFeatures(LLSD& sim_features)
+{
+	sim_features = mSimulatorFeatures;
+}
+
+void LLViewerRegion::setSimulatorFeatures(const LLSD& sim_features)
+{
+	llinfos << "Received simulator features for region: " << getName() << llendl;
+	std::stringstream str;
+	LLSDSerialize::toPrettyXML(sim_features, str);
+	LL_DEBUGS("SimulatorFeatures") << "\n" << str.str() << LL_ENDL;
+	mSimulatorFeatures = sim_features;
+}
+
 void LLViewerRegion::cacheFullUpdate(LLViewerObject* objectp, LLDataPackerBinaryBuffer &dp)
 {
 	U32 local_id = objectp->getLocalID();
@@ -1418,11 +1435,14 @@ void LLViewerRegion::setSeedCapability(const std::string& url)
 	capabilityNames.append("FetchLibDescendents");
 	capabilityNames.append("GetTexture");
 	capabilityNames.append("GetMesh"); // detect mesh
+	capabilityNames.append("GetObjectCost");
+	capabilityNames.append("GetObjectPhysicsData");
 	capabilityNames.append("GroupProposalBallot");
 	capabilityNames.append("GetDisplayNames");
 	capabilityNames.append("HomeLocation");
 	capabilityNames.append("MapLayer");
 	capabilityNames.append("MapLayerGod");
+	capabilityNames.append("MeshUploadFlag");
 	capabilityNames.append("NewFileAgentInventory");
 	capabilityNames.append("ParcelPropertiesUpdate");
 	capabilityNames.append("ParcelMediaURLFilterList");
@@ -1439,6 +1459,9 @@ void LLViewerRegion::setSeedCapability(const std::string& url)
 	capabilityNames.append("SetDisplayName");
 	capabilityNames.append("SendUserReportWithScreenshot");
 	capabilityNames.append("ServerReleaseNotes");
+	capabilityNames.append("SimConsole");
+	capabilityNames.append("SimConsoleAsync");
+	capabilityNames.append("SimulatorFeatures");
 	capabilityNames.append("StartGroupProposal");
 	capabilityNames.append("TextureStats");
 	capabilityNames.append("UntrustedSimulatorMessage");
@@ -1466,6 +1489,50 @@ void LLViewerRegion::setSeedCapability(const std::string& url)
 	LLHTTPClient::post(url, capabilityNames, mHttpResponderPtr);
 }
 
+class SimulatorFeaturesReceived : public LLHTTPClient::Responder
+{
+	LOG_CLASS(SimulatorFeaturesReceived);
+public:
+    SimulatorFeaturesReceived(const std::string& retry_url, U64 region_handle,
+							  S32 attempt = 0, S32 max_attempts = MAX_CAP_REQUEST_ATTEMPTS)
+	: mRetryURL(retry_url), mRegionHandle(region_handle), mAttempt(attempt), mMaxAttempts(max_attempts)
+    { }
+
+    void error(U32 statusNum, const std::string& reason)
+    {
+		LL_WARNS2("AppInit", "SimulatorFeatures") << statusNum << ": " << reason << LL_ENDL;
+		retry();
+    }
+
+    void result(const LLSD& content)
+    {
+		LLViewerRegion *regionp = LLWorld::getInstance()->getRegionFromHandle(mRegionHandle);
+		if(!regionp) //region is removed or responder is not created.
+		{
+			LL_WARNS2("AppInit", "SimulatorFeatures") << "Received results for region that no longer exists!" << LL_ENDL;
+			return ;
+		}
+
+		regionp->setSimulatorFeatures(content);
+	}
+
+private:
+	void retry()
+	{
+		if (mAttempt < mMaxAttempts)
+		{
+			mAttempt++;
+			LL_WARNS2("AppInit", "SimulatorFeatures") << "Re-trying '" << mRetryURL << "'.  Retry #" << mAttempt << LL_ENDL;
+			LLHTTPClient::get(mRetryURL, new SimulatorFeaturesReceived(*this), LLSD(), CAP_REQUEST_TIMEOUT);
+		}
+	}
+
+	std::string mRetryURL;
+	U64 mRegionHandle;
+	S32 mAttempt;
+	S32 mMaxAttempts;
+};
+
 void LLViewerRegion::setCapability(const std::string& name, const std::string& url)
 {
 	if(name == "EventQueueGet")
@@ -1477,6 +1544,11 @@ void LLViewerRegion::setCapability(const std::string& name, const std::string& u
 	else if(name == "UntrustedSimulatorMessage")
 	{
 		LLHTTPSender::setSender(mHost, new LLCapHTTPSender(url));
+	}
+	else if (name == "SimulatorFeatures")
+	{
+		// kick off a request for simulator features
+		LLHTTPClient::get(url, new SimulatorFeaturesReceived(url, getHandle()), LLSD(), CAP_REQUEST_TIMEOUT);
 	}
 	else
 	{
@@ -1547,6 +1619,20 @@ LLSpatialPartition* LLViewerRegion::getSpatialPartition(U32 type)
 	return NULL;
 }
 
+// the viewer can not yet distinquish between normal- and estate-owned objects
+// so we collapse these two bits and enable the UI if either are set
+const U32 ALLOW_RETURN_ENCROACHING_OBJECT = REGION_FLAGS_ALLOW_RETURN_ENCROACHING_OBJECT
+											| REGION_FLAGS_ALLOW_RETURN_ENCROACHING_ESTATE_OBJECT;
+
+bool LLViewerRegion::objectIsReturnable(const LLVector3& pos, const std::vector<LLBBox>& boxes) const
+{
+	return (mParcelOverlay != NULL)
+		&& (mParcelOverlay->isOwnedSelf(pos)
+			|| mParcelOverlay->isOwnedGroup(pos)
+			|| ((mRegionFlags & ALLOW_RETURN_ENCROACHING_OBJECT)
+				&& mParcelOverlay->encroachesOwned(boxes)));
+}
+
 void LLViewerRegion::showReleaseNotes()
 {
 	std::string url = this->getCapability("ServerReleaseNotes");
@@ -1560,4 +1646,16 @@ void LLViewerRegion::showReleaseNotes()
 
 	LLWeb::loadURL(url);
 	mReleaseNotesRequested = FALSE;
+}
+
+bool LLViewerRegion::meshUploadEnabled() const
+{
+	return (mSimulatorFeatures.has("MeshUploadEnabled") &&
+			mSimulatorFeatures["MeshUploadEnabled"].asBoolean());
+}
+
+bool LLViewerRegion::meshRezEnabled() const
+{
+	return (mSimulatorFeatures.has("MeshRezEnabled") &&
+			mSimulatorFeatures["MeshRezEnabled"].asBoolean());
 }

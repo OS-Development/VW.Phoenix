@@ -55,7 +55,6 @@
 #include "llfloateravatarinfo.h"
 #include "llinventorymodel.h"
 #include "llnamelistctrl.h"
-#include "llnotify.h"
 #include "llresmgr.h"
 #include "llimview.h"
 #include "lluictrlfactory.h"
@@ -250,8 +249,8 @@ BOOL LLPanelFriends::addFriend(const LLUUID& agent_id)
 	BOOL have_name;
 	if (LLAvatarNameCache::get(agent_id, &avatar_name))
 	{
-		static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-		switch (*sPhoenixNameSystem)
+		static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+		switch (sPhoenixNameSystem)
 		{
 			case 0 : fullname = avatar_name.getLegacyName(); break;
 			case 1 : fullname = (avatar_name.mIsDisplayNameDefault ? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
@@ -352,8 +351,8 @@ BOOL LLPanelFriends::updateFriendItem(const LLUUID& agent_id, const LLRelationsh
 	BOOL have_name;
 	if (LLAvatarNameCache::get(agent_id, &avatar_name))
 	{
-		static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-		switch (*sPhoenixNameSystem)
+		static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+		switch (sPhoenixNameSystem)
 		{
 			case 0 : fullname = avatar_name.getLegacyName(); break;
 			case 1 : fullname = (avatar_name.mIsDisplayNameDefault ? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
@@ -700,7 +699,7 @@ void LLPanelFriends::onClickIM(void* user_data)
 // static
 void LLPanelFriends::requestFriendship(const LLUUID& target_id, const std::string& target_name, const std::string& message)
 {
-	LLUUID calling_card_folder_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_CALLINGCARD);
+	LLUUID calling_card_folder_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_CALLINGCARD);
 	send_improved_im(target_id,
 					 target_name,
 					 message,
@@ -730,7 +729,7 @@ bool LLPanelFriends::callbackAddFriend(const LLSD& notification, const LLSD& res
 		// Servers older than 1.25 require the text of the message to be the
 		// calling card folder ID for the offering user. JC
 		LLUUID calling_card_folder_id = 
-			gInventory.findCategoryUUIDForType(LLAssetType::AT_CALLINGCARD);
+			gInventory.findCategoryUUIDForType(LLFolderType::FT_CALLINGCARD);
 		std::string message = calling_card_folder_id.asString();
 		requestFriendship(notification["payload"]["id"].asUUID(), 
 		    notification["payload"]["name"].asString(),
@@ -815,8 +814,8 @@ void LLPanelFriends::onClickRemove(void* user_data)
 			if (LLAvatarNameCache::get(agent_id, &avatar_name))
 			{
 				std::string fullname;
-				static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-				switch (*sPhoenixNameSystem)
+				static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+				switch (sPhoenixNameSystem)
 				{
 					case 0 : fullname = avatar_name.getLegacyName(); break;
 					case 1 : fullname = (avatar_name.mIsDisplayNameDefault ? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
@@ -1074,8 +1073,8 @@ void LLPanelFriends::confirmModifyRights(rights_map_t& ids, EGrantRevoke command
 			if (LLAvatarNameCache::get(agent_id, &avatar_name))
 			{
 				std::string fullname;
-				static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-				switch (*sPhoenixNameSystem)
+				static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+				switch (sPhoenixNameSystem)
 				{
 					case 0 : fullname = avatar_name.getLegacyName(); break;
 					case 1 : fullname = (avatar_name.mIsDisplayNameDefault ? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;

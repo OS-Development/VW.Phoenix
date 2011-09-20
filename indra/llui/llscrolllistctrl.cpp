@@ -129,7 +129,7 @@ void LLScrollListIcon::setValue(const LLSD& value)
 	{
 		// don't use default image specified by LLUUID::null, use no image in that case
 		LLUUID image_id = value.asUUID();
-		mIcon = image_id.notNull() ? LLUI::sImageProvider->getUIImageByID(image_id) : LLUIImagePtr(NULL);
+		mIcon = image_id.notNull() ? LLUI::getUIImageByID(image_id) : LLUIImagePtr(NULL);
 	}
 	else
 	{
@@ -277,7 +277,7 @@ LLScrollListText::LLScrollListText( const std::string& text, const LLFontGL* fon
 	// initialize rounded rect image
 	if (!mRoundedRectImage)
 	{
-		mRoundedRectImage = LLUI::sImageProvider->getUIImage("rounded_square.tga");
+		mRoundedRectImage = LLUI::getUIImage("rounded_square.tga");
 	}
 }
 //virtual 
@@ -1759,9 +1759,9 @@ void LLScrollListCtrl::drawItems()
 
 		LLColor4 highlight_color = LLColor4::white;
 
-		static F32 *sTypeAheadTimeout = rebind_llcontrol<F32>("TypeAheadTimeout", LLUI::sConfigGroup, true);
+		static LLCachedControl<F32> sTypeAheadTimeout((*LLUI::sConfigGroup), "TypeAheadTimeout");
 
-		F32 type_ahead_timeout = *sTypeAheadTimeout;
+		F32 type_ahead_timeout = sTypeAheadTimeout;
 		highlight_color.mV[VALPHA] = clamp_rescale(mSearchTimer.getElapsedTimeF32(), type_ahead_timeout * 0.7f, type_ahead_timeout, 0.4f, 0.f);
 
 		item_list::iterator iter;
@@ -2455,11 +2455,11 @@ BOOL LLScrollListCtrl::handleUnicodeCharHere(llwchar uni_char)
 		return FALSE;
 	}
 
-	static F32 *sTypeAheadTimeout = rebind_llcontrol<F32>("TypeAheadTimeout", LLUI::sConfigGroup, true);
+	static LLCachedControl<F32> sTypeAheadTimeout((*LLUI::sConfigGroup), "TypeAheadTimeout");
 
 
 	// perform incremental search based on keyboard input
-	if (mSearchTimer.getElapsedTimeF32() > *sTypeAheadTimeout)
+	if (mSearchTimer.getElapsedTimeF32() > F32(sTypeAheadTimeout))
 	{
 		mSearchString.clear();
 	}
@@ -3404,7 +3404,7 @@ LLScrollListItem* LLScrollListCtrl::addElement(const LLSD& value, EAddPosition p
 		}
 		
 		BOOL has_color = (*itor).has("color");
-		LLColor4 color = ((*itor)["color"]);
+		LLColor4 color = LLColor4((*itor)["color"]);
 		BOOL enabled = !(*itor).has("enabled") || (*itor)["enabled"].asBoolean() == true;
 
 		const LLFontGL *font = LLResMgr::getInstance()->getRes(fontname);

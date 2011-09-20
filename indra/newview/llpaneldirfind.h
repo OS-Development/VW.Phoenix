@@ -64,16 +64,21 @@ public:
 	static std::string buildSearchURL(const std::string& search_text, const std::string& collection, bool inc_pg, bool inc_mature, bool inc_adult);
 	static std::string getSearchURLSuffix(bool inc_pg, bool inc_mature, bool inc_adult);
 
+	static void setSearchToken(std::string &token) { sSearchToken = token; }
+	static std::string getSearchToken() { return sSearchToken; }
+
 private:
-	static void onClickBack( void* data );
-	static void onClickForward( void* data );
-	static void onClickHome( void* data );
-	static void onClickSearch( void* data );
-	static void onCommitSearch(LLUICtrl*, void* data);
-	static void onClickHelp( void* data );
+	static void onClickBack(void* data);
+	static void onClickForward(void* data);
+	static void onClickSearch(void* data);
+	static void onCommitNewSearch(LLUICtrl* ctrl, void* data);
+	static void onCommitSearch(LLUICtrl* ctrl, void* data);
+	static void onClickHelp(void* data);
 
 	// inherited from LLViewerMediaObserver
 	/*virtual*/ void handleMediaEvent(LLPluginClassMedia* self, EMediaEvent event);
+
+	static std::string sSearchToken;
 
 protected:
 	LLMediaCtrl* mWebBrowser;
@@ -86,6 +91,22 @@ public:
 	static LLPanelDirFindAll* create(LLFloaterDirectory* floater);
 	static void search(LLPanelDirFindAll* panel, const std::string& search_text);
 	static void focus(LLPanelDirFindAll* panel);
+};
+
+
+class LLPanelDirFindAllOld : public LLPanelDirBrowser
+{
+public:
+	LLPanelDirFindAllOld(const std::string& name, LLFloaterDirectory* floater);
+	/*virtual*/ ~LLPanelDirFindAllOld();
+
+	/*virtual*/ BOOL postBuild();
+
+	/*virtual*/ void draw();
+
+	static void onClickSearch(void *userdata);
+	static void onCommitScope(LLUICtrl* ctrl, void* data);
+	static void onKeystrokeName(LLLineEditor* line, void* data);
 };
 
 #endif

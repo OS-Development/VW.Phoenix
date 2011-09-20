@@ -38,7 +38,6 @@
 
 // common includes
 #include "llstat.h"
-#include "lldarrayptr.h"
 #include "llstring.h"
 
 // project includes
@@ -46,9 +45,10 @@
 
 class LLNetMap;
 class LLDebugBeacon;
+class LLVOAvatar;
 
 const U32 CLOSE_BIN_SIZE = 10;
-const U32 NUM_BINS = 16;
+const U32 NUM_BINS = 128;
 
 // GL name = position in object list + GL_NAME_INDEX_OFFSET so that
 // we can have special numbers like zero.
@@ -72,6 +72,7 @@ public:
 	inline LLViewerObject *getObject(const S32 index);
 	
 	inline LLViewerObject *findObject(const LLUUID &id);
+	inline LLVOAvatar *findAvatar(const LLUUID &id);
 	LLViewerObject *createObjectViewer(const LLPCode pcode, LLViewerRegion *regionp); // Create a viewer-side object
 	LLViewerObject *createObject(const LLPCode pcode, LLViewerRegion *regionp,
 								 const LLUUID &uuid, const U32 local_id, const LLHost &sender);
@@ -83,7 +84,7 @@ public:
 	void killAllObjects();
 	void removeDrawable(LLDrawable* drawablep);
 
-	void cleanDeadObjects(const BOOL use_timer = TRUE);	// Clean up the dead object list.
+	void cleanDeadObjects(const bool use_timer = true);	// Clean up the dead object list.
 
 	// Simulator and viewer side object updates...
 	void processUpdateCore(LLViewerObject* objectp, void** data, U32 block, const EObjectUpdateType update_type, LLDataPacker* dpp, BOOL justCreated);
@@ -92,6 +93,24 @@ public:
 	void processCachedObjectUpdate(LLMessageSystem *mesgsys, void **user_data, EObjectUpdateType update_type);
 	void updateApparentAngles(LLAgent &agent);
 	void update(LLAgent &agent, LLWorld &world);
+
+	void fetchObjectCosts();
+	void fetchPhysicsFlags();
+
+	void updateObjectCost(LLViewerObject* object);
+	void updateObjectCost(const LLUUID& object_id, F32 object_cost,
+						   F32 link_cost, F32 physics_cost,
+						   F32 link_physics_cost);
+	void onObjectCostFetchFailure(const LLUUID& object_id);
+
+	void updatePhysicsFlags(const LLViewerObject* object);
+	void onPhysicsFlagsFetchFailure(const LLUUID& object_id);
+	void updatePhysicsShapeType(const LLUUID& object_id, S32 type);
+	void updatePhysicsProperties(const LLUUID& object_id,
+									F32 density,
+									F32 friction,
+									F32 restitution,
+									F32 gravity_multiplier);
 
 	void shiftObjects(const LLVector3 &offset);
 	void clearAllMapObjectsInRegion(LLViewerRegion* regionp) ;
@@ -111,13 +130,11 @@ public:
 	void updateAvatarVisibility();
 
 	// Selection related stuff
-	void renderObjectsForSelect(LLCamera &camera, const LLRect& screen_rect, BOOL pick_parcel_wall = FALSE, BOOL render_transparent = TRUE);
 	void generatePickList(LLCamera &camera);
-	void renderPickList(const LLRect& screen_rect, BOOL pick_parcel_wall, BOOL render_transparent);
 
 	LLViewerObject *getSelectedObject(const U32 object_id);
 
-	inline S32 getNumObjects() { return mObjects.count(); }
+	inline S32 getNumObjects() { return (S32)mObjects.size(); }
 
 	void addToMap(LLViewerObject *objectp);
 	void removeFromMap(LLViewerObject *objectp);
@@ -131,7 +148,7 @@ public:
 
 	S32 findReferences(LLDrawable *drawablep) const; // Find references to drawable in all objects, and return value.
 
-	S32 getOrphanParentCount() const { return mOrphanParents.count(); }
+	S32 getOrphanParentCount() const { return (S32)mOrphanParents.size(); }
 	S32 getOrphanCount() const { return mNumOrphans; }
 	void orphanize(LLViewerObject *childp, U32 parent_id, U32 ip, U32 port);
 	void findOrphans(LLViewerObject* objectp, U32 ip, U32 port);
@@ -189,26 +206,38 @@ public:
 	S32 mNumDeadObjectUpdates;
 	S32 mNumUnknownKills;
 	S32 mNumDeadObjects;
+	S32 mMinNumDeadObjects;
 protected:
-	LLDynamicArray<U64>	mOrphanParents;	// LocalID/ip,port of orphaned objects
-	LLDynamicArray<OrphanInfo> mOrphanChildren;	// UUID's of orphaned objects
+	std::vector<U64>	mOrphanParents;	// LocalID/ip,port of orphaned objects
+	std::vector<OrphanInfo> mOrphanChildren;	// UUID's of orphaned objects
 	S32 mNumOrphans;
 
-	LLDynamicArrayPtr<LLPointer<LLViewerObject>, 256> mObjects;
+	typedef std::vector<LLPointer<LLViewerObject> > vobj_list_t;
+
+	vobj_list_t mObjects;
 	std::set<LLPointer<LLViewerObject> > mActiveObjects;
 
-	LLDynamicArrayPtr<LLPointer<LLViewerObject> > mMapObjects;
+	vobj_list_t mMapObjects;
 
 	std::set<LLUUID> mDeadObjects;
 
 	std::map<LLUUID, LLPointer<LLViewerObject> > mUUIDObjectMap;
+	std::map<LLUUID, LLPointer<LLVOAvatar> > mUUIDAvatarMap;
 
-	LLDynamicArray<LLDebugBeacon> mDebugBeacons;
+	//set of objects that need to update their cost
+	std::set<LLUUID> mStaleObjectCost;
+	std::set<LLUUID> mPendingObjectCost;
+
+	//set of objects that need to update their physics flags
+	std::set<LLUUID> mStalePhysicsFlags;
+	std::set<LLUUID> mPendingPhysicsFlags;
+
+	std::vector<LLDebugBeacon> mDebugBeacons;
 
 	S32 mCurLazyUpdateIndex;
 
 	static U32 sSimulatorMachineIndex;
-	static LLMap<U64, U32> sIPAndPortToIndex;
+	static std::map<U64, U32> sIPAndPortToIndex;
 
 	static std::map<U64, LLUUID> sIndexAndLocalIDToUUID;
 
@@ -246,7 +275,7 @@ extern LLViewerObjectList gObjectList;
 inline LLViewerObject *LLViewerObjectList::findObject(const LLUUID &id)
 {
 	std::map<LLUUID, LLPointer<LLViewerObject> >::iterator iter = mUUIDObjectMap.find(id);
-	if(iter != mUUIDObjectMap.end())
+	if (iter != mUUIDObjectMap.end())
 	{
 		return iter->second;
 	}
@@ -254,6 +283,12 @@ inline LLViewerObject *LLViewerObjectList::findObject(const LLUUID &id)
 	{
 		return NULL;
 	}
+}
+
+inline LLVOAvatar *LLViewerObjectList::findAvatar(const LLUUID &id)
+{
+	std::map<LLUUID, LLPointer<LLVOAvatar> >::const_iterator iter = mUUIDAvatarMap.find(id);
+	return (iter != mUUIDAvatarMap.end()) ? iter->second.get() : NULL;
 }
 
 inline LLViewerObject *LLViewerObjectList::getObject(const S32 index)
@@ -270,12 +305,16 @@ inline LLViewerObject *LLViewerObjectList::getObject(const S32 index)
 
 inline void LLViewerObjectList::addToMap(LLViewerObject *objectp)
 {
-	mMapObjects.put(objectp);
+	mMapObjects.push_back(objectp);
 }
 
 inline void LLViewerObjectList::removeFromMap(LLViewerObject *objectp)
 {
-	mMapObjects.removeObj(objectp);
+	std::vector<LLPointer<LLViewerObject> >::iterator iter = std::find(mMapObjects.begin(), mMapObjects.end(), objectp);
+	if (iter != mMapObjects.end())
+	{
+		mMapObjects.erase(iter);
+	}
 }
 
 

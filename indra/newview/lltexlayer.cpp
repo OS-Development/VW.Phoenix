@@ -45,8 +45,7 @@
 #include "lltexlayer.h"
 #include "llui.h"
 #include "llvfile.h"
-#include "llviewerimagelist.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llviewerregion.h"
 #include "llviewerstats.h"
 #include "llviewerwindow.h"
@@ -67,13 +66,13 @@ S32 LLTexLayerSetBuffer::sGLByteCount = 0;
 //-----------------------------------------------------------------------------
 // LLBakedUploadData()
 //-----------------------------------------------------------------------------
-LLBakedUploadData::LLBakedUploadData( LLVOAvatar* avatar,
-									  LLTexLayerSet* layerset, 
-									  LLTexLayerSetBuffer* layerset_buffer, 
-									  const LLUUID & id ) : 
-	mAvatar( avatar ),
-	mLayerSet( layerset ),
-	mLayerSetBuffer( layerset_buffer ),
+LLBakedUploadData::LLBakedUploadData(LLVOAvatar* avatar,
+									 LLTexLayerSet* layerset, 
+									 LLTexLayerSetBuffer* layerset_buffer, 
+									 const LLUUID & id) : 
+	mAvatar(avatar),
+	mTexLayerSet(layerset),
+	mLayerSetBuffer(layerset_buffer),
 	mID(id)
 { 
 	mStartTime = LLFrameTimer::getTotalTime();		// Record starting time
@@ -94,7 +93,7 @@ LLBakedUploadData::LLBakedUploadData( LLVOAvatar* avatar,
 LLTexLayerSetBuffer::LLTexLayerSetBuffer(LLTexLayerSet* owner, S32 width, S32 height)
 	:
 	// ORDER_LAST => must render these after the hints are created.
-	LLDynamicTexture( width, height, 4, LLDynamicTexture::ORDER_LAST, TRUE ), 
+	LLViewerDynamicTexture(width, height, 4, LLViewerDynamicTexture::ORDER_LAST, TRUE),
 	mNeedsUpdate( TRUE ),
 	mNeedsUpload( FALSE ),
 	mUploadPending( FALSE ), // Not used for any logic here, just to sync sending of updates
@@ -109,7 +108,7 @@ LLTexLayerSetBuffer::~LLTexLayerSetBuffer()
 	destroyGLTexture();
 	for (S32 order = 0; order < ORDER_COUNT; order++)
 	{
-		LLDynamicTexture::sInstances[order].erase(this);  // will fail in all but one case.
+		LLViewerDynamicTexture::sInstances[order].erase(this);  // will fail in all but one case.
 	}
 	if (mTexLayerSet->mComposite == this)
 	{
@@ -119,15 +118,21 @@ LLTexLayerSetBuffer::~LLTexLayerSetBuffer()
 }
 
 //virtual 
+S8 LLTexLayerSetBuffer::getType() const 
+{
+	return LLViewerDynamicTexture::LL_TEX_LAYER_SET_BUFFER;
+}
+
+//virtual 
 void LLTexLayerSetBuffer::restoreGLTexture() 
 {	
-	LLDynamicTexture::restoreGLTexture() ;
+	LLViewerDynamicTexture::restoreGLTexture();
 }
 
 //virtual 
 void LLTexLayerSetBuffer::destroyGLTexture() 
 {
-	LLDynamicTexture::destroyGLTexture() ;
+	LLViewerDynamicTexture::destroyGLTexture();
 }
 
 // static
@@ -168,7 +173,7 @@ void LLTexLayerSetBuffer::pushProjection()
 	glMatrixMode(GL_PROJECTION);
 	gGL.pushMatrix();
 	glLoadIdentity();
-	glOrtho(0.0f, mWidth, 0.0f, mHeight, -1.0f, 1.0f);
+	glOrtho(0.0f, mFullWidth, 0.0f, mFullHeight, -1.0f, 1.0f);
 
 	glMatrixMode(GL_MODELVIEW);
 	gGL.pushMatrix();
@@ -214,14 +219,14 @@ void LLTexLayerSetBuffer::preRender(BOOL clear_depth)
 	pushProjection();
 	
 	// keep depth buffer, we don't need to clear it
-	LLDynamicTexture::preRender(FALSE);
+	LLViewerDynamicTexture::preRender(FALSE);
 }
 
 void LLTexLayerSetBuffer::postRender(BOOL success)
 {
 	popProjection();
 
-	LLDynamicTexture::postRender(success);
+	LLViewerDynamicTexture::postRender(success);
 }
 
 BOOL LLTexLayerSetBuffer::render()
@@ -236,7 +241,7 @@ BOOL LLTexLayerSetBuffer::render()
 
 	// Composite the color data
 	LLGLSUIDefault gls_ui;
-	success &= mTexLayerSet->render( mOrigin.mX, mOrigin.mY, mWidth, mHeight );
+	success &= mTexLayerSet->render(mOrigin.mX, mOrigin.mY, mFullWidth, mFullHeight);
 	gGL.flush();
 
 	if( upload_now )
@@ -271,7 +276,7 @@ BOOL LLTexLayerSetBuffer::render()
 	gGL.setSceneBlendType(LLRender::BT_ALPHA);
 
 	// we have valid texture data now
-	mTexture->setGLTextureCreated(true);
+	mGLTexturep->setGLTextureCreated(true);
 	mNeedsUpdate = FALSE;
 
 	return success;
@@ -279,7 +284,7 @@ BOOL LLTexLayerSetBuffer::render()
 
 bool LLTexLayerSetBuffer::isInitialized(void) const
 {
-	return mTexture.notNull() && mTexture->isGLTextureCreated();
+	return mGLTexturep.notNull() && mGLTexturep->isGLTextureCreated();
 }
 
 BOOL LLTexLayerSetBuffer::updateImmediate()
@@ -299,44 +304,34 @@ BOOL LLTexLayerSetBuffer::updateImmediate()
 
 void LLTexLayerSetBuffer::readBackAndUpload()
 {
-	// pointers for storing data to upload
-	U8* baked_color_data = new U8[ mWidth * mHeight * 4 ];
-	
-	glReadPixels(mOrigin.mX, mOrigin.mY, mWidth, mHeight, GL_RGBA, GL_UNSIGNED_BYTE, baked_color_data );
-	stop_glerror();
-
 	llinfos << "Baked " << mTexLayerSet->getBodyRegion() << llendl;
 	LLViewerStats::getInstance()->incStat(LLViewerStats::ST_TEX_BAKES);
 
-	llassert( gAgent.getAvatarObject() == mTexLayerSet->getAvatar() );
-
-	// We won't need our caches since we're baked now.  (Techically, we won't 
-	// really be baked until this image is sent to the server and the Avatar
-	// Appearance message is received.)
+	// Don't need caches since we're baked now.  (note: we won't *really* be baked 
+	// until this image is sent to the server and the Avatar Appearance message is received.)
 	mTexLayerSet->deleteCaches();
 
+	// Get the COLOR information from our texture
+	U8* baked_color_data = new U8[mFullWidth * mFullHeight * 4];
+	glReadPixels(mOrigin.mX, mOrigin.mY, mFullWidth, mFullHeight, GL_RGBA, GL_UNSIGNED_BYTE, baked_color_data );
+	stop_glerror();
+
+	// Get the MASK information from our texture
 	LLGLSUIDefault gls_ui;
 
-	LLPointer<LLImageRaw> baked_mask_image = new LLImageRaw(mWidth, mHeight, 1 );
+	LLPointer<LLImageRaw> baked_mask_image = new LLImageRaw(mFullWidth, mFullHeight, 1);
 	U8* baked_mask_data = baked_mask_image->getData(); 
 
-	mTexLayerSet->gatherAlphaMasks(baked_mask_data, mWidth, mHeight);
+	mTexLayerSet->gatherAlphaMasks(baked_mask_data, mFullWidth, mFullHeight);
 //	imdebug("lum b=8 w=%d h=%d %p", mWidth, mHeight, baked_mask_data);
 
-
-	// writes into baked_color_data
-	const char* comment_text = NULL;
-
 	S32 baked_image_components = 5; // red green blue bump clothing
-	LLPointer<LLImageRaw> baked_image = new LLImageRaw( mWidth, mHeight, baked_image_components );
+	LLPointer<LLImageRaw> baked_image = new LLImageRaw(mFullWidth, mFullHeight, baked_image_components);
 	U8* baked_image_data = baked_image->getData();
-	
-	comment_text = LINDEN_J2C_COMMENT_PREFIX "RGBHM"; // 5 channels: rgb, heightfield/alpha, mask
-
 	S32 i = 0;
-	for (S32 u = 0; u < mWidth; u++)
+	for (S32 u = 0; u < mFullWidth; u++)
 	{
-		for (S32 v = 0; v < mHeight; v++)
+		for (S32 v = 0; v < mFullHeight; v++)
 		{
 			baked_image_data[5 * i + 0] = baked_color_data[4 * i + 0];
 			baked_image_data[5 * i + 1] = baked_color_data[4 * i + 1];
@@ -346,24 +341,22 @@ void LLTexLayerSetBuffer::readBackAndUpload()
 			i++;
 		}
 	}
-	
+
 	LLPointer<LLImageJ2C> compressedImage = new LLImageJ2C;
 	compressedImage->setRate(0.f);
-	LLTransactionID tid;
-	LLAssetID asset_id;
-	tid.generate();
-	asset_id = tid.makeAssetID(gAgent.getSecureSessionID());
-
-	BOOL res = false;
-	if( compressedImage->encode(baked_image, comment_text))
+	const char* comment_text = LINDEN_J2C_COMMENT_PREFIX "RGBHM"; // writes into baked_color_data. 5 channels (rgb, heightfield/alpha, mask)
+	if(compressedImage->encode(baked_image, comment_text))
 	{
-		res = LLVFile::writeFile(compressedImage->getData(), compressedImage->getDataSize(),
-								 gVFS, asset_id, LLAssetType::AT_TEXTURE);
-		if (res)
+		LLTransactionID tid;
+		tid.generate();
+		const LLAssetID asset_id = tid.makeAssetID(gAgent.getSecureSessionID());
+		if (LLVFile::writeFile(compressedImage->getData(), compressedImage->getDataSize(),
+							   gVFS, asset_id, LLAssetType::AT_TEXTURE))
 		{
-			LLPointer<LLImageJ2C> integrity_test = new LLImageJ2C;
+			// Read back the file and validate.
 			BOOL valid = FALSE;
-			S32 file_size;
+			LLPointer<LLImageJ2C> integrity_test = new LLImageJ2C;
+			S32 file_size = 0;
 			U8* data = LLVFile::readFile(gVFS, asset_id, LLAssetType::AT_TEXTURE, &file_size);
 			if (data)
 			{
@@ -373,30 +366,26 @@ void LLTexLayerSetBuffer::readBackAndUpload()
 			{
 				integrity_test->setLastError("Unable to read entire file");
 			}
-			
-			if( valid )
+
+			if (valid)
 			{
 				// baked_upload_data is owned by the responder and deleted after the request completes
 				LLBakedUploadData* baked_upload_data =
-					new LLBakedUploadData( gAgent.getAvatarObject(), this->mTexLayerSet, this, asset_id );
+					new LLBakedUploadData(gAgent.getAvatarObject(), this->mTexLayerSet, this, asset_id);
 				mUploadID = asset_id;
-				
+
 				// upload the image
-				std::string url = gAgent.getRegion()->getCapability("UploadBakedTexture");
-
-				if(!url.empty()
-					&& !LLPipeline::sForceOldBakedUpload) // Toggle the debug setting UploadBakedTexOld to change between the new caps method and old method
+				const std::string url = gAgent.getRegion()->getCapability("UploadBakedTexture");
+				if (!url.empty() &&
+					!LLPipeline::sForceOldBakedUpload) // Toggle the debug setting UploadBakedTexOld to change between the new caps method and old method
 				{
-					llinfos << "Baked texture upload via capability of " << mUploadID << " to " << url << llendl;
-
 					LLSD body = LLSD::emptyMap();
-					LLHTTPClient::post(url, body, new LLSendTexLayerResponder(body, mUploadID, LLAssetType::AT_TEXTURE, baked_upload_data));
 					// Responder will call LLTexLayerSetBuffer::onTextureUploadComplete()
-				} 
+					LLHTTPClient::post(url, body, new LLSendTexLayerResponder(body, mUploadID, LLAssetType::AT_TEXTURE, baked_upload_data));
+					llinfos << "Baked texture upload via capability of " << mUploadID << " to " << url << llendl;
+				}
 				else
 				{
-					llinfos << "Baked texture upload via Asset Store." <<  llendl;
-					// gAssetStorage->storeAssetData(mTransactionID, LLAssetType::AT_IMAGE_JPEG, &uploadCallback, (void *)this, FALSE);
 					gAssetStorage->storeAssetData(tid,
 												  LLAssetType::AT_TEXTURE,
 												  LLTexLayerSetBuffer::onTextureUploadComplete,
@@ -404,23 +393,26 @@ void LLTexLayerSetBuffer::readBackAndUpload()
 												  TRUE,		// temp_file
 												  TRUE,		// is_priority
 												  TRUE);	// store_local
+					llinfos << "Baked texture upload via Asset Store." <<  llendl;
 				}
-		
+
 				mNeedsUpload = FALSE;
 			}
 			else
 			{
+				// The read back and validate operation failed.  Remove the uploaded file.
 				mUploadPending = FALSE;
-				llinfos << "unable to create baked upload file: corrupted" << llendl;
 				LLVFile file(gVFS, asset_id, LLAssetType::AT_TEXTURE, LLVFile::WRITE);
 				file.remove();
+				llinfos << "Unable to create baked upload file (reason: corrupted)." << llendl;
 			}
 		}
 	}
-	if (!res)
+	else
 	{
+		// The VFS write file operation failed.
 		mUploadPending = FALSE;
-		llinfos << "unable to create baked upload file" << llendl;
+		llinfos << "Unable to create baked upload file (reason: failed to write file)" << llendl;
 	}
 
 	delete [] baked_color_data;
@@ -434,12 +426,12 @@ void LLTexLayerSetBuffer::onTextureUploadComplete(const LLUUID& uuid, void* user
   
   	LLVOAvatar* avatar = gAgent.getAvatarObject();
   
-	if (0 == result &&
+	if (result == 0 &&
 		avatar && !avatar->isDead() &&
 		baked_upload_data->mAvatar == avatar && // Sanity check: only the user's avatar should be uploading textures.
-		baked_upload_data->mLayerSet->hasComposite())
+		baked_upload_data->mTexLayerSet->hasComposite())
 	{
-		LLTexLayerSetBuffer* layerset_buffer = baked_upload_data->mLayerSet->getComposite();
+		LLTexLayerSetBuffer* layerset_buffer = baked_upload_data->mTexLayerSet->getComposite();
 
 		if (layerset_buffer->mUploadID.isNull())
 		{
@@ -586,7 +578,6 @@ LLTexLayerSet::~LLTexLayerSet()
 	deleteCaches();
 	std::for_each(mLayerList.begin(), mLayerList.end(), DeletePointer());
 	std::for_each(mMaskLayerList.begin(), mMaskLayerList.end(), DeletePointer());
-	delete mComposite;
 	mComposite = NULL;
 }
 
@@ -690,18 +681,18 @@ void LLTexLayerSet::renderAlphaMaskTextures(S32 x, S32 y, S32 width, S32 height,
 		LLGLSNoAlphaTest gls_no_alpha_test;
 		gGL.flush();
 		{
-			LLImageGL* image_gl = gTexStaticImageList.getImageGL(info->mStaticAlphaFileName, TRUE);
-			if (image_gl)
+			LLViewerTexture* tex = gTexStaticImageList.getTexture(info->mStaticAlphaFileName, TRUE);
+			if (tex)
 			{
 				LLGLSUIDefault gls_ui;
-				gGL.getTexUnit(0)->bind(image_gl);
+				gGL.getTexUnit(0)->bind(tex);
 				gGL.getTexUnit(0)->setTextureBlendType(LLTexUnit::TB_REPLACE);
 				gl_rect_2d_simple_tex(width, height);
 			}
 		}
 		gGL.flush();
 	}
-	else if (forceClear || info->mClearAlpha || (mMaskLayerList.size() > 0))
+	else if (forceClear || info->mClearAlpha || mMaskLayerList.size() > 0)
 	{
 		// Set the alpha channel to one (clean up after previous blending)
 		gGL.flush();
@@ -846,9 +837,8 @@ void LLTexLayerSet::createComposite()
 
 void LLTexLayerSet::destroyComposite()
 {
-	if( mComposite )
+	if (mComposite)
 	{
-		delete mComposite;
 		mComposite = NULL;
 	}
 }
@@ -1347,7 +1337,7 @@ BOOL LLTexLayer::render( S32 x, S32 y, S32 width, S32 height )
 
 	gGL.color4fv( net_color.mV);
 
-	if( getInfo()->mWriteAllChannels )
+	if (getInfo()->mWriteAllChannels)
 	{
 		gGL.flush();
 		gGL.setSceneBlendType(LLRender::BT_REPLACE);
@@ -1358,26 +1348,26 @@ BOOL LLTexLayer::render( S32 x, S32 y, S32 width, S32 height )
 		gGL.setColorMask(false, true);
 	}
 
-	if( (getInfo()->mLocalTexture != -1) && !getInfo()->mUseLocalTextureAlphaOnly )
+	if (getInfo()->mLocalTexture != -1 && !getInfo()->mUseLocalTextureAlphaOnly)
 	{
 		{
-			LLImageGL* image_gl = NULL;
-			if( mTexLayerSet->getAvatar()->getLocalTextureGL((ETextureIndex)getInfo()->mLocalTexture, &image_gl ) )
+			LLViewerTexture* tex = NULL;
+			if (mTexLayerSet->getAvatar()->getLocalTextureGL((ETextureIndex)getInfo()->mLocalTexture, &tex))
 			{
 				if (mTexLayerSet->getAvatar()->getLocalTextureID((ETextureIndex)getInfo()->mLocalTexture) == IMG_DEFAULT_AVATAR)
 				{
-					image_gl = NULL;
+					tex = NULL;
 				}
-				if( image_gl )
+				if (tex)
 				{
 					LLGLDisable alpha_test(getInfo()->mWriteAllChannels ? GL_ALPHA_TEST : 0);
 
-					LLTexUnit::eTextureAddressMode old_mode = image_gl->getAddressMode();
+					LLTexUnit::eTextureAddressMode old_mode = tex->getAddressMode();
 					
-					gGL.getTexUnit(0)->bind(image_gl, TRUE);
+					gGL.getTexUnit(0)->bind(tex, TRUE);
 					gGL.getTexUnit(0)->setTextureAddressMode(LLTexUnit::TAM_CLAMP);
 
-					gl_rect_2d_simple_tex( width, height );
+					gl_rect_2d_simple_tex(width, height);
 
 					gGL.getTexUnit(0)->setTextureAddressMode(old_mode);
 					gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
@@ -1386,14 +1376,14 @@ BOOL LLTexLayer::render( S32 x, S32 y, S32 width, S32 height )
 		}
 	}
 
-	if( !getInfo()->mStaticImageFileName.empty() )
+	if (!getInfo()->mStaticImageFileName.empty())
 	{
 		{
-			LLImageGL* image_gl = gTexStaticImageList.getImageGL( getInfo()->mStaticImageFileName, getInfo()->mStaticImageIsMask );
-			if( image_gl )
+			LLViewerTexture* tex = gTexStaticImageList.getTexture(getInfo()->mStaticImageFileName, getInfo()->mStaticImageIsMask);
+			if (tex)
 			{
-				gGL.getTexUnit(0)->bind(image_gl, TRUE);
-				gl_rect_2d_simple_tex( width, height );
+				gGL.getTexUnit(0)->bind(tex, TRUE);
+				gl_rect_2d_simple_tex(width, height);
 				gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
 			}
 			else
@@ -1403,18 +1393,16 @@ BOOL LLTexLayer::render( S32 x, S32 y, S32 width, S32 height )
 		}
 	}
 
-	if( ((-1 == getInfo()->mLocalTexture) ||
-		 getInfo()->mUseLocalTextureAlphaOnly) &&
-		getInfo()->mStaticImageFileName.empty() &&
-		color_specified )
+	if (color_specified && getInfo()->mStaticImageFileName.empty() &&
+		(getInfo()->mLocalTexture == -1 || getInfo()->mUseLocalTextureAlphaOnly))
 	{
 		LLGLDisable no_alpha(GL_ALPHA_TEST);
 		gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
-		gGL.color4fv( net_color.mV);
-		gl_rect_2d_simple( width, height );
+		gGL.color4fv(net_color.mV);
+		gl_rect_2d_simple(width, height);
 	}
 
-	if( alpha_mask_specified || getInfo()->mWriteAllChannels )
+	if (alpha_mask_specified || getInfo()->mWriteAllChannels)
 	{
 		// Restore standard blend func value
 		gGL.flush();
@@ -1428,7 +1416,7 @@ BOOL LLTexLayer::render( S32 x, S32 y, S32 width, S32 height )
 		gGL.setColorMask(true, true);
 	}
 
-	if( !success )
+	if (!success)
 	{
 		llinfos << "LLTexLayer::render() partial: " << getInfo()->mName << llendl;
 	}
@@ -1443,11 +1431,11 @@ BOOL LLTexLayer::blendAlphaTexture(S32 x, S32 y, S32 width, S32 height)
 	
 	if (!getInfo()->mStaticImageFileName.empty())
 	{
-		LLImageGL* image_gl = gTexStaticImageList.getImageGL(getInfo()->mStaticImageFileName, getInfo()->mStaticImageIsMask);
-		if (image_gl)
+		LLViewerTexture* tex = gTexStaticImageList.getTexture(getInfo()->mStaticImageFileName, getInfo()->mStaticImageIsMask);
+		if (tex)
 		{
 			LLGLSNoAlphaTest gls_no_alpha_test;
-			gGL.getTexUnit(0)->bind(image_gl, TRUE);
+			gGL.getTexUnit(0)->bind(tex, TRUE);
 			gl_rect_2d_simple_tex(width, height);
 			gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
 		}
@@ -1460,13 +1448,13 @@ BOOL LLTexLayer::blendAlphaTexture(S32 x, S32 y, S32 width, S32 height)
 	{
 		if (getInfo()->mLocalTexture >=0 && getInfo()->mLocalTexture < TEX_NUM_INDICES)
 		{
-			LLImageGL* image_gl = NULL;
-			if (mTexLayerSet->getAvatar()->getLocalTextureGL((ETextureIndex)getInfo()->mLocalTexture, &image_gl))
+			LLViewerTexture* tex = NULL;
+			if (mTexLayerSet->getAvatar()->getLocalTextureGL((ETextureIndex)getInfo()->mLocalTexture, &tex))
 			{
-				if (image_gl)
+				if (tex)
 				{
 					LLGLSNoAlphaTest gls_no_alpha_test;
-					gGL.getTexUnit(0)->bind(image_gl);
+					gGL.getTexUnit(0)->bind(tex);
 					gl_rect_2d_simple_tex(width, height);
 					gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
 					success = TRUE;
@@ -1474,7 +1462,7 @@ BOOL LLTexLayer::blendAlphaTexture(S32 x, S32 y, S32 width, S32 height)
 			}
 		}
 	}
-	
+
 	return success;
 }
 
@@ -1606,22 +1594,22 @@ BOOL LLTexLayer::renderAlphaMasks( S32 x, S32 y, S32 width, S32 height, LLColor4
 	gGL.setSceneBlendType(LLRender::BT_MULT_ALPHA);
 
 	// Accumulate the alpha component of the texture
-	if( getInfo()->mLocalTexture != -1 )
+	if (getInfo()->mLocalTexture != -1)
 	{
 		{
-			LLImageGL* image_gl = NULL;
-			if( mTexLayerSet->getAvatar()->getLocalTextureGL((ETextureIndex)getInfo()->mLocalTexture, &image_gl ) )
+			LLViewerTexture* tex = NULL;
+			if (mTexLayerSet->getAvatar()->getLocalTextureGL((ETextureIndex)getInfo()->mLocalTexture, &tex))
 			{
-				if( image_gl && (image_gl->getComponents() == 4) )
+				if (tex && tex->getComponents() == 4)
 				{
 					LLGLSNoAlphaTest gls_no_alpha_test;
 
-					LLTexUnit::eTextureAddressMode old_mode = image_gl->getAddressMode();
-					
-					gGL.getTexUnit(0)->bind(image_gl, TRUE);
+					LLTexUnit::eTextureAddressMode old_mode = tex->getAddressMode();
+
+					gGL.getTexUnit(0)->bind(tex, TRUE);
 					gGL.getTexUnit(0)->setTextureAddressMode(LLTexUnit::TAM_CLAMP);
 
-					gl_rect_2d_simple_tex( width, height );
+					gl_rect_2d_simple_tex(width, height);
 
 					gGL.getTexUnit(0)->setTextureAddressMode(old_mode);
 					gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
@@ -1630,18 +1618,18 @@ BOOL LLTexLayer::renderAlphaMasks( S32 x, S32 y, S32 width, S32 height, LLColor4
 		}
 	}
 
-	if( !getInfo()->mStaticImageFileName.empty() )
+	if (!getInfo()->mStaticImageFileName.empty())
 	{
 		{
-			LLImageGL* image_gl = gTexStaticImageList.getImageGL( getInfo()->mStaticImageFileName, getInfo()->mStaticImageIsMask );
-			if( image_gl )
+			LLViewerTexture* tex = gTexStaticImageList.getTexture(getInfo()->mStaticImageFileName, getInfo()->mStaticImageIsMask);
+			if (tex)
 			{
-				if(	(image_gl->getComponents() == 4) ||
-					( (image_gl->getComponents() == 1) && getInfo()->mStaticImageIsMask ) )
+				if (tex->getComponents() == 4 ||
+					(tex->getComponents() == 1 && getInfo()->mStaticImageIsMask))
 				{
 					LLGLSNoAlphaTest gls_no_alpha_test;
-					gGL.getTexUnit(0)->bind(image_gl, TRUE);
-					gl_rect_2d_simple_tex( width, height );
+					gGL.getTexUnit(0)->bind(tex, TRUE);
+					gl_rect_2d_simple_tex(width, height);
 					gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
 				}
 			}
@@ -1650,12 +1638,12 @@ BOOL LLTexLayer::renderAlphaMasks( S32 x, S32 y, S32 width, S32 height, LLColor4
 
 	// Draw a rectangle with the layer color to multiply the alpha by that color's alpha.
 	// Note: we're still using gGL.blendFunc( GL_DST_ALPHA, GL_ZERO );
-	if( colorp->mV[VW] != 1.f )
+	if (colorp->mV[VW] != 1.f)
 	{
 		LLGLDisable no_alpha(GL_ALPHA_TEST);
 		gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
-		gGL.color4fv( colorp->mV );
-		gl_rect_2d_simple( width, height );
+		gGL.color4fv(colorp->mV);
+		gl_rect_2d_simple(width, height);
 	}
 
 
@@ -1901,12 +1889,12 @@ void LLTexLayerParamAlpha::getCacheByteCount( S32* gl_bytes )
 		 iter != sInstances.end(); iter++ )
 	{
 		LLTexLayerParamAlpha* instance = *iter;
-		LLImageGL* image_gl = instance->mCachedProcessedImageGL;
-		if( image_gl )
+		LLViewerTexture* tex = instance->mCachedProcessedTexture;
+		if (tex)
 		{
-			S32 bytes = (S32)image_gl->getWidth() * image_gl->getHeight() * image_gl->getComponents();
+			S32 bytes = (S32)tex->getWidth() * tex->getHeight() * tex->getComponents();
 
-			if( image_gl->getHasGLTexture() )
+			if (tex->hasGLTexture())
 			{
 				*gl_bytes += bytes;
 			}
@@ -1914,22 +1902,22 @@ void LLTexLayerParamAlpha::getCacheByteCount( S32* gl_bytes )
 	}
 }
 
-LLTexLayerParamAlpha::LLTexLayerParamAlpha( LLTexLayer* layer )
+LLTexLayerParamAlpha::LLTexLayerParamAlpha(LLTexLayer* layer)
 	:
-	mCachedProcessedImageGL( NULL ),
-	mTexLayer( layer ),
-	mNeedsCreateTexture( FALSE ),
-	mStaticImageInvalid( FALSE ),
+	mCachedProcessedTexture(NULL),
+	mTexLayer(layer),
+	mNeedsCreateTexture(FALSE),
+	mStaticImageInvalid(FALSE),
 	mAvgDistortionVec(1.f, 1.f, 1.f),
 	mCachedEffectiveWeight(0.f)
 {
-	sInstances.push_front( this );
+	sInstances.push_front(this);
 }
 
 LLTexLayerParamAlpha::~LLTexLayerParamAlpha()
 {
 	deleteCaches();
-	sInstances.remove( this );
+	sInstances.remove(this);
 }
 
 //-----------------------------------------------------------------------------
@@ -1954,7 +1942,7 @@ BOOL LLTexLayerParamAlpha::setInfo(LLTexLayerParamAlphaInfo *info)
 void LLTexLayerParamAlpha::deleteCaches()
 {
 	mStaticImageTGA = NULL; // deletes image
-	mCachedProcessedImageGL = NULL;
+	mCachedProcessedTexture = NULL;
 	mStaticImageRaw = NULL;
 	mNeedsCreateTexture = FALSE;
 }
@@ -2070,22 +2058,21 @@ BOOL LLTexLayerParamAlpha::render( S32 x, S32 y, S32 width, S32 height )
 
 		const S32 image_tga_width = mStaticImageTGA->getWidth();
 		const S32 image_tga_height = mStaticImageTGA->getHeight(); 
-		if(	!mCachedProcessedImageGL ||
-			(mCachedProcessedImageGL->getWidth() != image_tga_width) ||
-			(mCachedProcessedImageGL->getHeight() != image_tga_height) ||
-			(weight_changed) )
+		if (weight_changed || !mCachedProcessedTexture ||
+			mCachedProcessedTexture->getWidth() != image_tga_width ||
+			mCachedProcessedTexture->getHeight() != image_tga_height)
 		{
 //			llinfos << "Building Cached Alpha: " << mName << ": (" << mStaticImageRaw->getWidth() << ", " << mStaticImageRaw->getHeight() << ") " << effective_weight << llendl;
 			mCachedEffectiveWeight = effective_weight;
 
-			if( !mCachedProcessedImageGL )
+			if (!mCachedProcessedTexture)
 			{
-				mCachedProcessedImageGL = new LLImageGL( image_tga_width, image_tga_height, 1, FALSE);
+				mCachedProcessedTexture = LLViewerTextureManager::getLocalTexture(image_tga_width, image_tga_height, 1, FALSE);
 
 				// We now have something in one of our caches
-				LLTexLayerSet::sHasCaches |= mCachedProcessedImageGL ? TRUE : FALSE;
+				LLTexLayerSet::sHasCaches |= mCachedProcessedTexture ? TRUE : FALSE;
 
-				mCachedProcessedImageGL->setExplicitFormat( GL_ALPHA8, GL_ALPHA );
+				mCachedProcessedTexture->setExplicitFormat(GL_ALPHA8, GL_ALPHA);
 			}
 
 			// Applies domain and effective weight to data as it is decoded. Also resizes the raw image if needed.
@@ -2095,20 +2082,20 @@ BOOL LLTexLayerParamAlpha::render( S32 x, S32 y, S32 width, S32 height )
 			mNeedsCreateTexture = TRUE;
 		}
 
-		if( mCachedProcessedImageGL )
+		if (mCachedProcessedTexture)
 		{
 			{
 				// Create the GL texture, and then hang onto it for future use.
-				if( mNeedsCreateTexture )
+				if (mNeedsCreateTexture)
 				{
-					mCachedProcessedImageGL->createGLTexture(0, mStaticImageRaw, 0, TRUE, LLViewerImageBoostLevel::TEXLAYER_CACHE);
+					mCachedProcessedTexture->createGLTexture(0, mStaticImageRaw, 0, TRUE, LLViewerTexture::BOOST_AVATAR_SELF);
 					mNeedsCreateTexture = FALSE;
-					gGL.getTexUnit(0)->bind(mCachedProcessedImageGL);
-					mCachedProcessedImageGL->setAddressMode(LLTexUnit::TAM_CLAMP);
+					gGL.getTexUnit(0)->bind(mCachedProcessedTexture);
+					mCachedProcessedTexture->setAddressMode(LLTexUnit::TAM_CLAMP);
 				}
 
 				LLGLSNoAlphaTest gls_no_alpha_test;
-				gGL.getTexUnit(0)->bind(mCachedProcessedImageGL, TRUE);
+				gGL.getTexUnit(0)->bind(mCachedProcessedTexture, TRUE);
 				gl_rect_2d_simple_tex( width, height );
 				gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
 				stop_glerror();
@@ -2117,9 +2104,9 @@ BOOL LLTexLayerParamAlpha::render( S32 x, S32 y, S32 width, S32 height )
 
 		// Don't keep the cache for other people's avatars
 		// (It's not really a "cache" in that case, but the logic is the same)
-		if( !mTexLayer->getTexLayerSet()->getAvatar()->isSelf() )
+		if (!mTexLayer->getTexLayerSet()->getAvatar()->isSelf())
 		{
-			mCachedProcessedImageGL = NULL;
+			mCachedProcessedTexture = NULL;
 		}
 	}
 	else
@@ -2473,7 +2460,7 @@ LLTexStaticImageList::~LLTexStaticImageList()
 	deleteCachedImages();
 }
 
-void LLTexStaticImageList::dumpByteCount()
+void LLTexStaticImageList::dumpByteCount() const
 {
 	llinfos << "Avatar Static Textures " <<
 		"KB GL:" << (mGLBytes / 1024) <<
@@ -2491,7 +2478,7 @@ void LLTexStaticImageList::deleteCachedImages()
 		//mStaticImageLists uses LLPointers, clear() will cause deletion
 		
 		mStaticImageListTGA.clear();
-		mStaticImageListGL.clear();
+		mStaticImageList.clear();
 		
 		mGLBytes = 0;
 		mTGABytes = 0;
@@ -2534,43 +2521,43 @@ LLImageTGA* LLTexStaticImageList::getImageTGA(const std::string& file_name)
 
 // Returns a GL Image (without a backing ImageRaw) that contains the decoded data from a tga file named file_name.
 // Caches the result to speed identical subsequent requests.
-LLImageGL* LLTexStaticImageList::getImageGL(const std::string& file_name, BOOL is_mask )
+LLViewerTexture* LLTexStaticImageList::getTexture(const std::string& file_name, BOOL is_mask)
 {
-	LLPointer<LLImageGL> image_gl;
+	LLPointer<LLViewerTexture> tex;
 	const char *namekey = sImageNames.addString(file_name);
 
-	image_gl_map_t::iterator iter = mStaticImageListGL.find(namekey);
-	if( iter != mStaticImageListGL.end() )
+	texture_map_t::const_iterator iter = mStaticImageList.find(namekey);
+	if (iter != mStaticImageList.end())
 	{
-		image_gl = iter->second;
+		tex = iter->second;
 	}
 	else
 	{
-		image_gl = new LLImageGL( FALSE );
+		tex = LLViewerTextureManager::getLocalTexture(FALSE);
 		LLPointer<LLImageRaw> image_raw = new LLImageRaw;
-		if( loadImageRaw( file_name, image_raw ) )
+		if (loadImageRaw(file_name, image_raw))
 		{
-			if( (image_raw->getComponents() == 1) && is_mask )
+			if (is_mask && image_raw->getComponents() == 1)
 			{
 				// Note: these are static, unchanging images so it's ok to assume
 				// that once an image is a mask it's always a mask.
-				image_gl->setExplicitFormat( GL_ALPHA8, GL_ALPHA );
+				tex->setExplicitFormat(GL_ALPHA8, GL_ALPHA);
 			}
-			image_gl->createGLTexture(0, image_raw, 0, TRUE, LLViewerImageBoostLevel::OTHER);
+			tex->createGLTexture(0, image_raw, 0, TRUE, LLViewerTexture::LOCAL);
 
-			gGL.getTexUnit(0)->bind(image_gl);
-			image_gl->setAddressMode(LLTexUnit::TAM_CLAMP);
+			gGL.getTexUnit(0)->bind(tex);
+			tex->setAddressMode(LLTexUnit::TAM_CLAMP);
 
-			mStaticImageListGL [ namekey ] = image_gl;
-			mGLBytes += (S32)image_gl->getWidth() * image_gl->getHeight() * image_gl->getComponents();
+			mStaticImageList[namekey] = tex;
+			mGLBytes += (S32)tex->getWidth() * tex->getHeight() * tex->getComponents();
 		}
 		else
 		{
-			image_gl = NULL;
+			tex = NULL;
 		}
 	}
 
-	return image_gl;
+	return tex;
 }
 
 // Reads a .tga file, decodes it, and puts the decoded data in image_raw.

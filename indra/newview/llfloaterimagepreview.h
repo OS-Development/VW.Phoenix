@@ -43,12 +43,17 @@ class LLViewerJointMesh;
 class LLVOAvatar;
 class LLTextBox;
 class LLVertexBuffer;
+class LLVolume;
 
-class LLImagePreviewSculpted : public LLDynamicTexture
+class LLImagePreviewSculpted : public LLViewerDynamicTexture
 {
- public:
-	LLImagePreviewSculpted(S32 width, S32 height);
+protected:
 	virtual ~LLImagePreviewSculpted();
+
+public:
+	LLImagePreviewSculpted(S32 width, S32 height);
+
+	/*virtual*/ S8 getType() const;
 
 	void setPreviewTarget(LLImageRaw *imagep, F32 distance);
 	void setTexture(U32 name) { mTextureName = name; }
@@ -60,7 +65,7 @@ class LLImagePreviewSculpted : public LLDynamicTexture
 	void pan(F32 right, F32 up);
 	virtual BOOL needsRender() { return mNeedsUpdate; }
 
- protected:
+protected:
 	BOOL        mNeedsUpdate;
 	U32         mTextureName;
 	F32			mCameraDistance;
@@ -73,11 +78,15 @@ class LLImagePreviewSculpted : public LLDynamicTexture
 };
 
 
-class LLImagePreviewAvatar : public LLDynamicTexture
+class LLImagePreviewAvatar : public LLViewerDynamicTexture
 {
+protected:
+	virtual ~LLImagePreviewAvatar();
+
 public:
 	LLImagePreviewAvatar(S32 width, S32 height);
-	virtual ~LLImagePreviewAvatar();
+
+	/*virtual*/ S8 getType() const;
 
 	void setPreviewTarget(const std::string& joint_name, const std::string& mesh_name, LLImageRaw* imagep, F32 distance, BOOL male);
 	void setTexture(U32 name) { mTextureName = name; }
@@ -126,14 +135,14 @@ protected:
 	void			draw();
 	bool			loadImage(const std::string& filename);
 
-	LLPointer<LLImageRaw> mRawImagep;
-	LLImagePreviewAvatar* mAvatarPreview;
-	LLImagePreviewSculpted* mSculptedPreview;
-	S32				mLastMouseX;
-	S32				mLastMouseY;
-	LLRect			mPreviewRect;
-	LLRectf			mPreviewImageRect;
-	LLPointer<LLImageGL> mImagep ;
+	LLPointer<LLImageRaw>				mRawImagep;
+	LLPointer<LLImagePreviewAvatar>		mAvatarPreview;
+	LLPointer<LLImagePreviewSculpted>	mSculptedPreview;
+	S32									mLastMouseX;
+	S32									mLastMouseY;
+	LLRect								mPreviewRect;
+	LLRectf								mPreviewImageRect;
+	LLPointer<LLViewerTexture> 			mImagep;
 
 	static S32		sUploadAmount;
 };

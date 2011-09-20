@@ -135,7 +135,7 @@ BOOL decode_vorbis_file(LLVFS *vfs, const LLUUID &in_uuid, char *out_fname)
 
 	//**********************************
 	LLAPRFile outfile ;
-	outfile.open(out_fname,LL_APR_WPB);
+	outfile.open(out_fname, LL_APR_WPB);
 	//**********************************
 	if (!outfile.getFileHandle())
 	{
@@ -226,14 +226,16 @@ BOOL decode_vorbis_file(LLVFS *vfs, const LLUUID &in_uuid, char *out_fname)
 	int r = ov_open_callbacks(in_vfile, &vf, NULL, 0, vfs_callbacks);
 	if(r < 0) 
 	{
-		llwarns << r << " Input to vorbis decode does not appear to be an Ogg bitstream: " << in_uuid << llendl;		
+		llwarns << r << " Input to vorbis decode does not appear to be an Ogg bitstream: " << in_uuid << llendl;
+		outfile.close();
 		return(FALSE);
 	}
 
 	{
 		char **ptr=ov_comment(&vf,-1)->user_comments;
 //		vorbis_info *vi=ov_info(&vf,-1);
-		while(*ptr){
+		while(*ptr)
+		{
 			fprintf(stderr,"%s\n",*ptr);
 			++ptr;
 		}
@@ -242,19 +244,24 @@ BOOL decode_vorbis_file(LLVFS *vfs, const LLUUID &in_uuid, char *out_fname)
 //    fprintf(stderr,"Encoded by: %s\n\n",ov_comment(&vf,-1)->vendor);
 	}
   
-	while(!eof){
+	while(!eof)
+	{
 		long ret=ov_read(&vf,pcmout,sizeof(pcmout),0,2,1,&current_section);
 		if (ret == 0) {
 			/* EOF */
 			eof=1;
 //			llinfos << "Vorbis EOF" << llendl;
-		} else if (ret < 0) {
+		}
+		else if (ret < 0)
+		{
 			/* error in the stream.  Not a problem, just reporting it in
 			   case we (the app) cares.  In this case, we don't. */
 			llwarning("Error in vorbis stream",0); 
 			break;
 
-		} else {
+		}
+		else
+		{
 //			llinfos << "Vorbis read " << ret << "bytes" << llendl;
 			/* we don't bother dealing with sample rate changes, etc, but.
 			   you'll have to*/

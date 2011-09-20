@@ -35,7 +35,9 @@
 
 #include "llavatarnamecache.h"
 #include "llfloater.h"
-#include "llmemory.h"
+#include "llpointer.h"
+#include "llrefcount.h"
+#include "llsingleton.h"
 #include "llvoiceclient.h"
 #include "llframetimer.h"
 #include "llevent.h"
@@ -75,13 +77,13 @@ public:
 	void lookupName();
 
     // [Ansariel/Henri: Display name support]
-	//static void onAvatarNameLookup(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* user_data);
     static void onAvatarNameLookup(const LLUUID& id, const LLAvatarName& avatar_name, void* user_data);
     // [/Ansariel/Henri: Display name support]
 
 	ESpeakerStatus	mStatus;			// current activity status in speech group
 	F32				mLastSpokeTime;		// timestamp when this speaker last spoke
 	F32				mSpeechVolume;		// current speech amplitude (timea average rms amplitude?)
+	std::string		mLegacyName;		// cache legacy name for this speaker
 	std::string		mDisplayName;		// cache user name for this speaker
 	LLFrameTimer	mActivityTimer;	// time out speakers when they are not part of current voice channel
 	BOOL			mHasSpoken;			// has this speaker said anything this session?
@@ -93,7 +95,6 @@ public:
 	BOOL			mIsModerator;
 	BOOL			mModeratorMutedVoice;
 	BOOL			mModeratorMutedText;
-	std::string     mLegacyName;
 };
 
 class LLSpeakerTextModerationEvent : public LLEvent

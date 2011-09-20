@@ -38,10 +38,13 @@
 //-----------------------------------------------------------------------------
 #include <string>
 
-#include "llmap.h"
 #include "lljointstate.h"
 #include "lljoint.h"
+#include "llmap.h"
+#include "llpointer.h"
+
 #include <map>
+#include <string>
 
 
 //-----------------------------------------------------------------------------

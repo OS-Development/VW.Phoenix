@@ -36,7 +36,7 @@
 #include <vector>
 
 #include "llfloater.h"
-#include "llmemory.h"
+#include "llpointer.h"
 #include "llcolorswatch.h"
 #include "llspinctrl.h"
 #include "lltextureentry.h"
@@ -179,7 +179,7 @@ class LLFloaterColorPicker
 		const S32 mPaletteRegionHeight;
 
 		// image used to compose color grid
-		LLPointer<LLImageGL> mRGBImage;
+		LLPointer<LLViewerTexture> mRGBImage;
 
 		// current swatch in use
 		LLColorSwatchCtrl* mSwatch;

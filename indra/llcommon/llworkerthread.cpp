@@ -43,7 +43,7 @@
 LLWorkerThread::LLWorkerThread(const std::string& name, bool threaded) :
 	LLQueuedThread(name, threaded)
 {
-	mDeleteMutex = new LLMutex(NULL);
+	mDeleteMutex = new LLMutex;
 }
 
 LLWorkerThread::~LLWorkerThread()
@@ -202,10 +202,9 @@ void LLWorkerThread::WorkRequest::finishRequest(bool completed)
 
 LLWorkerClass::LLWorkerClass(LLWorkerThread* workerthread, const std::string& name)
 	: mWorkerThread(workerthread),
-	  mRequestPriority(LLWorkerThread::PRIORITY_NORMAL),
 	  mWorkerClassName(name),
 	  mRequestHandle(LLWorkerThread::nullHandle()),
-	  mMutex(NULL),
+	  mRequestPriority(LLWorkerThread::PRIORITY_NORMAL),
 	  mWorkFlags(0)
 {
 	if (!mWorkerThread)

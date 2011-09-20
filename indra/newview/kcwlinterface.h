@@ -22,9 +22,9 @@
  */
 
 #include "llviewerprecompiledheaders.h"
-#include "llmemory.h"	// LLSingleton<>
-#include "lltimer.h"	// LLEventTimer
+#include "lleventtimer.h"
 #include "llnotifications.h"
+#include "llsingleton.h"
 #include "lluuid.h"
 #include <set>
 #include <string>

@@ -380,18 +380,18 @@ void LLPanelPermissions::refresh()
 	BOOL groups_identical = LLSelectMgr::getInstance()->selectGetGroup(group_id);
 	if (groups_identical)
 	{
-		if(mLabelGroupName)
+		if (mLabelGroupName)
 		{
-			mLabelGroupName->setNameID(group_id, TRUE);
+			mLabelGroupName->setNameID(group_id, true);
 			mLabelGroupName->setEnabled(TRUE);
 		}
 	}
 	else
 	{
-		if(mLabelGroupName)
+		if (mLabelGroupName)
 		{
-			mLabelGroupName->setNameID(LLUUID::null, TRUE);
-			mLabelGroupName->refresh(LLUUID::null, LLStringUtil::null, LLStringUtil::null, TRUE);
+			mLabelGroupName->setNameID(LLUUID::null, true);
+			mLabelGroupName->refresh(LLUUID::null, LLStringUtil::null, true);
 			mLabelGroupName->setEnabled(FALSE);
 		}
 	}

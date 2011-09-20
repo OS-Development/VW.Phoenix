@@ -150,7 +150,7 @@ void LLPanelGeneral::apply()
 	gSavedSettings.setBOOL("AllowIdleAFK", childGetValue("allow_idle_AFK_checkbox"));
 	gSavedSettings.setF32("AFKTimeout", childGetValue("afk_timeout_spinner").asReal());
 	gSavedSettings.setBOOL("NotifyMoneyChange", childGetValue("notify_money_change_checkbox"));
-	gSavedSettings.setColor4("EffectColor", childGetValue("effect_color_swatch"));
+	gSavedSettings.setColor4("EffectColor", LLColor4(childGetValue("effect_color_swatch")));
 	gSavedSettings.setF32("UIScaleFactor", childGetValue("ui_scale_slider").asReal());
 	gSavedSettings.setBOOL("UIAutoScale", childGetValue("ui_auto_scale"));
 	gSavedSettings.setString("Language", childGetValue("language_combobox"));

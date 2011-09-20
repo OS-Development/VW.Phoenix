@@ -35,8 +35,10 @@
 #include "llsdmessagebuilder.h"
 
 #include "llmessagetemplate.h"
+#include "llmath.h"
 #include "llquaternion.h"
 #include "llsdutil.h"
+#include "llsdutil_math.h"
 #include "llsdserialize.h"
 #include "u64.h"
 #include "v3dmath.h"

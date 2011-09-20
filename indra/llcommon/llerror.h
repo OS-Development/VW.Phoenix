@@ -179,7 +179,7 @@ namespace LLError
 		{ return s; }
 		// used to indicate the end of a message
 		
-	class NoClassInfo { };
+	class LL_COMMON_API NoClassInfo { };
 		// used to indicate no class info known for logging
 
    //LLCallStacks keeps track of call stacks and output the call stacks to log file
@@ -242,7 +242,7 @@ typedef LLError::NoClassInfo _LL_CLASS_TO_LOG;
 	do { \
 		static LLError::CallSite _site( \
 			level, __FILE__, __LINE__, typeid(_LL_CLASS_TO_LOG), __FUNCTION__, broadTag, narrowTag, once);\
-		if (_site.shouldLog()) \
+		if (LL_UNLIKELY(_site.shouldLog())) \
 		{ \
 			std::ostringstream* _out = LLError::Log::out(); \
 			(*_out)
@@ -301,9 +301,5 @@ typedef LLError::NoClassInfo _LL_CLASS_TO_LOG;
 		
 		Such computation is done iff the message will be logged.
 	*/
-
-#ifdef SHOW_ASSERT
-extern bool is_main_thread();
-#endif
 
 #endif // LL_LLERROR_H

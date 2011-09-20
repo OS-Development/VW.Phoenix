@@ -1174,7 +1174,7 @@ void LLLayoutStack::draw()
 
 		LLLocalClipRect clip(clip_rect);
 		// only force drawing invisible children if visible amount is non-zero
-		drawChild(panelp, 0, 0, !clip_rect.isNull());
+		drawChild(panelp, 0, 0, !clip_rect.isEmpty());
 	}
 }
 

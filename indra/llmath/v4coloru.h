@@ -53,20 +53,20 @@ class LLColor4U
 {
 public:
 
-	union
-	{
+	//	union
+	//	{
 		U8         mV[LENGTHOFCOLOR4U];
-		U32        mAll;
-		LLColor4*  mSources;
-		LLColor4U* mSourcesU;
-	};
+	//		U32        mAll;
+	//		LLColor4*  mSources;
+	//		LLColor4U* mSourcesU;
+	//	};
 
 
 	LLColor4U();						// Initializes LLColor4U to (0, 0, 0, 1)
 	LLColor4U(U8 r, U8 g, U8 b);		// Initializes LLColor4U to (r, g, b, 1)
 	LLColor4U(U8 r, U8 g, U8 b, U8 a);		// Initializes LLColor4U to (r. g, b, a)
 	LLColor4U(const U8 *vec);			// Initializes LLColor4U to (vec[0]. vec[1], vec[2], 1)
-	LLColor4U(const LLSD& sd)
+	explicit LLColor4U(const LLSD& sd)
 	{
 		setValue(sd);
 	}
@@ -79,12 +79,6 @@ public:
 		mV[3] = sd[3].asInteger();
 	}
 
-	const LLColor4U& operator=(const LLSD& sd)
-	{
-		setValue(sd);
-		return *this;
-	}
-
 	LLSD getValue() const
 	{
 		LLSD ret;
@@ -94,6 +88,9 @@ public:
 		ret[3] = mV[3];
 		return ret;
 	}
+
+	U32 asRGBA() const;
+	void fromRGBA( U32 aVal );
 
 	const LLColor4U&	setToBlack();						// zero LLColor4U to (0, 0, 0, 1)
 	const LLColor4U&	setToWhite();						// zero LLColor4U to (0, 0, 0, 1)
@@ -137,6 +134,12 @@ public:
 	inline void setVecScaleClamp(const LLColor4 &color);
 
 	static BOOL parseColor4U(const std::string& buf, LLColor4U* value);
+
+	// conversion
+	operator const LLColor4() const
+	{
+		return LLColor4(*this);
+	}
 
 	static LLColor4U white;
 	static LLColor4U black;
@@ -300,7 +303,7 @@ inline const LLColor4U&	LLColor4U::setAlpha(U8 a)
 
 inline F32		LLColor4U::length(void) const
 {
-	return fsqrtf( ((F32)mV[VX]) * mV[VX] + ((F32)mV[VY]) * mV[VY] + ((F32)mV[VZ]) * mV[VZ] );
+	return (F32) sqrt( ((F32)mV[VX]) * mV[VX] + ((F32)mV[VY]) * mV[VY] + ((F32)mV[VZ]) * mV[VZ] );
 }
 
 inline F32		LLColor4U::lengthSquared(void) const
@@ -311,7 +314,7 @@ inline F32		LLColor4U::lengthSquared(void) const
 // deprecated
 inline F32		LLColor4U::magVec(void) const
 {
-	return fsqrtf( ((F32)mV[VX]) * mV[VX] + ((F32)mV[VY]) * mV[VY] + ((F32)mV[VZ]) * mV[VZ] );
+	return (F32) sqrt( ((F32)mV[VX]) * mV[VX] + ((F32)mV[VY]) * mV[VY] + ((F32)mV[VZ]) * mV[VZ] );
 }
 
 // deprecated

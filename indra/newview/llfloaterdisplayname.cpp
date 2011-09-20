@@ -27,18 +27,15 @@
 
 
 #include "llviewerprecompiledheaders.h"
-#include "llfloater.h"
-
-#include "llnotifications.h"
-#include "llviewerdisplayname.h"
-
-#include "llnotify.h"
 #include "llfloaterdisplayname.h"
+
 #include "llavatarnamecache.h"
+#include "llnotifications.h"
 #include "lluictrlfactory.h"
 
 #include "llagent.h"
-
+#include "llviewercontrol.h"
+#include "llviewerdisplayname.h"
 
 LLFloaterDisplayName* LLFloaterDisplayName::sInstance = NULL;
 

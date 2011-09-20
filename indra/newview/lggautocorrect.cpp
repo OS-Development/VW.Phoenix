@@ -233,8 +233,8 @@ LLSD LGGAutoCorrect::getAutoCorrectEntries(std::string listName)
 }
 std::string LGGAutoCorrect::replaceWord(std::string currentWord)
 {
-	static BOOL *doAnything = rebind_llcontrol<BOOL>("PhoenixEnableAutoCorrect", &gSavedSettings, true);
-	if(!(*doAnything))return currentWord;
+	static LLCachedControl<bool> doAnything(gSavedSettings, "PhoenixEnableAutoCorrect");
+	if(!doAnything)return currentWord;
 
 	//loop through priorities
 	for(int currentPriority = 10;currentPriority>=0;currentPriority--)
@@ -292,8 +292,9 @@ std::string LGGAutoCorrect::replaceWord(std::string currentWord)
 }
 std::string LGGAutoCorrect::replaceWords(std::string words)
 {
-	static BOOL *doAnything = rebind_llcontrol<BOOL>("PhoenixEnableAutoCorrect", &gSavedSettings, true);
-	if(!(*doAnything))return words;
+	static LLCachedControl<bool> doAnything(gSavedSettings, "PhoenixEnableAutoCorrect");
+
+	if(!doAnything)return words;
 	//TODO update this function to use the "wordStyle" thing,
 	//but so far this function is never used, so later
 

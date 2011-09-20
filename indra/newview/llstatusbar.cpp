@@ -50,8 +50,8 @@
 #include "llinventoryview.h"
 #include "llkeyboard.h"
 #include "lllineeditor.h"
-#include "llmenugl.h"
-#include "llnotify.h"
+#include "llfontgl.h"
+#include "llnotifications.h"
 #include "llimview.h"
 #include "lltextbox.h"
 #include "llui.h"
@@ -242,14 +242,15 @@ void LLStatusBar::draw()
 {
 	refresh();
 
-	/*static LLColor4* sColorDropShadow = rebind_llcontrol<LLColor4>("ColorDropShadow", LLUI::sColorsGroup, true);
-	static S32* sDropShadowFloater = rebind_llcontrol<S32>("DropShadowFloater", LLUI::sConfigGroup, true);
+	/*
+	static LLCachedControl<LLColor4U> sColorDropShadow((*LLUI::sColorsGroup), "ColorDropShadow");
+	static LLCachedControl<S32> sDropShadowFloater((*LLUI::sConfigGroup), "DropShadowFloater");
 
 	if (isBackgroundVisible())
 	{
 		gl_drop_shadow(0, getRect().getHeight(), getRect().getWidth(), 0, 
-			(*sColorDropShadow), 
-			(*sDropShadowFloater) );
+			(LLColor4)sColorDropShadow, 
+			sDropShadowFloater );
 	}*/
 	LLPanel::draw();
 }
@@ -319,7 +320,7 @@ void LLStatusBar::refresh()
 	S32 x = MENU_RIGHT + MENU_PARCEL_SPACING;
 	S32 y = 0;
 
-	bool search_visible = gSavedSettings.getBOOL("ShowSearchBar");
+	static LLCachedControl<bool> search_visible(gSavedSettings, "ShowSearchBar");
 
 	// reshape menu bar to its content's width
 	if (MENU_RIGHT != gMenuBarView->getRect().getWidth())
@@ -531,7 +532,7 @@ void LLStatusBar::refresh()
 		mRegionDetails.mPing = region->getNetDetailsForLCD();
 		if (parcel)
 		{
-			static LLCachedControl<BOOL> PhoenixShowSimChannel("PhoenixShowSimChannel", 0);
+			static LLCachedControl<bool> PhoenixShowSimChannel(gSavedSettings, "PhoenixShowSimChannel");
 			if(PhoenixShowSimChannel)
 			{
 				std::istringstream temp(gLastVersionChannel);

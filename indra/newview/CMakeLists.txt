@@ -16,6 +16,7 @@ include(LLAddBuildTest)
 include(LLAudio)
 include(LLCharacter)
 include(LLCommon)
+include(LLConvexDecomposition)
 include(LLImage)
 include(LLImageJ2COJ)
 include(LLInventory)
@@ -36,6 +37,7 @@ include(TemplateCheck)
 include(UI)
 include(LLKDU)
 include(ViewerMiscLibs)
+include(GLOD)
 include(ViewerArtwork.cmake)
 
 include(Growl)
@@ -54,9 +56,11 @@ include_directories(
     ${HUNSPELL_INCLUDE_DIR}
     ${ELFIO_INCLUDE_DIR}
     ${JSONCPP_INCLUDE_DIRS}
+    ${GLOD_INCLUDE_DIR}
     ${LLAUDIO_INCLUDE_DIRS}
     ${LLCHARACTER_INCLUDE_DIRS}
     ${LLCOMMON_INCLUDE_DIRS}
+    ${LLCONVEXDECOMP_INCLUDE_DIRS}
     ${LLIMAGE_INCLUDE_DIRS}
     ${LLINVENTORY_INCLUDE_DIRS}
     ${LLMATH_INCLUDE_DIRS}
@@ -70,6 +74,8 @@ include_directories(
     ${LLXML_INCLUDE_DIRS}
     ${LSCRIPT_INCLUDE_DIRS}
     ${LSCRIPT_INCLUDE_DIRS}/lscript_compile
+    ${LIBS_PREBUILT_DIR}/include/collada
+    ${LIBS_PREBUILT_DIR}/include/collada/1.4
     ${VIEWER_RESOURCE_DIRS}
     ${LIBOTR_INCLUDE_DIRS}
     ${GROWL_INCLUDE_DIRS}
@@ -136,7 +142,6 @@ set(viewer_SOURCE_FILES
     llassetuploadqueue.cpp
     llattachmentsmgr.cpp
     llaudiosourcevo.cpp
-    llbbox.cpp
     llbox.cpp
     llcallbacklist.cpp
     llcallingcard.cpp
@@ -156,7 +161,6 @@ set(viewer_SOURCE_FILES
     llcontainerview.cpp
     llcurrencyuimanager.cpp
     llcylinder.cpp
-
     lldaycyclemanager.cpp
     lldebugmessagebox.cpp
     lldebugview.cpp
@@ -235,6 +239,7 @@ set(viewer_SOURCE_FILES
     llfloaterlandmark.cpp
     llfloatermap.cpp
     llfloatermemleak.cpp
+	llfloatermodeluploadbase.cpp
     llfloatermute.cpp
     llfloaternamedesc.cpp
     llfloaternewim.cpp
@@ -242,12 +247,14 @@ set(viewer_SOURCE_FILES
     llfloaterobjectiminfo.cpp
     llfloateropenobject.cpp
     llfloaterparcel.cpp
+    llfloaterpay.cpp
     llfloaterpermissionsmgr.cpp
     llfloaterperms.cpp
     llfloaterpostcard.cpp
     llfloaterpostprocess.cpp
     llfloaterpreference.cpp
     llfloaterproperties.cpp
+	llfloaterregiondebugconsole.cpp
     llfloaterregioninfo.cpp
     llfloaterreporter.cpp
     llfloaterscriptdebug.cpp
@@ -274,7 +281,6 @@ set(viewer_SOURCE_FILES
     llframestats.cpp
     llframestatview.cpp
     llgesturemgr.cpp
-    llgivemoney.cpp
     llglsandbox.cpp
     llgroupmgr.cpp
     llgroupnotify.cpp
@@ -296,6 +302,7 @@ set(viewer_SOURCE_FILES
     llinventoryactions.cpp
     llinventorybridge.cpp
     llinventoryclipboard.cpp
+    llinventoryicon.cpp
     llinventorymodel.cpp
     llinventoryview.cpp
     lljoystickbutton.cpp
@@ -310,6 +317,7 @@ set(viewer_SOURCE_FILES
     llmediaremotectrl.cpp
     llmemoryview.cpp
     llmenucommands.cpp
+    llmeshrepository.cpp
     llmimetypes.cpp
     llmorphview.cpp
     llmoveview.cpp
@@ -369,6 +377,7 @@ set(viewer_SOURCE_FILES
     llparcelselection.cpp
     llpatchvertexarray.cpp
     llphysicsmotion.cpp
+	llphysicsshapebuilderutil.cpp
     llpolymesh.cpp
     llpolymorph.cpp
     llprefschat.cpp
@@ -434,6 +443,7 @@ set(viewer_SOURCE_FILES
     lltrans.cpp
     lltranslate.cpp
     lluploaddialog.cpp
+	lluploadfloaterobservers.cpp
     llurl.cpp
     llurldispatcher.cpp
     llurlhistory.cpp
@@ -444,14 +454,14 @@ set(viewer_SOURCE_FILES
     llvelocitybar.cpp
     llviewchildren.cpp
     llviewerassetstorage.cpp
+    llviewerassettype.cpp
     llvieweraudio.cpp
     llviewercamera.cpp
     llviewercontrol.cpp
     llviewerdisplay.cpp
+    llviewerfoldertype.cpp
     llviewergenericmessage.cpp
     llviewergesture.cpp
-    llviewerimage.cpp
-    llviewerimagelist.cpp
     llviewerinventory.cpp
     llviewerjointattachment.cpp
     llviewerjoint.cpp
@@ -482,6 +492,8 @@ set(viewer_SOURCE_FILES
     llviewerstats.cpp
     llviewertexteditor.cpp
     llviewertextureanim.cpp
+    llviewertexture.cpp
+    llviewertexturelist.cpp
     llviewerthrottle.cpp
     llviewervisualparam.cpp
     llviewerwindow.cpp
@@ -625,7 +637,6 @@ set(viewer_HEADER_FILES
     llassetuploadqueue.h
     llassetuploadqueue.h
     llattachmentsmgr.h
-    llbbox.h
     llbox.h
     llcallbacklist.h
     llcallingcard.h
@@ -724,6 +735,7 @@ set(viewer_HEADER_FILES
     llfloaterlandmark.h
     llfloatermap.h
     llfloatermemleak.h
+	llfloatermodeluploadbase.h
     llfloatermute.h
     llfloaternamedesc.h
     llfloaternewim.h
@@ -732,12 +744,14 @@ set(viewer_HEADER_FILES
     llfloateropenobject.h
 	llfloaterteleporthistory.h
     llfloaterparcel.h
+    llfloaterpay.h
     llfloaterpermissionsmgr.h
     llfloaterpostcard.h
     llfloaterpostprocess.h
     llfloaterpreference.h
     llfloaterperms.h
     llfloaterproperties.h
+	llfloaterregiondebugconsole.h
     llfloaterregioninfo.h
     llfloaterreporter.h
     llfloatersearchreplace.h
@@ -763,7 +777,6 @@ set(viewer_HEADER_FILES
     llframestats.h
     llframestatview.h
     llgesturemgr.h
-    llgivemoney.h
     llgroupmgr.h
     llgroupnotify.h
     llhomelocationresponder.h
@@ -783,6 +796,7 @@ set(viewer_HEADER_FILES
     llimview.h
     llinventorybridge.h
     llinventoryclipboard.h
+    llinventoryicon.h
     llinventorymodel.h
     llinventoryview.h
     lljoystickbutton.h
@@ -798,6 +812,7 @@ set(viewer_HEADER_FILES
     llmediaremotectrl.h
     llmemoryview.h
     llmenucommands.h
+    llmeshrepository.h
     llmimetypes.h
     llmorphview.h
     llmoveview.h
@@ -858,6 +873,7 @@ set(viewer_HEADER_FILES
     llparcelselection.h
     llpatchvertexarray.h
     llphysicsmotion.h
+	llphysicsshapebuilderutil.h
     llpolymesh.h
     llpolymorph.h
     llprefschat.h
@@ -926,6 +942,7 @@ set(viewer_HEADER_FILES
     lltranslate.h
     lluiconstants.h
     lluploaddialog.h
+	lluploadfloaterobservers.h
     llurl.h
     llurldispatcher.h
     llurlhistory.h
@@ -936,15 +953,15 @@ set(viewer_HEADER_FILES
     llvelocitybar.h
     llviewchildren.h
     llviewerassetstorage.h
+    llviewerassettype.h
     llvieweraudio.h
     llviewerbuild.h
     llviewercamera.h
     llviewercontrol.h
     llviewerdisplay.h
+    llviewerfoldertype.h
     llviewergenericmessage.h
     llviewergesture.h
-    llviewerimage.h
-    llviewerimagelist.h
     llviewerinventory.h
     llviewerjoint.h
     llviewerjointattachment.h
@@ -973,6 +990,8 @@ set(viewer_HEADER_FILES
     llviewerstats.h
     llviewertexteditor.h
     llviewertextureanim.h
+    llviewertexture.h
+    llviewertexturelist.h
     llviewerthrottle.h
     llviewervisualparam.h
     llviewerwindow.h
@@ -1391,8 +1410,8 @@ if (WINDOWS)
     
     set_target_properties(${VIEWER_BINARY_NAME}
         PROPERTIES
-        LINK_FLAGS "/debug /NODEFAULTLIB:LIBCMT /SUBSYSTEM:WINDOWS"
-        LINK_FLAGS_DEBUG "/NODEFAULTLIB:\"LIBCMT;LIBCMTD;MSVCRT\""
+        LINK_FLAGS "/debug /NODEFAULTLIB:LIBCMT /SUBSYSTEM:WINDOWS /INCLUDE:__tcmalloc"
+        LINK_FLAGS_DEBUG "/NODEFAULTLIB:\"LIBCMT;LIBCMTD;MSVCRT\" /INCREMENTAL:NO"
         LINK_FLAGS_RELEASE ${release_flags}
         )
 
@@ -1466,6 +1485,7 @@ if (WINDOWS)
 endif (WINDOWS)
 
 target_link_libraries(${VIEWER_BINARY_NAME}
+    ${GOOGLE_PERFTOOLS_LIBRARIES}
     ${LLAUDIO_LIBRARIES}
     ${LLCHARACTER_LIBRARIES}
     ${LLIMAGE_LIBRARIES}
@@ -1497,6 +1517,7 @@ target_link_libraries(${VIEWER_BINARY_NAME}
     ${Boost_THREAD_LIBRARY}
     ${DBUSGLIB_LIBRARIES}
     ${OPENGL_LIBRARIES}
+    ${GLOD_LIBRARIES}
     ${JSONCPP_LIBRARIES}
     ${SDL_LIBRARY}
     ${SMARTHEAP_LIBRARY}
@@ -1504,9 +1525,11 @@ target_link_libraries(${VIEWER_BINARY_NAME}
     ${WINDOWS_LIBRARIES}
     ${XMLRPCEPI_LIBRARIES}
     ${ELFIO_LIBRARIES}
+    ${LLCONVEXDECOMP_LIBRARY}
     ${LIBOTR_LIBRARIES}
     ${HUNSPELL_LIBRARY}
     ${GROWL_LIBRARY}
+    ${TCMALLOC_LIBRARIES}
     )
 
 if (WINDOWS)

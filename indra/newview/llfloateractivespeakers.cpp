@@ -113,8 +113,8 @@ void LLSpeaker::onAvatarNameLookup(const LLUUID& id, const LLAvatarName& avatar_
 	if (speaker_ptr)
 	{
         // [Ansariel/Henri: Display name support]
-		static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-		switch (*sPhoenixNameSystem)
+		static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+		switch (sPhoenixNameSystem)
 		{
 			case 0 : speaker_ptr->mDisplayName = avatar_name.getLegacyName(); break;
 			case 1 : speaker_ptr->mDisplayName = (avatar_name.mIsDisplayNameDefault ? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
@@ -182,13 +182,13 @@ bool LLSortRecentSpeakers::operator()(const LLPointer<LLSpeaker> lhs, const LLPo
 	}
 
 	// and then on last speaking time
-	if(lhs->mLastSpokeTime != rhs->mLastSpokeTime)
+	if (lhs->mLastSpokeTime != rhs->mLastSpokeTime)
 	{
 		return (lhs->mLastSpokeTime > rhs->mLastSpokeTime);
 	}
 	
 	// and finally (only if those are both equal), on name.
-	return(	lhs->mDisplayName.compare(rhs->mDisplayName) < 0 );
+	return (lhs->mDisplayName.compare(rhs->mDisplayName) < 0);
 }
 
 //
@@ -538,9 +538,9 @@ void LLPanelActiveSpeakers::refreshSpeakers()
 			}
 			else
 			{
-				static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
+				static LLCachedControl<LLColor4U> sDefaultListText(gColors, "DefaultListText");
 
-				name_cell->setColor((*sDefaultListText));
+				name_cell->setColor((LLColor4)sDefaultListText);
 			}
 
 			std::string speaker_name;
@@ -682,7 +682,7 @@ void LLPanelActiveSpeakers::onClickMuteTextCommit(LLUICtrl* ctrl, void* user_dat
 		return;
 	}
 	
-	name = speakerp->mDisplayName;
+	name = speakerp->mLegacyName;
 
 	LLMute mute(speaker_id, name, speakerp->mType == LLSpeaker::SPEAKER_AGENT ? LLMute::AGENT : LLMute::OBJECT);
 
@@ -1497,7 +1497,7 @@ void LLLocalSpeakerMgr::updateSpeakerList()
 		LLSpeaker* speakerp = speaker_it->second;
 		if (speakerp->mStatus == LLSpeaker::STATUS_TEXT_ONLY)
 		{
-			LLVOAvatar* avatarp = (LLVOAvatar*)gObjectList.findObject(speaker_id);
+			LLVOAvatar* avatarp = gObjectList.findAvatar(speaker_id);
 			if (!avatarp || dist_vec(avatarp->getPositionAgent(), gAgent.getPositionAgent()) > CHAT_NORMAL_RADIUS)
 			{
 				speakerp->mStatus = LLSpeaker::STATUS_NOT_IN_CHANNEL;

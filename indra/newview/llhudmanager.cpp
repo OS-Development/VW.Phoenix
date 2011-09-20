@@ -79,9 +79,9 @@ void LLHUDManager::updateEffects()
 
 void LLHUDManager::sendEffects()
 {
-	static BOOL* sPhoenixBroadcastEffects = rebind_llcontrol<BOOL>("PhoenixBroadcastEffects", &gSavedSettings, true);
+	static LLCachedControl<bool> sPhoenixBroadcastEffects(gSavedSettings, "PhoenixBroadcastEffects");
 
-	if(!(*sPhoenixBroadcastEffects))return;
+	if(!sPhoenixBroadcastEffects)return;
 	S32 i;
 	for (i = 0; i < mHUDEffects.count(); i++)
 	{

@@ -33,8 +33,7 @@
 #ifndef LL_LLHUDICON_H
 #define LL_LLHUDICON_H
 
-#include "llmemory.h"
-#include "lldarrayptr.h"
+#include "llpointer.h"
 
 #include "llhudobject.h"
 #include "v4color.h"
@@ -45,11 +44,11 @@
 #include "llfontgl.h"
 #include <set>
 #include <vector>
-#include "lldarray.h"
 
 // Renders a 2D icon billboard floating at the location specified.
 class LLDrawable;
 class LLViewerObject;
+class LLViewerTexture;
 
 class LLHUDIcon : public LLHUDObject
 {
@@ -57,11 +56,10 @@ friend class LLHUDObject;
 
 public:
 	/*virtual*/ void render();
-	/*virtual*/ void renderForSelect();
 	/*virtual*/ void markDead();
 	/*virtual*/ F32 getDistance() const { return mDistance; }
 
-	void setImage(LLViewerImage* imagep);
+	void setImage(LLViewerTexture* imagep);
 	void setScale(F32 fraction_of_fov);
 
 	void restartLifeTimer() { mLifeTimer.reset(); }
@@ -88,7 +86,7 @@ protected:
 	void renderIcon(BOOL for_select); // common render code
 
 private:
-	LLPointer<LLViewerImage> mImagep;
+	LLPointer<LLViewerTexture> mImagep;
 	LLFrameTimer	mAnimTimer;
 	LLFrameTimer	mLifeTimer;
 	F32				mDistance;

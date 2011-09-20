@@ -43,12 +43,17 @@
 #include "lluictrlfactory.h"
 #include "llviewercontrol.h"
 #include "llweb.h"
+#include "llinventoryview.h"
+#include "llimview.h"
 
 // linden library includes
 #include "llinventory.h"
 #include "lluuid.h"
 #include "message.h"
 #include "lggircgrouphandler.h"
+
+extern void handle_lure(const LLUUID& invitee);
+extern void handle_pay_by_id(const LLUUID& payee);
 
 const char FLOATER_TITLE[] = "Profile";
 const LLRect FAI_RECT(0, 530, 420, 0);
@@ -75,15 +80,93 @@ public:
 			return false;
 		}
 
-		if (params[1].asString() == "about")
+		const std::string verb = params[1].asString();
+		if (verb == "about" || verb == "inspect")
 		{
 			LLFloaterAvatarInfo::show(agent_id);
+			return true;
+		}
+		else if (verb == "pay")
+		{
+			handle_pay_by_id(agent_id);
+			return true;
+		}
+		else if (verb == "offerteleport")
+		{
+			handle_lure(agent_id);
+			return true;
+		}
+		else if (verb == "im")
+		{
+			std::string name;
+			if (gIMMgr && gCacheName->getFullName(agent_id, name))
+			{
+				gIMMgr->setFloaterOpen(TRUE);
+				gIMMgr->addSession(name, IM_NOTHING_SPECIAL, agent_id);
+				make_ui_sound("UISndStartIM");
+			}
 			return true;
 		}
 		return false;
 	}
 };
 LLAgentHandler gAgentHandler;
+
+class LLShareWithAvatarHandler : public LLCommandHandler
+{
+public: 
+	// requires trusted browser to trigger
+	LLShareWithAvatarHandler() : LLCommandHandler("sharewithavatar", true) { }
+
+	bool handle(const LLSD& params, const LLSD& query_map, LLMediaCtrl* web)
+	{
+		//Make sure we have some parameters
+		if (params.size() == 0)
+		{
+			return false;
+		}
+
+		//Get the ID
+		LLUUID id;
+		if (!id.set(params[0], FALSE))
+		{
+			return false;
+		}
+
+		// Select the 2nd Life tab in the profile panel.
+		LLFloaterAvatarInfo::showFromObject(id, "2nd Life");
+		// Open the inventory floater and/or bring it to front
+		LLInventoryView::showAgentInventory(TRUE);
+		// Give some clue to the user as what to do now
+		LLNotifications::instance().add("ShareInventory");
+		return true;
+	}
+};
+LLShareWithAvatarHandler gShareWithAvatar;
+
+class LLPickHandler : public LLCommandHandler
+{
+public: 
+	// requires trusted browser to trigger
+	LLPickHandler() : LLCommandHandler("pick", true) { }
+
+	bool handle(const LLSD& params, const LLSD& query_map, LLMediaCtrl* web)
+	{
+		//Make sure we have some parameters
+		if (params.size() == 0)
+		{
+			return false;
+		}
+
+		// *TODO: implement pick selection by UUID (and move to
+		// llpanelpick.cpp ?).
+		// For now, simply select the Picks tab in the profile panel.
+		llinfos << "STUB code for URI secondlife://app/pick/ - Selecting Picks tab in avatar profile." << llendl;
+		LLFloaterAvatarInfo::showFromObject(gAgentID, "Picks");
+		return true;
+	}
+};
+LLPickHandler gPickHandler;
 
 //-----------------------------------------------------------------------------
 // Member functions
@@ -126,7 +209,6 @@ LLFloaterAvatarInfo::LLFloaterAvatarInfo(const std::string& name, const LLRect &
 
 	gAvatarInfoInstances.addData(avatar_id, this); // must be done before callback below is called.
 	LLAvatarNameCache::get(avatar_id, boost::bind(&LLFloaterAvatarInfo::callbackLoadAvatarName, _1, _2));
-	//gCacheName->get(avatar_id, FALSE, callbackLoadAvatarName);
 }
 
 // virtual

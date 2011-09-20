@@ -37,6 +37,9 @@
 // the HUD or a dialog box or a button.  It can also contain sub-views
 // and child widgets
 
+#include <boost/function.hpp>
+#include <boost/signals2.hpp>
+
 #include "llcoord.h"
 #include "llfontgl.h"
 #include "llmortician.h"
@@ -208,7 +211,7 @@ public:
 	}
 };
 
-class LLView : public LLMouseHandler, public LLMortician, public LLFocusableElement
+class LLView : public LLMouseHandler, public LLMortician, public LLFocusableElement, public boost::signals2::trackable
 {
 public:
 	LOG_CLASS(LLView);
@@ -530,13 +533,16 @@ public:
 			if (widget)
 			{
 				// need non-const to update private dummy widget cache
-				llwarns << "Making dummy " << xml_tag << " named " << name << " in " << getName() << llendl;
+				llwarns << "Making dummy " << xml_tag << " named '" << name
+						<< "' in " << getName() << llendl;
 				mDummyWidgets.insert(std::make_pair(name, widget));
 			}
 			else
 			{
 				// dynamic cast will fail if T::fromXML only registered for base class
-				llwarns << "Failed to create dummy widget of requested type " << llendl;
+				llwarns << "Failed to create dummy widget of requested type ("
+						<< xml_tag << ") named '" << name << "'" << " in "
+						<< getName() << llendl;
 				return NULL;
 			}
 		}
@@ -663,7 +669,7 @@ private:
 	typedef std::map<std::string, LLView*> dummy_widget_map_t;
 	mutable dummy_widget_map_t mDummyWidgets;
 
-	boost::signals::connection mControlConnection;
+	boost::signals2::connection mControlConnection;
 
 	ECursorType mHoverCursor;
 	

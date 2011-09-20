@@ -10,7 +10,7 @@
 		Zapłata dla:
 	</text>
 	<text type="string" length="1" name="payee_name">
-		[FIRST] [LAST]
+		[NAME]
 	</text>
 	<text type="string" length="1" name="fastpay text" halign="left" left="12">
 		Szybka Zapłata:

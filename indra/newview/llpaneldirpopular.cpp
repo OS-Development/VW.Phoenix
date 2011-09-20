@@ -43,8 +43,7 @@ LLPanelDirPopular::LLPanelDirPopular(const std::string& name, LLFloaterDirectory
 // virtual
 void LLPanelDirPopular::search(const std::string& search_text)
 {
-	// no-op, initial page is loaded during construction and there
-	// is no search interface, just browse
+	mWebBrowser->navigateTo(getString("default_search_page"));
 }
 
 // marketplace panel

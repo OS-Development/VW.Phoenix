@@ -84,7 +84,7 @@
 		Primitive: [COUNT]
 	</text>
 	<tab_container name="Object Info Tabs" tab_max_width="150" tab_min_width="30">
-		<panel label="Allgemein" name="General">
+		<panel label="Allgem." name="General">
 			<text name="Name:">
 				Name:
 			</text>
@@ -418,7 +418,7 @@ Primitiv" name="sculpt texture control" tool_tip="Klicken Sie hier, um ein Bild 
 				</combo_item>
 			</combo_box>
 		</panel>
-		<panel label="Eigenschaften" name="Features">
+		<panel label="Eigensch." name="Features">
 			<text name="select_single" bottom="-15">
 				Wählen Sie nur einen einzelnen Baustein aus,
 um Eigenschaften zu bearbeiten.

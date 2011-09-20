@@ -64,7 +64,8 @@ void LLDrawPoolGround::prerender()
 
 void LLDrawPoolGround::render(S32 pass)
 {
-	if (mDrawFace.empty() || !gSavedSettings.getBOOL("RenderGround"))
+	static LLCachedControl<bool> render_ground(gSavedSettings, "RenderGround");
+	if (mDrawFace.empty() || !render_ground)
 	{
 		return;
 	}	
@@ -90,8 +91,3 @@ void LLDrawPoolGround::render(S32 pass)
 	
 	glPopMatrix();
 }
-
-void LLDrawPoolGround::renderForSelect()
-{
-}
-

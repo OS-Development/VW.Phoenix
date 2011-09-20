@@ -42,7 +42,7 @@
 #include "llmotioncontroller.h"
 #include "llvisualparam.h"
 #include "string_table.h"
-#include "llmemory.h"
+#include "llpointer.h"
 #include "llthread.h"
 
 class LLPolyMesh;
@@ -229,6 +229,20 @@ public:
 		if (mCurIterator == mVisualParamIndexMap.end())
 			return 0;
 		return (mCurIterator++)->second;
+	}
+
+	S32 getVisualParamCountInGroup(EVisualParamGroup group)
+	{
+		S32 rtn = 0;
+		VisualParamIndexMap_t::iterator iter;
+		for (iter = mVisualParamIndexMap.begin(); iter != mVisualParamIndexMap.end(); iter++)
+		{
+			if (iter->second->getGroup() == group)
+			{
+				rtn++;
+			}
+		}
+		return rtn;
 	}
 
 	LLVisualParam*	getVisualParam(S32 id)

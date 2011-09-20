@@ -44,6 +44,7 @@
 
 #include "indra_constants.h"
 #include "llcachename.h"
+#include "llnotifications.h"
 #include "llstl.h"
 #include "lltimer.h"
 #include "lluuid.h"
@@ -51,9 +52,7 @@
 
 #include "llagent.h"
 #include "llbutton.h"
-//#include "llinventory.h"
 #include "llinventorymodel.h"
-#include "llnotify.h"
 #include "llresmgr.h"
 #include "llimview.h"
 #include "llviewercontrol.h"
@@ -199,16 +198,16 @@ bool LLAvatarTracker::haveTrackingInfo()
 
 LLVector3d LLAvatarTracker::getGlobalPos()
 {
-	if(!mTrackedAgentValid || !mTrackingData) return LLVector3d();
+	if (!mTrackedAgentValid || !mTrackingData) return LLVector3d();
 	LLVector3d global_pos;
 	
-	LLViewerObject* object = gObjectList.findObject(mTrackingData->mAvatarID);
-	if(object && !object->isDead())
+	LLVOAvatar* avatarp = gObjectList.findAvatar(mTrackingData->mAvatarID);
+	if (avatarp && !avatarp->isDead())
 	{
-		global_pos = object->getPositionGlobal();
+		global_pos = avatarp->getPositionGlobal();
 		// HACK - for making the tracker point above the avatar's head
 		// rather than its groin
-		global_pos.mdV[VZ] += 0.7f * ((LLVOAvatar *)object)->mBodySize.mV[VZ];
+		global_pos.mdV[VZ] += 0.7f * avatarp->mBodySize.mV[VZ];
 
 		mTrackingData->mGlobalPositionEstimate = global_pos;
 	}
@@ -228,10 +227,10 @@ void LLAvatarTracker::getDegreesAndDist(F32& rot,
 
 	LLVector3d global_pos;
 
-	LLViewerObject* object = gObjectList.findObject(mTrackingData->mAvatarID);
-	if(object && !object->isDead())
+	LLVOAvatar* avatarp = gObjectList.findAvatar(mTrackingData->mAvatarID);
+	if (avatarp && !avatarp->isDead())
 	{
-		global_pos = object->getPositionGlobal();
+		global_pos = avatarp->getPositionGlobal();
 		mTrackingData->mGlobalPositionEstimate = global_pos;
 	}
 	else
@@ -608,8 +607,8 @@ void LLAvatarTracker::processChange(LLMessageSystem* msg)
 					LLAvatarName avatar_name;
 					if (LLAvatarNameCache::get(agent_id, &avatar_name))
 					{
-						static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-						switch (*sPhoenixNameSystem)
+						static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+						switch (sPhoenixNameSystem)
 						{
 							case 0 : fullname = avatar_name.getLegacyName(); break;
 							case 1 : fullname = (avatar_name.mIsDisplayNameDefault ? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
@@ -672,8 +671,8 @@ void LLAvatarTracker::processNotify(LLMessageSystem* msg, bool online)
 					LLAvatarName avatar_name;
 					if (LLAvatarNameCache::get(agent_id, &avatar_name))
 					{
-						static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-						switch (*sPhoenixNameSystem)
+						static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+						switch (sPhoenixNameSystem)
 						{
 							case 0 : fullname = avatar_name.getLegacyName(); break;
 							case 1 : fullname = (avatar_name.mIsDisplayNameDefault ? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
@@ -809,8 +808,8 @@ void LLTrackingData::agentFound(const LLUUID& prey,
 
 bool LLTrackingData::haveTrackingInfo()
 {
-	LLViewerObject* object = gObjectList.findObject(mAvatarID);
-	if(object && !object->isDead())
+	LLVOAvatar* avatarp = gObjectList.findAvatar(mAvatarID);
+	if (avatarp && !avatarp->isDead())
 	{
 		mCoarseLocationTimer.checkExpirationAndReset(COARSE_FREQUENCY);
 		mUpdateTimer.setTimerExpirySec(FIND_FREQUENCY);
@@ -818,20 +817,20 @@ bool LLTrackingData::haveTrackingInfo()
 		mHaveInfo = true;
 		return true;
 	}
-	if(mHaveCoarseInfo &&
-	   !mCoarseLocationTimer.checkExpirationAndReset(COARSE_FREQUENCY))
+	if (mHaveCoarseInfo &&
+	    !mCoarseLocationTimer.checkExpirationAndReset(COARSE_FREQUENCY))
 	{
 		// if we reach here, then we have a 'recent' coarse update
 		mUpdateTimer.setTimerExpirySec(FIND_FREQUENCY);
 		mAgentGone.setTimerExpirySec(OFFLINE_SECONDS);
 		return true;
 	}
-	if(mUpdateTimer.checkExpirationAndReset(FIND_FREQUENCY))
+	if (mUpdateTimer.checkExpirationAndReset(FIND_FREQUENCY))
 	{
 		LLAvatarTracker::instance().findAgent();
 		mHaveCoarseInfo = false;
 	}
-	if(mAgentGone.checkExpirationAndReset(OFFLINE_SECONDS))
+	if (mAgentGone.checkExpirationAndReset(OFFLINE_SECONDS))
 	{
 		mHaveInfo = false;
 		mHaveCoarseInfo = false;

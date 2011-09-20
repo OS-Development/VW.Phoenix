@@ -72,7 +72,8 @@
 #include "llscrollbar.h"
 #include "llimview.h"
 #include "lltooldraganddrop.h"
-#include "llviewerimagelist.h"
+#include "llviewerassettype.h"
+#include "llviewertexturelist.h"
 #include "llviewerinventory.h"
 #include "llviewerobjectlist.h"
 #include "llviewerwindow.h"
@@ -199,6 +200,7 @@ void LLInventoryViewFinder::updateElementsFromFilter()
 	childSetValue("check_sound", (S32) (filter_types & 0x1 << LLInventoryType::IT_SOUND));
 	childSetValue("check_texture", (S32) (filter_types & 0x1 << LLInventoryType::IT_TEXTURE));
 	childSetValue("check_snapshot", (S32) (filter_types & 0x1 << LLInventoryType::IT_SNAPSHOT));
+	childSetValue("check_mesh", (S32) (filter_types & 0x1 << LLInventoryType::IT_MESH));
 	childSetValue("check_show_empty", show_folders == LLInventoryFilter::SHOW_ALL_FOLDERS);
 	childSetValue("check_since_logoff", mFilter->isSinceLogoff());
 	mSpinSinceHours->set((F32)(hours % 24));
@@ -277,6 +279,12 @@ void LLInventoryViewFinder::draw()
 	if (!childGetValue("check_snapshot"))
 	{
 		filter &= ~(0x1 << LLInventoryType::IT_SNAPSHOT);
+		filtered_by_all_types = FALSE;
+	}
+
+	if (!getChild<LLUICtrl>("check_mesh")->getValue())
+	{
+		filter &= ~(0x1 << LLInventoryType::IT_MESH);
 		filtered_by_all_types = FALSE;
 	}
 
@@ -360,6 +368,7 @@ void LLInventoryViewFinder::selectAllTypes(void* user_data)
 	self->childSetValue("check_sound", TRUE);
 	self->childSetValue("check_texture", TRUE);
 	self->childSetValue("check_snapshot", TRUE);
+	self->childSetValue("check_mesh", TRUE);
 
 /*
 	self->mCheckCallingCard->set(TRUE);
@@ -405,6 +414,7 @@ void LLInventoryViewFinder::selectNoTypes(void* user_data)
 	self->childSetValue("check_sound", FALSE);
 	self->childSetValue("check_texture", FALSE);
 	self->childSetValue("check_snapshot", FALSE);
+	self->childSetValue("check_mesh", FALSE);
 }
 
 
@@ -1166,6 +1176,11 @@ void LLInventoryView::onQuickFilterCommit(LLUICtrl* ctrl, void* user_data)
 		filter_type = 0x1 << LLInventoryType::IT_SNAPSHOT;
 	}
 
+	else if (view->getString("filter_type_mesh") == item_type)
+	{
+		filter_type = 0x1 << LLInventoryType::IT_MESH;
+	}
+
 	else if (view->getString("filter_type_custom") == item_type)
 	{
 		// When they select custom, show the floater then return
@@ -1238,6 +1253,7 @@ void LLInventoryView::refreshQuickFilter(LLUICtrl* ctrl)
   filter_mask |= (0x1 << LLInventoryType::IT_SOUND);
   filter_mask |= (0x1 << LLInventoryType::IT_TEXTURE);
   filter_mask |= (0x1 << LLInventoryType::IT_SNAPSHOT);
+  filter_mask |= (0x1 << LLInventoryType::IT_MESH);
 
 
   filter_type &= filter_mask;
@@ -1306,6 +1322,11 @@ void LLInventoryView::refreshQuickFilter(LLUICtrl* ctrl)
 	else if (filter_type == (0x1 << LLInventoryType::IT_SNAPSHOT))
 	{
 		selection = view->getString("filter_type_snapshot");
+	}
+
+	else if (filter_type == (0x1 << LLInventoryType::IT_MESH))
+	{
+		selection = view->getString("filter_type_mesh");
 	}
 
 	else
@@ -1455,144 +1476,6 @@ BOOL LLInventoryView::handleDragAndDrop(S32 x, S32 y, MASK mask, BOOL drop,
 	BOOL handled = LLFloater::handleDragAndDrop(x, y, mask, drop, cargo_type, cargo_data, accept, tooltip_msg);
 
 	return handled;
-}
-std::string get_item_icon_name(LLAssetType::EType asset_type,
-							 LLInventoryType::EType inventory_type,
-							 U32 attachment_point,
-							 BOOL item_is_multi )
-{
-	EInventoryIcon idx = OBJECT_ICON_NAME;
-	if ( item_is_multi )
-	{
-		idx = OBJECT_MULTI_ICON_NAME;
-	}
-	
-	switch(asset_type)
-	{
-	case LLAssetType::AT_TEXTURE:
-		if(LLInventoryType::IT_SNAPSHOT == inventory_type)
-		{
-			idx = SNAPSHOT_ICON_NAME;
-		}
-		else
-		{
-			idx = TEXTURE_ICON_NAME;
-		}
-		break;
-
-	case LLAssetType::AT_SOUND:
-		idx = SOUND_ICON_NAME;
-		break;
-	case LLAssetType::AT_CALLINGCARD:
-		if(attachment_point!= 0)
-		{
-			idx = CALLINGCARD_ONLINE_ICON_NAME;
-		}
-		else
-		{
-			idx = CALLINGCARD_OFFLINE_ICON_NAME;
-		}
-		break;
-	case LLAssetType::AT_LANDMARK:
-		if(attachment_point!= 0)
-		{
-			idx = LANDMARK_VISITED_ICON_NAME;
-		}
-		else
-		{
-			idx = LANDMARK_ICON_NAME;
-		}
-		break;
-	case LLAssetType::AT_SCRIPT:
-	case LLAssetType::AT_LSL_TEXT:
-	case LLAssetType::AT_LSL_BYTECODE:
-		idx = SCRIPT_ICON_NAME;
-		break;
-	case LLAssetType::AT_CLOTHING:
-		idx = CLOTHING_ICON_NAME;
-	case LLAssetType::AT_BODYPART :
-		if(LLAssetType::AT_BODYPART == asset_type)
-		{
-			idx = BODYPART_ICON_NAME;
-		}
-		switch(LLInventoryItem::II_FLAGS_WEARABLES_MASK & attachment_point)
-		{
-		case WT_SHAPE:
-			idx = BODYPART_SHAPE_ICON_NAME;
-			break;
-		case WT_SKIN:
-			idx = BODYPART_SKIN_ICON_NAME;
-			break;
-		case WT_HAIR:
-			idx = BODYPART_HAIR_ICON_NAME;
-			break;
-		case WT_EYES:
-			idx = BODYPART_EYES_ICON_NAME;
-			break;
-		case WT_SHIRT:
-			idx = CLOTHING_SHIRT_ICON_NAME;
-			break;
-		case WT_PANTS:
-			idx = CLOTHING_PANTS_ICON_NAME;
-			break;
-		case WT_SHOES:
-			idx = CLOTHING_SHOES_ICON_NAME;
-			break;
-		case WT_SOCKS:
-			idx = CLOTHING_SOCKS_ICON_NAME;
-			break;
-		case WT_JACKET:
-			idx = CLOTHING_JACKET_ICON_NAME;
-			break;
-		case WT_GLOVES:
-			idx = CLOTHING_GLOVES_ICON_NAME;
-			break;
-		case WT_UNDERSHIRT:
-			idx = CLOTHING_UNDERSHIRT_ICON_NAME;
-			break;
-		case WT_UNDERPANTS:
-			idx = CLOTHING_UNDERPANTS_ICON_NAME;
-			break;
-		case WT_SKIRT:
-			idx = CLOTHING_SKIRT_ICON_NAME;
-			break;
-		case WT_ALPHA:
-			idx = CLOTHING_ALPHA_ICON_NAME;
-			break;
-		case WT_TATTOO:
-			idx = CLOTHING_TATTOO_ICON_NAME;
-			break;
-		case WT_PHYSICS:
-			idx = CLOTHING_PHYSICS_ICON_NAME;
-			break;
-		default:
-			// no-op, go with choice above
-			break;
-		}
-		break;
-	case LLAssetType::AT_NOTECARD:
-		idx = NOTECARD_ICON_NAME;
-		break;
-	case LLAssetType::AT_ANIMATION:
-		idx = ANIMATION_ICON_NAME;
-		break;
-	case LLAssetType::AT_GESTURE:
-		idx = GESTURE_ICON_NAME;
-		break;
-	default:
-		break;
-	}
-	
-	return ICON_NAME[idx];
-}
-
-LLUIImagePtr get_item_icon(LLAssetType::EType asset_type,
-							 LLInventoryType::EType inventory_type,
-							 U32 attachment_point,
-							 BOOL item_is_multi)
-{
-	const std::string& icon_name = get_item_icon_name(asset_type, inventory_type, attachment_point, item_is_multi );
-	return LLUI::getUIImage(icon_name);
 }
 
 const std::string LLInventoryPanel::DEFAULT_SORT_ORDER = std::string("InventorySortOrder");
@@ -2122,7 +2005,7 @@ void LLInventoryPanel::closeAllFolders()
 
 void LLInventoryPanel::openDefaultFolderForType(LLAssetType::EType type)
 {
-	LLUUID category_id = mInventory->findCategoryUUIDForType(type);
+	LLUUID category_id = mInventory->findCategoryUUIDForType(LLFolderType::assetTypeToFolderType(type));
 	LLOpenFolderByID opener(category_id);
 	mFolders->applyFunctorRecursively(opener);
 }
@@ -2156,7 +2039,7 @@ void LLInventoryPanel::createNewItem(const std::string& name,
 									U32 next_owner_perm)
 {
 	std::string desc;
-	LLAssetType::generateDescriptionFor(asset_type, desc);
+	LLViewerAssetType::generateDescriptionFor(asset_type, desc);
 	next_owner_perm = (next_owner_perm) ? next_owner_perm : PERM_MOVE | PERM_TRANSFER;
 
 	

@@ -1462,6 +1462,17 @@ Unable to upload [FILE] due to the following reason: [REASON]
 Please try again later.
   </notification>
 
+   <notification
+    icon="alertmodal.tga"
+    name="UploadCostConfirmation"
+    type="alertmodal">
+This upload will cost L$[PRICE], do you wish to continue with the upload?
+    <usetemplate
+     name="okcancelbuttons"
+     notext="Cancel"
+     yestext="Upload"/>
+  </notification>
+
   <notification
    icon="alertmodal.tga"
    name="CannotCreateLandmarkNotOwner"
@@ -5145,6 +5156,13 @@ Builds with extended hollow or extended hole size do not render properly on othe
 
   <notification
    icon="alertmodal.tga"
+   name="ShareInventory"
+   type="alertmodal">
+To share an item (or folder) with this avatar, drag it from your inventory to the 'Drop inventory item here' area in the avatar profile.
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
    name="ExportFailed"
    type="alertmodal">
 Bad permissions for the exported object. Export aborted.
@@ -6607,21 +6625,21 @@ Click Accept to join the call or Decline to decline the invitation. Click Mute t
    icon="notify.tga"
    name="AutoUnmuteByIM"
    type="notify">
-[FIRST] [LAST] was sent an instant message and has been automatically unmuted.
+[NAME] was sent an instant message and has been automatically unmuted.
   </notification>
 
   <notification
    icon="notify.tga"
    name="AutoUnmuteByMoney"
    type="notify">
-[FIRST] [LAST] was given money and has been automatically unmuted.
+[NAME] was given money and has been automatically unmuted.
   </notification>
 
   <notification
    icon="notify.tga"
    name="AutoUnmuteByInventory"
    type="notify">
-[FIRST] [LAST] was offered inventory and has been automatically unmuted.
+[NAME] was offered inventory and has been automatically unmuted.
   </notification>
 
   <notification
@@ -7091,6 +7109,30 @@ The URL you clicked cannot be opened from this web browser.
            type="notifytip">
         Blocked calling cards from [FIRST] [LAST]
   </notification>  
+
+  <notification
+    name="MeshUploadError"
+    icon="alert.tga"
+    type="alert">
+    [LABEL] failed to upload: [MESSAGE] [IDENTIFIER] 
+
+See the log file for details.
+  </notification>
+
+   <notification
+    name="MeshUploadPermError"
+    icon="alert.tga"
+    type="alert">
+    Error while requesting mesh upload permissons.
+  </notification>
+
+  <notification
+    name="RegionCapabilityRequestError"
+    icon="alert.tga"
+    type="alert">
+    Could not get region capability &apos;[CAPABILITY]&apos;.
+  </notification>
+
   <global name="UnsupportedCPU">
 - Your CPU speed does not meet the minimum requirements.
   </global>
@@ -7099,6 +7141,10 @@ The URL you clicked cannot be opened from this web browser.
     You do not appear to have the proper hardware requirements for the Phoenix Viewer. Phoenix requires an OpenGL graphics card that has multitexture support. If this is the case, you may want to make sure that you have the latest drivers for your graphics card, and service packs and patches for your operating system.
 
     If you continue to have problems, please visit: http://www.phoenixviewer.com/
+  </global>
+
+  <global name="UnsupportedCPUSSE2">
+Your CPU speed does not meet the minimum requirements (missing SSE2 support).
   </global>
 
   <global name="UnsupportedCPUAmount">

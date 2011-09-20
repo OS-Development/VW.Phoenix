@@ -293,12 +293,11 @@ void LLTextBox::draw()
 	{
 		gl_rect_2d_offset_local(getLocalRect(), 2, FALSE);
 	}
-	//static LLColor4* sColorDropShadow = rebind_llcontrol<LLColor4>("ColorDropShadow", LLUI::sColorsGroup, true);
-
+	//static LLCachedControl<LLColor4U> sColorDropShadow((*LLUI::sColorsGroup), "ColorDropShadow");
 
 	/*if( mBorderDropShadowVisible )
 	{
-		static LLColor4 color_drop_shadow = (*sColorDropShadow);
+		static LLColor4 color_drop_shadow = (LLColor4)sColorDropShadow;
 		static S32 drop_shadow_tooltip = LLUI::sConfigGroup->getS32("DropShadowTooltip");
 		gl_drop_shadow(0, getRect().getHeight(), getRect().getWidth(), 0,
 			color_drop_shadow, drop_shadow_tooltip);

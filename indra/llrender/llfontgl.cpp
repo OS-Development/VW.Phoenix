@@ -34,15 +34,14 @@
 
 #include <boost/tokenizer.hpp>
 
-#include "llfont.h"
 #include "llfontgl.h"
+
+#include "llfasttimer.h"
 #include "llfontbitmapcache.h"
-#include "llfontregistry.h"
 #include "llgl.h"
 #include "llrender.h"
-#include "v4color.h"
 #include "llstl.h"
-#include "llfasttimer.h"
+#include "v4color.h"
 
 const S32 BOLD_OFFSET = 1;
 
@@ -272,7 +271,15 @@ void LLFontGL::destroyAllGL()
 
 void LLFontGL::destroyGL()
 {
-	mFontBitmapCachep->destroyGL();
+		if (LLFont::sOpenGLcrashOnRestart)
+		{
+			// This will leak memory but will prevent a crash...
+			sFontRegistry = NULL;
+		}
+		else
+		{
+			sFontRegistry->destroyGL();
+		}
 }
 
 
@@ -384,9 +391,9 @@ S32 LLFontGL::render(const LLWString &wstr,
 					 BOOL use_embedded,
 					 BOOL use_ellipses) const
 {
-	if(!sDisplayFont) //do not display texts
+	if (!sDisplayFont) //do not display texts
 	{
-		return wstr.length() ;
+		return wstr.length();
 	}
 
 	if (wstr.empty())
@@ -424,7 +431,7 @@ S32 LLFontGL::render(const LLWString &wstr,
 
 	LLFastTimer t(LLFastTimer::FTM_RENDER_FONTS);
 
-	gGL.color4fv( color.mV );
+	gGL.color4fv (color.mV);
 
 	S32 chars_drawn = 0;
 	S32 i;
@@ -1067,15 +1074,15 @@ void LLFontGL::clearEmbeddedChars()
 	mEmbeddedChars.clear();
 }
 
-void LLFontGL::addEmbeddedChar( llwchar wc, LLImageGL* image, const std::string& label ) const
+void LLFontGL::addEmbeddedChar( llwchar wc, LLTexture* image, const std::string& label ) const
 {
 	LLWString wlabel = utf8str_to_wstring(label);
 	addEmbeddedChar(wc, image, wlabel);
 }
 
-void LLFontGL::addEmbeddedChar( llwchar wc, LLImageGL* image, const LLWString& wlabel ) const
+void LLFontGL::addEmbeddedChar( llwchar wc, LLTexture* image, const LLWString& wlabel ) const
 {
-	embedded_data_t* ext_data = new embedded_data_t(image, wlabel);
+	embedded_data_t* ext_data = new embedded_data_t(image->getGLTexture(), wlabel);
 	mEmbeddedChars[wc] = ext_data;
 }
 

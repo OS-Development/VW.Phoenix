@@ -49,6 +49,7 @@
 #include "llviewerobjectlist.h"
 #include "llface.h"
 #include "llvoavatar.h"
+#include "llhudtext.h"
 
 #include "llglheaders.h"
 
@@ -117,7 +118,7 @@ void LLViewerJointAttachment::setupDrawable(LLViewerObject *object)
 	object->mDrawable->makeActive();
 	LLVector3 current_pos = object->getRenderPosition();
 	LLQuaternion current_rot = object->getRenderRotation();
-	LLQuaternion attachment_pt_inv_rot = ~getWorldRotation();
+	LLQuaternion attachment_pt_inv_rot = ~(getWorldRotation());
 
 	current_pos -= getWorldPosition();
 	current_pos.rotVec(attachment_pt_inv_rot);
@@ -169,13 +170,26 @@ BOOL LLViewerJointAttachment::addObject(LLViewerObject* object)
 
 	if (isObjectAttached(object))
 	{
-		llinfos << "(same object re-attached)" << llendl;
+		llinfos << "Same object re-attached: " << object->getID() << llendl;
 		removeObject(object);
 		// Pass through anyway to let setupDrawable()
 		// re-connect object to the joint correctly
 	}
 
 	object->extractAttachmentItemID();
+
+	// Two instances of the same inventory item attached --
+	// Request detach, and kill the object in the meantime.
+	if (getAttachedObject(object->getAttachmentItemID()))
+	{
+		llinfos << "Same inventory object re-attached, detaching spurious instance: "
+				<< object->getAttachmentItemID() << llendl;
+		object->markDead();
+
+		// If this happens to be attached to self, then detach.
+		LLVOAvatar::detachAttachmentIntoInventory(object->getAttachmentItemID());
+		return FALSE;
+	}
 
 	mAttachedObjects.push_back(object);
 	setupDrawable(object);

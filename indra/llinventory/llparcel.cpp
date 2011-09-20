@@ -41,9 +41,9 @@
 #include "llmath.h"
 #include "llsd.h"
 #include "llsdutil.h"
+#include "llsdutil_math.h"
 #include "lltransactiontypes.h"
 #include "lltransactionflags.h"
-#include "llsdutil.h"
 #include "message.h"
 #include "u64.h"
 
@@ -79,23 +79,26 @@ static const std::string PARCEL_CATEGORY_STRING[LLParcel::C_COUNT] =
     "shopping",
     "stage",
     "other",
+	"rental",
 };
+
 static const std::string PARCEL_CATEGORY_UI_STRING[LLParcel::C_COUNT + 1] =
 {
     "None",
     "Linden Location",
     "Adult",
-    "Arts & Culture",
+    "Arts and Culture",
     "Business",
     "Educational",
     "Gaming",
     "Hangout",
     "Newcomer Friendly",
-    "Parks & Nature",
+    "Parks and Nature",
     "Residential",
     "Shopping",
     "Stage",
     "Other",
+	"Rental",
     "Any",	 // valid string for parcel searches
 };
 
@@ -174,8 +177,6 @@ void LLParcel::init(const LLUUID &owner_id,
 	mSaleTimerExpires.setTimerExpirySec(0);
 	mSaleTimerExpires.stop();
 	mGraceExtension = 0;
-	//mExpireAction = STEA_REVERT;
-	mRecordTransaction = FALSE;
 
 	mAuctionID = 0;
 	mInEscrow = false;
@@ -455,7 +456,7 @@ BOOL LLParcel::allowTerraformBy(const LLUUID &agent_id) const
 
 bool LLParcel::isAgentBlockedFromParcel(LLParcel* parcelp,
                                         const LLUUID& agent_id,
-                                        const std::vector<LLUUID>& group_ids,
+                                        const uuid_vec_t& group_ids,
                                         const BOOL is_agent_identified,
                                         const BOOL is_agent_transacted,
                                         const BOOL is_agent_ageverified)
@@ -680,6 +681,7 @@ void LLParcel::packMessage(LLMessageSystem* msg)
 // Assumes we are in a block "ParcelData"
 void LLParcel::packMessage(LLSD& msg)
 {
+	// used in the viewer, the sim uses it's own packer
 	msg["local_id"] = getLocalID();
 	msg["parcel_flags"] = ll_sd_from_U32(getParcelFlags());
 	msg["sale_price"] = getSalePrice();

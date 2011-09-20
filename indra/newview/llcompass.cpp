@@ -32,23 +32,17 @@
 
 #include "llviewerprecompiledheaders.h"
 
-#include "llmath.h"		// clampf()
-#include "llmath.h"
-#include "llgl.h"
-
-#include "llui.h"
-
-#include "llcircuit.h"
-#include "message.h"
-#include "llagent.h"
 #include "llcompass.h"
 
-#include "llviewerimage.h"
-#include "llviewerimagelist.h"
-#include "llviewercontrol.h"
+#include "llcircuit.h"
+#include "llgl.h"
+#include "llui.h"
+#include "message.h"
+#include "llagent.h"
 #include "llviewercamera.h"
-
-//#include "llglheaders.h"
+#include "llviewercontrol.h"
+#include "llviewertexture.h"
+#include "llviewertexturelist.h"
 
 //
 // Imported globals
@@ -63,25 +57,25 @@ extern LLMessageSystem* gMessageSystem;
 /// LLCompass
 ///----------------------------------------------------------------------------
 
-LLCompass::LLCompass( const std::string& name, const LLRect& rect)
-		:	LLView(name, rect, FALSE)
+LLCompass::LLCompass( const std::string& name, const LLRect& rect) :
+	LLView(name, rect, FALSE)
 {
 	mTexture = NULL;
 	mBkgndTexture = NULL;
 
-	BOOL state = gSavedSettings.getBOOL( "ShowCompass" );
+	BOOL state = gSavedSettings.getBOOL("ShowCompass");
 
 	setVisible( state );
 }
 
 void LLCompass::setTexture(LLUUID image_id)
 {
-   	mTexture = gImageList.getImage(image_id, FALSE, TRUE);
+   	mTexture = LLViewerTextureManager::getFetchedTexture(image_id, FALSE, LLViewerTexture::BOOST_UI);
 }
 
 void LLCompass::setBkgndTexture(LLUUID image_id)
 {
-   	mBkgndTexture = gImageList.getImage(image_id, FALSE, TRUE);
+   	mBkgndTexture = LLViewerTextureManager::getFetchedTexture(image_id, FALSE, LLViewerTexture::BOOST_UI);
 }
 
 //
@@ -92,20 +86,20 @@ void LLCompass::setBkgndTexture(LLUUID image_id)
 /// LLHorizontalCompass
 ///----------------------------------------------------------------------------
 
-LLHorizontalCompass::LLHorizontalCompass( const std::string& name, const LLRect& rect,
-										  const LLColor4& focus_color,
-										  const LLUUID& image_id ) :
-	LLView( name, rect, TRUE ),
-	mFocusColor( focus_color ),
-	mTexture( NULL )
+LLHorizontalCompass::LLHorizontalCompass(const std::string& name, const LLRect& rect,
+										 const LLColor4& focus_color,
+										 const LLUUID& image_id) :
+	LLView(name, rect, TRUE),
+	mFocusColor(focus_color),
+	mTexture(NULL)
 {
-	setTexture( image_id );
+	setTexture(image_id);
 
-	BOOL state = gSavedSettings.getBOOL( "ShowCompass" );
-	setVisible( state );
+	BOOL state = gSavedSettings.getBOOL("ShowCompass");
+	setVisible(state);
 }
 
-void LLHorizontalCompass::setTexture( const LLUUID& image_id )
+void LLHorizontalCompass::setTexture(const LLUUID& image_id)
 {
-   	mTexture = gImageList.getImage(image_id, FALSE, TRUE);
+   	mTexture = LLViewerTextureManager::getFetchedTexture(image_id, FALSE, LLViewerTexture::BOOST_UI);
 }

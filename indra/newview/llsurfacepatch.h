@@ -35,7 +35,7 @@
 
 #include "v3math.h"
 #include "v3dmath.h"
-#include "llmemory.h"
+#include "llpointer.h"
 
 class LLSurface;
 class LLVOSurfacePatch;
@@ -90,6 +90,7 @@ public:
 
 	void updateCameraDistanceRegion( const LLVector3 &pos_region);
 	void updateVisibility();
+	void updateGL();
 
 	void dirtyZ(); // Dirty the z values of this patch
 	void setHasReceivedData();

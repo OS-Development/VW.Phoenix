@@ -43,7 +43,7 @@
 #include "llagent.h"			// for agent id
 #include "llalertdialog.h"
 #include "llinventorymodel.h"	// for gInventory
-#include "llinventoryview.h"	// for get_item_icon
+#include "llinventoryicon.h"	// for getIconName
 #include "llselectmgr.h"
 #include "llscrolllistctrl.h"
 #include "llviewercontrol.h"
@@ -153,9 +153,9 @@ void LLFloaterBuy::show(const LLSaleInfo& sale_info)
 	LLSD row;
 
 	// Compute icon for this item
-	std::string icon_name = get_item_icon_name(LLAssetType::AT_OBJECT, 
-									 LLInventoryType::IT_OBJECT,
-									 0x0, FALSE);
+	std::string icon_name = LLInventoryIcon::getIconName(LLAssetType::AT_OBJECT, 
+														 LLInventoryType::IT_OBJECT,
+														 0x0, FALSE);
 
 	row["columns"][0]["column"] = "icon";
 	row["columns"][0]["type"] = "icon";
@@ -232,10 +232,6 @@ void LLFloaterBuy::inventoryChanged(LLViewerObject* obj,
 		if (obj->getType() == LLAssetType::AT_CATEGORY)
 			continue;
 
-		// Skip root folders, so we know we have inventory items only
-		if (obj->getType() == LLAssetType::AT_ROOT_CATEGORY) 
-			continue;
-
 		// Skip the mysterious blank InventoryObject 
 		if (obj->getType() == LLAssetType::AT_NONE)
 			continue;
@@ -252,15 +248,16 @@ void LLFloaterBuy::inventoryChanged(LLViewerObject* obj,
 
 		// Compute icon for this item
 		BOOL item_is_multi = FALSE;
-		if ( inv_item->getFlags() & LLInventoryItem::II_FLAGS_LANDMARK_VISITED )
+		if ((inv_item->getFlags() & LLInventoryItem::II_FLAGS_LANDMARK_VISITED)
+			|| (inv_item->getFlags() & LLInventoryItem::II_FLAGS_OBJECT_HAS_MULTIPLE_ITEMS))
 		{
 			item_is_multi = TRUE;
 		}
 
-		std::string icon_name = get_item_icon_name(inv_item->getType(), 
-							 inv_item->getInventoryType(),
-							 inv_item->getFlags(),
-							 item_is_multi);
+		std::string icon_name = LLInventoryIcon::getIconName(inv_item->getType(), 
+															 inv_item->getInventoryType(),
+							 								 inv_item->getFlags(),
+							 								 item_is_multi);
 		row["columns"][0]["column"] = "icon";
 		row["columns"][0]["type"] = "icon";
 		row["columns"][0]["value"] = icon_name;
@@ -303,7 +300,7 @@ void LLFloaterBuy::onClickBuy(void*)
 
 	// Put the items where we put new folders.
 	LLUUID category_id;
-	category_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_OBJECT);
+	category_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_OBJECT);
 
 	// *NOTE: doesn't work for multiple object buy, which UI does not
 	// currently support sale info is used for verification only, if

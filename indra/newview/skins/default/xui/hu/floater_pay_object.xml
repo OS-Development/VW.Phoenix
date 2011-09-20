@@ -7,7 +7,7 @@
 		Fizetés lakónak:
 	</text>
 	<text type="string" length="1" name="payee_name" left="120" width="180">
-		[FIRST] [LAST]
+		[NAME]
 	</text>
 	<text type="string" length="1" name="object_name_label">
 		Tárgy által:

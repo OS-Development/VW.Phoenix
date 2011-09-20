@@ -2976,13 +2976,13 @@ Klik Accepteren om deel te nemen aan dit gesprek of Afwijzen om de uitnodiging a
 		</form>
 	</notification>
 	<notification name="AutoUnmuteByIM">
-		Er is een instant message naar [FIRST] [LAST] gestuurd, waardoor deze automatisch van de negeerlijst is gehaald.
+		Er is een instant message naar [NAME] gestuurd, waardoor deze automatisch van de negeerlijst is gehaald.
 	</notification>
 	<notification name="AutoUnmuteByMoney">
-		Er is geld gegeven aan [FIRST] [LAST], waardoor deze automatisch van de negeerlijst is gehaald.
+		Er is geld gegeven aan [NAME], waardoor deze automatisch van de negeerlijst is gehaald.
 	</notification>
 	<notification name="AutoUnmuteByInventory">
-		Er is inventaris aangeboden aan [FIRST] [LAST], waardoor deze automatisch van de negeerlijst is gehaald.
+		Er is inventaris aangeboden aan [NAME], waardoor deze automatisch van de negeerlijst is gehaald.
 	</notification>
 	<notification name="VoiceInviteGroup">
 		[NAME] doet nu mee met een Voice chat gesprek binnen de groep [GROUP].

@@ -197,6 +197,7 @@
 	<string name="all_files">All Files</string>
 	<string name="sound_files">Sounds</string>
 	<string name="animation_files">Animations</string>
+	<string name="scene_files">Models</string>
 	<string name="image_files">Images</string>
 	<string name="save_file_verb">Save</string>
 	<string name="load_file_verb">Load</string>
@@ -209,7 +210,20 @@
 	<string name="compressed_image_files">Compressed Images</string>
 	<string name="load_files">Load Files</string>
 	<string name="choose_the_directory">Choose Directory</string>
-	
+
+	<!-- Materials -->
+	<string name="Stone">Stone</string>
+	<string name="Metal">Metal</string>
+	<string name="Glass">Glass</string>
+	<string name="Wood">Wood</string>
+	<string name="Flesh">Flesh</string>
+	<string name="Plastic">Plastic</string>
+	<string name="Rubber">Rubber</string>
+	<string name="Light">Light</string>
+
+	<!-- Legacy strings, almost never used -->
+	<string name="Fullbright">Fullbright (Legacy)</string>	<!-- used in the Build > materials dropdown-->
+
 	<!-- LSL Usage Hover Tips -->
   <string name="LSLTipSleepTime">
 Sleeps script for [SLEEP_TIME] seconds.
@@ -1647,8 +1661,7 @@ Returns the value for header for request_id
   <string name="LSLTipText_llSetPrimMediaParams">
 llSetPrimMediaParams(integer face, list params)
 Sets the media params for a particular face on an object. If media is not already on this object, add it.
-List is a set of name/value pairs in no particular order.  Params not specified are unchanged, or if new media is added then set to the default specified.
-The possible names are below, along with the types of values and what they mean.
+List is a set of name/value pairs in no particular order. Params not specified are unchanged, or if new media is added then set to the default specified.
   </string>
   <string name="LSLTipText_llGetPrimMediaParams">
 list llGetPrimMediaParams(integer face, list params)
@@ -1726,6 +1739,87 @@ Requests name of an avatar.  When data is available the dataserver event will be
   <string name="LSLTipText_llGetLinkNumberOfSides">
     integer llGetLinkNumberOfSides(integer link)
     Returns an integer that is the number of faces (or sides) of the prim link.
+  </string>
+  <string name="LSLTipText_llGetEnv" translate="false">
+	string llGetEnv(string name)
+	Returns a string with the requested data about the region.
+  </string>
+   <string name="LSLTipText_llRegionSayTo" translate="false">
+	llRegionSayTo(key target, integer channel, string message)
+	Sends message on channel (not DEBUG_CHANNEL) directly to prim or avatar target anywhere within the region.
+   </string>
+  <string name="LSLTipText_llSetMemoryLimit" translate="false">
+	integer llSetMemoryLimit(integer limit)
+	Request limit bytes to be reserved for this script.
+	Returns a success/failure flag (STATUS_OK when sucessful, another of the STATUS_* flags on failure) for whether the memory limit was set.
+	Only relevant for Mono-compiled scripts.
+  </string>
+  <string name="LSLTipText_llGetMemoryLimit" translate="false">
+	integer llGetUsedMemory()
+	Get the maximum memory a script can use.
+	Returns the integer amount of memory the script can use in bytes.
+  </string>
+  <string name="LSLTipText_llSetLinkMedia" translate="false">
+	integer llSetLinkMedia(integer link, integer face, list params)
+	Set the media params for a particular face on the 'link'ed prim without a delay.
+	Returns an integer that is flag (STATUS_OK when sucessful, another of the STATUS_* flags on failure) which details the success/failure of the operation(s).
+	Takes the same parameters as llSetPrimMediaParams()
+  </string>
+  <string name="LSLTipText_llGetLinkMedia" translate="false">
+	list llGetLinkMedia(integer link, integer face, list params)
+	Get the media params for a particular face on a 'link'ed prim(s), given the desired list of named params.
+	Returns a list of values in the order requested (empty list if no media exists on the face).
+	Takes the same parameters as llGetPrimMediaParams()
+  </string>
+  <string name="LSLTipText_llClearLinkMedia" translate="false">
+	integer llClearLinkMedia(integer link, integer face)
+	Clears (deletes) the media and all params from the given face on the linked prim(s).
+	Returns an integer that is flag (STATUS_OK when sucessful, another of the STATUS_* flags on failure) which details the success/failure of the operation(s).
+  </string>
+  <string name="LSLTipText_llSetLinkCamera" translate="false">
+	llSetLinkCamera(integer link, vector eye, vector at)
+	Sets the camera eye offset, and the offset that camera is looking at, for avatars that sit on the linked prim.
+	The two vector parameters are offsets relative to the object's center and expressed in local coordinates.
+  </string>
+  <string name="LSLTipText_llSetContentType" translate="false">
+	llSetContentType(key request_id, integer content_type)
+	Set the Internet media type of an LSL HTTP server response.
+	content_type may be one of CONTENT_TYPE_TEXT (default) "text/plain", or CONTENT_TYPE_HTML "text/html", only valid for embedded browsers on content owned by the person viewing. Falls back to "text/plain" otherwise.
+  </string>
+  <string name="LSLTipText_llLinkSitTarget" translate="false">
+	llLinkSitTarget(integer link, vector offset, rotation rot)
+	Set the sit location for the 'link'ed prim(s). The sit location is relative to the prim's position and rotation.
+	Equivalent to calling llSitTarget on link prim(s) in the link set.
+  </string>
+  <string name="LSLTipText_llAvatarOnLinkSitTarget" translate="false">
+	key llAvatarOnLinkSitTarget(integer link)
+	Returns a key that is the UUID of the user seated on the 'link'ed prim.
+	Equivalent to calling llAvatarOnSitTarget on link prim in the link set.
+  </string>
+  <string name="LSLTipText_llSetVelocity" translate="false">
+	llSetVelocity(vector force, integer local)
+	Applies velocity with 'force' to object and 'local' a boolean (if TRUE, force is treated as a local directional vector instead of region directional vector).
+  </string>
+  <string name="LSLTipText_llSetAngularVelocity" translate="false">
+	llSetAngularVelocity(vector force, integer local)
+	Applies rotational velocity with 'force' to object and 'local' a boolean (if TRUE uses local axis, if FALSE uses region axis).
+  </string>
+  <string name="LSLTipText_llCastRay" translate="false">
+	list llCastRay(vector start, vector end, list options)
+	Cast a ray from start to end and report collision data for intersections with objects.
+  </string>
+  <string name="LSLTipText_llGetMassMKS" translate="false">
+	float llGetMassMKS()
+	Returns a float that is the mass in kilograms of the object the script is attached to.
+  </string>
+  <string name="LSLTipText_llSetPhysicsMaterial" translate="false">
+	llSetPhysicsMaterial(integer material_bits, float gravity_multiplier, float restitution, float friction, float density)
+	Sets the physics properties of the object the script is attached to.
+	material_bits is a bitwise combination of DENSITY, FRICTION, RESTITUTION and GRAVITY_MULTIPLIER, specifying which floats to actually apply.
+  </string>
+  <string name="LSLTipText_llGetPhysicsMaterial" translate="false">
+	list llGetPhysicsMaterial()
+	Returns a list of the object physics properties: [ float gravity_multiplier, float restitution, float friction, float density ]
   </string>
 </strings>
 

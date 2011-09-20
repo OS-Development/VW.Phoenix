@@ -30,6 +30,7 @@
 
 #include "llstring.h"
 #include "llapr.h"
+#include "llaprpool.h"
 
 #include "apr_dso.h"
 
@@ -56,7 +57,7 @@ public:
 	
 	// Load a plugin dll/dylib/so
 	// Returns 0 if successful, APR error code or error code returned from the plugin's init function on failure.
-	int load(std::string &plugin_file);
+	int load(const std::string& plugin_dir, std::string &plugin_file);
 	
 	// Sends a message to the plugin.
 	void sendMessage(const std::string &message);
@@ -88,6 +89,7 @@ private:
 	static void staticReceiveMessage(const char *message_string, void **user_data);
 	void receiveMessage(const char *message_string);
 
+	LLAPRPool mDSOHandlePool;
 	apr_dso_handle_t *mDSOHandle;
 	
 	void *mPluginUserData;

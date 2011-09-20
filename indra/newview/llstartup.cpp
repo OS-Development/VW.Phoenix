@@ -35,16 +35,17 @@
 #include "llstartup.h"
 
 #if LL_WINDOWS
-#	include <process.h>		// _spawnl()
+#include <process.h>				// _spawnl()
 #else
-#	include <sys/stat.h>		// mkdir()
+#include <sys/stat.h>				// mkdir()
 #endif
 
-#include "llviewermedia_streamingaudio.h"
+#include "imageids.h"
+#include "llares.h"
 #include "llaudioengine.h"
 
 #ifdef LL_FMOD
-# include "llaudioengine_fmod.h"
+#include "llaudioengine_fmod.h"
 #endif
 
 #ifdef LL_OPENAL
@@ -54,58 +55,64 @@
 #include "hippogridmanager.h"
 #include "hippolimits.h"
 
-#include "llares.h"
 #include "llcachename.h"
-#include "llviewercontrol.h"
 #include "lldir.h"
-#include "lleventpoll.h" // OGPX for Agent Domain event queue
 #include "llerrorcontrol.h"
+#include "lleventpoll.h"			// OGPX for Agent Domain event queue
 #include "llfiltersd2xmlrpc.h"
 #include "llfocusmgr.h"
+#include "llhttpclient.h"
 #include "llhttpsender.h"
-#include "imageids.h"
 #include "llimageworker.h"
 #include "lllandmark.h"
 #include "llloginflags.h"
 #include "llmd5.h"
 #include "llmemorystream.h"
 #include "llmessageconfig.h"
-#include "llmoveview.h"
+#include "llnotifications.h"
+#include "llpostprocess.h"
 #include "llregionhandle.h"
 #include "llsd.h"
 #include "llsdserialize.h"
 #include "llsdutil.h"
+#include "llsdutil_math.h"
 #include "llsecondlifeurls.h"
+#include "llsocks5.h"
 #include "llstring.h"
+#include "llui.h"
 #include "lluserrelations.h"
 #include "llversionviewer.h"
 #include "llvfs.h"
-#include "llxorcipher.h"	// saved password, MAC address
+#include "llxorcipher.h"			// saved password, MAC address
 #include "message.h"
 #include "v3math.h"
 
 #include "llagent.h"
+#include "llagentlanguage.h"
 #include "llagentpilot.h"
-#include "llfloateravatarpicker.h"
+#include "llappviewer.h"
 #include "llcallbacklist.h"
 #include "llcallingcard.h"
 #include "llcolorscheme.h"
 #include "llconsole.h"
 #include "llcontainerview.h"
-#include "llfloaterstats.h"
 #include "lldebugview.h"
 #include "lldrawable.h"
 #include "lleventnotifier.h"
 #include "llface.h"
+#include "llfasttimerview.h"
 #include "llfeaturemanager.h"
 #include "llfirstuse.h"
 #include "llfloateractivespeakers.h"
+#include "llfloateravatarpicker.h"
 #include "llfloaterbeacons.h"
 #include "llfloatercamera.h"
 #include "llfloaterchat.h"
 #include "llfloatergesture.h"
 #include "llfloaterhud.h"
 #include "llfloaterland.h"
+#include "llfloatermap.h"
+#include "llfloaterstats.h"
 #include "llfloatertopobjects.h"
 #include "llfloatertos.h"
 #include "llfloaterworldmap.h"
@@ -115,17 +122,20 @@
 #include "llgroupmgr.h"
 #include "llhudeffecttrail.h"
 #include "llhudmanager.h"
-#include "llhttpclient.h"
 #include "llimagebmp.h"
 #include "llinventorymodel.h"
 #include "llinventoryview.h"
 #include "llkeyboard.h"
 #include "llloginhandler.h"			// gLoginHandler, SLURL support
+#include "llmoveview.h"
 #include "llpanellogin.h"
 #include "llmutelist.h"
-#include "llnotify.h"
+#include "llnamebox.h"
+#include "llnameeditor.h"
+#include "llnamelistctrl.h"
 #include "llpanelavatar.h"
 #include "llpaneldirbrowser.h"
+#include "llpaneldirfind.h"
 #include "llpaneldirland.h"
 #include "llpanelevent.h"
 #include "llpanelclassified.h"
@@ -136,19 +146,18 @@
 #include "llpreview.h"
 #include "llpreviewscript.h"
 #include "llproductinforequest.h"
-#include "llsdhttpserver.h" // OGPX might not need when EVENTHACK is sorted
+#include "llsdhttpserver.h"			// OGPX might not need when EVENTHACK is sorted
 #include "llsecondlifeurls.h"
 #include "llselectmgr.h"
 #include "llsky.h"
 #include "llsrv.h"
 #include "llstatview.h"
 #include "lltrans.h"
-#include "llstatusbar.h"		// sendMoneyBalanceRequest(), owns L$ balance
+#include "llstatusbar.h"			// sendMoneyBalanceRequest(), owns L$ balance
 #include "llsurface.h"
 #include "lltexturecache.h"
 #include "lltexturefetch.h"
 #include "lltoolmgr.h"
-#include "llui.h"
 #include "llurldispatcher.h"
 #include "llurlsimstring.h"
 #include "llurlhistory.h"
@@ -157,11 +166,13 @@
 #include "llvieweraudio.h"
 #include "llviewerassetstorage.h"
 #include "llviewercamera.h"
+#include "llviewercontrol.h"
 #include "llviewerdisplay.h"
 #include "llviewergenericmessage.h"
 #include "llviewergesture.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llviewermedia.h"
+#include "llviewermedia_streamingaudio.h"
 #include "llviewermenu.h"
 #include "llviewermessage.h"
 #include "llviewernetwork.h"
@@ -174,24 +185,14 @@
 #include "llviewerwindow.h"
 #include "llvoavatar.h"
 #include "llvoclouds.h"
+#include "llvoiceclient.h"
+#include "llwaterparammanager.h"
 #include "llweb.h"
+#include "llwlparammanager.h"
 #include "llworld.h"
 #include "llworldmapmessage.h"
 #include "llxfermanager.h"
 #include "pipeline.h"
-#include "llappviewer.h"
-#include "llfasttimerview.h"
-#include "llfloatermap.h"
-#include "llweb.h"
-#include "llvoiceclient.h"
-#include "llnamelistctrl.h"
-#include "llnamebox.h"
-#include "llnameeditor.h"
-#include "llpostprocess.h"
-#include "llwlparammanager.h"
-#include "llwaterparammanager.h"
-#include "llagentlanguage.h"
-#include "llsocks5.h"
 #include "floateravatarlist.h"
 #include "scriptcounter.h"
 #include "jcfloater_areasearch.h"
@@ -206,8 +207,8 @@
 // [/RLVa:KB]
 
 #if LL_WINDOWS
-#include "llwindebug.h"
 #include "lldxhardware.h"
+#include "llwindebug.h"
 #endif
 
 #include "jc_lslviewerbridge.h"
@@ -243,7 +244,7 @@ extern std::string gWindowTitle;
 // local globals
 //
 
-LLPointer<LLImageGL> gStartImageGL;
+LLPointer<LLViewerTexture> gStartTexture;
 
 static LLHost gAgentSimHost;
 static BOOL gSkipOptionalUpdate = FALSE;
@@ -279,11 +280,11 @@ void release_start_screen();
 void reset_login();
 void apply_udp_blacklist(const std::string& csv);
 
-void callback_cache_name(const LLUUID& id, const std::string& firstname, const std::string& lastname, BOOL is_group, void* data)
+void callback_cache_name(const LLUUID& id, const std::string& fullname, bool is_group)
 {
-	LLNameListCtrl::refreshAll(id, firstname, lastname, is_group);
-	LLNameBox::refreshAll(id, firstname, lastname, is_group);
-	LLNameEditor::refreshAll(id, firstname, lastname, is_group);
+	LLNameListCtrl::refreshAll(id, fullname, is_group);
+	LLNameBox::refreshAll(id, fullname, is_group);
+	LLNameEditor::refreshAll(id, fullname, is_group);
 
 	// TODO: Actually be intelligent about the refresh.
 	// For now, just brute force refresh the dialogs.
@@ -331,7 +332,7 @@ void update_texture_fetch()
 	LLAppViewer::getTextureCache()->update(1); // unpauses the texture cache thread
 	LLAppViewer::getImageDecodeThread()->update(1); // unpauses the image thread
 	LLAppViewer::getTextureFetch()->update(1); // unpauses the texture fetch thread
-	gImageList.updateImages(0.10f);
+	gTextureList.updateImages(0.10f);
 }
 
 static std::vector<std::string> sAuthUris;
@@ -406,7 +407,7 @@ bool idle_startup()
 	else
 	{
 		// Update images?
-		gImageList.updateImages(0.01f);
+		gTextureList.updateImages(0.01f);
 	}
 
 	if ( STATE_FIRST == LLStartUp::getStartupState() )
@@ -514,7 +515,7 @@ bool idle_startup()
 		{
 			std::string diagnostic = "Could not start address resolution system";
 			LL_WARNS("AppInit") << diagnostic << LL_ENDL;
-			LLAppViewer::instance()->earlyExit("LoginFailedNoNetwork", LLSD().insert("DIAGNOSTIC", diagnostic));
+			LLAppViewer::instance()->earlyExit("LoginFailedNoNetwork", LLSD().with("DIAGNOSTIC", diagnostic));
 		}
 
 		//
@@ -574,7 +575,7 @@ bool idle_startup()
 			{
 				std::string diagnostic = llformat(" Error: %d", gMessageSystem->getErrorCode());
 				LL_WARNS("AppInit") << diagnostic << LL_ENDL;
-				LLAppViewer::instance()->earlyExit("LoginFailedNoNetwork", LLSD().insert("DIAGNOSTIC", diagnostic));
+				LLAppViewer::instance()->earlyExit("LoginFailedNoNetwork", LLSD().with("DIAGNOSTIC", diagnostic));
 			}
 
 			#if LL_WINDOWS
@@ -597,7 +598,7 @@ bool idle_startup()
 		}
 		else
 		{
-			LLAppViewer::instance()->earlyExit("MessageTemplateNotFound", LLSD().insert("PATH", message_template_path));
+			LLAppViewer::instance()->earlyExit("MessageTemplateNotFound", LLSD().with("PATH", message_template_path));
 		}
 
 		if(gMessageSystem && gMessageSystem->isOK())
@@ -1603,6 +1604,14 @@ bool idle_startup()
 				gAgent.setMaturity(text[0]);
 			}
 
+			// This token is used by the new style web search in SL
+			std::string search_token = LLUserAuth::getInstance()->getResponse("search_token");
+			if (search_token.empty())
+			{
+				search_token = LLUserAuth::getInstance()->getResponse("auth_token");
+			}
+
+			LLPanelDirFind::setSearchToken(search_token);
 			// this is the value of their preference setting for that content
 			// which will always be <= agent_access_max
 			text = LLUserAuth::getInstance()->getResponse("agent_region_access");
@@ -1903,7 +1912,7 @@ bool idle_startup()
 		//
 		// Initialize classes w/graphics stuff.
 		//
-		gImageList.doPrefetchImages();
+		gTextureList.doPrefetchImages();
 		LLSurface::initClasses();
 
 		LLFace::initClass();
@@ -2022,9 +2031,9 @@ bool idle_startup()
 			LLFloaterAvatarList::toggle(NULL);
 		}
 
-		static BOOL* sBeaconAlwaysOn = rebind_llcontrol<BOOL>("BeaconAlwaysOn", &gSavedSettings, true);
+		static LLCachedControl<bool> sBeaconAlwaysOn(gSavedSettings, "BeaconAlwaysOn");
 
-		if (*sBeaconAlwaysOn)
+		if (sBeaconAlwaysOn)
 		{
 			LLFloaterBeacons::showInstance();
 		}
@@ -2062,10 +2071,10 @@ bool idle_startup()
 
 		gXferManager->registerCallbacks(gMessageSystem);
 
-		if ( gCacheName == NULL )
+		if (gCacheName == NULL)
 		{
 			gCacheName = new LLCacheName(gMessageSystem);
-			gCacheName->addObserver(callback_cache_name);
+			gCacheName->addObserver(&callback_cache_name);
 
 			// Load stored cache if possible
             LLAppViewer::instance()->loadNameCache();
@@ -2074,8 +2083,8 @@ bool idle_startup()
 		// Start cache in not-running state until we figure out if we have
 		// capabilities for display name lookup
 		LLAvatarNameCache::initClass(false);	
-		static S32 *sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-		if(*sPhoenixNameSystem<=0 || *sPhoenixNameSystem >2) LLAvatarNameCache::setUseDisplayNames(false);
+		static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+		if(sPhoenixNameSystem<=0 || sPhoenixNameSystem >2) LLAvatarNameCache::setUseDisplayNames(false);
 		else LLAvatarNameCache::setUseDisplayNames(true);
 
 		// *Note: this is where gWorldMap used to be initialized.
@@ -2161,7 +2170,7 @@ bool idle_startup()
 			F32 frac = (F32)i / (F32)DECODE_TIME_SEC;
 			set_startup_status(0.45f + frac*0.1f, LLTrans::getString("LoginDecodingImages"), gAgent.mMOTD);
 			display_startup();
-			gImageList.decodeAllImages(1.f);
+			gTextureList.decodeAllImages(1.f);
 		}
 		LLStartUp::setStartupState( STATE_WORLD_WAIT );
 
@@ -3387,191 +3396,160 @@ void pass_processObjectProperties(LLMessageSystem *msg, void**)
 
 void register_viewer_callbacks(LLMessageSystem* msg)
 {
-	msg->setHandlerFuncFast(_PREHASH_LayerData,				process_layer_data );
-	msg->setHandlerFuncFast(_PREHASH_ImageData,				LLViewerImageList::receiveImageHeader );
-	msg->setHandlerFuncFast(_PREHASH_ImagePacket,				LLViewerImageList::receiveImagePacket );
+	msg->setHandlerFuncFast(_PREHASH_LayerData,					process_layer_data );
+	msg->setHandlerFuncFast(_PREHASH_ImageData,					LLViewerTextureList::receiveImageHeader);
+	msg->setHandlerFuncFast(_PREHASH_ImagePacket,				LLViewerTextureList::receiveImagePacket);
 	msg->setHandlerFuncFast(_PREHASH_ObjectUpdate,				process_object_update );
-	msg->setHandlerFunc("ObjectUpdateCompressed",				process_compressed_object_update );
-	msg->setHandlerFunc("ObjectUpdateCached",					process_cached_object_update );
-	msg->setHandlerFuncFast(_PREHASH_ImprovedTerseObjectUpdate, process_terse_object_update_improved );
-	msg->setHandlerFunc("SimStats",				process_sim_stats);
-	msg->setHandlerFuncFast(_PREHASH_HealthMessage,			process_health_message );
+	msg->setHandlerFunc("ObjectUpdateCompressed",				process_compressed_object_update);
+	msg->setHandlerFunc("ObjectUpdateCached",					process_cached_object_update);
+	msg->setHandlerFuncFast(_PREHASH_ImprovedTerseObjectUpdate, process_terse_object_update_improved);
+	msg->setHandlerFunc("SimStats",								process_sim_stats);
+	msg->setHandlerFuncFast(_PREHASH_HealthMessage,				process_health_message);
 	msg->setHandlerFuncFast(_PREHASH_EconomyData,				process_economy_data);
-	msg->setHandlerFunc("RegionInfo", LLViewerRegion::processRegionInfo);
+	msg->setHandlerFunc("RegionInfo",							LLViewerRegion::processRegionInfo);
 
-	msg->setHandlerFuncFast(_PREHASH_ChatFromSimulator,		process_chat_from_simulator);
-	msg->setHandlerFuncFast(_PREHASH_KillObject,				process_kill_object,	NULL);
-	msg->setHandlerFuncFast(_PREHASH_SimulatorViewerTimeMessage,	process_time_synch,		NULL);
+	msg->setHandlerFuncFast(_PREHASH_ChatFromSimulator,			process_chat_from_simulator);
+	msg->setHandlerFuncFast(_PREHASH_KillObject,				process_kill_object, NULL);
+	msg->setHandlerFuncFast(_PREHASH_SimulatorViewerTimeMessage,process_time_synch, NULL);
 	msg->setHandlerFuncFast(_PREHASH_EnableSimulator,			process_enable_simulator);
 	msg->setHandlerFuncFast(_PREHASH_DisableSimulator,			process_disable_simulator);
-	msg->setHandlerFuncFast(_PREHASH_KickUser,					process_kick_user,		NULL);
+	msg->setHandlerFuncFast(_PREHASH_KickUser,					process_kick_user, NULL);
 
-	msg->setHandlerFunc("CrossedRegion", process_crossed_region);
-	msg->setHandlerFuncFast(_PREHASH_TeleportFinish, process_teleport_finish);
+	msg->setHandlerFunc("CrossedRegion",						process_crossed_region);
+	msg->setHandlerFuncFast(_PREHASH_TeleportFinish,			process_teleport_finish);
 
-	msg->setHandlerFuncFast(_PREHASH_AlertMessage,             process_alert_message);
-	msg->setHandlerFunc("AgentAlertMessage", process_agent_alert_message);
-	msg->setHandlerFuncFast(_PREHASH_MeanCollisionAlert,             process_mean_collision_alert_message,  NULL);
-	msg->setHandlerFunc("ViewerFrozenMessage",             process_frozen_message);
+	msg->setHandlerFuncFast(_PREHASH_AlertMessage,				process_alert_message);
+	msg->setHandlerFunc("AgentAlertMessage",					process_agent_alert_message);
+	msg->setHandlerFuncFast(_PREHASH_MeanCollisionAlert,		process_mean_collision_alert_message, NULL);
+	msg->setHandlerFunc("ViewerFrozenMessage",					process_frozen_message);
 
-	msg->setHandlerFuncFast(_PREHASH_NameValuePair,			process_name_value);
-	msg->setHandlerFuncFast(_PREHASH_RemoveNameValuePair,	process_remove_name_value);
-	msg->setHandlerFuncFast(_PREHASH_AvatarAnimation,		process_avatar_animation);
-	msg->setHandlerFuncFast(_PREHASH_AvatarAppearance,		process_avatar_appearance);
-	msg->setHandlerFunc("AgentCachedTextureResponse",	LLAgent::processAgentCachedTextureResponse);
-	msg->setHandlerFunc("RebakeAvatarTextures", LLVOAvatar::processRebakeAvatarTextures);
-	msg->setHandlerFuncFast(_PREHASH_CameraConstraint,		process_camera_constraint);
-	msg->setHandlerFuncFast(_PREHASH_AvatarSitResponse,		process_avatar_sit_response);
-	msg->setHandlerFunc("SetFollowCamProperties",			process_set_follow_cam_properties);
-	msg->setHandlerFunc("ClearFollowCamProperties",			process_clear_follow_cam_properties);
+	msg->setHandlerFuncFast(_PREHASH_NameValuePair,				process_name_value);
+	msg->setHandlerFuncFast(_PREHASH_RemoveNameValuePair,		process_remove_name_value);
+	msg->setHandlerFuncFast(_PREHASH_AvatarAnimation,			process_avatar_animation);
+	msg->setHandlerFuncFast(_PREHASH_AvatarAppearance,			process_avatar_appearance);
+	msg->setHandlerFunc("AgentCachedTextureResponse",			LLAgent::processAgentCachedTextureResponse);
+	msg->setHandlerFunc("RebakeAvatarTextures",					LLVOAvatar::processRebakeAvatarTextures);
+	msg->setHandlerFuncFast(_PREHASH_CameraConstraint,			process_camera_constraint);
+	msg->setHandlerFuncFast(_PREHASH_AvatarSitResponse,			process_avatar_sit_response);
+	msg->setHandlerFunc("SetFollowCamProperties",				process_set_follow_cam_properties);
+	msg->setHandlerFunc("ClearFollowCamProperties",				process_clear_follow_cam_properties);
 
 	msg->setHandlerFuncFast(_PREHASH_ImprovedInstantMessage,	process_improved_im);
 	msg->setHandlerFuncFast(_PREHASH_ScriptQuestion,			process_script_question);
 
 	msg->setHandlerFuncFast(_PREHASH_ObjectProperties,			pass_processObjectProperties, NULL);
 	msg->setHandlerFuncFast(_PREHASH_ObjectPropertiesFamily,	pass_processObjectPropertiesFamily, NULL);
-	msg->setHandlerFunc("ForceObjectSelect", LLSelectMgr::processForceObjectSelect);
+	msg->setHandlerFunc("ForceObjectSelect",					LLSelectMgr::processForceObjectSelect);
 
-	msg->setHandlerFuncFast(_PREHASH_MoneyBalanceReply,		process_money_balance_reply,	NULL);
+	msg->setHandlerFuncFast(_PREHASH_MoneyBalanceReply,			process_money_balance_reply, NULL);
 	msg->setHandlerFuncFast(_PREHASH_CoarseLocationUpdate,		LLWorld::processCoarseUpdate, NULL);
 	msg->setHandlerFuncFast(_PREHASH_ReplyTaskInventory, 		LLViewerObject::processTaskInv,	NULL);
 	msg->setHandlerFuncFast(_PREHASH_DerezContainer,			process_derez_container, NULL);
-	msg->setHandlerFuncFast(_PREHASH_ScriptRunningReply,
-						&LLLiveLSLEditor::processScriptRunningReply);
+	msg->setHandlerFuncFast(_PREHASH_ScriptRunningReply,		&LLLiveLSLEditor::processScriptRunningReply);
 
-	msg->setHandlerFuncFast(_PREHASH_DeRezAck, process_derez_ack);
+	msg->setHandlerFuncFast(_PREHASH_DeRezAck,					process_derez_ack);
 
-	msg->setHandlerFunc("LogoutReply", process_logout_reply);
+	msg->setHandlerFunc("LogoutReply",							process_logout_reply);
 
-	//msg->setHandlerFuncFast(_PREHASH_AddModifyAbility,
-	//					&LLAgent::processAddModifyAbility);
-	//msg->setHandlerFuncFast(_PREHASH_RemoveModifyAbility,
-	//					&LLAgent::processRemoveModifyAbility);
-	msg->setHandlerFuncFast(_PREHASH_AgentDataUpdate,
-						&LLAgent::processAgentDataUpdate);
-	msg->setHandlerFuncFast(_PREHASH_AgentGroupDataUpdate,
-						&LLAgent::processAgentGroupDataUpdate);
-	msg->setHandlerFunc("AgentDropGroup",
-						&LLAgent::processAgentDropGroup);
+	//msg->setHandlerFuncFast(_PREHASH_AddModifyAbility,		&LLAgent::processAddModifyAbility);
+	//msg->setHandlerFuncFast(_PREHASH_RemoveModifyAbility,		&LLAgent::processRemoveModifyAbility);
+	msg->setHandlerFuncFast(_PREHASH_AgentDataUpdate,			&LLAgent::processAgentDataUpdate);
+	msg->setHandlerFuncFast(_PREHASH_AgentGroupDataUpdate,		&LLAgent::processAgentGroupDataUpdate);
+	msg->setHandlerFunc("AgentDropGroup",						&LLAgent::processAgentDropGroup);
+
 	// land ownership messages
-	msg->setHandlerFuncFast(_PREHASH_ParcelOverlay,
-						LLViewerParcelMgr::processParcelOverlay);
-	msg->setHandlerFuncFast(_PREHASH_ParcelProperties,
-						LLViewerParcelMgr::processParcelProperties);
-	msg->setHandlerFunc("ParcelAccessListReply",
-		LLViewerParcelMgr::processParcelAccessListReply);
-	msg->setHandlerFunc("ParcelDwellReply",
-		LLViewerParcelMgr::processParcelDwellReply);
+	msg->setHandlerFuncFast(_PREHASH_ParcelOverlay,				LLViewerParcelMgr::processParcelOverlay);
+	msg->setHandlerFuncFast(_PREHASH_ParcelProperties,			LLViewerParcelMgr::processParcelProperties);
+	msg->setHandlerFunc("ParcelAccessListReply",				LLViewerParcelMgr::processParcelAccessListReply);
+	msg->setHandlerFunc("ParcelDwellReply",						LLViewerParcelMgr::processParcelDwellReply);
 
-	msg->setHandlerFunc("AvatarPropertiesReply",
-						pass_processAvatarPropertiesReply);
-	msg->setHandlerFunc("AvatarInterestsReply",
-						LLPanelAvatar::processAvatarInterestsReply);
-	msg->setHandlerFunc("AvatarGroupsReply",
-						LLPanelAvatar::processAvatarGroupsReply);
-	// ratings deprecated
-	//msg->setHandlerFuncFast(_PREHASH_AvatarStatisticsReply,
-	//					LLPanelAvatar::processAvatarStatisticsReply);
-	msg->setHandlerFunc("AvatarNotesReply",
-						LLPanelAvatar::processAvatarNotesReply);
-	msg->setHandlerFunc("AvatarPicksReply",
-						LLPanelAvatar::processAvatarPicksReply);
-	msg->setHandlerFunc("AvatarClassifiedReply",
-						LLPanelAvatar::processAvatarClassifiedReply);
-
-	msg->setHandlerFuncFast(_PREHASH_CreateGroupReply,
-						LLGroupMgr::processCreateGroupReply);
-	msg->setHandlerFuncFast(_PREHASH_JoinGroupReply,
-						LLGroupMgr::processJoinGroupReply);
-	msg->setHandlerFuncFast(_PREHASH_EjectGroupMemberReply,
-						LLGroupMgr::processEjectGroupMemberReply);
-	msg->setHandlerFuncFast(_PREHASH_LeaveGroupReply,
-						LLGroupMgr::processLeaveGroupReply);
-	msg->setHandlerFuncFast(_PREHASH_GroupProfileReply,
-						LLGroupMgr::processGroupPropertiesReply);
+	msg->setHandlerFunc("AvatarPropertiesReply",				pass_processAvatarPropertiesReply);
+	msg->setHandlerFunc("AvatarInterestsReply",					LLPanelAvatar::processAvatarInterestsReply);
+	msg->setHandlerFunc("AvatarGroupsReply",					LLPanelAvatar::processAvatarGroupsReply);
 
 	// ratings deprecated
-	// msg->setHandlerFuncFast(_PREHASH_ReputationIndividualReply,
-	//					LLFloaterRate::processReputationIndividualReply);
+	//msg->setHandlerFuncFast(_PREHASH_AvatarStatisticsReply,	LLPanelAvatar::processAvatarStatisticsReply);
+	msg->setHandlerFunc("AvatarNotesReply",						LLPanelAvatar::processAvatarNotesReply);
+	msg->setHandlerFunc("AvatarPicksReply",						LLPanelAvatar::processAvatarPicksReply);
+	msg->setHandlerFunc("AvatarClassifiedReply",				LLPanelAvatar::processAvatarClassifiedReply);
 
-	msg->setHandlerFuncFast(_PREHASH_AgentWearablesUpdate,
-						LLAgent::processAgentInitialWearablesUpdate );
+	msg->setHandlerFuncFast(_PREHASH_CreateGroupReply,			LLGroupMgr::processCreateGroupReply);
+	msg->setHandlerFuncFast(_PREHASH_JoinGroupReply,			LLGroupMgr::processJoinGroupReply);
+	msg->setHandlerFuncFast(_PREHASH_EjectGroupMemberReply,		LLGroupMgr::processEjectGroupMemberReply);
+	msg->setHandlerFuncFast(_PREHASH_LeaveGroupReply,			LLGroupMgr::processLeaveGroupReply);
+	msg->setHandlerFuncFast(_PREHASH_GroupProfileReply,			LLGroupMgr::processGroupPropertiesReply);
 
-	msg->setHandlerFunc("ScriptControlChange",
-						LLAgent::processScriptControlChange );
+	// ratings deprecated
+	// msg->setHandlerFuncFast(_PREHASH_ReputationIndividualReply,LLFloaterRate::processReputationIndividualReply);
 
-	msg->setHandlerFuncFast(_PREHASH_ViewerEffect, LLHUDManager::processViewerEffect);
+	msg->setHandlerFuncFast(_PREHASH_AgentWearablesUpdate,		LLAgent::processAgentInitialWearablesUpdate );
 
-	msg->setHandlerFuncFast(_PREHASH_GrantGodlikePowers, process_grant_godlike_powers);
+	msg->setHandlerFunc("ScriptControlChange",					LLAgent::processScriptControlChange );
 
-	msg->setHandlerFuncFast(_PREHASH_GroupAccountSummaryReply,
-							LLPanelGroupLandMoney::processGroupAccountSummaryReply);
-	msg->setHandlerFuncFast(_PREHASH_GroupAccountDetailsReply,
-							LLPanelGroupLandMoney::processGroupAccountDetailsReply);
-	msg->setHandlerFuncFast(_PREHASH_GroupAccountTransactionsReply,
-							LLPanelGroupLandMoney::processGroupAccountTransactionsReply);
+	msg->setHandlerFuncFast(_PREHASH_ViewerEffect,				LLHUDManager::processViewerEffect);
 
-	msg->setHandlerFuncFast(_PREHASH_UserInfoReply,
-		process_user_info_reply);
+	msg->setHandlerFuncFast(_PREHASH_GrantGodlikePowers,		process_grant_godlike_powers);
 
-	msg->setHandlerFunc("RegionHandshake", process_region_handshake, NULL);
+	msg->setHandlerFuncFast(_PREHASH_GroupAccountSummaryReply,	LLPanelGroupLandMoney::processGroupAccountSummaryReply);
+	msg->setHandlerFuncFast(_PREHASH_GroupAccountDetailsReply,	LLPanelGroupLandMoney::processGroupAccountDetailsReply);
+	msg->setHandlerFuncFast(_PREHASH_GroupAccountTransactionsReply,LLPanelGroupLandMoney::processGroupAccountTransactionsReply);
 
-	msg->setHandlerFunc("TeleportStart", process_teleport_start );
-	msg->setHandlerFunc("TeleportProgress", process_teleport_progress);
-	msg->setHandlerFunc("TeleportFailed", process_teleport_failed, NULL);
-	msg->setHandlerFunc("TeleportLocal", process_teleport_local, NULL);
+	msg->setHandlerFuncFast(_PREHASH_UserInfoReply,				process_user_info_reply);
 
-	msg->setHandlerFunc("ImageNotInDatabase", LLViewerImageList::processImageNotInDatabase, NULL);
+	msg->setHandlerFunc("RegionHandshake",						process_region_handshake, NULL);
 
-	msg->setHandlerFuncFast(_PREHASH_GroupMembersReply,
-						LLGroupMgr::processGroupMembersReply);
-	msg->setHandlerFunc("GroupRoleDataReply",
-						LLGroupMgr::processGroupRoleDataReply);
-	msg->setHandlerFunc("GroupRoleMembersReply",
-						LLGroupMgr::processGroupRoleMembersReply);
-	msg->setHandlerFunc("GroupTitlesReply",
-						LLGroupMgr::processGroupTitlesReply);
+	msg->setHandlerFunc("TeleportStart",						process_teleport_start);
+	msg->setHandlerFunc("TeleportProgress",						process_teleport_progress);
+	msg->setHandlerFunc("TeleportFailed",						process_teleport_failed, NULL);
+	msg->setHandlerFunc("TeleportLocal",						process_teleport_local, NULL);
+
+	msg->setHandlerFunc("ImageNotInDatabase",					LLViewerTextureList::processImageNotInDatabase, NULL);
+
+	msg->setHandlerFuncFast(_PREHASH_GroupMembersReply,			LLGroupMgr::processGroupMembersReply);
+	msg->setHandlerFunc("GroupRoleDataReply",					LLGroupMgr::processGroupRoleDataReply);
+	msg->setHandlerFunc("GroupRoleMembersReply",				LLGroupMgr::processGroupRoleMembersReply);
+	msg->setHandlerFunc("GroupTitlesReply",						LLGroupMgr::processGroupTitlesReply);
+
 	// Special handler as this message is sometimes used for group land.
-	msg->setHandlerFunc("PlacesReply", process_places_reply);
-	msg->setHandlerFunc("GroupNoticesListReply", LLPanelGroupNotices::processGroupNoticesListReply);
+	msg->setHandlerFunc("PlacesReply",							process_places_reply);
+	msg->setHandlerFunc("GroupNoticesListReply",				LLPanelGroupNotices::processGroupNoticesListReply);
 
-	msg->setHandlerFunc("DirPlacesReply", LLPanelDirBrowser::processDirPlacesReply);
-	msg->setHandlerFunc("DirPeopleReply", LLPanelDirBrowser::processDirPeopleReply);
-	msg->setHandlerFunc("DirEventsReply", LLPanelDirBrowser::processDirEventsReply);
-	msg->setHandlerFunc("DirGroupsReply", LLPanelDirBrowser::processDirGroupsReply);
-	//msg->setHandlerFunc("DirPicksReply",  LLPanelDirBrowser::processDirPicksReply);
-	msg->setHandlerFunc("DirClassifiedReply",  LLPanelDirBrowser::processDirClassifiedReply);
-	msg->setHandlerFunc("DirLandReply",   LLPanelDirBrowser::processDirLandReply);
-	//msg->setHandlerFunc("DirPopularReply",LLPanelDirBrowser::processDirPopularReply);
+	msg->setHandlerFunc("DirPlacesReply",						LLPanelDirBrowser::processDirPlacesReply);
+	msg->setHandlerFunc("DirPeopleReply",						LLPanelDirBrowser::processDirPeopleReply);
+	msg->setHandlerFunc("DirEventsReply",						LLPanelDirBrowser::processDirEventsReply);
+	msg->setHandlerFunc("DirGroupsReply",						LLPanelDirBrowser::processDirGroupsReply);
+	//msg->setHandlerFunc("DirPicksReply",						LLPanelDirBrowser::processDirPicksReply);
+	msg->setHandlerFunc("DirClassifiedReply",					LLPanelDirBrowser::processDirClassifiedReply);
+	msg->setHandlerFunc("DirLandReply",							LLPanelDirBrowser::processDirLandReply);
+	//msg->setHandlerFunc("DirPopularReply",					LLPanelDirBrowser::processDirPopularReply);
 
-	msg->setHandlerFunc("AvatarPickerReply", LLFloaterAvatarPicker::processAvatarPickerReply);
+	msg->setHandlerFunc("AvatarPickerReply",					LLFloaterAvatarPicker::processAvatarPickerReply);
 
-	msg->setHandlerFunc("MapBlockReply", LLWorldMapMessage::processMapBlockReply);
-	msg->setHandlerFunc("MapItemReply", LLWorldMapMessage::processMapItemReply);
+	msg->setHandlerFunc("MapBlockReply",						LLWorldMapMessage::processMapBlockReply);
+	msg->setHandlerFunc("MapItemReply",							LLWorldMapMessage::processMapItemReply);
 
-	msg->setHandlerFunc("EventInfoReply", LLPanelEvent::processEventInfoReply);
-	msg->setHandlerFunc("PickInfoReply", LLPanelPick::processPickInfoReply);
-	msg->setHandlerFunc("ClassifiedInfoReply", LLPanelClassified::processClassifiedInfoReply);
-	msg->setHandlerFunc("ParcelInfoReply", LLPanelPlace::processParcelInfoReply);
-	msg->setHandlerFunc("ScriptDialog", process_script_dialog);
-	msg->setHandlerFunc("LoadURL", process_load_url);
-	msg->setHandlerFunc("ScriptTeleportRequest", process_script_teleport_request);
-	msg->setHandlerFunc("EstateCovenantReply", process_covenant_reply);
+	msg->setHandlerFunc("EventInfoReply",						LLPanelEvent::processEventInfoReply);
+	msg->setHandlerFunc("PickInfoReply",						LLPanelPick::processPickInfoReply);
+	msg->setHandlerFunc("ClassifiedInfoReply",					LLPanelClassified::processClassifiedInfoReply);
+	msg->setHandlerFunc("ParcelInfoReply",						LLPanelPlace::processParcelInfoReply);
+	msg->setHandlerFunc("ScriptDialog",							process_script_dialog);
+	msg->setHandlerFunc("LoadURL",								process_load_url);
+	msg->setHandlerFunc("ScriptTeleportRequest",				process_script_teleport_request);
+	msg->setHandlerFunc("EstateCovenantReply",					process_covenant_reply);
 
 	// calling cards
-	msg->setHandlerFunc("OfferCallingCard", process_offer_callingcard);
-	msg->setHandlerFunc("AcceptCallingCard", process_accept_callingcard);
-	msg->setHandlerFunc("DeclineCallingCard", process_decline_callingcard);
+	msg->setHandlerFunc("OfferCallingCard",						process_offer_callingcard);
+	msg->setHandlerFunc("AcceptCallingCard",					process_accept_callingcard);
+	msg->setHandlerFunc("DeclineCallingCard",					process_decline_callingcard);
 
-	msg->setHandlerFunc("ParcelObjectOwnersReply", LLPanelLandObjects::processParcelObjectOwnersReply);
+	msg->setHandlerFunc("ParcelObjectOwnersReply",				LLPanelLandObjects::processParcelObjectOwnersReply);
 
-	msg->setHandlerFunc("InitiateDownload", process_initiate_download);
-	msg->setHandlerFunc("LandStatReply", LLFloaterTopObjects::handle_land_reply);
-	msg->setHandlerFunc("GenericMessage", process_generic_message);
+	msg->setHandlerFunc("InitiateDownload",						process_initiate_download);
+	msg->setHandlerFunc("LandStatReply",						LLFloaterTopObjects::handle_land_reply);
+	msg->setHandlerFunc("GenericMessage",						process_generic_message);
 
-	msg->setHandlerFuncFast(_PREHASH_FeatureDisabled, process_feature_disabled_message);
+	msg->setHandlerFuncFast(_PREHASH_FeatureDisabled,			process_feature_disabled_message);
 }
-
 
 void init_stat_view()
 {
@@ -3661,9 +3639,9 @@ void LLStartUp::loadInitialOutfit( const std::string& outfit_folder_name,
 // location_id = 1 => home position
 void init_start_screen(S32 location_id)
 {
-	if (gStartImageGL.notNull())
+	if (gStartTexture.notNull())
 	{
-		gStartImageGL = NULL;
+		gStartTexture = NULL;
 		LL_INFOS("AppInit") << "re-initializing start screen" << LL_ENDL;
 	}
 
@@ -3695,7 +3673,6 @@ void init_start_screen(S32 location_id)
 		return;
 	}
 
-	gStartImageGL = new LLImageGL(FALSE);
 	gStartImageWidth = start_image_bmp->getWidth();
 	gStartImageHeight = start_image_bmp->getHeight();
 
@@ -3703,12 +3680,12 @@ void init_start_screen(S32 location_id)
 	if (!start_image_bmp->decode(raw, 0.0f))
 	{
 		LL_WARNS("AppInit") << "Bitmap decode failed" << LL_ENDL;
-		gStartImageGL = NULL;
+		gStartTexture = NULL;
 		return;
 	}
 
 	raw->expandToPowerOfTwo();
-	gStartImageGL->createGLTexture(0, raw, 0, TRUE, LLViewerImageBoostLevel::OTHER);
+	gStartTexture = LLViewerTextureManager::getLocalTexture(raw.get(), FALSE);
 }
 
 
@@ -3716,9 +3693,8 @@ void init_start_screen(S32 location_id)
 void release_start_screen()
 {
 	LL_DEBUGS("AppInit") << "Releasing bitmap..." << LL_ENDL;
-	gStartImageGL = NULL;
+	gStartTexture = NULL;
 }
-
 
 // static
 std::string LLStartUp::startupStateToString(EStartupState state)

@@ -33,17 +33,17 @@
 #include "llviewerprecompiledheaders.h"
 
 #include "lldirpicker.h"
-//#include "llviewermessage.h"
-#include "llworld.h"
-#include "llviewerwindow.h"
-#include "llkeyboard.h"
+
 #include "lldir.h"
 #include "llframetimer.h"
-#include "lltrans.h"
+#include "llkeyboard.h"
 
 #if LL_LINUX || LL_SOLARIS
 # include "llfilepicker.h"
 #endif
+#include "lltrans.h"
+#include "llviewerwindow.h"
+#include "llworld.h"
 
 //
 // Globals
@@ -60,7 +60,9 @@ LLDirPicker LLDirPicker::sInstance;
 //
 #if LL_WINDOWS
 
-LLDirPicker::LLDirPicker() 
+LLDirPicker::LLDirPicker()
+:	mFileName(NULL),
+	mLocked(false)
 {
 }
 
@@ -80,34 +82,34 @@ BOOL LLDirPicker::getDir(std::string* filename)
 	// Modal, so pause agent
 	send_agent_pause();
 
-   BROWSEINFO bi;
-   memset(&bi, 0, sizeof(bi));
+	BROWSEINFO bi;
+	memset(&bi, 0, sizeof(bi));
 
-   bi.ulFlags   = BIF_USENEWUI;
-   bi.hwndOwner = (HWND)gViewerWindow->getPlatformWindow();
-   bi.lpszTitle = NULL;
+	bi.ulFlags   = BIF_USENEWUI;
+	bi.hwndOwner = (HWND)gViewerWindow->getPlatformWindow();
+	bi.lpszTitle = NULL;
 
-   ::OleInitialize(NULL);
+	::OleInitialize(NULL);
 
-   LPITEMIDLIST pIDL = ::SHBrowseForFolder(&bi);
+	LPITEMIDLIST pIDL = ::SHBrowseForFolder(&bi);
 
-   if(pIDL != NULL)
-   {
-      WCHAR buffer[_MAX_PATH] = {'\0'};
+	if (pIDL != NULL)
+	{
+	   WCHAR buffer[_MAX_PATH] = { '\0' };
 
-      if(::SHGetPathFromIDList(pIDL, buffer) != 0)
-      {
+	   if (::SHGetPathFromIDList(pIDL, buffer) != 0)
+	   {
 		  	// Set the string value.
 
-   			mDir = utf16str_to_utf8str(llutf16string(buffer));
+				mDir = utf16str_to_utf8str(llutf16string(buffer));
 	         success = TRUE;
-      }
+	   }
 
-      // free the item id list
-      CoTaskMemFree(pIDL);
-   }
+	   // free the item id list
+	   CoTaskMemFree(pIDL);
+	}
 
-   ::OleUninitialize();
+	::OleUninitialize();
 
 	send_agent_resume();
 
@@ -125,6 +127,8 @@ std::string LLDirPicker::getDirName()
 #elif LL_DARWIN
 
 LLDirPicker::LLDirPicker() 
+:	mFileName(NULL),
+	mLocked(false)
 {
 	reset();
 
@@ -261,13 +265,15 @@ std::string LLDirPicker::getDirName()
 
 void LLDirPicker::reset()
 {
-	mLocked = FALSE;
+	mLocked = false;
 	mDir.clear();
 }
 
 #elif LL_LINUX || LL_SOLARIS
 
 LLDirPicker::LLDirPicker() 
+:	mFileName(NULL),
+	mLocked(false)
 {
 	mFilePicker = new LLFilePicker();
 	reset();

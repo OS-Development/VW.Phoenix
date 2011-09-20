@@ -33,7 +33,8 @@
 #ifndef LL_LLHTTPNODE_H
 #define LL_LLHTTPNODE_H
 
-#include "llmemory.h"
+#include "llpointer.h"
+#include "llrefcount.h"
 #include "llsd.h"
 
 class LLChainIOFactory;
@@ -303,7 +304,7 @@ protected:
 	~LLSimpleResponse();
 
 private:
-	LLSimpleResponse() {;} // Must be accessed through LLPointer.
+	LLSimpleResponse() : mCode(0) {} // Must be accessed through LLPointer.
 };
 
 std::ostream& operator<<(std::ostream& out, const LLSimpleResponse& resp);

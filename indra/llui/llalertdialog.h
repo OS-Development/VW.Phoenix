@@ -35,9 +35,7 @@
 
 #include "llpanel.h"
 #include "llmodaldialog.h"
-#include "llmemory.h"
-#include "llui.h"
-#include "llnotifications.h"
+#include "llnotifications.h"	// this one also includes llinstancetracker.h and llui.h
 
 class LLButton;
 class LLCheckBoxCtrl;

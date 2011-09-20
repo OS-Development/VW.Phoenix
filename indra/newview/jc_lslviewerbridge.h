@@ -34,8 +34,8 @@
 #include "llchatbar.h"
 
 #include "llviewerobject.h"
-
-#include "llmemory.h"	// LLSingleton<>
+#include "lleventtimer.h"
+#include "llsingleton.h"
 
 #define phoenix_category_name "#Phoenix"
 

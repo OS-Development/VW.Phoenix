@@ -74,7 +74,12 @@ class LLHTTPPipe : public LLIOPipe
 {
 public:
 	LLHTTPPipe(const LLHTTPNode& node)
-		: mNode(node), mResponse(NULL), mState(STATE_INVOKE), mChainLock(0), mStatusCode(0)
+		: mNode(node),
+		  mResponse(NULL),
+		  mState(STATE_INVOKE),
+		  mChainLock(0),
+		  mLockedPump(NULL),
+		  mStatusCode(0)
 		{ }
 	virtual ~LLHTTPPipe()
 	{
@@ -110,7 +115,7 @@ private:
 		void nullPipe();
 
 	private:
-		Response() {;} // Must be accessed through LLPointer.
+		Response() : mPipe(NULL) {} // Must be accessed through LLPointer.
 		LLHTTPPipe* mPipe;
 	};
 	friend class Response;
@@ -402,7 +407,7 @@ void LLHTTPPipe::unlockChain()
 class LLHTTPResponseHeader : public LLIOPipe
 {
 public:
-	LLHTTPResponseHeader() {}
+	LLHTTPResponseHeader() : mCode(0) {}
 	virtual ~LLHTTPResponseHeader() {}
 
 protected:
@@ -520,7 +525,7 @@ protected:
 	 * seek orfor string assignment.
 	 * @returns Returns true if a line was found.
 	 */
-	bool readLine(
+	bool readHeaderLine(
 		const LLChannelDescriptors& channels,
 		buffer_ptr_t buffer,
 		U8* dest,
@@ -591,7 +596,7 @@ LLHTTPResponder::~LLHTTPResponder()
 	//lldebugs << "destroying LLHTTPResponder" << llendl;
 }
 
-bool LLHTTPResponder::readLine(
+bool LLHTTPResponder::readHeaderLine(
 	const LLChannelDescriptors& channels,
 	buffer_ptr_t buffer,
 	U8* dest,
@@ -606,7 +611,7 @@ bool LLHTTPResponder::readLine(
 	{
 		if(len)
 		{
-			lldebugs << "readLine failed - too long maybe?" << llendl;
+			lldebugs << "readHeaderLine failed - too long maybe?" << llendl;
 			markBad(channels, buffer);
 		}
 		return false;
@@ -669,7 +674,7 @@ LLIOPipe::EStatus LLHTTPResponder::process_impl(
 #endif
 		
 		PUMP_DEBUG;
-		if(readLine(channels, buffer, (U8*)buf, len))
+		if (readHeaderLine(channels, buffer, (U8*)buf, len))
 		{
 			bool read_next_line = false;
 			bool parse_all = true;
@@ -733,7 +738,13 @@ LLIOPipe::EStatus LLHTTPResponder::process_impl(
 					if(read_next_line)
 					{
 						len = HEADER_BUFFER_SIZE;	
-						readLine(channels, buffer, (U8*)buf, len);
+						if (!readHeaderLine(channels, buffer, (U8*)buf, len))
+						{
+							// Failed to read the header line, probably too long.
+							// readHeaderLine already marked the channel/buffer as bad.
+							keep_parsing = false;
+							break;
+						}
 					}
 					if(0 == len)
 					{
@@ -948,13 +959,9 @@ private:
 
 
 // static
-LLHTTPNode& LLIOHTTPServer::create(
-	apr_pool_t* pool, LLPumpIO& pump, U16 port)
+LLHTTPNode& LLIOHTTPServer::create(LLPumpIO& pump, U16 port)
 {
-	LLSocket::ptr_t socket = LLSocket::create(
-        pool,
-        LLSocket::STREAM_TCP,
-        port);
+	LLSocket::ptr_t socket = LLSocket::create(LLSocket::STREAM_TCP, port);
     if(!socket)
     {
         llerrs << "Unable to initialize socket" << llendl;
@@ -963,7 +970,7 @@ LLHTTPNode& LLIOHTTPServer::create(
     LLHTTPResponseFactory* factory = new LLHTTPResponseFactory;
 	boost::shared_ptr<LLChainIOFactory> factory_ptr(factory);
 
-    LLIOServerSocket* server = new LLIOServerSocket(pool, socket, factory_ptr);
+    LLIOServerSocket* server = new LLIOServerSocket(socket, factory_ptr);
 
 	LLPumpIO::chain_t chain;
     chain.push_back(LLIOPipe::ptr_t(server));

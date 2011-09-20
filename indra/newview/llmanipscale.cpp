@@ -35,33 +35,35 @@
 #include "llmanipscale.h"
 
 // library includes
+#include "llbbox.h"
+#include "llcriticaldamp.h"
 #include "llmath.h"
-#include "v3math.h"
 #include "llquaternion.h"
 #include "llgl.h"
+#include "llglheaders.h"
 #include "llrender.h"
-#include "v4color.h"
 #include "llprimitive.h"
+#include "llui.h"
+#include "v2math.h"
+#include "v3math.h"
+#include "v4color.h"
 
 // viewer includes
 #include "llagent.h"
-#include "llbbox.h"
 #include "llbox.h"
-#include "llviewercontrol.h"
-#include "llcriticaldamp.h"
 #include "lldrawable.h"
 #include "llfloatertools.h"
-#include "llglheaders.h"
+#include "llhudrender.h"
+#include "llmeshrepository.h"
 #include "llselectmgr.h"
 #include "llstatusbar.h"
-#include "llui.h"
 #include "llviewercamera.h"
+#include "llviewercontrol.h"
 #include "llviewerobject.h"
+#include "llviewerregion.h"
 #include "llviewerwindow.h"
-#include "llhudrender.h"
-#include "llworld.h"
-#include "v2math.h"
 #include "llvoavatar.h"
+#include "llworld.h"
 
 #include "hippolimits.h"
 
@@ -90,8 +92,6 @@ const LLManip::EManipPart MANIPULATOR_IDS[NUM_MANIPULATORS] =
 	LLManip::LL_FACE_NEGY,
 	LLManip::LL_FACE_NEGZ
 };
-
-
 
 // static
 void LLManipScale::setUniform(BOOL b)

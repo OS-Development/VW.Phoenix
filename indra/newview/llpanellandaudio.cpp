@@ -127,7 +127,7 @@ void LLPanelLandAudio::refresh()
 		BOOL can_change_media = LLViewerParcelMgr::isParcelModifiableByAgent(parcel, GP_LAND_CHANGE_MEDIA);
 
 		mMusicURLEdit->setText(parcel->getMusicURL());
-		mMusicURLEdit->setEnabled( can_change_media );
+		mMusicURLEdit->setEnabled(can_change_media);
 
 		BOOL can_change_av_sounds = LLViewerParcelMgr::isParcelModifiableByAgent(parcel, GP_LAND_OPTIONS) && parcel->getHaveNewParcelLimitData();
 		mCheckAVSoundAny->set(parcel->getAllowAnyAVSounds());
@@ -136,12 +136,12 @@ void LLPanelLandAudio::refresh()
 		mCheckAVSoundGroup->set(parcel->getAllowGroupAVSounds() || parcel->getAllowAnyAVSounds());	// On if "Everyone" is on
 		mCheckAVSoundGroup->setEnabled(can_change_av_sounds && !parcel->getAllowAnyAVSounds());		// Enabled if "Everyone" is off
 
-		mCheckSoundLocal->set( parcel->getSoundLocal() );
-		mCheckSoundLocal->setEnabled( can_change_media );
+		mCheckSoundLocal->set(parcel->getSoundLocal());
+		mCheckSoundLocal->setEnabled(can_change_media);
 
-		if(parcel->getParcelFlagAllowVoice())
+		if (parcel->getParcelFlagAllowVoice())
 		{
-			if(parcel->getParcelFlagUseEstateVoiceChannel())
+			if (parcel->getParcelFlagUseEstateVoiceChannel())
 				mRadioVoiceChat->setSelectedIndex(kRadioVoiceChatEstate);
 			else
 				mRadioVoiceChat->setSelectedIndex(kRadioVoiceChatPrivate);
@@ -210,7 +210,7 @@ void LLPanelLandAudio::onCommitAny(LLUICtrl*, void *userdata)
 	parcel->setAllowGroupAVSounds(group_av_sound);
 
 	// Send current parcel data upstream to server
-	LLViewerParcelMgr::getInstance()->sendParcelPropertiesUpdate( parcel );
+	LLViewerParcelMgr::getInstance()->sendParcelPropertiesUpdate(parcel);
 
 	// Might have changed properties, so let's redraw!
 	self->refresh();

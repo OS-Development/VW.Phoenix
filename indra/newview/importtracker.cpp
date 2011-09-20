@@ -49,7 +49,7 @@ void ImportTracker::importer(std::string file,  void (*callback)(LLViewerObject*
 	groupcounter=0;
 	LLSD ls_llsd;
 	ls_llsd=linksetgroups[groupcounter]["Object"];
-	linksetoffset=linksetgroups[groupcounter]["ObjectPos"];
+	linksetoffset=LLVector3(linksetgroups[groupcounter]["ObjectPos"]);
 	initialPos=gAgent.getCameraPositionAgent();
 	import(ls_llsd);
 }
@@ -137,7 +137,7 @@ void ImportTracker::cleanUp()
 			++groupcounter;
 			LLSD ls_llsd;
 			ls_llsd=linksetgroups[groupcounter]["Object"];
-			linksetoffset=linksetgroups[groupcounter]["ObjectPos"];
+			linksetoffset=LLVector3(linksetgroups[groupcounter]["ObjectPos"]);
 			import(ls_llsd);
 		}
 	}
@@ -167,17 +167,17 @@ void ImportTracker::get_update(S32 newid, BOOL justCreated, BOOL createSelected)
 				LLPrimitive obj;
 				obj.setNumTEs(U8(10));	
 				S32 shinnyLevel = 0;
-				static std::string* shinystr = rebind_llcontrol<std::string>("PhoenixBuildPrefs_Shiny", &gSavedSettings, true);
-				if(*shinystr == "None") shinnyLevel = 0;
-				if(*shinystr == "Low") shinnyLevel = 1;
-				if(*shinystr == "Medium") shinnyLevel = 2;
-				if(*shinystr == "High") shinnyLevel = 3;
+				static LLCachedControl<std::string> sshinystr(gSavedSettings, "PhoenixBuildPrefs_Shiny");
+				std::string shinystr = sshinystr;
+				if(shinystr == "None") shinnyLevel = 0;
+				if(shinystr == "Low") shinnyLevel = 1;
+				if(shinystr == "Medium") shinnyLevel = 2;
+				if(shinystr == "High") shinnyLevel = 3;
 				
 				for (int i = 0; i < 10; i++)
 				{
-					static std::string* buildpreftex = rebind_llcontrol<std::string>("PhoenixBuildPrefs_Texture", &gSavedSettings, true);
-
-					LLTextureEntry tex =  LLTextureEntry(LLUUID(*buildpreftex));
+					static LLCachedControl<std::string> buildpreftex(gSavedSettings, "PhoenixBuildPrefs_Texture");
+					LLTextureEntry tex =  LLTextureEntry(LLUUID(buildpreftex));
 					tex.setColor(gSavedSettings.getColor4("PhoenixBuildPrefs_Color"));
 					tex.setAlpha(1.0 - ((gSavedSettings.getF32("PhoenixBuildPrefs_Alpha")) / 100.0));
 					tex.setGlow(gSavedSettings.getF32("PhoenixBuildPrefs_Glow"));
@@ -390,10 +390,10 @@ public:
 	{
 		LLPointer<LLInventoryCallback> cb = new JCImportTransferCallback(data);
 		LLPermissions perm;
-		LLUUID parent_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+		LLUUID parent_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 
 		create_inventory_item(gAgent.getID(), gAgent.getSessionID(),
-			gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH), data->tid, data->name,
+			gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH), data->tid, data->name,
 			data->description, data->type, LLInventoryType::defaultForAssetType(data->type), data->wear_type,
 			LLFloaterPerms::getNextOwnerPerms(),
 			cb);
@@ -441,8 +441,7 @@ public:
 	void fire(const LLUUID &inv_item)
 	{
 		S32 file_size;
-		LLAPRFile infile ;
-		infile.open(data->filename, LL_APR_RB, LLAPRFile::global, &file_size);
+		LLAPRFile infile(data->filename, LL_APR_RB, &file_size);
 		if (infile.getFileHandle())
 		{
 			//cmdline_printchat("got file handle @ postinv");
@@ -531,10 +530,10 @@ void JCImportInventorycallback(const LLUUID& uuid, void* user_data, S32 result, 
 
 		LLPointer<LLInventoryCallback> cb = new JCImportTransferCallback(data);
 		LLPermissions perm;
-		LLUUID parent_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+		LLUUID parent_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 
 		create_inventory_item(gAgent.getID(), gAgent.getSessionID(),
-			gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH), data->tid, data->name,
+			gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH), data->tid, data->name,
 			data->description, data->type, LLInventoryType::defaultForAssetType(data->type), data->wear_type,
 			LLFloaterPerms::getNextOwnerPerms(),
 			cb);
@@ -605,8 +604,7 @@ void ImportTracker::send_inventory(LLSD& prim)
 					{
 						std::string url = gAgent.getRegion()->getCapability("NewFileAgentInventory");
 						S32 file_size;
-						LLAPRFile infile ;
-						infile.open(data->filename, LL_APR_RB, LLAPRFile::global, &file_size);
+						LLAPRFile infile(data->filename, LL_APR_RB, &file_size);
 						if (infile.getFileHandle())
 						{
 							//cmdline_printchat("got file handle");
@@ -619,7 +617,7 @@ void ImportTracker::send_inventory(LLSD& prim)
 								file.write(copy_buf, file_size);
 							}
 							LLSD body;
-							body["folder_id"] = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+							body["folder_id"] = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 							body["asset_type"] = LLAssetType::lookup(data->type);
 							body["inventory_type"] = LLInventoryType::lookup(data->inv_type);
 							body["name"] = data->name;
@@ -639,8 +637,7 @@ void ImportTracker::send_inventory(LLSD& prim)
 					//cmdline_printchat("case cloth/bodypart");
 					{
 						S32 file_size;
-						LLAPRFile infile ;
-						infile.open(data->filename, LL_APR_RB, LLAPRFile::global, &file_size);
+						LLAPRFile infile(data->filename, LL_APR_RB, &file_size);
 						if (infile.getFileHandle())
 						{
 							//cmdline_printchat("got file handle @ cloth");
@@ -680,9 +677,9 @@ void ImportTracker::send_inventory(LLSD& prim)
 						//std::string agent_url = gAgent.getRegion()->getCapability("UpdateNotecardAgentInventory");
 						LLPointer<LLInventoryCallback> cb = new JCPostInvCallback(data);
 						LLPermissions perm;
-						LLUUID parent_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+						LLUUID parent_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 						create_inventory_item(gAgent.getID(), gAgent.getSessionID(),
-							gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH), data->tid, data->name,
+							gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH), data->tid, data->name,
 							data->description, data->type, LLInventoryType::defaultForAssetType(data->type), data->wear_type,
 							LLFloaterPerms::getNextOwnerPerms(),
 							cb);
@@ -692,9 +689,9 @@ void ImportTracker::send_inventory(LLSD& prim)
 					{
 						LLPointer<LLInventoryCallback> cb = new JCPostInvCallback(data);
 						LLPermissions perm;
-						LLUUID parent_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+						LLUUID parent_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 						create_inventory_item(gAgent.getID(), gAgent.getSessionID(),
-							gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH), data->tid, data->name,
+							gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH), data->tid, data->name,
 							data->description, data->type, LLInventoryType::defaultForAssetType(data->type), data->wear_type,
 							LLFloaterPerms::getNextOwnerPerms(),
 							cb);
@@ -794,7 +791,7 @@ void ImportTracker::send_vectors(LLSD& prim,int counter)
 		rotation = rotq.packToVector3();
 	else
 		rotation = (rotq * rootrot).packToVector3();
-	LLVector3 scale = prim["scale"];
+	LLVector3 scale(prim["scale"]);
 	U8 data[256];
 	
 	LLMessageSystem* msg = gMessageSystem;
@@ -1071,7 +1068,7 @@ void ImportTracker::wear(LLSD &prim)
 	
 	msg->sendReliable(gAgent.getRegion()->getHost());
 
-	LLVector3 position = prim["attachpos"];
+	LLVector3 position(prim["attachpos"]);
 	
 	LLSD rot = prim["attachrot"];
 	LLQuaternion rotq;

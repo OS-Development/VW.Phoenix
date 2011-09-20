@@ -52,7 +52,6 @@
 #include "llviewerobject.h"
 #include "llviewercamera.h"
 #include "pipeline.h"
-#include "llagent.h"
 #include "lldrawpool.h"
 
 #include "llvosky.h"
@@ -155,7 +154,8 @@ void LLSky::setOverrideSun(BOOL override)
 
 void LLSky::setSunDirection(const LLVector3 &sun_direction, const LLVector3 &sun_ang_velocity)
 {
-	if(mVOSkyp.notNull()) {
+	if (mVOSkyp.notNull())
+	{
 		mVOSkyp->setSunDirection(sun_direction, sun_ang_velocity);
 	}
 }

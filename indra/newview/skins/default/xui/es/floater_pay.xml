@@ -10,7 +10,7 @@
 		Pagar al residente:
 	</text>
 	<text length="1" name="payee_name" type="string" left="115">
-		[FIRST] [LAST]
+		[NAME]
 	</text>
 	<text length="1" name="fastpay text" type="string" width="100" halign="left">
 		Pago rápido:

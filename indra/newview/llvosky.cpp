@@ -49,7 +49,7 @@
 #include "llglheaders.h"
 #include "llsky.h"
 #include "llviewercamera.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llviewerobjectlist.h"
 #include "llviewerregion.h"
 #include "llworld.h"
@@ -81,9 +81,6 @@ static const LLVector2 TEX11 = LLVector2(1.f, 1.f);
 // Exported globals
 LLUUID gSunTextureID = IMG_SUN;
 LLUUID gMoonTextureID = IMG_MOON;
-
-//static 
-LLColor3 LLHaze::sAirScaSeaLevel;
 
 class LLFastLn
 {
@@ -187,7 +184,23 @@ inline void color_gamma_correct(LLColor3 &col)
 	}
 }
 
+static LLColor3 calc_air_sca_sea_level()
+{
+	static LLColor3 WAVE_LEN(675, 520, 445);
+	static LLColor3 refr_ind = refr_ind_calc(WAVE_LEN);
+	static LLColor3 n21 = refr_ind * refr_ind - LLColor3(1, 1, 1);
+	static LLColor3 n4 = n21 * n21;
+	static LLColor3 wl2 = WAVE_LEN * WAVE_LEN * 1e-6f;
+	static LLColor3 wl4 = wl2 * wl2;
+	static LLColor3 mult_const = fsigma * 2.0f/ 3.0f * 1e24f * (F_PI * F_PI) * n4;
+	static F32 dens_div_N = F32(ATM_SEA_LEVEL_NDENS / Ndens2);
+	return dens_div_N * color_div (mult_const, wl4);
+}
 
+// static constants.
+LLColor3 const LLHaze::sAirScaSeaLevel = calc_air_sca_sea_level();
+F32 const LLHaze::sAirScaIntense = color_intens(LLHaze::sAirScaSeaLevel);
+F32 const LLHaze::sAirScaAvg = LLHaze::sAirScaIntense / 3.f;
 
 /***************************************
 		SkyTex
@@ -212,8 +225,8 @@ void LLSkyTex::init()
 
 	for (S32 i = 0; i < 2; ++i)
 	{
-		mImageGL[i] = new LLImageGL(FALSE);
-		mImageGL[i]->setAddressMode(LLTexUnit::TAM_CLAMP);
+		mTexture[i] = LLViewerTextureManager::getLocalTexture(FALSE);
+		mTexture[i]->setAddressMode(LLTexUnit::TAM_CLAMP);
 		mImageRaw[i] = new LLImageRaw(sResolution, sResolution, sComponents);
 		
 		initEmpty(i);
@@ -222,16 +235,16 @@ void LLSkyTex::init()
 
 void LLSkyTex::cleanupGL()
 {
-	mImageGL[0] = NULL;
-	mImageGL[1] = NULL;
+	mTexture[0] = NULL;
+	mTexture[1] = NULL;
 }
 
 void LLSkyTex::restoreGL()
 {
 	for (S32 i = 0; i < 2; i++)
 	{
-		mImageGL[i] = new LLImageGL(FALSE);
-		mImageGL[i]->setAddressMode(LLTexUnit::TAM_CLAMP);
+		mTexture[i] = LLViewerTextureManager::getLocalTexture(FALSE);
+		mTexture[i]->setAddressMode(LLTexUnit::TAM_CLAMP);
 	}
 }
 
@@ -278,7 +291,7 @@ void LLSkyTex::create(const F32 brightness)
 			S32 offset = basic_offset * sComponents;
 			U32* pix = (U32*)(data + offset);
 			LLColor4U temp = LLColor4U(mSkyData[basic_offset]);
-			*pix = temp.mAll;
+			*pix = temp.asRGBA();
 		}
 	}
 	createGLImage(sCurrent);
@@ -289,13 +302,13 @@ void LLSkyTex::create(const F32 brightness)
 
 void LLSkyTex::createGLImage(S32 which)
 {	
-	mImageGL[which]->createGLTexture(0, mImageRaw[which], 0, TRUE, LLViewerImageBoostLevel::OTHER);
-	mImageGL[which]->setAddressMode(LLTexUnit::TAM_CLAMP);
+	mTexture[which]->createGLTexture(0, mImageRaw[which], 0, TRUE, LLViewerTexture::LOCAL);
+	mTexture[which]->setAddressMode(LLTexUnit::TAM_CLAMP);
 }
 
 void LLSkyTex::bindTexture(BOOL curr)
 {
-	gGL.getTexUnit(0)->bind(mImageGL[getWhich(curr)]);
+	gGL.getTexUnit(0)->bind(mTexture[getWhich(curr)]);
 }
 
 /***************************************
@@ -376,31 +389,29 @@ LLVOSky::LLVOSky(const LLUUID &id, const LLPCode pcode, LLViewerRegion *regionp)
 	mSun.setIntensity(SUN_INTENSITY);
 	mMoon.setIntensity(0.1f * SUN_INTENSITY);
 
-	mSunTexturep = gImageList.getImage(gSunTextureID, TRUE, TRUE);
+	mSunTexturep = LLViewerTextureManager::getFetchedTexture(gSunTextureID, TRUE, LLViewerTexture::BOOST_UI);
 	mSunTexturep->setAddressMode(LLTexUnit::TAM_CLAMP);
-	mMoonTexturep = gImageList.getImage(gMoonTextureID, TRUE, TRUE);
+	mMoonTexturep = LLViewerTextureManager::getFetchedTexture(gMoonTextureID, TRUE, LLViewerTexture::BOOST_UI);
 	mMoonTexturep->setAddressMode(LLTexUnit::TAM_CLAMP);
-	mBloomTexturep = gImageList.getImage(IMG_BLOOM1);
+	mBloomTexturep = LLViewerTextureManager::getFetchedTexture(IMG_BLOOM1);
 	mBloomTexturep->setNoDelete() ;
 	mBloomTexturep->setAddressMode(LLTexUnit::TAM_CLAMP);
 
 	mHeavenlyBodyUpdated = FALSE ;
+
+	mDrawRefl = 0;
+	mHazeConcentration = 0.f;
+	mInterpVal = 0.f;
 }
 
 
 LLVOSky::~LLVOSky()
 {
-	// Don't delete images - it'll get deleted by gImageList on shutdown
+	// Don't delete images - it'll get deleted by gTextureList on shutdown
 	// This needs to be done for each texture
 
 	mCubeMap = NULL;
 }
-
-void LLVOSky::initClass()
-{
-	LLHaze::initClass();
-}
-
 
 void LLVOSky::init()
 {
@@ -472,11 +483,11 @@ void LLVOSky::restoreGL()
 	{
 		mSkyTex[i].restoreGL();
 	}
-	mSunTexturep = gImageList.getImage(gSunTextureID, TRUE, TRUE);
+	mSunTexturep = LLViewerTextureManager::getFetchedTexture(gSunTextureID, TRUE, LLViewerTexture::BOOST_UI);
 	mSunTexturep->setAddressMode(LLTexUnit::TAM_CLAMP);
-	mMoonTexturep = gImageList.getImage(gMoonTextureID, TRUE, TRUE);
+	mMoonTexturep = LLViewerTextureManager::getFetchedTexture(gMoonTextureID, TRUE, LLViewerTexture::BOOST_UI);
 	mMoonTexturep->setAddressMode(LLTexUnit::TAM_CLAMP);
-	mBloomTexturep = gImageList.getImage(IMG_BLOOM1);
+	mBloomTexturep = LLViewerTextureManager::getFetchedTexture(IMG_BLOOM1);
 	mBloomTexturep->setNoDelete() ;
 	mBloomTexturep->setAddressMode(LLTexUnit::TAM_CLAMP);
 
@@ -832,7 +843,7 @@ void LLVOSky::calcSkyColorWLVert(LLVector3 & Pn, LLColor3 & vary_HazeColor, LLCo
 	componentMultBy(vary_HazeColor, LLColor3::white - temp1);
 
 	sunlight = sunlight_color;
-	temp2.mV[1] = llmax(0.f, lightnorm[1] * 2.f);
+	temp2.mV[1] = llmax(F_APPROXIMATELY_ZERO, lightnorm[1] * 2.f);
 	temp2.mV[1] = 1.f / temp2.mV[1];
 	componentMultBy(sunlight, componentExp((light_atten * -1.f) * temp2.mV[1]));
 
@@ -965,12 +976,12 @@ void LLVOSky::calcAtmospherics(void)
 		
 		// and vary_sunlight will work properly with moon light
 		F32 lighty = unclamped_lightnorm[1];
-		if(lighty < NIGHTTIME_ELEVATION_COS)
+		if (lighty < LLSky::NIGHTTIME_ELEVATION_COS)
 		{
 			lighty = -lighty;
 		}
 
-		temp2.mV[1] = llmax(0.f, lighty);
+		temp2.mV[1] = llmax(F_APPROXIMATELY_ZERO, lighty);
 		temp2.mV[1] = 1.f / temp2.mV[1];
 		componentMultBy(sunlight, componentExp((light_atten * -1.f) * temp2.mV[1]));
 
@@ -1024,9 +1035,9 @@ void LLVOSky::calcAtmospherics(void)
 	// Since WL scales everything by 2, there should always be at least a 2:1 brightness ratio
 	// between sunlight and point lights in windlight to normalize point lights.
 
-	static F32 *sRenderSunDynamicRange = rebind_llcontrol<F32>("RenderSunDynamicRange", &gSavedSettings, true);
+	static LLCachedControl<F32> render_sun_dynamic_range(gSavedSettings, "RenderSunDynamicRange");
 
-	F32 sun_dynamic_range = llmax((*sRenderSunDynamicRange), 0.0001f);
+	F32 sun_dynamic_range = llmax(F32(render_sun_dynamic_range), 0.0001f);
 	LLWLParamManager::instance()->mSceneLightStrength = 2.0f * (1.0f + sun_dynamic_range * dp);
 
 	mSunDiffuse = vary_SunlightColor;
@@ -1075,10 +1086,10 @@ BOOL LLVOSky::updateSky()
 		++next_frame;
 		next_frame = next_frame % cycle_frame_no;
 
-		sInterpVal = (!mInitialized) ? 1 : (F32)next_frame / cycle_frame_no;
+		mInterpVal = !mInitialized ? 1.f : (F32)next_frame / cycle_frame_no;
 		// sInterpVal = (F32)next_frame / cycle_frame_no;
-		LLSkyTex::setInterpVal( sInterpVal );
-		LLHeavenBody::setInterpVal( sInterpVal );
+		LLSkyTex::setInterpVal(mInterpVal);
+		LLHeavenBody::setInterpVal(mInterpVal);
 		calcAtmospherics();
 
 		if (mForceUpdate || total_no_tiles == frame)
@@ -1176,7 +1187,8 @@ BOOL LLVOSky::updateSky()
 		}
 	}
 
-	if (mDrawable.notNull() && mDrawable->getFace(0) && mDrawable->getFace(0)->mVertexBuffer.isNull())
+	if (mDrawable.notNull() && mDrawable->getFace(0) &&
+		!mDrawable->getFace(0)->getVertexBuffer())
 	{
 		gPipeline.markRebuild(mDrawable, LLDrawable::REBUILD_VOLUME, TRUE);
 	}
@@ -1227,10 +1239,11 @@ void LLVOSky::createDummyVertexBuffer()
 		mFace[FACE_DUMMY] = mDrawable->addFace(poolp, NULL);
 	}
 
-	if(mFace[FACE_DUMMY]->mVertexBuffer.isNull())
+	if (!mFace[FACE_DUMMY]->getVertexBuffer())
 	{
-		mFace[FACE_DUMMY]->mVertexBuffer = new LLVertexBuffer(LLDrawPoolSky::VERTEX_DATA_MASK, GL_DYNAMIC_DRAW_ARB);
-		mFace[FACE_DUMMY]->mVertexBuffer->allocateBuffer(1, 1, TRUE);
+		LLVertexBuffer* buff = new LLVertexBuffer(LLDrawPoolSky::VERTEX_DATA_MASK, GL_DYNAMIC_DRAW_ARB);
+		buff->allocateBuffer(1, 1, TRUE);
+		mFace[FACE_DUMMY]->setVertexBuffer(buff);
 	}
 }
 
@@ -1247,13 +1260,13 @@ void LLVOSky::updateDummyVertexBuffer()
 
 	LLFastTimer t(LLFastTimer::FTM_RENDER_FAKE_VBO_UPDATE) ;
 
-	if(!mFace[FACE_DUMMY] || mFace[FACE_DUMMY]->mVertexBuffer.isNull())
+	if (!mFace[FACE_DUMMY] || !mFace[FACE_DUMMY]->getVertexBuffer())
 		createDummyVertexBuffer() ;
 
 	LLStrider<LLVector3> vertices ;
-	mFace[FACE_DUMMY]->mVertexBuffer->getVertexStrider(vertices,  0);
+	mFace[FACE_DUMMY]->getVertexBuffer()->getVertexStrider(vertices, 0);
 	*vertices = mCameraPosAgent ;
-	mFace[FACE_DUMMY]->mVertexBuffer->setBuffer(0) ;
+	mFace[FACE_DUMMY]->getVertexBuffer()->setBuffer(0);
 }
 //----------------------------------
 //end of fake vertex buffer updating
@@ -1295,13 +1308,14 @@ BOOL LLVOSky::updateGeometry(LLDrawable *drawable)
 	{
 		face = mFace[FACE_SIDE0 + side]; 
 
-		if (face->mVertexBuffer.isNull())
+		if (!face->getVertexBuffer())
 		{
 			face->setSize(4, 6);
 			face->setGeomIndex(0);
 			face->setIndicesIndex(0);
-			face->mVertexBuffer = new LLVertexBuffer(LLDrawPoolSky::VERTEX_DATA_MASK, GL_STREAM_DRAW_ARB);
-			face->mVertexBuffer->allocateBuffer(4, 6, TRUE);
+			LLVertexBuffer* buff = new LLVertexBuffer(LLDrawPoolSky::VERTEX_DATA_MASK, GL_STREAM_DRAW_ARB);
+			buff->allocateBuffer(4, 6, TRUE);
+			face->setVertexBuffer(buff);
 			
 			index_offset = face->getGeometry(verticesp,normalsp,texCoordsp, indicesp);
 			
@@ -1335,7 +1349,7 @@ BOOL LLVOSky::updateGeometry(LLDrawable *drawable)
 			*indicesp++ = index_offset + 3;
 			*indicesp++ = index_offset + 2;
 
-			face->mVertexBuffer->setBuffer(0);
+			buff->setBuffer(0);
 		}
 	}
 
@@ -1462,13 +1476,14 @@ BOOL LLVOSky::updateHeavenlyBodyGeometry(LLDrawable *drawable, const S32 f, cons
 
 	facep = mFace[f]; 
 
-	if (facep->mVertexBuffer.isNull())
+	if (!facep->getVertexBuffer())
 	{
 		facep->setSize(4, 6);		
-		facep->mVertexBuffer = new LLVertexBuffer(LLDrawPoolSky::VERTEX_DATA_MASK, GL_STREAM_DRAW_ARB);
-		facep->mVertexBuffer->allocateBuffer(facep->getGeomCount(), facep->getIndicesCount(), TRUE);
+		LLVertexBuffer* buff = new LLVertexBuffer(LLDrawPoolSky::VERTEX_DATA_MASK, GL_STREAM_DRAW_ARB);
+		buff->allocateBuffer(facep->getGeomCount(), facep->getIndicesCount(), TRUE);
 		facep->setGeomIndex(0);
 		facep->setIndicesIndex(0);
+		facep->setVertexBuffer(buff);
 	}
 
 	index_offset = facep->getGeometry(verticesp,normalsp,texCoordsp, indicesp);
@@ -1497,7 +1512,7 @@ BOOL LLVOSky::updateHeavenlyBodyGeometry(LLDrawable *drawable, const S32 f, cons
 	*indicesp++ = index_offset + 2;
 	*indicesp++ = index_offset + 3;
 
-	facep->mVertexBuffer->setBuffer(0);
+	facep->getVertexBuffer()->setBuffer(0);
 
 	if (is_sun)
 	{
@@ -1621,13 +1636,13 @@ void LLVOSky::updateSunHaloGeometry(LLDrawable *drawable )
 
 	face = mFace[FACE_BLOOM]; 
 
-	if (face->mVertexBuffer.isNull())
+	if (!face->getVertexBuffer())
 	{
 		face->setSize(4, 6);
 		face->setGeomIndex(0);
 		face->setIndicesIndex(0);
-		face->mVertexBuffer = new LLVertexBuffer(LLDrawPoolWater::VERTEX_DATA_MASK, GL_STREAM_DRAW_ARB);
-		face->mVertexBuffer->allocateBuffer(4, 6, TRUE);
+		LLVertexBuffer* buff = new LLVertexBuffer(LLDrawPoolWater::VERTEX_DATA_MASK, GL_STREAM_DRAW_ARB);
+		face->setVertexBuffer(buff);
 	}
 
 	index_offset = face->getGeometry(verticesp,normalsp,texCoordsp, indicesp);
@@ -1866,13 +1881,14 @@ void LLVOSky::updateReflectionGeometry(LLDrawable *drawable, F32 H,
 
 	LLFace *face = mFace[FACE_REFLECTION]; 
 
-	if (face->mVertexBuffer.isNull() || quads*4 != face->getGeomCount())
+	if (!face->getVertexBuffer() || quads*4 != face->getGeomCount())
 	{
 		face->setSize(quads * 4, quads * 6);
-		face->mVertexBuffer = new LLVertexBuffer(LLDrawPoolWater::VERTEX_DATA_MASK, GL_STREAM_DRAW_ARB);
-		face->mVertexBuffer->allocateBuffer(face->getGeomCount(), face->getIndicesCount(), TRUE);
+		LLVertexBuffer* buff = new LLVertexBuffer(LLDrawPoolWater::VERTEX_DATA_MASK, GL_STREAM_DRAW_ARB);
+		buff->allocateBuffer(face->getGeomCount(), face->getIndicesCount(), TRUE);
 		face->setIndicesIndex(0);
 		face->setGeomIndex(0);
+		face->setVertexBuffer(buff);
 	}
 	
 	LLStrider<LLVector3> verticesp;
@@ -2010,11 +2026,8 @@ void LLVOSky::updateReflectionGeometry(LLDrawable *drawable, F32 H,
 		}
 	}
 
-	face->mVertexBuffer->setBuffer(0);
+	face->getVertexBuffer()->setBuffer(0);
 }
-
-
-
 
 void LLVOSky::updateFog(const F32 distance)
 {
@@ -2118,9 +2131,12 @@ void LLVOSky::updateFog(const F32 distance)
 		LLColor4 water_fog_color = LLDrawPoolWater::sWaterFogColor.mV;
 		
 		// adjust the color based on depth.  We're doing linear approximations
-		float depth_scale = gSavedSettings.getF32("WaterGLFogDepthScale");
-		float depth_modifier = 1.0f - llmin(llmax(depth / depth_scale, 0.01f), 
-			gSavedSettings.getF32("WaterGLFogDepthFloor"));
+		//float depth_scale = gSavedSettings.getF32("WaterGLFogDepthScale");
+		//float depth_modifier = 1.0f - llmin(llmax(depth / depth_scale, 0.01f), 
+		//	gSavedSettings.getF32("WaterGLFogDepthFloor"));
+		static LLCachedControl<F32> depth_scale(gSavedSettings, "WaterGLFogDepthScale");
+		static LLCachedControl<F32> water_gl_fog_depth_floor(gSavedSettings, "WaterGLFogDepthFloor");
+		F32 depth_modifier = 1.0f - llmin(llmax(depth / llmax(1.0f, (F32)depth_scale), 0.01f), (F32)water_gl_fog_depth_floor);
 
 		LLColor4 fogCol = water_fog_color * depth_modifier;
 		fogCol.setAlpha(1);
@@ -2130,7 +2146,9 @@ void LLVOSky::updateFog(const F32 distance)
 		mGLFogCol = fogCol;
 
 		// set the density based on what the shaders use
-		fog_density = water_fog_density * gSavedSettings.getF32("WaterGLFogDensityScale");
+		//fog_density = water_fog_density * gSavedSettings.getF32("WaterGLFogDensityScale");
+		static LLCachedControl<F32> water_gl_fog_density_scale(gSavedSettings, "WaterGLFogDensityScale");
+		fog_density = water_fog_density * water_gl_fog_density_scale;
 		glFogi(GL_FOG_MODE, GL_EXP2);
 	}
 
@@ -2146,17 +2164,7 @@ void LLVOSky::updateFog(const F32 distance)
 	stop_glerror();
 }
 
-// static
-void LLHaze::initClass()
-{
-	sAirScaSeaLevel = LLHaze::calcAirScaSeaLevel();
-}
-
-
-
 // Functions used a lot.
-
-
 F32 color_norm_pow(LLColor3& col, F32 e, BOOL postmultiply)
 {
 	F32 mv = color_max(col);

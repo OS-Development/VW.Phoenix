@@ -58,7 +58,7 @@ public:
 	// Add a user to the list by name.  It will be added, the name 
 	// requested from the cache, and updated as necessary.
 	BOOL addNameItem(const LLUUID& agent_id, EAddPosition pos = ADD_BOTTOM,
-					 BOOL enabled = TRUE, std::string& suffix = LLStringUtil::null);
+					 BOOL enabled = TRUE, const std::string& suffix = LLStringUtil::null);
 	BOOL addNameItem(LLScrollListItem* item, EAddPosition pos = ADD_BOTTOM);
 
 	virtual LLScrollListItem* addElement(const LLSD& value, EAddPosition pos = ADD_BOTTOM, void* userdata = NULL);
@@ -72,10 +72,9 @@ public:
 
 	void removeNameItem(const LLUUID& agent_id);
 
-	void refresh(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group);
+	void refresh(const LLUUID& id, const std::string& fullname, bool is_group);
 
-	static void refreshAll(const LLUUID& id, const std::string& firstname,
-						   const std::string& lastname, BOOL is_group);
+	static void refreshAll(const LLUUID& id, const std::string& fullname, bool is_group);
 
 	virtual BOOL	handleDragAndDrop(S32 x, S32 y, MASK mask,
 									  BOOL drop, EDragAndDropType cargo_type, void *cargo_data,

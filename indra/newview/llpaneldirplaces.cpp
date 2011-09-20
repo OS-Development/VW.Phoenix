@@ -35,28 +35,22 @@
 #include "llpaneldirplaces.h"
 
 // linden library includes
-#include "llfontgl.h"
-#include "message.h"
 #include "lldir.h"
+#include "llnotifications.h"
 #include "llparcel.h"
-#include "llregionflags.h"
 #include "llqueryflags.h"
+#include "llregionflags.h"
+#include "message.h"
 
 // viewer project includes
 #include "llagent.h"
-#include "llbutton.h"
-#include "llcheckboxctrl.h"
-#include "llcombobox.h"
 #include "llfloaterdirectory.h"
-#include "lllineeditor.h"
-#include "llviewerwindow.h"
 #include "llpaneldirbrowser.h"
-#include "lltextbox.h"
 #include "lluiconstants.h"
 #include "llviewercontrol.h"
 #include "llviewermessage.h"
+#include "llviewerwindow.h"
 #include "llworldmap.h"
-#include "llnotify.h"
 
 LLPanelDirPlaces::LLPanelDirPlaces(const std::string& name, LLFloaterDirectory* floater)
 	:	LLPanelDirBrowser(name, floater)

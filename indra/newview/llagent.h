@@ -47,7 +47,8 @@
 #include "llhudeffectlookat.h"
 #include "llhudeffectpointat.h"
 #include "llinventorymodel.h"
-#include "llmemory.h"
+#include "llpointer.h"
+#include "llrefcount.h"
 #include "llstring.h"
 #include "lluuid.h"
 #include "m3math.h"
@@ -839,7 +840,7 @@ private:
 	bool mbAlwaysRun; // should the avatar run by default rather than walk
 	bool mbRunning;	// is the avatar trying to run right now
 
-	LLAgentAccess   mAgentAccess;
+	LLAgentAccess*	mAgentAccess;
 	
 	ETeleportState	mTeleportState;
 	std::string		mTeleportMessage;

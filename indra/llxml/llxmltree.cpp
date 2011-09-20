@@ -508,9 +508,10 @@ std::string LLXmlTreeNode::getTextContents()
 
 LLXmlTreeParser::LLXmlTreeParser(LLXmlTree* tree) 
 	: mTree(tree),
-	  mRoot( NULL ),
-	  mCurrent( NULL ),
-	  mDump( FALSE )
+	  mRoot(NULL),
+	  mCurrent(NULL),
+	  mDump(FALSE),
+	  mKeepContents(FALSE)
 {
 }
 

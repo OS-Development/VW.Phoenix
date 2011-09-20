@@ -36,6 +36,7 @@
 #include "llfasttimer.h"
 #include "llmessagebuilder.h"
 #include "llmessagetemplate.h"
+#include "llmath.h"
 #include "llquaternion.h"
 #include "message.h"
 #include "u64.h"
@@ -433,10 +434,9 @@ inline void LLTemplateMessageReader::getString(const char *block, const char *va
 
 inline void LLTemplateMessageReader::getString(const char *block, const char *var, std::string& outstr, S32 blocknum )
 {
-	char s[MTUBYTES];
-	s[0] = '\0';
+	char s[MTUBYTES + 1]= { 0 }; // every element is initialized with 0
 	getData(block, var, s, 0, blocknum, MTUBYTES);
-	s[MTUBYTES - 1] = '\0';
+	s[MTUBYTES] = '\0';
 	outstr = s;
 }
 

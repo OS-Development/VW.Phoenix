@@ -156,7 +156,8 @@ void LLFastTimer::reset()
 	
 	if (sCurDepth != 0)
 	{
-		llerrs << "LLFastTimer::Reset() when sCurDepth != 0" << llendl;
+		llerrs << "LLFastTimer::Reset() when sCurDepth != 0 (" << sCurDepth
+			   << ") with type number " << sCurType << llendl;
 	}
 	if (sPauseHistory)
 	{
@@ -169,19 +170,19 @@ void LLFastTimer::reset()
 	}
 	else if (sCurFrameIndex >= 0)
 	{
-		int hidx = sCurFrameIndex % FTM_HISTORY_NUM;
-		for (S32 i=0; i<FTM_NUM_TYPES; i++)
+		S32 hidx = sCurFrameIndex % FTM_HISTORY_NUM;
+		for (S32 i = 0; i < FTM_NUM_TYPES; i++)
 		{
 			sCountHistory[hidx][i] = sCounter[i];
-			sCountAverage[i] = (sCountAverage[i]*sCurFrameIndex + sCounter[i]) / (sCurFrameIndex+1);
+			sCountAverage[i] = (sCountAverage[i] * sCurFrameIndex + sCounter[i]) / (sCurFrameIndex + 1);
 			sCallHistory[hidx][i] = sCalls[i];
-			sCallAverage[i] = (sCallAverage[i]*sCurFrameIndex + sCalls[i]) / (sCurFrameIndex+1);
+			sCallAverage[i] = (sCallAverage[i] * sCurFrameIndex + sCalls[i]) / (sCurFrameIndex + 1);
 		}
 		sLastFrameIndex = sCurFrameIndex;
 	}
 	else
 	{
-		for (S32 i=0; i<FTM_NUM_TYPES; i++)
+		for (S32 i = 0; i < FTM_NUM_TYPES; i++)
 		{
 			sCountAverage[i] = 0;
 			sCallAverage[i] = 0;
@@ -190,7 +191,7 @@ void LLFastTimer::reset()
 	
 	sCurFrameIndex++;
 	
-	for (S32 i=0; i<FTM_NUM_TYPES; i++)
+	for (S32 i = 0; i < FTM_NUM_TYPES; i++)
 	{
 		sCounter[i] = 0;
 		sCalls[i] = 0;

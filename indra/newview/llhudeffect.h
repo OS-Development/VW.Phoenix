@@ -39,7 +39,6 @@
 #include "v4coloru.h"
 #include "llinterp.h"
 #include "llframetimer.h"
-#include "llmemory.h"
 
 const F32 LL_HUD_DUR_SHORT = 1.f;
 

@@ -73,8 +73,7 @@
 #include "lltrans.h"
 #include "llviewercontrol.h"
 #include "lluictrlfactory.h"
-#include "llviewerimage.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llviewerregion.h"
 #include "llviewerstats.h"
 #include "llviewertexteditor.h"
@@ -1141,11 +1140,11 @@ BOOL LLPanelRegionTextureInfo::validateTextureSizes()
 		if (!texture_ctrl) continue;
 
 		LLUUID image_asset_id = texture_ctrl->getImageAssetID();
-		LLViewerImage* img = gImageList.getImage(image_asset_id);
+		LLViewerTexture* img = LLViewerTextureManager::getFetchedTexture(image_asset_id);
 		S32 components = img->getComponents();
 		// Must ask for highest resolution version's width. JC
-		S32 width = img->getWidth(0);
-		S32 height = img->getHeight(0);
+		S32 width = img->getFullWidth();
+		S32 height = img->getFullHeight();
 
 		//llinfos << "texture detail " << i << " is " << width << "x" << height << "x" << components << llendl;
 
@@ -2557,12 +2556,7 @@ void LLPanelEstateInfo::setAccessAllowedEnabled(bool enable_agent,
 }
 
 // static
-void LLPanelEstateInfo::callbackCacheName(
-	const LLUUID& id,
-	const std::string& first,
-	const std::string& last,
-	BOOL is_group,
-	void*)
+void LLPanelEstateInfo::callbackCacheName(const LLUUID& id,	const std::string& full_name, bool is_group)
 {
 	LLPanelEstateInfo* self = LLFloaterRegionInfo::getPanelEstate();
 	if (!self) return;
@@ -2575,7 +2569,7 @@ void LLPanelEstateInfo::callbackCacheName(
 	}
 	else
 	{
-		name = first + " " + last;
+		name = full_name;
 	}
 
 	self->setOwnerName(name);
@@ -3074,8 +3068,9 @@ bool LLDispatchEstateUpdateInfo::operator()(
 	LLUUID owner_id(strings[1]);
 	regionp->setOwner(owner_id);
 	// Update estate owner name in UI
-	const BOOL is_group = FALSE;
-	gCacheName->get(owner_id, is_group, LLPanelEstateInfo::callbackCacheName);
+	gCacheName->get(owner_id, false,
+					boost::bind(LLPanelEstateInfo::callbackCacheName,
+								_1, _2, _3));
 
 	U32 estate_id = strtoul(strings[2].c_str(), NULL, 10);
 	panel->setEstateID(estate_id);

@@ -61,17 +61,17 @@ public:
 protected:
 	F32 mPercentDone;
 
-	LLPointer<LLImageGL>  mImageBar;
-	//LLUUID                mImageBarID;
-	//LLString              mImageBarName;
-	LLColor4              mColorBar;
-	LLColor4              mColorBar2;
+	LLPointer<LLTexture>	mImageBar;
+	//LLUUID				mImageBarID;
+	//LLString				mImageBarName;
+	LLColor4				mColorBar;
+	LLColor4				mColorBar2;
 
-	LLPointer<LLImageGL>  mImageShadow;
-	//LLUUID                mImageShadowID;
-	//LLString              mImageShadowName;
-	LLColor4              mColorShadow;
-	LLColor4              mColorBackground;
+	LLPointer<LLTexture>	mImageShadow;
+	//LLUUID				mImageShadowID;
+	//LLString				mImageShadowName;
+	LLColor4				mColorShadow;
+	LLColor4				mColorBackground;
 };
 
 #endif // LL_LLPROGRESSBAR_H

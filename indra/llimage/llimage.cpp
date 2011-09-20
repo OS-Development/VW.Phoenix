@@ -57,7 +57,7 @@ LLMutex* LLImage::sMutex = NULL;
 //static
 void LLImage::initClass()
 {
-	sMutex = new LLMutex(NULL);
+	sMutex = new LLMutex;
 	LLImageJ2C::openDSO();
 }
 
@@ -194,6 +194,10 @@ U8* LLImageBase::allocateData(S32 size)
 // virtual
 U8* LLImageBase::reallocateData(S32 size)
 {
+	if (mData && mDataSize == size)
+	{
+		return mData;
+	}
 	LLMemType mt1((LLMemType::EMemType)mMemType);
 	U8 *new_datap = new U8[size];
 	if (!new_datap)
@@ -277,7 +281,7 @@ LLImageRaw::LLImageRaw(U8 *data, U16 width, U16 height, S8 components)
 	: LLImageBase()
 {
 	mMemType = LLMemType::MTYPE_IMAGERAW;
-	if(allocateDataSize(width, height, components))
+	if (allocateDataSize(width, height, components) && data)
 	{
 		memcpy(getData(), data, width*height*components);
 	}
@@ -654,10 +658,10 @@ void LLImageRaw::fill( const LLColor4U& color )
 	if( 4 == getComponents() )
 	{
 		U32* data = (U32*) getData();
+		U32 mColor = color.asRGBA();
+
 		for( S32 i = 0; i < pixels; i++ )
-		{
-			data[i] = color.mAll;
-		}
+			data[i] = mColor;
 	}
 	else
 	if( 3 == getComponents() )
@@ -1567,8 +1571,7 @@ BOOL LLImageFormatted::load(const std::string &filename)
 	resetLastError();
 
 	S32 file_size = 0;
-	LLAPRFile infile ;
-	infile.open(filename, LL_APR_RB, LLAPRFile::global, &file_size);
+	LLAPRFile infile(filename, LL_APR_RB, &file_size);
 	apr_file_t* apr_file = infile.getFileHandle();
 	if (!apr_file)
 	{
@@ -1603,8 +1606,7 @@ BOOL LLImageFormatted::save(const std::string &filename)
 {
 	resetLastError();
 
-	LLAPRFile outfile ;
-	outfile.open(filename, LL_APR_WB, LLAPRFile::global);
+	LLAPRFile outfile(filename, LL_APR_WB);
 	if (!outfile.getFileHandle())
 	{
 		setLastError("Unable to open file for writing", filename);

@@ -9,6 +9,7 @@
 #include "llviewercontrol.h"		// gSavedSettings
 #include "llagent.h"
 #include "llviewerregion.h"
+#include "llmeshrepository.h"
 
 HippoLimits *gHippoLimits = 0;
 
@@ -91,7 +92,7 @@ void HippoLimits::onRegionCapsReceived(const LLUUID& region_id)
 void HippoLimits::doSecondLifeMeshCheck()
 {
 	// check if the region has mesh for 64m prim support
-	if (!gAgent.getRegion()->getCapability("GetMesh").empty())
+	if (gMeshRepo.meshRezEnabled())
 	{
 		mMaxPrimScale = 64.0f;
 		gSavedSettings.setBOOL("Phoenix64mPrimSupport", TRUE);

@@ -39,7 +39,7 @@
 #include "llagent.h"
 #include "lldrawable.h"
 #include "llviewercamera.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llviewerobject.h"
 #include "llviewerobjectlist.h"
 #include "llvoavatar.h"
@@ -78,7 +78,7 @@ void LLViewerPartSource::update(const F32 dt)
 
 LLUUID LLViewerPartSource::getImageUUID() const
 {
-	LLViewerImage* imagep = mImagep;
+	LLViewerTexture* imagep = mImagep;
 	if(imagep)
 	{
 		return imagep->getID();
@@ -100,8 +100,7 @@ LLViewerPartSourceScript::LLViewerPartSourceScript(LLViewerObject *source_objp) 
 	llassert(source_objp);
 	mSourceObjectp = source_objp;
 	mPosAgent = mSourceObjectp->getPositionAgent();
-	mImagep = gImageList.getImageFromFile("pixiesmall.j2c");
-	gGL.getTexUnit(0)->bind(mImagep.get());
+	mImagep = LLViewerTextureManager::getFetchedTextureFromFile("pixiesmall.j2c");
 	mImagep->setAddressMode(LLTexUnit::TAM_CLAMP);
 }
 
@@ -491,7 +490,7 @@ LLPointer<LLViewerPartSourceScript> LLViewerPartSourceScript::createPSS(LLViewer
 }
 
 
-void LLViewerPartSourceScript::setImage(LLViewerImage *imagep)
+void LLViewerPartSourceScript::setImage(LLViewerTexture *imagep)
 {
 	LLMemType mt(LLMemType::MTYPE_PARTICLES);
 	mImagep = imagep;
@@ -502,10 +501,6 @@ void LLViewerPartSourceScript::setTargetObject(LLViewerObject *objp)
 	LLMemType mt(LLMemType::MTYPE_PARTICLES);
 	mTargetObjectp = objp;
 }
-
-
-
-
 
 LLViewerPartSourceSpiral::LLViewerPartSourceSpiral(const LLVector3 &pos) :
 	LLViewerPartSource(LL_PART_SOURCE_CHAT)
@@ -551,7 +546,7 @@ void LLViewerPartSourceSpiral::update(const F32 dt)
 	LLMemType mt(LLMemType::MTYPE_PARTICLES);
 	if (!mImagep)
 	{
-		mImagep = gImageList.getImageFromFile("pixiesmall.j2c");
+		mImagep = LLViewerTextureManager::getFetchedTextureFromFile("pixiesmall.j2c");
 	}
 
 	const F32 RATE = 0.025f;
@@ -629,7 +624,6 @@ void LLViewerPartSourceBeam::setColor(const LLColor4 &color)
 	mColor = color;
 }
 
-
 void LLViewerPartSourceBeam::updatePart(LLViewerPart &part, const F32 dt)
 {
 	LLMemType mt(LLMemType::MTYPE_PARTICLES);
@@ -673,7 +667,6 @@ void LLViewerPartSourceBeam::updatePart(LLViewerPart &part, const F32 dt)
 		part.mPosAgent += frac * target_pos_agent;
 	}
 }
-
 
 void LLViewerPartSourceBeam::update(const F32 dt)
 {
@@ -720,7 +713,7 @@ void LLViewerPartSourceBeam::update(const F32 dt)
 
 		if (!mImagep)
 		{
-			mImagep = gImageList.getImageFromFile("pixiesmall.j2c");
+			mImagep = LLViewerTextureManager::getFetchedTextureFromFile("pixiesmall.j2c");
 		}
 
 		LLViewerPart* part = new LLViewerPart();
@@ -806,9 +799,8 @@ void LLViewerPartSourceChat::update(const F32 dt)
 	LLMemType mt(LLMemType::MTYPE_PARTICLES);
 	if (!mImagep)
 	{
-		mImagep = gImageList.getImageFromFile("pixiesmall.j2c");
+		mImagep = LLViewerTextureManager::getFetchedTextureFromFile("pixiesmall.j2c");
 	}
-
 
 	const F32 RATE = 0.025f;
 

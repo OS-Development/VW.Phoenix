@@ -468,7 +468,7 @@ LLMotion *LLKeyframeMotion::create(const LLUUID &id)
 //-----------------------------------------------------------------------------
 LLPointer<LLJointState>& LLKeyframeMotion::getJointState(U32 index)
 {
-	llassert_always (index < mJointStates.size());
+	llassert_always(index < mJointStates.size());
 	return mJointStates[index];
 }
 
@@ -477,7 +477,7 @@ LLPointer<LLJointState>& LLKeyframeMotion::getJointState(U32 index)
 //-----------------------------------------------------------------------------
 LLJoint* LLKeyframeMotion::getJoint(U32 index)
 {
-	llassert_always (index < mJointStates.size());
+	llassert_always(index < mJointStates.size());
 	LLJoint* joint = mJointStates[index]->getJoint();
 	
 	//Commented out 06-28-11 by Aura.
@@ -664,7 +664,7 @@ BOOL LLKeyframeMotion::onActivate()
 		// don't start emote if already active to avoid recursion
 		if (!mCharacter->isMotionActive(emote_anim_id))
 		{
-			mCharacter->startMotion( emote_anim_id );
+			mCharacter->startMotion(emote_anim_id);
 		}
 	}
 
@@ -1287,8 +1287,7 @@ BOOL LLKeyframeMotion::deserialize(LLDataPacker& dp)
 		return FALSE;
 	}
 	
-	if (mJointMotionList->mDuration > MAX_ANIM_DURATION ||
-	    !llfinite(mJointMotionList->mDuration))
+	if (mJointMotionList->mDuration > MAX_ANIM_DURATION || !llfinite(mJointMotionList->mDuration))
 	{
 		llwarns << "invalid animation duration" << llendl;
 		return FALSE;
@@ -1433,8 +1432,8 @@ BOOL LLKeyframeMotion::deserialize(LLDataPacker& dp)
 		
 		LLPointer<LLJointState> joint_state = new LLJointState;
 		mJointStates.push_back(joint_state);
-		joint_state->setJoint( joint ); // note: can accept NULL
-		joint_state->setUsage( 0 );
+		joint_state->setJoint(joint); // note: can accept NULL
+		joint_state->setUsage(0);
 
 		//---------------------------------------------------------------------
 		// get joint priority
@@ -1464,7 +1463,8 @@ BOOL LLKeyframeMotion::deserialize(LLDataPacker& dp)
 		//---------------------------------------------------------------------
 		// scan rotation curve header
 		//---------------------------------------------------------------------
-		if (!dp.unpackS32(joint_motion->mRotationCurve.mNumKeys, "num_rot_keys") || joint_motion->mRotationCurve.mNumKeys < 0)
+		if (!dp.unpackS32(joint_motion->mRotationCurve.mNumKeys, "num_rot_keys") ||
+			joint_motion->mRotationCurve.mNumKeys < 0)
 		{
 			llwarns << "can't read number of rotation keys" << llendl;
 			return FALSE;
@@ -1488,8 +1488,7 @@ BOOL LLKeyframeMotion::deserialize(LLDataPacker& dp)
 
 			if (old_version)
 			{
-				if (!dp.unpackF32(time, "time") ||
-				    !llfinite(time))
+				if (!dp.unpackF32(time, "time") || !llfinite(time))
 				{
 					llwarns << "can't read rotation key (" << k << ")" << llendl;
 					return FALSE;
@@ -1558,7 +1557,8 @@ BOOL LLKeyframeMotion::deserialize(LLDataPacker& dp)
 		//---------------------------------------------------------------------
 		// scan position curve header
 		//---------------------------------------------------------------------
-		if (!dp.unpackS32(joint_motion->mPositionCurve.mNumKeys, "num_pos_keys") || joint_motion->mPositionCurve.mNumKeys < 0)
+		if (!dp.unpackS32(joint_motion->mPositionCurve.mNumKeys, "num_pos_keys") ||
+			joint_motion->mPositionCurve.mNumKeys < 0)
 		{
 			llwarns << "can't read number of position keys" << llendl;
 			return FALSE;
@@ -1582,8 +1582,7 @@ BOOL LLKeyframeMotion::deserialize(LLDataPacker& dp)
 
 			if (old_version)
 			{
-				if (!dp.unpackF32(pos_key.mTime, "time") ||
-				    !llfinite(pos_key.mTime))
+				if (!dp.unpackF32(pos_key.mTime, "time") || !llfinite(pos_key.mTime))
 				{
 					llwarns << "can't read position key (" << k << ")" << llendl;
 					return FALSE;
@@ -1654,7 +1653,7 @@ BOOL LLKeyframeMotion::deserialize(LLDataPacker& dp)
 
 	if (num_constraints > MAX_CONSTRAINTS || num_constraints < 0)
 	{
-		llwarns << "Bad number of constraints... ignoring: " << num_constraints << llendl;
+		llwarns << "Bad number of constraints (" << num_constraints << ")... ignoring." << llendl;
 	}
 	else
 	{
@@ -1699,7 +1698,7 @@ BOOL LLKeyframeMotion::deserialize(LLDataPacker& dp)
 			constraintp->mConstraintType = (EConstraintType)byte;
 
 			const S32 BIN_DATA_LENGTH = 16;
-			U8 bin_data[BIN_DATA_LENGTH+1];
+			U8 bin_data[BIN_DATA_LENGTH + 1];
 			if (!dp.unpackBinaryDataFixed(bin_data, BIN_DATA_LENGTH, "source_volume"))
 			{
 				llwarns << "can't read source volume name" << llendl;
@@ -1779,28 +1778,32 @@ BOOL LLKeyframeMotion::deserialize(LLDataPacker& dp)
 	//			constraintp->mTargetConstraintDir *= constraintp->mSourceConstraintOffset.magVec();
 			}
 
-			if (!dp.unpackF32(constraintp->mEaseInStartTime, "ease_in_start") || !llfinite(constraintp->mEaseInStartTime))
+			if (!dp.unpackF32(constraintp->mEaseInStartTime, "ease_in_start") ||
+				!llfinite(constraintp->mEaseInStartTime))
 			{
 				llwarns << "can't read constraint ease in start time" << llendl;
 				delete constraintp;
 				return FALSE;
 			}
 
-			if (!dp.unpackF32(constraintp->mEaseInStopTime, "ease_in_stop") || !llfinite(constraintp->mEaseInStopTime))
+			if (!dp.unpackF32(constraintp->mEaseInStopTime, "ease_in_stop") ||
+				!llfinite(constraintp->mEaseInStopTime))
 			{
 				llwarns << "can't read constraint ease in stop time" << llendl;
 				delete constraintp;
 				return FALSE;
 			}
 
-			if (!dp.unpackF32(constraintp->mEaseOutStartTime, "ease_out_start") || !llfinite(constraintp->mEaseOutStartTime))
+			if (!dp.unpackF32(constraintp->mEaseOutStartTime, "ease_out_start") ||
+				!llfinite(constraintp->mEaseOutStartTime))
 			{
 				llwarns << "can't read constraint ease out start time" << llendl;
 				delete constraintp;
 				return FALSE;
 			}
 
-			if (!dp.unpackF32(constraintp->mEaseOutStopTime, "ease_out_stop") || !llfinite(constraintp->mEaseOutStopTime))
+			if (!dp.unpackF32(constraintp->mEaseOutStopTime, "ease_out_stop") ||
+				!llfinite(constraintp->mEaseOutStopTime))
 			{
 				llwarns << "can't read constraint ease out stop time" << llendl;
 				delete constraintp;

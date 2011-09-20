@@ -240,15 +240,15 @@ public:
 	}
 
 	// Get coords
-	const LLVector3	*getCoords() const{
+	const LLVector4	*getCoords() const{
 		return mCoords;
 	}
 
 	// non const version
-	LLVector3 *getWritableCoords();
+	LLVector4 *getWritableCoords();
 
 	// Get normals
-	const LLVector3	*getNormals() const{ 
+	const LLVector4	*getNormals() const{ 
 		return mNormals; 
 	}
 
@@ -270,7 +270,7 @@ public:
 	}
 
 	// intermediate morphed normals and output normals
-	LLVector3 *getWritableNormals();
+	LLVector4 *getWritableNormals();
 	LLVector3 *getScaledNormals();
 
 	LLVector3 *getWritableBinormals();
@@ -331,6 +331,7 @@ public:
 	}
 
 	typedef std::map<std::string,LLPolyMorphData*> morph_list_t;
+
 	static void getMorphList (const std::string& mesh_name, morph_list_t* morph_list);
 
 	LLPolyMorphData*	getMorphData(const std::string& morph_name);
@@ -357,7 +358,7 @@ public:
 	U32				mCurVertexCount;
 
 	// Dumps diagnostic information about the global mesh table
-	static void dumpDiagInfo(void*);
+	static void dumpDiagInfo(void *);
 
 private:
 	void initializeForMorph();
@@ -368,11 +369,11 @@ protected:
 	// Single array of floats for allocation / deletion
 	F32						*mVertexData;
 	// deformed vertices (resulting from application of morph targets)
-	LLVector3				*mCoords;
+	LLVector4				*mCoords;
 	// deformed normals (resulting from application of morph targets)
 	LLVector3				*mScaledNormals;
 	// output normals (after normalization)
-	LLVector3				*mNormals;
+	LLVector4				*mNormals;
 	// deformed binormals (resulting from application of morph targets)
 	LLVector3				*mScaledBinormals;
 	// output binormals (after normalization)

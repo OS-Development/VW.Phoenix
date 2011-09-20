@@ -37,10 +37,9 @@
 #include "llhoverview.h"
 #include "llmimetypes.h"
 #include "llviewercontrol.h"
-#include "llviewerimage.h"
 #include "llviewerwindow.h"
 #include "llversionviewer.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llpluginclassmedia.h"
 #include "llplugincookiestore.h"
 
@@ -926,6 +925,7 @@ LLPluginClassMedia* LLViewerMediaImpl::newSourceFromMediaType(std::string media_
 		else
 		{
 			LLPluginClassMedia* media_source = new LLPluginClassMedia(owner);
+			media_source->setOwner(owner);
 			media_source->setSize(default_width, default_height);
 			media_source->setUserDataPath(user_data_path);
 			media_source->setLanguageCode(LLUI::getLanguage());
@@ -942,9 +942,10 @@ LLPluginClassMedia* LLViewerMediaImpl::newSourceFromMediaType(std::string media_
 			bool javascript_enabled = gSavedSettings.getBOOL( "BrowserJavascriptEnabled" );
 			media_source->setJavascriptEnabled( javascript_enabled );
 
-			media_source->setTarget(target);
+			media_source->setTarget(LLStringUtil::null); //media_source->setTarget(target)
 
-			if (media_source->init(launcher_name, plugin_name, false)) //No more user_data_path
+			const std::string plugin_dir = gDirUtilp->getLLPluginDir();
+			if (media_source->init(launcher_name, plugin_dir, plugin_name, false))
 			{
 				return media_source;
 			}
@@ -955,7 +956,12 @@ LLPluginClassMedia* LLViewerMediaImpl::newSourceFromMediaType(std::string media_
 			}
 		}
 	}
-	
+
+	LL_WARNS("Media") << "Plugin intialization failed for mime type: " << media_type << LL_ENDL;
+	LLSD args;
+	args["MIME_TYPE"] = media_type;
+	LLNotifications::instance().add("NoPlugin", args);
+
 	return NULL;
 }							
 
@@ -1317,7 +1323,13 @@ void LLViewerMediaImpl::navigateTo(const std::string& url, const std::string& mi
 
 		if(scheme.empty() || "http" == scheme || "https" == scheme)
 		{
-			LLHTTPClient::getHeaderOnly( url, new LLMimeDiscoveryResponder(this));
+			// If we don't set an Accept header, LLHTTPClient will add one like this:
+			//    Accept: application/llsd+xml
+			// which is really not what we want.
+			LLSD headers = LLSD::emptyMap();
+			headers["Accept"] = "*/*";
+			LLHTTPClient::getHeaderOnly(url, new LLMimeDiscoveryResponder(this),
+										headers, 10.0f);
 		}
 		else if("data" == scheme || "file" == scheme || "about" == scheme)
 		{
@@ -1461,23 +1473,27 @@ void LLViewerMediaImpl::updateMovieImage(const LLUUID& uuid, BOOL active)
 	// If we have changed media uuid, restore the old one
 	if (!mTextureId.isNull())
 	{
-		LLViewerImage* oldImage = LLViewerImage::getImage( mTextureId );
+		LLViewerTexture* oldImage = LLViewerTextureManager::findTexture(mTextureId);
 		if (oldImage)
 		{
-			oldImage->reinit(mMovieImageHasMips);
+			// HACK: downcast to LLViewerMediaTexture. *TODO: fully implement LLViewerMediaTexture
+			LLViewerMediaTexture* media_tex = (LLViewerMediaTexture*)oldImage;
+			media_tex->reinit(mMovieImageHasMips);
 			oldImage->mIsMediaTexture = FALSE;
 		}
 	}
 	// If the movie is playing, set the new media image
 	if (active && !uuid.isNull())
 	{
-		LLViewerImage* viewerImage = LLViewerImage::getImage( uuid );
-		if( viewerImage )
+		LLViewerTexture* viewerImage = LLViewerTextureManager::findTexture(uuid);
+		if (viewerImage)
 		{
 			mTextureId = uuid;
 			// Can't use mipmaps for movies because they don't update the full image
-			mMovieImageHasMips = viewerImage->getUseMipMaps();
-			viewerImage->reinit(FALSE);
+			// HACK: downcast to LLViewerMediaTexture. *TODO: fully implement LLViewerMediaTexture
+			LLViewerMediaTexture* media_tex = (LLViewerMediaTexture*)viewerImage;
+			mMovieImageHasMips = media_tex->getUseMipMaps();
+			media_tex->reinit(FALSE);
 			viewerImage->mIsMediaTexture = TRUE;
 		}
 	}
@@ -1519,7 +1535,7 @@ void LLViewerMediaImpl::update()
 		return;
 	}
 	
-	LLViewerImage* placeholder_image = updatePlaceholderImage();
+	LLViewerTexture* placeholder_image = updatePlaceholderImage();
 		
 	if(placeholder_image)
 	{
@@ -1566,7 +1582,8 @@ void LLViewerMediaImpl::updateImagesMediaStreams()
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-LLViewerImage* LLViewerMediaImpl::updatePlaceholderImage()
+// *TODO: Should return a LLViewerMediaTexture*
+LLViewerTexture* LLViewerMediaImpl::updatePlaceholderImage()
 {
 	if(mTextureId.isNull())
 	{
@@ -1574,11 +1591,11 @@ LLViewerImage* LLViewerMediaImpl::updatePlaceholderImage()
 		return NULL;
 	}
 	
-	LLViewerImage* placeholder_image = gImageList.getImage( mTextureId );
+	LLViewerMediaTexture* placeholder_image = (LLViewerMediaTexture*)LLViewerTextureManager::getFetchedTexture(mTextureId);
 	
 	if (mNeedsNewTexture 
 		|| placeholder_image->getUseMipMaps()
-		|| ! placeholder_image->mIsMediaTexture
+		|| !placeholder_image->mIsMediaTexture
 		|| (placeholder_image->getWidth() != mMediaSource->getTextureWidth())
 		|| (placeholder_image->getHeight() != mMediaSource->getTextureHeight())
 		|| (mTextureUsedWidth != mMediaSource->getWidth())
@@ -1761,12 +1778,14 @@ void LLViewerMediaImpl::handleMediaEvent(LLPluginClassMedia* plugin, LLPluginCla
 	{
 		case MEDIA_EVENT_CLICK_LINK_NOFOLLOW:
 		{
-			LL_DEBUGS("Media") << "MEDIA_EVENT_CLICK_LINK_NOFOLLOW, uri is: " << plugin->getClickURL() << LL_ENDL; 
-			std::string url = plugin->getClickURL();
-			LLURLDispatcher::dispatch(url, NULL, mTrustedBrowser);
-
+			LL_DEBUGS("Media") << "MEDIA_EVENT_CLICK_LINK_NOFOLLOW, uri is: "
+							   << plugin->getClickURL() << LL_ENDL;
+			// NOTE: this is dealt with in LLMediaCtrl::handleMediaEvent()
+			// since if dealt from here, we won't be able to pass the media
+			// control to LLURLDispatcher::dispatch()
+			break;
 		}
-		break;
+
 		case MEDIA_EVENT_CLICK_LINK_HREF:
 		{
 			LL_DEBUGS("Media") <<  "Media event:  MEDIA_EVENT_CLICK_LINK_HREF, target is \"" << plugin->getClickTarget() << "\", uri is " << plugin->getClickURL() << LL_ENDL;

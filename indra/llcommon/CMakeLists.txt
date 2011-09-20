@@ -6,6 +6,9 @@ include(00-Common)
 include(LLCommon)
 include(Utils)
 include(Linking)
+include(Boost)
+include(GooglePerfTools)
+include(ZLIB)
 
 include_directories(
     ${EXPAT_INCLUDE_DIRS}
@@ -18,6 +21,7 @@ set(llcommon_SOURCE_FILES
 	indra_constants.cpp
     llapp.cpp
     llapr.cpp
+    llaprpool.cpp
     llassettype.cpp
     llavatarname.cpp
     llbase32.cpp
@@ -28,17 +32,24 @@ set(llcommon_SOURCE_FILES
     llcriticaldamp.cpp
     llcursortypes.cpp
     lldate.cpp
+	lldependencies.cpp
+	lldictionary.cpp
     llerror.cpp
     llerrorthread.cpp
     llevent.cpp
+    lleventapi.cpp
+    lleventdispatcher.cpp
+    llevents.cpp
+    lleventtimer.cpp
     llfasttimer.cpp
     llfile.cpp
     llfindlocale.cpp
     llfixedbuffer.cpp
+	llfoldertype.cpp
     llformat.cpp
     llframetimer.cpp
     llheartbeat.cpp
-    llindraconfigfile.cpp
+	llinstancetracker.cpp
     llliveappconfig.cpp
     lllivefile.cpp
     lllog.cpp
@@ -52,7 +63,9 @@ set(llcommon_SOURCE_FILES
     llprocessor.cpp
     llqueuedthread.cpp
     llrand.cpp
+    llrefcount.cpp
     llrun.cpp
+    llscopedvolatileaprpool.h
     llsd.cpp
     llsdserialize.cpp
     llsdserialize_xml.cpp
@@ -71,7 +84,6 @@ set(llcommon_SOURCE_FILES
     metaclass.cpp
     metaproperty.cpp
     reflective.cpp
-    timing.cpp
     u64.cpp
     )
     
@@ -88,6 +100,7 @@ set(llcommon_HEADER_FILES
     llagentconstants.h
     llapp.h
     llapr.h
+    llaprpool.h
     llassettype.h
     llassoclist.h
     llavatarconstants.h
@@ -106,7 +119,9 @@ set(llcommon_HEADER_FILES
     lldarrayptr.h
     lldate.h
     lldefs.h
+	lldependencies.h
     lldepthstack.h
+	lldictionary.h
     lldlinked.h
     lldqueueptr.h
     llendianswizzle.h
@@ -116,19 +131,24 @@ set(llcommon_HEADER_FILES
     llerrorlegacy.h
     llerrorthread.h
     llevent.h
+    lleventapi.h
+    lleventdispatcher.h
     lleventemitter.h
+	llevents.h
+    lldepthstack.h
     llextendedstatus.h
     llfasttimer.h
     llfile.h
     llfindlocale.h
     llfixedbuffer.h
+	llfoldertype.h
     llformat.h
     llframetimer.h
     llhash.h
     llheartbeat.h
     llhttpstatuscodes.h
     llindexedqueue.h
-    llindraconfigfile.h
+    llinstancetracker.h
     llkeythrottle.h
     lllinkedqueue.h
     llliveappconfig.h
@@ -145,6 +165,7 @@ set(llcommon_HEADER_FILES
     llmortician.h
     llnametable.h
     lloptioninterface.h
+    llpointer.h
     llpreprocessor.h
     llpriqueuemap.h
     llprocesslauncher.h
@@ -153,13 +174,16 @@ set(llcommon_HEADER_FILES
     llptrskipmap.h
     llqueuedthread.h
     llrand.h
+    llrefcount.h
     llrun.h
+    llsafehandle.h
     llsd.h
     llsdserialize.h
     llsdserialize_xml.h
     llsdutil.h
     llsecondlifeurls.h
     llsimplehash.h
+	llsingleton.h
     llskiplist.h
     llskipmap.h
     llstack.h
@@ -179,17 +203,18 @@ set(llcommon_HEADER_FILES
 #    llversionserver.h
 #    llversionviewer.h
     llworkerthread.h
+	ll_template_cast.h
     metaclass.h
     metaclasst.h
     metaproperty.h
     metapropertyt.h
-    processor.h
     reflective.h
     reflectivet.h
     roles_constants.h
     stdenums.h
     stdtypes.h
     string_table.h
+	stringize.h
     timer.h
     timing.h
     u64.h
@@ -218,9 +243,15 @@ target_link_libraries(
     ${EXPAT_LIBRARIES}
     ${ZLIB_LIBRARIES}
 	${WINDOWS_LIBRARIES}
+    ${Boost_PROGRAM_OPTIONS_LIBRARY}
+    ${Boost_REGEX_LIBRARY}
+    ${GOOGLE_PERFTOOLS_LIBRARIES}
     )
 
 if (DARWIN)
+    include(CMakeFindFrameworks)
+    find_library(CARBON_LIBRARY Carbon)
+    target_link_libraries(llcommon ${CARBON_LIBRARY})
     # Don't embed a full path in the library's install name
     set_target_properties(
         llcommon

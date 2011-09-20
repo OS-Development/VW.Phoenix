@@ -465,18 +465,32 @@ void LLScriptLibrary::init()
 	// Otherwise the bytecode numbers for each call will be wrong, and all
 	// existing scripts will crash.
 
-	// New (v1.38 server) functions (in unofficial order: should be confirmed later, even if the viewer doesn't create its own bytecode any more):
-	addFunction(10.f, 0.f, dummy_func, "llSetLinkPrimitiveParamsFast", NULL, "il");
-	addFunction(10.f, 0.f, dummy_func, "llGetLinkPrimitiveParams", "l", "il");
-	addFunction(10.f, 0.f, dummy_func, "llLinkParticleSystem", NULL, "il");
-	addFunction(10.f, 0.f, dummy_func, "llSetLinkTextureAnim", NULL, "iiiiifff");
-	addFunction(10.f, 0.f, dummy_func, "llGetLinkNumberOfSides", "i", "i");
-
 	// IDEVO Name lookup calls, see lscript_avatar_names.h
 	addFunction(10.f, 0.f, dummy_func, "llGetUsername", "s", "k");
 	addFunction(10.f, 0.f, dummy_func, "llRequestUsername", "k", "k");
 	addFunction(10.f, 0.f, dummy_func, "llGetDisplayName", "s", "k");
 	addFunction(10.f, 0.f, dummy_func, "llRequestDisplayName", "k", "k");
+
+	addFunction(10.f, 0.f, dummy_func, "llGetEnv", "s", "s");
+	addFunction(10.f, 0.f, dummy_func, "llRegionSayTo", NULL, "kis");
+
+	// Server v11.08.10.238207 new functions:
+	addFunction(10.f, 0.f, dummy_func, "llSetMemoryLimit", "i", "i");
+	addFunction(10.f, 0.f, dummy_func, "llGetMemoryLimit", "i", NULL);
+	addFunction(10.f, 0.f, dummy_func, "llSetLinkMedia", "i", "iil");
+	addFunction(10.f, 0.f, dummy_func, "llGetLinkMedia", "l", "iil");
+	addFunction(10.f, 0.f, dummy_func, "llClearLinkMedia", "i", "ii");
+	addFunction(10.f, 0.f, dummy_func, "llSetLinkCamera", NULL, "ivv");	
+	addFunction(10.f, 0.f, dummy_func, "llSetContentType", NULL, "ki");	
+	addFunction(10.f, 0.f, dummy_func, "llLinkSitTarget", NULL, "ivq");
+	addFunction(10.f, 0.f, dummy_func, "llAvatarOnLinkSitTarget", "k", "i");
+	addFunction(10.f, 0.f, dummy_func, "llSetVelocity", NULL, "vi");	
+
+	// Server v11.09.09.240509 new functions:
+	addFunction(10.f, 0.f, dummy_func, "llCastRay", "l", "vvl");
+	addFunction(10.f, 0.f, dummy_func, "llGetMassMKS", "f", NULL);
+	addFunction(10.f, 0.f, dummy_func, "llSetPhysicsMaterial", NULL, "iffff");
+	addFunction(10.f, 0.f, dummy_func, "llGetPhysicsMaterial", "l", NULL);
 }
 
 LLScriptLibraryFunction::LLScriptLibraryFunction(F32 eu, F32 st, void (*exec_func)(LLScriptLibData *, LLScriptLibData *, const LLUUID &), const char *name, const char *ret_type, const char *args, BOOL god_only)

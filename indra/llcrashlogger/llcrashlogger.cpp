@@ -86,6 +86,7 @@ void LLCrashLoggerText::updateApplication(const std::string& message)
 LLCrashLogger::LLCrashLogger() :
 	mCrashBehavior(CRASH_BEHAVIOR_ASK),
 	mCrashInPreviousExec(false),
+	mCrashSettings("CrashSettings"),
 	mSentCrashLogs(false),
 	mCrashHost("")
 {
@@ -391,8 +392,7 @@ bool LLCrashLogger::init()
 		return false;
 	}
 
-	gServicePump = new LLPumpIO(gAPRPoolp);
-	gServicePump->prime(gAPRPoolp);
+	gServicePump = new LLPumpIO;
 	LLHTTPClient::setPump(*gServicePump);
 
 	//If we've opened the crash logger, assume we can delete the marker file if it exists	

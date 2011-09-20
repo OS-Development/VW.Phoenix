@@ -2564,13 +2564,13 @@ Kattints az elfogad gombra a beszélgetés megkezdéséhez vagy az elutasít gom
 		</form>
 	</notification>
 	<notification name="AutoUnmuteByIM">
-		[FIRST] [LAST] üzenetet küldött és automatikusan lekerült az elnémítottak listájáról.
+		[NAME] üzenetet küldött és automatikusan lekerült az elnémítottak listájáról.
 	</notification>
 	<notification name="AutoUnmuteByMoney">
-		[FIRST] [LAST] pénzt adott és automatikusan lekerült az elnémítottak listájáról.
+		[NAME] pénzt adott és automatikusan lekerült az elnémítottak listájáról.
 	</notification>
 	<notification name="AutoUnmuteByInventory">
-		[FIRST] [LAST] készlettár elemet ajánlott és automatikusan lekerült az elnémítottak listájáról.
+		[NAME] készlettár elemet ajánlott és automatikusan lekerült az elnémítottak listájáról.
 	</notification>
 	<notification name="VoiceInviteGroup">
 		[NAME] belépett ezzel a csoporttal: [GROUP] történő beszélgetésbe.

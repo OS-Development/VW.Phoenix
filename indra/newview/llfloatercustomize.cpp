@@ -51,10 +51,10 @@
 #include "lltabcontainervertical.h"
 #include "llviewerwindow.h"
 #include "llinventorymodel.h"
-#include "llinventoryview.h"
+#include "llinventoryicon.h"	// for getIconName
 #include "lltextbox.h"
 #include "lllineeditor.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llfocusmgr.h"
 #include "llviewerwindow.h"
 #include "llviewercamera.h"
@@ -510,7 +510,9 @@ LLPanelEditWearable::LLPanelEditWearable( EWearableType type )
 BOOL LLPanelEditWearable::postBuild()
 {
 	LLAssetType::EType asset_type = LLWearable::typeToAssetType( mType );
-	std::string icon_name = get_item_icon_name(asset_type,LLInventoryType::IT_WEARABLE,mType,FALSE);
+	std::string icon_name = LLInventoryIcon::getIconName(asset_type,
+														 LLInventoryType::IT_WEARABLE,
+														 mType, FALSE);
 
 	childSetValue("icon", icon_name);
 
@@ -706,7 +708,7 @@ bool LLPanelEditWearable::onSelectAutoWearOption(const LLSD& notification, const
 
 		LLUUID folder_id;
 		// regular UI, items get created in normal folder
-		folder_id = gInventory.findCategoryUUIDForType(asset_type);
+		folder_id = gInventory.findCategoryUUIDForType(LLFolderType::assetTypeToFolderType(asset_type));
 
 		// Only auto wear the new item if the AutoWearNewClothing checkbox is selected.
 		LLPointer<LLInventoryCallback> cb = option == 0 ? 
@@ -756,7 +758,7 @@ void LLPanelEditWearable::onInvisibilityCommit(LLUICtrl* ctrl, void* userdata)
 	bool new_invis_state = checkbox_ctrl->get();
 	if (new_invis_state)
 	{
-		LLViewerImage* image = gImageList.getImage(IMG_INVISIBLE);
+		LLViewerTexture* image = LLViewerTextureManager::getFetchedTexture(IMG_INVISIBLE);
 		const LLTextureEntry* current_te = avatar->getTE(te);
 		if (current_te)
 		{
@@ -775,7 +777,7 @@ void LLPanelEditWearable::onInvisibilityCommit(LLUICtrl* ctrl, void* userdata)
 		}
 		if (prev_id.notNull())
 		{
-			LLViewerImage* image = gImageList.getImage(prev_id);
+			LLViewerTexture* image = LLViewerTextureManager::getFetchedTexture(prev_id);
 			avatar->setLocTexTE(te, image, TRUE);
 			avatar->wearableUpdated(self->mType, FALSE);
 		}
@@ -881,10 +883,10 @@ void LLPanelEditWearable::onTextureCommit( LLUICtrl* ctrl, void* userdata )
 		ETextureIndex te = (ETextureIndex)(self->mTextureList[ctrl->getName()]);
 
 		// Set the new version
-		LLViewerImage* image = gImageList.getImage( texture_ctrl->getImageAssetID() );
+		LLViewerTexture* image = LLViewerTextureManager::getFetchedTexture(texture_ctrl->getImageAssetID());
 		if (image->getID().isNull())
 		{
-			image = gImageList.getImage(IMG_DEFAULT_AVATAR);
+			image = LLViewerTextureManager::getFetchedTexture(IMG_DEFAULT_AVATAR);
 		}
 		self->mTextureList[ctrl->getName()] = te;
 		if (gAgent.getWearable(self->mType))
@@ -1274,11 +1276,12 @@ public:
 	F32					percentToWeight( F32 percent );
 
 public:
-	LLViewerVisualParam* mParam;
-	LLVisualParamHint*	mHintMin;
-	LLVisualParamHint*	mHintMax;
-	LLButton*           mLess;
-	LLButton*           mMore;
+	LLViewerVisualParam* 			mParam;
+	LLPointer<LLVisualParamHint>	mHintMin;
+	LLPointer<LLVisualParamHint>	mHintMax;
+	LLButton*						mLess;
+	LLButton*						mMore;
+
 	static S32 			sUpdateDelayFrames;
 	
 protected:
@@ -1376,8 +1379,8 @@ LLScrollingPanelParam::LLScrollingPanelParam( const std::string& name,
 
 LLScrollingPanelParam::~LLScrollingPanelParam()
 {
-	delete mHintMin;
-	delete mHintMax;
+	mHintMin = NULL;
+	mHintMax = NULL;
 }
 
 void LLScrollingPanelParam::updatePanel(BOOL allow_modify)
@@ -2372,7 +2375,7 @@ void LLFloaterCustomize::initWearablePanels()
 LLFloaterCustomize::~LLFloaterCustomize()
 {
 	llinfos << "Destroying LLFloaterCustomize" << llendl;
-	delete mResetParams;
+	mResetParams = NULL;
 	gInventory.removeObserver(mInventoryObserver);
 	delete mInventoryObserver;
 }

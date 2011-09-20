@@ -36,7 +36,7 @@
 #include "exporttracker.h"
 #include "llviewerobjectlist.h"
 #include "llvoavatar.h"
-#include "llsdutil.h"
+#include "llsdutil_math.h"
 #include "llsdserialize.h"
 #include "lldirpicker.h"
 #include "llfilepicker.h"
@@ -48,7 +48,7 @@
 #include "llcurl.h"
 #include "llselectmgr.h"
 #include "llviewercontrol.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "hippogridmanager.h"
 #include "llimagej2c.h"
 
@@ -69,6 +69,8 @@ std::string JCExportTracker::destination;
 std::string JCExportTracker::asset_dir;
 std::set<LLUUID> JCExportTracker::requested_textures;
 void cmdline_printchat(std::string chat);
+LLLoadedCallbackEntry::source_callback_list_t JCExportTracker::mCallbackTextureList;
+
 JCExportTracker::JCExportTracker()
 {
 	llassert_always(sInstance == NULL);
@@ -78,6 +80,7 @@ JCExportTracker::JCExportTracker()
 
 JCExportTracker::~JCExportTracker()
 {
+	LLLoadedCallbackEntry::cleanUpCallbackList(&mCallbackTextureList);
 	sInstance = NULL;
 }
 void JCExportTracker::init()
@@ -252,10 +255,10 @@ LLSD JCExportTracker::subserialize(LLViewerObject* linkset)
 				if(requested_textures.count(asset_id) == 0)
 				{
 					requested_textures.insert(asset_id);
-					LLViewerImage* img = gImageList.getImage(asset_id, MIPMAP_TRUE, FALSE);
-					img->setBoostLevel(LLViewerImageBoostLevel::BOOST_MAX_LEVEL);
+					LLViewerFetchedTexture* img = LLViewerTextureManager::getFetchedTexture(asset_id, MIPMAP_TRUE);
+					img->setBoostLevel(LLViewerTexture::BOOST_MAX_LEVEL);
 					img->setLoadedCallback( JCExportTracker::onFileLoadedForSave, 
-									0, TRUE, FALSE, info );
+									0, TRUE, FALSE, info, &mCallbackTextureList);
 					llinfos << "Requesting texture " << asset_id.asString() << llendl;
 				}
 			}
@@ -297,7 +300,7 @@ LLSD JCExportTracker::subserialize(LLViewerObject* linkset)
 }
 
 void JCExportTracker::onFileLoadedForSave(BOOL success, 
-											LLViewerImage *src_vi,
+											LLViewerFetchedTexture *src_vi,
 											LLImageRaw* src, 
 											LLImageRaw* aux_src, 
 											S32 discard_level,
@@ -770,8 +773,7 @@ void JCAssetExportCallback(LLVFS *vfs, const LLUUID& uuid, LLAssetType::EType ty
 				strcpy((char*)buffer,card.c_str());
 			}//else //cmdline_printchat("Failed to decode notecard");
 		}
-		LLAPRFile infile;
-		infile.open(info->path.c_str(), LL_APR_WB,LLAPRFile::global);
+		LLAPRFile infile(info->path.c_str(), LL_APR_WB);
 		apr_file_t *fp = infile.getFileHandle();
 		if(fp)infile.write(buffer, size);
 		infile.close();

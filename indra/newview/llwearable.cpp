@@ -43,7 +43,7 @@
 #include "llviewerwindow.h"
 #include "llfloatercustomize.h"
 #include "llinventorymodel.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llviewerinventory.h"
 #include "llviewerregion.h"
 #include "llvoavatar.h"
@@ -590,18 +590,18 @@ BOOL LLWearable::isDirty()
 		}
 	}
 
-	for( S32 te = 0; te < TEX_NUM_INDICES; te++ )
+	for (S32 te = 0; te < TEX_NUM_INDICES; te++)
 	{
-		if( LLVOAvatar::getTEWearableType((ETextureIndex) te ) == mType )
+		if (LLVOAvatar::getTEWearableType((ETextureIndex) te ) == mType)
 		{
-			LLViewerImage* avatar_image = avatar->getTEImage( te );
-			if( !avatar_image )
+			LLViewerTexture* avatar_image = avatar->getTEImage(te);
+			if (!avatar_image)
 			{
-				llassert( 0 );
+				llassert(0);
 				continue;
 			}
 			const LLUUID& image_id = get_if_there(mTEMap,  te, LLVOAvatar::getDefaultTEImageID((ETextureIndex) te ) );
-			if( avatar_image->getID() != image_id )
+			if (avatar_image->getID() != image_id)
 			{
 				return TRUE;
 			}
@@ -696,13 +696,13 @@ void LLWearable::writeToAvatar( BOOL set_by_user )
 	}
 
 	// Pull texture entries
-	for( S32 te = 0; te < TEX_NUM_INDICES; te++ )
+	for (S32 te = 0; te < TEX_NUM_INDICES; te++)
 	{
-		if( LLVOAvatar::getTEWearableType((ETextureIndex) te ) == mType )
+		if (LLVOAvatar::getTEWearableType((ETextureIndex) te ) == mType)
 		{
-			const LLUUID& image_id = get_if_there(mTEMap, te, LLVOAvatar::getDefaultTEImageID((ETextureIndex) te ) );
-			LLViewerImage* image = gImageList.getImage( image_id );
-			avatar->setLocTexTE( te, image, set_by_user );
+			const LLUUID& image_id = get_if_there(mTEMap, te, LLVOAvatar::getDefaultTEImageID((ETextureIndex)te));
+			LLViewerTexture* image = LLViewerTextureManager::getFetchedTexture(image_id);
+			avatar->setLocTexTE(te, image, set_by_user);
 		}
 	}
 
@@ -772,16 +772,16 @@ void LLWearable::removeFromAvatar( EWearableType type, BOOL set_by_user )
 	}
 
 	// Pull textures
-	LLViewerImage* image = gImageList.getImage( IMG_DEFAULT_AVATAR );
-	for( S32 te = 0; te < TEX_NUM_INDICES; te++ )
+	LLViewerTexture* image = LLViewerTextureManager::getFetchedTexture(IMG_DEFAULT_AVATAR);
+	for (S32 te = 0; te < TEX_NUM_INDICES; te++)
 	{
-		if( LLVOAvatar::getTEWearableType((ETextureIndex) te ) == type )
+		if (LLVOAvatar::getTEWearableType((ETextureIndex) te ) == type)
 		{
-			avatar->setLocTexTE( te, image, set_by_user );
+			avatar->setLocTexTE(te, image, set_by_user);
 		}
 	}
 
-	if( gFloaterCustomize )
+	if (gFloaterCustomize)
 	{
 		gFloaterCustomize->setWearable(type, NULL, PERM_ALL, TRUE);
 	}
@@ -789,7 +789,7 @@ void LLWearable::removeFromAvatar( EWearableType type, BOOL set_by_user )
 	avatar->updateVisualParams();
 	avatar->updateMeshTextures();
 
-//	if( set_by_user )
+//	if (set_by_user)
 //	{
 //		gAgent.sendAgentSetAppearance();
 //	}
@@ -826,21 +826,21 @@ void LLWearable::readFromAvatar()
 	}
 
 	mTEMap.clear();
-	for( S32 te = 0; te < TEX_NUM_INDICES; te++ )
+	for (S32 te = 0; te < TEX_NUM_INDICES; te++)
 	{
-		if( LLVOAvatar::getTEWearableType((ETextureIndex) te ) == mType )
+		if (LLVOAvatar::getTEWearableType((ETextureIndex)te) == mType)
 		{
-			LLViewerImage* image = avatar->getTEImage( te );
-			if( image )
+			LLViewerTexture* image = avatar->getTEImage(te);
+			if (image)
 			{
 				mTEMap[te] = image->getID();
 			}
 		}
 	}
 
-	//if( gFloaterCustomize )
+	//if (gFloaterCustomize)
 	//{
-	//	mDescription = gFloaterCustomize->getWearableDescription( mType );
+	//	mDescription = gFloaterCustomize->getWearableDescription(mType);
 	//}
 }
 

@@ -33,9 +33,9 @@
 #ifndef LL_LLNOTIFY_H
 #define LL_LLNOTIFY_H
 
+#include "lleventtimer.h"
 #include "llfontgl.h"
 #include "llpanel.h"
-#include "lltimer.h"
 #include "llnotifications.h"
 #include <vector>
 

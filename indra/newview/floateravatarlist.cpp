@@ -746,9 +746,9 @@ static void send_freeze(const LLUUID& avatar_id, bool freeze)
 	}
 
 	LLMessageSystem* msg = gMessageSystem;
-	LLViewerObject* avatar = gObjectList.findObject(avatar_id);
+	LLVOAvatar* avatar = gObjectList.findAvatar(avatar_id);
 
-	if (avatar)
+	if (avatar && avatar->getRegion())
 	{
 		msg->newMessage("FreezeUser");
 		msg->nextBlock("AgentData");
@@ -757,7 +757,7 @@ static void send_freeze(const LLUUID& avatar_id, bool freeze)
 		msg->nextBlock("Data");
 		msg->addUUID("TargetID", avatar_id );
 		msg->addU32("Flags", flags );
-		msg->sendReliable( avatar->getRegion()->getHost() );
+		msg->sendReliable(avatar->getRegion()->getHost());
 	}
 }
 
@@ -791,9 +791,9 @@ bool LLFloaterAvatarList::LLAgentUnfreeze::handleEvent(LLPointer<LLEvent> event,
 static void send_eject(const LLUUID& avatar_id, bool ban)
 {	
 	LLMessageSystem* msg = gMessageSystem;
-	LLViewerObject* avatar = gObjectList.findObject(avatar_id);
+	LLVOAvatar* avatar = gObjectList.findAvatar(avatar_id);
 
-	if (avatar)
+	if (avatar && avatar->getRegion())
 	{
 		U32 flags = 0x0;
 		if ( ban )
@@ -809,7 +809,7 @@ static void send_eject(const LLUUID& avatar_id, bool ban)
 		msg->nextBlock("Data");
 		msg->addUUID("TargetID", avatar_id );
 		msg->addU32("Flags", flags );
-		msg->sendReliable( avatar->getRegion()->getHost() );
+		msg->sendReliable(avatar->getRegion()->getHost());
 	}
 }
 
@@ -1132,14 +1132,16 @@ void LLFloaterAvatarList::updateAvatarList()
 	for(i = 0; i < count; ++i)
 	{
 		const LLUUID &avid = avatar_ids[i];
+		if (avid.isNull())
+		{
+			continue;
+		}
 
 		LLVector3d position;
-		LLViewerObject *obj = gObjectList.findObject(avid);
+		LLVOAvatar* avatarp = gObjectList.findAvatar(avid);
 
-		if(obj)
+		if(avatarp)
 		{
-			LLVOAvatar* avatarp = dynamic_cast<LLVOAvatar*>(obj);
-			if (avatarp == NULL) continue;
 			if (avatarp->isDead() || avatarp->isSelf() || avatarp->mIsDummy) continue;
 
 			// Get avatar data
@@ -1157,8 +1159,8 @@ void LLFloaterAvatarList::updateAvatarList()
 				LLAvatarName avatar_name;
 				if (LLAvatarNameCache::get(avatarp->getID(), &avatar_name))
 				{
-					static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-					switch (*sPhoenixNameSystem)
+					static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+					switch (sPhoenixNameSystem)
 					{
 						case 0 : name = avatar_name.getLegacyName(); break;
 						case 1 : name = (avatar_name.mIsDisplayNameDefault ? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
@@ -1197,8 +1199,8 @@ void LLFloaterAvatarList::updateAvatarList()
 				LLAvatarName avatar_name;
 				if (LLAvatarNameCache::get(avid, &avatar_name))
 				{
-					static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-					switch (*sPhoenixNameSystem)
+					static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+					switch (sPhoenixNameSystem)
 					{
 						case 0 : name = avatar_name.getLegacyName(); break;
 						case 1 : name = (avatar_name.mIsDisplayNameDefault ? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
@@ -1260,8 +1262,8 @@ void LLFloaterAvatarList::updateAvatarListVoice()
 			LLAvatarName avatar_name;
 			if (LLAvatarNameCache::get(participant_id, &avatar_name))
 			{
-				static S32* sPhoenixNameSystem = rebind_llcontrol<S32>("PhoenixNameSystem", &gSavedSettings, true);
-				switch (*sPhoenixNameSystem)
+				static LLCachedControl<S32> sPhoenixNameSystem(gSavedSettings, "PhoenixNameSystem");
+				switch (sPhoenixNameSystem)
 				{
 					case 0 : name = avatar_name.getLegacyName(); break;
 					case 1 : name = (avatar_name.mIsDisplayNameDefault ? avatar_name.mDisplayName : avatar_name.getCompleteName()); break;
@@ -1339,22 +1341,22 @@ void LLFloaterAvatarList::refreshAvatarList()
 	std::string toSendToBridge("");
 	std::vector<LLUUID> avatarsToSendToBridge;
 
-	static BOOL *sPhoenixAvatarListColorEntries = rebind_llcontrol<BOOL>("PhoenixAvatarListColorEntries", &gSavedSettings, true);
+	static LLCachedControl<bool> sPhoenixAvatarListColorEntries(gSavedSettings, "PhoenixAvatarListColorEntries");
 	LLColor4 friend_color;
 	LLColor4 muted_color;
-	LLColor4 marked_color = LLColor4::cyan.getValue();
-	if(*sPhoenixAvatarListColorEntries)
+	LLColor4 marked_color = LLColor4::cyan;
+	if(sPhoenixAvatarListColorEntries)
 	{
-		static LLColor4* sMapFriend = rebind_llcontrol<LLColor4>("MapFriend", &gColors, true);
-		friend_color = (*sMapFriend).getValue();
-		static LLColor4* sMapMuted = rebind_llcontrol<LLColor4>("MapMuted", &gColors, true);
-		muted_color = (*sMapMuted).getValue();
+		static LLCachedControl<LLColor4U> sMapFriend(gColors, "MapFriend");
+		friend_color = (LLColor4)sMapFriend;
+		static LLCachedControl<LLColor4U> sMapMuted(gColors, "MapMuted");
+		muted_color = (LLColor4)sMapMuted;
 	}
 
 	LLColor4 av_color;
-	static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
-	static BOOL *sfriendsGroupsOnRadar = rebind_llcontrol<BOOL>("PhoenixContactSetsColorizeRadar",&gSavedSettings,true);
-
+	static LLCachedControl<LLColor4U> sDefaultListText(gColors, "DefaultListText");
+	LLColor4 DefaultListText = (LLColor4)sDefaultListText;
+	static LLCachedControl<bool> sfriendsGroupsOnRadar(gSavedSettings, "PhoenixContactSetsColorizeRadar");
 
 	const std::string icon_image_0 = "icn_active-speakers-dot-lvl0.tga";
 	const std::string icon_image_1 = "icn_active-speakers-dot-lvl1.tga";
@@ -1370,7 +1372,7 @@ void LLFloaterAvatarList::refreshAvatarList()
 		if ( av_id.isNull() ) continue;
 
 		BOOL av_isvoice = ent->getIsVoice();
-		LLVOAvatar *av = (LLVOAvatar*)gObjectList.findObject(av_id);
+		LLVOAvatar* av = gObjectList.findAvatar(av_id);
 		BOOL flagForFedUpDistance = false;
 		LLVector3d position = LLVector3d::zero;
 		F32 distance = 0.0f;
@@ -1415,17 +1417,17 @@ void LLFloaterAvatarList::refreshAvatarList()
 		DATA_STATUS avinfo_status = ent->mAvatarInfo.getStatus();
 
 		element["id"] = av_id;
-		if(*sPhoenixAvatarListColorEntries)
+		if(sPhoenixAvatarListColorEntries)
 		{
 			if ( is_agent_friend(av_id)) av_color = friend_color;
 			else if (LLMuteList::getInstance()->isMuted(av_id)) av_color = muted_color;
-			else av_color = (*sDefaultListText).getValue();
+			else av_color = (LLColor4)sDefaultListText;
 		}
 		else
 		{
-			av_color = (*sDefaultListText).getValue();
+			av_color = (LLColor4)sDefaultListText;
 		}
-		if((*sfriendsGroupsOnRadar)&&(is_agent_friend(av_id)||(LGGContactSets::getInstance()->isNonFriend(av_id))))
+		if (sfriendsGroupsOnRadar && (is_agent_friend(av_id) ||LGGContactSets::getInstance()->isNonFriend(av_id)))
 		{
 			LLColor4 fgColor = LGGContactSets::getInstance()->getFriendColor(av_id);
 			if(fgColor!=LGGContactSets::getInstance()->getDefaultColor())
@@ -1492,15 +1494,15 @@ void LLFloaterAvatarList::refreshAvatarList()
 		{
 			//lgg fix for out of draw distance
 			//element["columns"][LIST_DISTANCE]["value"] = std::string("(> "+llformat("%d", gSavedSettings.getF32("RenderFarClip") )+")");
-			static F32 *sRenderFarClip = rebind_llcontrol<F32>("RenderFarClip", &gSavedSettings, true);
-			element["columns"][LIST_DISTANCE]["value"] = llformat("> %d", (S32)(*sRenderFarClip) );
+			static LLCachedControl<F32> sRenderFarClip(gSavedSettings, "RenderFarClip");
+			element["columns"][LIST_DISTANCE]["value"] = llformat("> %d", (S32)(sRenderFarClip) );
 		}
 		element["columns"][LIST_DISTANCE]["color"] = getAvatarColor(ent, distance, CT_DISTANCE).getValue();
 		
 		if ( avinfo_status == DATA_RETRIEVED )
 		{
-			static F32 *sPhoenixAvatarAgeAlertDays = rebind_llcontrol<F32>("PhoenixAvatarAgeAlertDays", &gSavedSettings, true);
-			if ((avinfo.getAge() < (*sPhoenixAvatarAgeAlertDays)) && !ent->getAlert())
+			static LLCachedControl<F32> sPhoenixAvatarAgeAlertDays(gSavedSettings, "PhoenixAvatarAgeAlertDays");
+			if ((avinfo.getAge() < sPhoenixAvatarAgeAlertDays) && !ent->getAlert())
 			{
 				ent->setAlert();
 				chat_avatar_status(ent->getName().c_str(),av_id,ALERT_TYPE_AGE, true);
@@ -1579,25 +1581,26 @@ void LLFloaterAvatarList::refreshAvatarList()
 
 		element["columns"][LIST_TIME]["column"] = "time";
 		element["columns"][LIST_TIME]["type"] = "text";
-		element["columns"][LIST_TIME]["color"] = (*sDefaultListText).getValue();
+
+		element["columns"][LIST_TIME]["color"] = DefaultListText.getValue();
 		element["columns"][LIST_TIME]["value"] = llformat("%d:%02d:%02d", hours,mins,secs);
 
 		element["columns"][LIST_CLIENT]["column"] = "client";
 		element["columns"][LIST_CLIENT]["type"] = "text";
 
-		static LLColor4* sAvatarNameColor = rebind_llcontrol<LLColor4>("AvatarNameColor", &gColors, true);
-	
-		LLColor4 avatar_name_color = (*sAvatarNameColor);
+		static LLCachedControl<LLColor4U> sAvatarNameColor(gColors, "AvatarNameColor");
+		LLColor4 avatar_name_color = (LLColor4)sAvatarNameColor;
 		std::string client;
 
-		static LLColor4 *sScrollUnselectedColor = rebind_llcontrol<LLColor4>("ScrollUnselectedColor", LLUI::sColorsGroup, true);
+		static LLCachedControl<LLColor4U> ScrollUnselectedColor(gColors, "ScrollUnselectedColor");
+		LLColor4 sScrollUnselectedColor = (LLColor4)ScrollUnselectedColor;
 
 		if(av)
 		{
 			LLVOAvatar::resolveClient(avatar_name_color, client, av);
 			if(client == "")
 			{
-				avatar_name_color = *sScrollUnselectedColor;
+				avatar_name_color = sScrollUnselectedColor;
 				client = "?";
 			}
 			element["columns"][LIST_CLIENT]["value"] = client.c_str();
@@ -1606,10 +1609,10 @@ void LLFloaterAvatarList::refreshAvatarList()
 		else
 		{
 			element["columns"][LIST_CLIENT]["value"] = "Out Of Range";
-			avatar_name_color = *sScrollUnselectedColor;
+			avatar_name_color = sScrollUnselectedColor;
 		}
 
-		avatar_name_color = avatar_name_color * 0.5 + *sScrollUnselectedColor * 0.5;
+		avatar_name_color = avatar_name_color * 0.5 + sScrollUnselectedColor * 0.5;
 
 		element["columns"][LIST_CLIENT]["color"] = avatar_name_color.getValue();
 		
@@ -2156,32 +2159,33 @@ void LLFloaterAvatarList::onClickAgeAlertDays(LLUICtrl* ctrl,void *userdata)
 
 LLColor4 LLFloaterAvatarList::getAvatarColor(LLAvatarListEntry *ent, F32 distance, e_coloring_type type)
 {
-	static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
-	static LLColor4* sAvatarListTextDistNormalRange = rebind_llcontrol<LLColor4>("AvatarListTextDistNormalRange", &gColors, true);
-	static LLColor4* sAvatarListTextDistShoutRange = rebind_llcontrol<LLColor4>("AvatarListTextDistShoutRange", &gColors, true);
-	static LLColor4* sAvatarListTextDistOver = rebind_llcontrol<LLColor4>("AvatarListTextDistOver", &gColors, true);
-	static LLColor4* sAvatarListTextAgeNormal = rebind_llcontrol<LLColor4>("AvatarListTextAgeNormal", &gColors, true);
-	static LLColor4* sAvatarListTextAgeYoung = rebind_llcontrol<LLColor4>("AvatarListTextAgeYoung", &gColors, true);
+	static LLCachedControl<LLColor4U> sDefaultListText(gColors, "DefaultListText");
+	static LLCachedControl<LLColor4U> sAvatarListTextDistNormalRange(gColors, "AvatarListTextDistNormalRange");
+	static LLCachedControl<LLColor4U> sAvatarListTextDistShoutRange(gColors, "AvatarListTextDistShoutRange");
+	static LLCachedControl<LLColor4U> sAvatarListTextDistOver(gColors, "AvatarListTextDistOver");
+	static LLCachedControl<LLColor4U> sAvatarListTextAgeNormal(gColors, "AvatarListTextAgeNormal");
+	static LLCachedControl<LLColor4U> sAvatarListTextAgeYoung(gColors, "AvatarListTextAgeYoung");
+
 // 	F32 r = 0.0f, g = 0.0f, b = 0.0f, a = 0.5f;
-	LLColor4 av_color = (*sDefaultListText).getValue();
+	LLColor4 av_color = (LLColor4)sDefaultListText;
 
 	switch(type)
 	{
 		case CT_NONE:
-			av_color = (*sDefaultListText).getValue();
+			av_color = (LLColor4)sDefaultListText;
 			break;
 		case CT_DISTANCE:
 			if ( distance <= 20.0f )
 			{
-				av_color = (*sAvatarListTextDistNormalRange).getValue();
+				av_color = (LLColor4)sAvatarListTextDistNormalRange;
 			}
 			else if ( distance > 20.0f && distance <= 96.0f )
 			{
-				av_color = (*sAvatarListTextDistShoutRange).getValue();
+				av_color = (LLColor4)sAvatarListTextDistShoutRange;
 			}
 			else
 			{
-				av_color = (*sAvatarListTextDistOver).getValue();
+				av_color = (LLColor4)sAvatarListTextDistOver;
 			}
 			break;
 		case CT_AGE:
@@ -2190,11 +2194,11 @@ LLColor4 LLFloaterAvatarList::getAvatarColor(LLAvatarListEntry *ent, F32 distanc
 				S32 age = ent->mAvatarInfo.getValue().getAge();
 				if ( age <= 7 )
 				{
-					av_color = (*sAvatarListTextAgeYoung).getValue();
+					av_color = (LLColor4)sAvatarListTextAgeYoung;
 				}
 				else
 				{
-					av_color = (*sAvatarListTextAgeNormal).getValue();
+					av_color = (LLColor4)sAvatarListTextAgeNormal;
 				}
 			}
 			break;
@@ -2227,8 +2231,8 @@ void LLFloaterAvatarList::onDoubleClick(void *userdata)
 
 void LLFloaterAvatarList::lookAtAvatar(LLUUID &uuid)
 { // twisted laws
-    LLViewerObject* voavatar = gObjectList.findObject(uuid);
-    if(voavatar && voavatar->isAvatar())
+    LLVOAvatar* voavatar = gObjectList.findAvatar(uuid);
+    if (voavatar)
     {
         gAgent.setFocusOnAvatar(FALSE, FALSE);
         gAgent.changeCameraToThirdPerson();

@@ -29,9 +29,12 @@ set(debug_files
     libapr-1.dll
     libaprutil-1.dll
     libapriconv-1.dll
+    libcollada14dom22-d.dll
+    glod.dll
     libhunspell.dll
     lgggrowl++.dll
     lgggrowl.dll
+    libtcmalloc_minimal-debug.dll
     )
 
 copy_if_different(
@@ -231,9 +234,12 @@ set(release_files
     libapr-1.dll
     libaprutil-1.dll
     libapriconv-1.dll
+    libcollada14dom22.dll
+    glod.dll
     libhunspell.dll
     lgggrowl++.dll
     lgggrowl.dll
+    libtcmalloc_minimal.dll
     )
     
 copy_if_different(

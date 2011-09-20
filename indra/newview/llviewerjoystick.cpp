@@ -766,7 +766,7 @@ void LLViewerJoystick::moveAvatar(bool reset)
 	sDelta[RX_I] += (cur_delta[RX_I] - sDelta[RX_I]) * time * feather;
 	sDelta[RY_I] += (cur_delta[RY_I] - sDelta[RY_I]) * time * feather;
 	
-	handleRun(fsqrtf(sDelta[Z_I]*sDelta[Z_I] + sDelta[X_I]*sDelta[X_I]));
+	handleRun((F32)sqrt(sDelta[Z_I] * sDelta[Z_I] + sDelta[X_I] * sDelta[X_I]));
 	
 	// Allow forward/backward movement some priority
 	if (dom_axis == Z_I)
@@ -1031,7 +1031,8 @@ bool LLViewerJoystick::toggleFlycam()
 
 void LLViewerJoystick::scanJoystick()
 {
-	if (mDriverState != JDS_INITIALIZED || !gSavedSettings.getBOOL("JoystickEnabled"))
+	static LLCachedControl<bool> joystick_enabled(gSavedSettings, "JoystickEnabled");
+	if (mDriverState != JDS_INITIALIZED || !joystick_enabled)
 	{
 		return;
 	}

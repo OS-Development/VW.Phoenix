@@ -462,14 +462,12 @@ void LLAlertDialog::draw()
 		setDefaultBtn(mButtonData[mDefaultOption].mButton);
 	}
 
-	/*static LLColor4* sColorDropShadow = rebind_llcontrol<LLColor4>("ColorDropShadow", LLUI::sColorsGroup, true);
+	/*
+	static LLCachedControl<LLColor4U> sColorDropShadow((*LLUI::sColorsGroup), "ColorDropShadow");
+	static LLCachedControl<S32> sDropShadowFloater((*LLUI::sConfigGroup), "DropShadowFloater");
 
-	LLColor4 shadow_color = (*sColorDropShadow);
-
-	static S32* sDropShadowFloater = rebind_llcontrol<S32>("DropShadowFloater", LLUI::sConfigGroup, true);
-
-
-	S32 shadow_lines = (*sDropShadowFloater);
+	LLColor4 shadow_color = (LLColor4)sColorDropShadow;
+	S32 shadow_lines = sDropShadowFloater;
 
 	gl_drop_shadow( 0, getRect().getHeight(), getRect().getWidth(), 0,
 		shadow_color, shadow_lines);*/

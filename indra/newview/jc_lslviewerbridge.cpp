@@ -65,9 +65,9 @@
 //  the major and minor version numbers being the same in the defines below;
 //  and on it being in the form of "<major>.<minor>". If you change any of
 //  these, you MUST update the IsAnOldBridge function to match. -- TS
-#define phoenix_bridge_name "#LSL<->Client Bridge v0.14"
+#define phoenix_bridge_name "#LSL<->Client Bridge v0.15"
 #define PHOENIX_BRIDGE_MAJOR_VERSION 0
-#define PHOENIX_BRIDGE_MINOR_VERSION 14
+#define PHOENIX_BRIDGE_MINOR_VERSION 15
 
 const boost::regex AnyBridgePattern("^#LSL<->Client Bridge.*");
 
@@ -145,10 +145,13 @@ struct n2kdat
 	S32 channel;
 	std::string reply;
 };
-void callbackname2key(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* data)
+
+//void callbackname2key(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* data)
+void callbackname2key(const LLUUID& id, const std::string& fullname, bool is_group, n2kdat* dat)
 {
-	n2kdat* dat = (n2kdat*)data; 
-	std::string send = dat->reply + first+" "+last;
+	//n2kdat* dat = (n2kdat*)data; 
+	//std::string send = dat->reply + first+" "+last;
+	std::string send = dat->reply + fullname;
 	JCLSLBridge::send_chat_to_object(send, dat->channel, dat->source);
 	delete dat;
 	//if(id == subjectA.owner_id)sInstance->childSetValue("owner_a_name", first + " " + last);
@@ -235,7 +238,8 @@ bool JCLSLBridge::lsltobridge(std::string message, std::string from_name, LLUUID
 				bool group = (bool)atoi(args[4].asString().c_str());
 				data->reply = llformat("key2namereply|%s|",uniq.c_str());
 				data->source = source_id;
-				gCacheName->get(LLUUID(args[2].asString()), group, callbackname2key, data);
+				//gCacheName->get(LLUUID(args[2].asString()), group, callbackname2key, data);
+				gCacheName->get(LLUUID(args[2].asString()), group, boost::bind(&callbackname2key, _1, _2, _3, data));
 				return true;
 			}
 			else if(cmd == "emao")
@@ -361,7 +365,7 @@ LLUUID JCLSLBridge::findCategoryByNameOrCreate(std::string name)
 	phoenix_category = gInventory.findCategoryByName(phoenix_category_name);
 	if(phoenix_category.isNull())
 	{
-		phoenix_category = gInventory.createNewCategory(gAgent.getInventoryRootID(), LLAssetType::AT_NONE, phoenix_category_name);
+		phoenix_category = gInventory.createNewCategory(gAgent.getInventoryRootID(), LLFolderType::FT_NONE, phoenix_category_name);
 	}
 	return phoenix_category;
 }
@@ -582,7 +586,7 @@ void callbackBridgeCleanup(const LLSD &notification, const LLSD &response, LLVie
 		{
 			//cmdline_printchat("--Moving out-of-date bridge objects to your trash folder.");
 			//delete
-			LLUUID trash_cat = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+			LLUUID trash_cat = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 			for(LLDynamicArray<LLPointer<LLViewerInventoryItem> >::iterator itr = items.begin(); itr != items.end(); ++itr)
 			{
 				LLViewerInventoryItem* item = *itr;
@@ -605,7 +609,7 @@ class BridgeCleanupMatches : public LLInventoryCollectFunctor
 public:
 	BridgeCleanupMatches()
 	{
-		trash_cat = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+		trash_cat = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 	}
 	virtual ~BridgeCleanupMatches() {}
 	virtual bool operator()(LLInventoryCategory* cat,

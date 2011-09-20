@@ -40,7 +40,7 @@
 class LLFace;
 class LLDrawPool;
 class LLSelectNode;
-
+class LLViewerFetchedTexture;
 
 class LLVOTree : public LLViewerObject
 {
@@ -60,6 +60,7 @@ public:
 	// Initialize data that's only inited once per class.
 	static void initClass();
 	static void cleanupClass();
+	static bool isTreeRenderingStopped();
 
 	/*virtual*/ U32 processUpdateMessage(LLMessageSystem *mesgsys,
 											void **user_data,
@@ -74,7 +75,7 @@ public:
 
 	/*virtual*/ LLDrawable* createDrawable(LLPipeline *pipeline);
 	/*virtual*/ BOOL		updateGeometry(LLDrawable *drawable);
-	/*virtual*/ void		updateSpatialExtents(LLVector3 &min, LLVector3 &max);
+	/*virtual*/ void		updateSpatialExtents(LLVector4a &min, LLVector4a &max);
 
 	virtual U32 getPartitionType() const;
 
@@ -122,11 +123,9 @@ public:
 										  LLVector3* intersection = NULL,       // return the intersection point
 										  LLVector2* tex_coord = NULL,          // return the texture coordinates of the intersection point
 										  LLVector3* normal = NULL,             // return the surface normal at the intersection point
-										  LLVector3* bi_normal = NULL           // return the surface bi-normal at the intersection point
-		);
-
-	void    generateSilhouette(LLSelectNode* nodep, const LLVector3& view_point);
-	
+										  LLVector3* bi_normal = NULL);		// return the surface bi-normal at the intersection point
+ 
+	void generateSilhouette(LLSelectNode* nodep, const LLVector3& view_point);
 
 	static S32 sMaxTreeSpecies;
 
@@ -156,6 +155,7 @@ public:
 	};
 
 	static F32 sTreeFactor;			// Tree level of detail factor
+	static const S32 sMAX_NUM_TREE_LOD_LEVELS;
 
 	friend class LLDrawPoolTree;
 protected:
@@ -164,7 +164,7 @@ protected:
 	LLVector3		mWind;
 
 	LLPointer<LLVertexBuffer> mReferenceBuffer; //reference geometry for generating tree mesh
-	LLPointer<LLViewerImage> mTreeImagep;	// Pointer to proper tree image
+	LLPointer<LLViewerFetchedTexture> mTreeImagep;	// Pointer to proper tree image
 
 	U8				mSpecies;		// Species of tree
 	F32				mBranchLength;	// Scale (length) of tree branches
@@ -204,11 +204,9 @@ protected:
 private:
 	void generateSilhouetteVertices(std::vector<LLVector3> &vertices,
 									std::vector<LLVector3> &normals,
-									std::vector<S32> &segments,
 									const LLVector3& view_vec,
 									const LLMatrix4& mat,
 									const LLMatrix3& norm_mat);
-	
 };
 
 #endif

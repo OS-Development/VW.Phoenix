@@ -193,6 +193,8 @@ public:
 
 private:
 	BOOL					mDirty;
+	BOOL					mOrginalShowHighlight; //Phoenix:KC
+	BOOL					mOpen; //Phoenix:KC
 
 	//Banana:KC
 	S32					mSmallHeight;

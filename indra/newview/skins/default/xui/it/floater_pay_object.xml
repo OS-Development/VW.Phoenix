@@ -7,7 +7,7 @@
 		Paga il residente:
 	</text>
 	<text name="payee_name" left="120">
-		[FIRST] [LAST]
+		[NAME]
 	</text>
 	<text name="object_name_label" left="5" width="110" halign="left">
 		Mediante l&apos;oggetto:

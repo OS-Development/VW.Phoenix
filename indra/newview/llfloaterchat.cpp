@@ -484,8 +484,9 @@ void LLFloaterChat::addChat(const LLChat& chat,
 		else if(from_instant_message)
 		{
 			//Phoenix:KC - color chat from friends. taking care not to color when RLV hide names is in effect, lol
-			static BOOL* sPhoenixColorFriendsChat = rebind_llcontrol<BOOL>("PhoenixColorFriendsChat", &gSavedSettings, true);
-			if (!*sPhoenixColorFriendsChat
+			static LLCachedControl<bool> sPhoenixColorFriendsChat(gSavedSettings, "PhoenixColorFriendsChat");
+
+			if (!sPhoenixColorFriendsChat
 			|| !LLAvatarTracker::instance().isBuddy(chat.mFromID))
 			{
 				text_color = gSavedSettings.getColor("IMChatColor");
@@ -566,19 +567,20 @@ LLColor4 get_text_color(const LLChat& chat)
 		switch(chat.mSourceType)
 		{
 		case CHAT_SOURCE_SYSTEM:
+		case CHAT_SOURCE_UNKNOWN:
 			text_color = gSavedSettings.getColor4("SystemChatColor");
 			break;
 		case CHAT_SOURCE_AGENT:
-		    if (chat.mFromID.isNull())
+		    if (gAgent.getID() == chat.mFromID)
 			{
-				text_color = gSavedSettings.getColor4("SystemChatColor");
+				text_color = gSavedSettings.getColor4("UserChatColor");
 			}
 			else
 			{
 				//Phoenix:KC - color chat from friends. taking care not to color when RLV hide names is in effect, lol
-				static BOOL* sPhoenixColorFriendsChat = rebind_llcontrol<BOOL>("PhoenixColorFriendsChat", &gSavedSettings, true);
-				static BOOL* sPhoenixColorLindensChat = rebind_llcontrol<BOOL>("PhoenixColorLindensChat", &gSavedSettings, true);
-				if ( *sPhoenixColorFriendsChat
+				static LLCachedControl<bool> sPhoenixColorFriendsChat(gSavedSettings, "PhoenixColorFriendsChat");
+				static LLCachedControl<bool> sPhoenixColorLindensChat(gSavedSettings, "PhoenixColorLindensChat");
+				if ( sPhoenixColorFriendsChat
 					&& LLAvatarTracker::instance().isBuddy(chat.mFromID)
 				&& (!rlv_handler_t::isEnabled()
 				|| !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES)))
@@ -595,7 +597,7 @@ LLColor4 get_text_color(const LLChat& chat)
 				{
 					text_color = gSavedSettings.getColor4("UserChatColor");
 				}
-				else if (*sPhoenixColorLindensChat && LLMuteList::getInstance()->isLinden(chat.mFromID))
+				else if (sPhoenixColorLindensChat && LLMuteList::getInstance()->isLinden(chat.mFromID))
 				{
 					text_color = gSavedSettings.getColor4("PhoenixLindensChatColor");
 				}
@@ -610,12 +612,22 @@ LLColor4 get_text_color(const LLChat& chat)
 			{
 				text_color = gSavedSettings.getColor4("ScriptErrorColor");
 			}
-			else if ( chat.mChatType == CHAT_TYPE_OWNER )
+			else if (chat.mChatType == CHAT_TYPE_OWNER)
 			{
+				// Message from one of our own objects
 				text_color = gSavedSettings.getColor4("llOwnerSayChatColor");
+			}
+			else if (chat.mChatType == CHAT_TYPE_DIRECT)
+			{
+				// Used both for llRegionSayTo() and llInstantMesssage()
+				// since there is no real reason to distinguish one from
+				// another (both are seen only by us and the object may
+				// pertain to anyone, us included).
+				text_color = gSavedSettings.getColor4("DirectChatColor");
 			}
 			else
 			{
+				// Public object chat
 				text_color = gSavedSettings.getColor4("ObjectChatColor");
 			}
 			break;

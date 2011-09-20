@@ -38,8 +38,7 @@
 #include "message.h"
 #include "llappviewer.h"	// for gPacificDaylightTime
 #include "lltracker.h"
-#include "llviewerimage.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 
 // Timers to temporise database requests
 const F32 AGENTS_UPDATE_TIMER = 60.0;			// Seconds between 2 agent requests for a region
@@ -84,7 +83,7 @@ void LLSimInfo::setLandForSaleImage (LLUUID image_id)
 	// Fetch the image
 	if (mMapImageID.notNull())
 	{
-		mOverlayImage = gImageList.getImage(mMapImageID, MIPMAP_TRUE, FALSE);
+		mOverlayImage = LLViewerTextureManager::getFetchedTexture(mMapImageID, MIPMAP_TRUE, LLViewerTexture::BOOST_MAP, LLViewerTexture::LOD_TEXTURE);
 		mOverlayImage->setAddressMode(LLTexUnit::TAM_CLAMP);
 	}
 	else
@@ -93,18 +92,18 @@ void LLSimInfo::setLandForSaleImage (LLUUID image_id)
 	}
 }
 
-LLPointer<LLViewerImage> LLSimInfo::getLandForSaleImage () 
+LLPointer<LLViewerFetchedTexture> LLSimInfo::getLandForSaleImage () 
 {
 	if (mOverlayImage.isNull() && mMapImageID.notNull())
 	{
 		// Fetch the image if it hasn't been done yet (unlikely but...)
-		mOverlayImage = gImageList.getImage(mMapImageID, MIPMAP_TRUE, FALSE);
+		mOverlayImage = LLViewerTextureManager::getFetchedTexture(mMapImageID, MIPMAP_TRUE, LLViewerTexture::BOOST_MAP, LLViewerTexture::LOD_TEXTURE);
 		mOverlayImage->setAddressMode(LLTexUnit::TAM_CLAMP);
 	}
 	if (!mOverlayImage.isNull())
 	{
 		// Boost the fetch level when we try to access that image
-		mOverlayImage->setBoostLevel(LLViewerImageBoostLevel::BOOST_MAP);
+		mOverlayImage->setBoostLevel(LLViewerTexture::BOOST_MAP);
 	}
 	return mOverlayImage;
 }

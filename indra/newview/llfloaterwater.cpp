@@ -635,8 +635,7 @@ void LLFloaterWater::onSavePreset(LLUICtrl* ctrl, void* userData)
 	if (ctrl->getValue().asString() == "save_inventory_item")
 	{	
 		// Check if this is already a notecard and that its not in the trash or purged.
-		LLUUID trash_id;
-		trash_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+		const LLUUID trash_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 		if(LLWaterParamManager::instance()->mCurParams.mInventoryID.notNull() 
 			&& !gInventory.isObjectDescendentOf(LLWaterParamManager::instance()->mCurParams.mInventoryID, trash_id)
 			&& gInventory.isObjectDescendentOf(LLWaterParamManager::instance()->mCurParams.mInventoryID, gAgent.getInventoryRootID())

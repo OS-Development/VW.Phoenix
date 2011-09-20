@@ -318,7 +318,7 @@ LLAgent::LLAgent() :
 	mbAlwaysRun(false),
 	mbRunning(false),
 
-	mAgentAccess(gSavedSettings),
+	mAgentAccess(new LLAgentAccess(gSavedSettings)),
 	mTeleportState( TELEPORT_NONE ),
 	mRegionp(NULL),
 
@@ -493,9 +493,11 @@ void LLAgent::init()
 
 	mEffectColor = gSavedSettings.getColor4("EffectColor");
 	ignorePrejump = gSavedSettings.getBOOL("PhoenixIgnoreFinishAnimation");
-	gSavedSettings.getControl("PhoenixIgnoreFinishAnimation")->getSignal()->connect((boost::function<void (const LLSD &)>) &updateIgnorePrejump);
+	//gSavedSettings.getControl("PhoenixIgnoreFinishAnimation")->getSignal()->connect((boost::function<void (const LLSD &)>) &updateIgnorePrejump);
+	gSavedSettings.getControl("PhoenixIgnoreFinishAnimation")->getSignal()->connect(boost::bind(&updateIgnorePrejump, _2));
 	PhoenixForceFly = gSavedSettings.getBOOL("PhoenixAlwaysFly");
-	gSavedSettings.getControl("PhoenixAlwaysFly")->getSignal()->connect((boost::function<void (const LLSD &)>) &updatePhoenixForceFly);
+	//gSavedSettings.getControl("PhoenixAlwaysFly")->getSignal()->connect((boost::function<void (const LLSD &)>) &updatePhoenixForceFly);
+	gSavedSettings.getControl("PhoenixAlwaysFly")->getSignal()->connect(boost::bind(&updatePhoenixForceFly, _2));
 	mBlockSpam=gSavedSettings.getBOOL("PhoenixBlockSpam");
 	mInitialized = TRUE;
 }
@@ -531,6 +533,9 @@ LLAgent::~LLAgent()
 	delete [] mActiveCacheQueries;
 	mActiveCacheQueries = NULL;
 
+	delete mAgentAccess;
+	mAgentAccess = NULL;
+
 	// *Note: this is where LLViewerCamera::getInstance() used to be deleted.
 }
 
@@ -562,12 +567,12 @@ void LLAgent::resetView(BOOL reset_camera, BOOL change_camera)
 		}
 
 		// Hide all popup menus
-		gMenuHolder->hideMenus();
+		if (gMenuHolder) gMenuHolder->hideMenus();
 	}
 
-	static BOOL* sFreezeTime = rebind_llcontrol<BOOL>("FreezeTime", &gSavedSettings, true);
+	static LLCachedControl<bool> sFreezeTime(gSavedSettings, "FreezeTime");
 
-	if (change_camera && !(*sFreezeTime))
+	if (change_camera && !sFreezeTime)
 	{
 		changeCameraToDefault();
 		
@@ -591,7 +596,7 @@ void LLAgent::resetView(BOOL reset_camera, BOOL change_camera)
 	}
 
 
-	if (reset_camera && !(*sFreezeTime))
+	if (reset_camera && !sFreezeTime)
 	{
 		if (!gViewerWindow->getLeftMouseDown() && cameraThirdPerson())
 		{
@@ -1599,7 +1604,7 @@ BOOL LLAgent::calcCameraMinDistance(F32 &obj_min_distance)
 {
 	BOOL soft_limit = FALSE; // is the bounding box to be treated literally (volumes) or as an approximation (avatars)
 
-	if (!mFocusObject || mFocusObject->isDead())
+	if (!mFocusObject || mFocusObject->isDead() || mFocusObject->isMesh())
 	{
 		obj_min_distance = 0.f;
 		return TRUE;
@@ -2020,9 +2025,9 @@ void LLAgent::cameraOrbitIn(const F32 meters)
 		
 		mCameraZoomFraction = (mTargetCameraDistance - meters) / camera_offset_dist;
 
-		static BOOL* sFreezeTime = rebind_llcontrol<BOOL>("FreezeTime", &gSavedSettings, true);
+		static LLCachedControl<bool> sFreezeTime(gSavedSettings, "FreezeTime");
 
-		if (!(*sFreezeTime) && mCameraZoomFraction < MIN_ZOOM_FRACTION && meters > 0.f)
+		if (!sFreezeTime && mCameraZoomFraction < MIN_ZOOM_FRACTION && meters > 0.f)
 		{
 			// No need to animate, camera is already there.
 			changeCameraToMouselook(FALSE);
@@ -2368,7 +2373,7 @@ void LLAgent::startAutoPilotGlobal(const LLVector3d &target_global, const std::s
 	else
 	{
 		// Guess at a reasonable stop distance.
-		mAutoPilotStopDistance = fsqrtf( distance );
+		mAutoPilotStopDistance = (F32)sqrt(distance);
 		if (mAutoPilotStopDistance < 0.5f) 
 		{
 			mAutoPilotStopDistance = 0.5f;
@@ -2870,8 +2875,8 @@ void LLAgent::startTyping()
 
 	if (mChatTimer.getElapsedTimeF32() < 2.f)
 	{
-		LLViewerObject* chatter = gObjectList.findObject(mLastChatterID);
-		if (chatter && chatter->isAvatar())
+		LLVOAvatar* chatter = gObjectList.findAvatar(mLastChatterID);
+		if (chatter)
 		{
 			gAgent.setLookAt(LOOKAT_TARGET_RESPOND, chatter, LLVector3::zero);
 		}
@@ -2930,7 +2935,7 @@ U8 LLAgent::getRenderState()
 		return 0;
 	}
 
-	static LLCachedControl<BOOL> PhoenixVoiceAnimWhileTyping("PhoenixVoiceAnimWhileTyping", 0);
+	static LLCachedControl<bool> PhoenixVoiceAnimWhileTyping(gSavedSettings, "PhoenixVoiceAnimWhileTyping");
 	if((mRenderState & AGENT_STATE_TYPING) && PhoenixVoiceAnimWhileTyping){ // If we are typing and voice anim should be played
 		LLVOAvatar* avatarp = gAgent.getAvatarObject();
 		if (avatarp)
@@ -2977,8 +2982,8 @@ static const LLFloaterView::skip_list_t& get_skip_list()
 {
 	static LLFloaterView::skip_list_t skip_list;
 	skip_list.insert(LLFloaterMap::getInstance());
-	static BOOL *sPhoenixShowStatusBarInMouselook = rebind_llcontrol<BOOL>("PhoenixShowStatusBarInMouselook", &gSavedSettings, true);
-	if(*sPhoenixShowStatusBarInMouselook)
+	static LLCachedControl<bool> sPhoenixShowStatusBarInMouselook(gSavedSettings, "PhoenixShowStatusBarInMouselook");
+	if(sPhoenixShowStatusBarInMouselook)
 	{
 		skip_list.insert(LLFloaterStats::getInstance());
 	}
@@ -5009,107 +5014,90 @@ void LLAgent::lookAtObject(LLUUID object_id, ECameraPosition camera_pos)
 
 const F32 SIT_POINT_EXTENTS = 0.2f;
 
-void LLAgent::setStartPosition( U32 location_id )
+LLSD ll_sdmap_from_vector3(const LLVector3& vec)
 {
-  LLViewerObject          *object;
+	LLSD ret;
+	ret["X"] = vec.mV[VX];
+	ret["Y"] = vec.mV[VY];
+	ret["Z"] = vec.mV[VZ];
+	return ret;
+}
 
-  if ( !(gAgentID == LLUUID::null) )
-  {
-    // we've got an ID for an agent viewerobject
-    object = gObjectList.findObject(gAgentID);
-    if (object)
-    {
-      // we've got the viewer object
-      // Sometimes the agent can be velocity interpolated off of
-      // this simulator.  Clamp it to the region the agent is
-      // in, a little bit in on each side.
-      const F32 INSET = 0.5f; //meters
-      const F32 REGION_WIDTH = LLWorld::getInstance()->getRegionWidthInMeters();
+void LLAgent::setStartPosition(U32 location_id)
+{
+	if (gAgentID == LLUUID::null || gObjectList.findAvatar(gAgentID) == NULL)
+	{
+        llwarns << "Can't find agent viewer object id " << gAgentID
+				<< ". Operation aborted." << llendl;
+        return;
+    }
 
-      LLVector3 agent_pos = getPositionAgent();
-      LLVector3 agent_look_at = mFrameAgent.getAtAxis();
+	// we've got the viewer object
+	// Sometimes the agent can be velocity interpolated off of
+	// this simulator.  Clamp it to the region the agent is
+	// in, a little bit in on each side.
+	const F32 INSET = 0.5f; //meters
+	const F32 REGION_WIDTH = LLWorld::getInstance()->getRegionWidthInMeters();
 
-      if (mAvatarObject.notNull())
-      {
-	// the z height is at the agent's feet
-	agent_pos.mV[VZ] -= 0.5f * mAvatarObject->mBodySize.mV[VZ];
-      }
+	LLVector3 agent_pos = getPositionAgent();
 
-      agent_pos.mV[VX] = llclamp( agent_pos.mV[VX], INSET, REGION_WIDTH - INSET );
-      agent_pos.mV[VY] = llclamp( agent_pos.mV[VY], INSET, REGION_WIDTH - INSET );
+	if (mAvatarObject.notNull())
+	{
+		// the z height is at the agent's feet
+		agent_pos.mV[VZ] -= 0.5f * mAvatarObject->mBodySize.mV[VZ];
+	}
 
-      // Don't let them go below ground, or too high.
-      agent_pos.mV[VZ] = llclamp( agent_pos.mV[VZ],
-				  mRegionp->getLandHeightRegion( agent_pos ),
-				  LLWorld::getInstance()->getRegionMaxHeight() );
-      // Send the CapReq
+	agent_pos.mV[VX] = llclamp( agent_pos.mV[VX], INSET, REGION_WIDTH - INSET );
+	agent_pos.mV[VY] = llclamp( agent_pos.mV[VY], INSET, REGION_WIDTH - INSET );
 
-      LLSD body;
+	// Don't let them go below ground, or too high.
+	agent_pos.mV[VZ] = llclamp(agent_pos.mV[VZ],
+							   mRegionp->getLandHeightRegion(agent_pos),
+							   LLWorld::getInstance()->getRegionMaxHeight());
 
-      std::string url = gAgent.getRegion()->getCapability("HomeLocation");
-      std::ostringstream strBuffer;
-      if( url.empty() )
-      {
-	LLMessageSystem* msg = gMessageSystem;
-	msg->newMessageFast(_PREHASH_SetStartLocationRequest);
-	msg->nextBlockFast( _PREHASH_AgentData);
-	msg->addUUIDFast(_PREHASH_AgentID, getID());
-	msg->addUUIDFast(_PREHASH_SessionID, getSessionID());
-	msg->nextBlockFast( _PREHASH_StartLocationData);
-	// corrected by sim
-	msg->addStringFast(_PREHASH_SimName, "");
-	msg->addU32Fast(_PREHASH_LocationID, location_id);
-	msg->addVector3Fast(_PREHASH_LocationPos, agent_pos);
-	msg->addVector3Fast(_PREHASH_LocationLookAt,mFrameAgent.getAtAxis());
-	
-	// Reliable only helps when setting home location.  Last
-	// location is sent on quit, and we don't have time to ack
-	// the packets.
-	msg->sendReliable(mRegionp->getHost());
+	std::string url = gAgent.getRegion()->getCapability("HomeLocation");
+	if (!url.empty())
+	{
+		// Send the CapReq
+
+		LLSD request;
+		LLSD body;
+		LLSD homeLocation;
+
+		homeLocation["LocationId"] = LLSD::Integer(location_id);
+		homeLocation["LocationPos"] = ll_sdmap_from_vector3(agent_pos);
+		homeLocation["LocationLookAt"] = ll_sdmap_from_vector3(mFrameAgent.getAtAxis());
+
+		body["HomeLocation"] = homeLocation;
+
+		LLHTTPClient::post(url, body, new LLHomeLocationResponder());
+	}
+	else
+	{
+		// Old message based method
+
+		LLMessageSystem* msg = gMessageSystem;
+		msg->newMessageFast(_PREHASH_SetStartLocationRequest);
+		msg->nextBlockFast( _PREHASH_AgentData);
+		msg->addUUIDFast(_PREHASH_AgentID, getID());
+		msg->addUUIDFast(_PREHASH_SessionID, getSessionID());
+		msg->nextBlockFast( _PREHASH_StartLocationData);
+		// corrected by sim
+		msg->addStringFast(_PREHASH_SimName, "");
+		msg->addU32Fast(_PREHASH_LocationID, location_id);
+		msg->addVector3Fast(_PREHASH_LocationPos, agent_pos);
+		msg->addVector3Fast(_PREHASH_LocationLookAt, mFrameAgent.getAtAxis());
+
+		// Reliable only helps when setting home location. Last location is
+		// sent on quit, and we don't have time to ack the packets.
+		msg->sendReliable(mRegionp->getHost());
+	}
 
 	const U32 HOME_INDEX = 1;
-	if( HOME_INDEX == location_id )
-	  {
-	    setHomePosRegion( mRegionp->getHandle(), getPositionAgent() );
-	  }
-      }
-      else
-      {
-	strBuffer << location_id;
-	body["HomeLocation"]["LocationId"] = strBuffer.str();
-
-	strBuffer.str("");
-	strBuffer << agent_pos.mV[VX];
-	body["HomeLocation"]["LocationPos"]["X"] = strBuffer.str();
-
-	strBuffer.str("");
-	strBuffer << agent_pos.mV[VY];
-	body["HomeLocation"]["LocationPos"]["Y"] = strBuffer.str();
-
-	strBuffer.str("");
-	strBuffer << agent_pos.mV[VZ];
-	body["HomeLocation"]["LocationPos"]["Z"] = strBuffer.str();
-
-	strBuffer.str("");
-	strBuffer << agent_look_at.mV[VX];
-	body["HomeLocation"]["LocationLookAt"]["X"] = strBuffer.str();
-
-	strBuffer.str("");
-	strBuffer << agent_look_at.mV[VY];
-	body["HomeLocation"]["LocationLookAt"]["Y"] = strBuffer.str();
-
-	strBuffer.str("");
-	strBuffer << agent_look_at.mV[VZ];
-	body["HomeLocation"]["LocationLookAt"]["Z"] = strBuffer.str();
-
-	LLHTTPClient::post( url, body, new LLHomeLocationResponder() );
-      }
-    }
-    else
-    {
-      llinfos << "setStartPosition - Can't find agent viewerobject id " << gAgentID << llendl;
-    }
-  }
+	if (HOME_INDEX == location_id)
+	{
+		setHomePosRegion(mRegionp->getHandle(), getPositionAgent());
+	}
 }
 
 void LLAgent::requestStopMotion( LLMotion* motion )
@@ -5167,27 +5155,27 @@ void LLAgent::onAnimStop(const LLUUID& id)
 
 BOOL LLAgent::isGodlike() const
 {
-	return mAgentAccess.isGodlike();
+	return mAgentAccess->isGodlike();
 }
 
 U8 LLAgent::getGodLevel() const
 {
-	return mAgentAccess.getGodLevel();
+	return mAgentAccess->getGodLevel();
 }
 
 bool LLAgent::wantsPGOnly() const
 {
-	return mAgentAccess.wantsPGOnly();
+	return mAgentAccess->wantsPGOnly();
 }
 
 bool LLAgent::canAccessMature() const
 {
-	return mAgentAccess.canAccessMature();
+	return mAgentAccess->canAccessMature();
 }
 
 bool LLAgent::canAccessAdult() const
 {
-	return mAgentAccess.canAccessAdult();
+	return mAgentAccess->canAccessAdult();
 }
 
 bool LLAgent::canAccessMaturityInRegion( U64 region_handle ) const
@@ -5222,37 +5210,37 @@ bool LLAgent::canAccessMaturityAtGlobal( LLVector3d pos_global ) const
 
 bool LLAgent::prefersPG() const
 {
-	return mAgentAccess.prefersPG();
+	return mAgentAccess->prefersPG();
 }
 
 bool LLAgent::prefersMature() const
 {
-	return mAgentAccess.prefersMature();
+	return mAgentAccess->prefersMature();
 }
 	
 bool LLAgent::prefersAdult() const
 {
-	return mAgentAccess.prefersAdult();
+	return mAgentAccess->prefersAdult();
 }
 
 bool LLAgent::isTeen() const
 {
-	return mAgentAccess.isTeen();
+	return mAgentAccess->isTeen();
 }
 
 bool LLAgent::isMature() const
 {
-	return mAgentAccess.isMature();
+	return mAgentAccess->isMature();
 }
 
 bool LLAgent::isAdult() const
 {
-	return mAgentAccess.isAdult();
+	return mAgentAccess->isAdult();
 }
 
 void LLAgent::setTeen(bool teen)
 {
-	mAgentAccess.setTeen(teen);
+	mAgentAccess->setTeen(teen);
 }
 
 //static 
@@ -5294,32 +5282,32 @@ bool LLAgent::sendMaturityPreferenceToServer(int preferredMaturity)
 
 BOOL LLAgent::getAdminOverride() const	
 { 
-	return mAgentAccess.getAdminOverride(); 
+	return mAgentAccess->getAdminOverride();
 }
 
 void LLAgent::setMaturity(char text)
 {
-	mAgentAccess.setMaturity(text);
+	mAgentAccess->setMaturity(text);
 }
 
 void LLAgent::setAdminOverride(BOOL b)	
 { 
-	mAgentAccess.setAdminOverride(b);
+	mAgentAccess->setAdminOverride(b);
 }
 
 void LLAgent::setGodLevel(U8 god_level)	
 { 
-	mAgentAccess.setGodLevel(god_level);
+	mAgentAccess->setGodLevel(god_level);
 }
 
 void LLAgent::setAOTransition()
 {
-	mAgentAccess.setTransition();
+	mAgentAccess->setTransition();
 }
 
 const LLAgentAccess& LLAgent::getAgentAccess()
 {
-	return mAgentAccess;
+	return *mAgentAccess;
 }
 
 
@@ -6637,9 +6625,9 @@ void LLAgent::setTeleportState(ETeleportState state)
 {
 	mTeleportState = state;
 
-	static BOOL* sFreezeTime = rebind_llcontrol<BOOL>("FreezeTime", &gSavedSettings, true);
+	static LLCachedControl<bool> sFreezeTime(gSavedSettings, "FreezeTime");
 
-	if (mTeleportState > TELEPORT_NONE && (*sFreezeTime))
+	if (mTeleportState > TELEPORT_NONE && sFreezeTime)
 	{
 		LLFloaterSnapshot::hide(0);
 	}
@@ -7027,7 +7015,7 @@ void LLAgent::saveWearableAs(
 	if (save_in_lost_and_found)
 	{
 		category_id = gInventory.findCategoryUUIDForType(
-			LLAssetType::AT_LOST_AND_FOUND);
+			LLFolderType::FT_LOST_AND_FOUND);
 	}
 	else
 	{
@@ -7059,7 +7047,7 @@ void LLAgent::saveWearableAs(
 			new_wearable->setPermissions(item->getPermissions());
 			if (save_in_lost_and_found)
 			{
-				category_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_LOST_AND_FOUND);
+				category_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_LOST_AND_FOUND);
 			}
 			else
 			{
@@ -7409,7 +7397,7 @@ void LLAgent::recoverMissingWearable( EWearableType type )
 	// (We used to overwrite the "not found" one, but that could potentially
 	// destory content.) JC
 	LLUUID lost_and_found_id = 
-		gInventory.findCategoryUUIDForType(LLAssetType::AT_LOST_AND_FOUND);
+		gInventory.findCategoryUUIDForType(LLFolderType::FT_LOST_AND_FOUND);
 	LLPointer<LLInventoryCallback> cb =
 		new addWearableToAgentInventoryCallback(
 			LLPointer<LLRefCount>(NULL),
@@ -7538,11 +7526,14 @@ void LLAgent::makeNewOutfit(
 	BOOL fUseLinks = !gSavedSettings.getBOOL("UseInventoryLinks");
 	BOOL fUseOutfits = gSavedSettings.getBOOL("UseOutfitFolders");
 
-	LLAssetType::EType typeDest = (fUseOutfits) ? LLAssetType::AT_MY_OUTFITS : LLAssetType::AT_CLOTHING;
-	LLAssetType::EType typeFolder = (fUseOutfits) ? LLAssetType::AT_OUTFIT : LLAssetType::AT_NONE;
+	LLFolderType::EType typeDest = (fUseOutfits) ? LLFolderType::FT_MY_OUTFITS : LLFolderType::FT_CLOTHING;
+	LLFolderType::EType typeFolder = (fUseOutfits) ? LLFolderType::FT_OUTFIT : LLFolderType::FT_NONE;
 
 	// First, make a folder for the outfit.
-	LLUUID folder_id = gInventory.createNewCategory(gInventory.findCategoryUUIDForType(typeDest), typeFolder, new_folder_name);
+	const LLUUID clothing_folder_id = gInventory.findCategoryUUIDForType(typeDest);
+	LLUUID folder_id = gInventory.createNewCategory(clothing_folder_id,
+													typeFolder,
+													new_folder_name);
 
 	bool found_first_item = false;
 

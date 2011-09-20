@@ -89,7 +89,7 @@ void QToolAlign::pickCallback(const LLPickInfo& pick_info)
 	}
 	else
 	{
-		if (!(pick_info.mKeyMask == MASK_SHIFT))
+		if (pick_info.mKeyMask != MASK_SHIFT)
 		{
 			LLSelectMgr::getInstance()->deselectAll();
 		}
@@ -104,7 +104,7 @@ void QToolAlign::handleSelect()
 {
 	// no parts, please
 
-	llwarns << "in select" << llendl;
+	LL_DEBUGS("ToolAlign") << "Tool Align in select." << LL_ENDL;
 	LLSelectMgr::getInstance()->promoteSelectionToRoot();
 }
 
@@ -119,6 +119,8 @@ BOOL QToolAlign::findSelectedManipulator(S32 x, S32 y)
 	mHighlightedAxis = -1;
 	mHighlightedDirection = 0;
 
+	LLViewerCamera* camera = LLViewerCamera::getInstance();
+
 	LLMatrix4 transform;
 	if (LLSelectMgr::getInstance()->getSelection()->getSelectType() == SELECT_TYPE_HUD)
 	{
@@ -128,7 +130,7 @@ BOOL QToolAlign::findSelectedManipulator(S32 x, S32 y)
 		transform *= cfr;
 		LLMatrix4 window_scale;
 		F32 zoom_level = 2.f * gAgent.mHUDCurZoom;
-		window_scale.initAll(LLVector3(zoom_level / LLViewerCamera::getInstance()->getAspect(), zoom_level, 0.f),
+		window_scale.initAll(LLVector3(zoom_level / camera->getAspect(), zoom_level, 0.f),
 							 LLQuaternion::DEFAULT,
 							 LLVector3::zero);
 		transform *= window_scale;
@@ -137,8 +139,8 @@ BOOL QToolAlign::findSelectedManipulator(S32 x, S32 y)
 	{
 		transform.initAll(LLVector3(1.f, 1.f, 1.f), mBBox.getRotation(), mBBox.getCenterAgent());
 
-		LLMatrix4 projection_matrix = LLViewerCamera::getInstance()->getProjection();
-		LLMatrix4 model_matrix = LLViewerCamera::getInstance()->getModelview();
+		LLMatrix4 projection_matrix = camera->getProjection();
+		LLMatrix4 model_matrix = camera->getModelview();
 
 		transform *= model_matrix;
 		transform *= projection_matrix;
@@ -284,9 +286,11 @@ LLBBox get_selection_axis_aligned_bbox()
 
 void QToolAlign::computeManipulatorSize()
 {
+	LLViewerCamera* camera = LLViewerCamera::getInstance();
+
 	if (LLSelectMgr::getInstance()->getSelection()->getSelectType() == SELECT_TYPE_HUD)
 	{
-		mManipulatorSize = MANIPULATOR_SIZE / (LLViewerCamera::getInstance()->getViewHeightInPixels() *
+		mManipulatorSize = MANIPULATOR_SIZE / (camera->getViewHeightInPixels() *
 											   gAgent.mHUDCurZoom);
 	}
 	else
@@ -296,8 +300,8 @@ void QToolAlign::computeManipulatorSize()
 		if (distance > 0.001f)
 		{
 			// range != zero
-			F32 fraction_of_fov = MANIPULATOR_SIZE /LLViewerCamera::getInstance()->getViewHeightInPixels();
-			F32 apparent_angle = fraction_of_fov * LLViewerCamera::getInstance()->getView();  // radians
+			F32 fraction_of_fov = MANIPULATOR_SIZE / camera->getViewHeightInPixels();
+			F32 apparent_angle = fraction_of_fov * camera->getView();  // radians
 			mManipulatorSize = MANIPULATOR_SIZE * distance * tan(apparent_angle);
 		}
 		else
@@ -532,8 +536,8 @@ void QToolAlign::align()
 			// check to see if it overlaps the previously placed objects
 			BOOL overlap = FALSE;
 
-			llwarns << "i=" << i << " j=" << j << llendl;
-			
+			LL_DEBUGS("ToolAlign") << "i=" << i << " j=" << j << LL_ENDL;
+		
 			if (!mForce) // well, don't check if in force mode
 			{
 				for (S32 k = 0; k < i; k++)
@@ -545,8 +549,15 @@ void QToolAlign::align()
 
 					if (overlaps_this)
 					{
-						llwarns << "overlap" << new_bbox.getCenterAgent() << other_bbox.getCenterAgent() << llendl;
-						llwarns << "extent" << new_bbox.getExtentLocal() << other_bbox.getExtentLocal() << llendl;
+						LL_WARNS("ToolAlign") << "Overlap: "
+											  << new_bbox.getCenterAgent()
+											  << " / "
+											  << other_bbox.getCenterAgent()
+											  << " - Extent: "
+											  << new_bbox.getExtentLocal()
+											  << " / "
+											  << other_bbox.getExtentLocal()
+											  << LL_ENDL;
 					}
 
 					overlap = (overlap || overlaps_this);

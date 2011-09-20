@@ -40,7 +40,7 @@ LLPluginProcessChild::LLPluginProcessChild()
 {
 	mState = STATE_UNINITIALIZED;
 	mInstance = NULL;
-	mSocket = LLSocket::create(gAPRPoolp, LLSocket::STREAM_TCP);
+	mSocket = LLSocket::create(LLSocket::STREAM_TCP);
 	mSleepTime = PLUGIN_IDLE_SECONDS;	// default: send idle messages at 100Hz
 	mCPUElapsed = 0.0f;
 	mBlockingRequest = false;
@@ -139,7 +139,7 @@ void LLPluginProcessChild::idle(void)
 				if(!mPluginFile.empty())
 				{
 					mInstance = new LLPluginInstance(this);
-					if(mInstance->load(mPluginFile) == 0)
+					if (mInstance->load(mPluginDir, mPluginFile) == 0)
 					{
 						mHeartbeat.start();
 						mHeartbeat.setTimerExpirySec(HEARTBEAT_SECONDS);
@@ -348,6 +348,7 @@ void LLPluginProcessChild::receiveMessageRaw(const std::string &message)
 			if(message_name == "load_plugin")
 			{
 				mPluginFile = parsed.getValue("file");
+				mPluginDir = parsed.getValue("dir");
 			}
 			else if(message_name == "shm_add")
 			{

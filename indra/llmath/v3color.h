@@ -79,6 +79,7 @@ public:
 		mV[2] = (F32) sd[2].asReal();;
 	}
 
+	void setHSL(F32 hue, F32 saturation, F32 luminance);
 	void calcHSL(F32* hue, F32* saturation, F32* luminance) const;
 	
 	const LLColor3&	setToBlack();					// Clears LLColor3 to (0, 0, 0)
@@ -283,7 +284,7 @@ inline F32		LLColor3::brightness(void) const
 
 inline F32		LLColor3::length(void) const
 {
-	return fsqrtf(mV[0]*mV[0] + mV[1]*mV[1] + mV[2]*mV[2]);
+	return (F32) sqrt(mV[0]*mV[0] + mV[1]*mV[1] + mV[2]*mV[2]);
 }
 
 inline F32		LLColor3::lengthSquared(void) const
@@ -293,7 +294,7 @@ inline F32		LLColor3::lengthSquared(void) const
 
 inline F32		LLColor3::normalize(void)
 {
-	F32 mag = fsqrtf(mV[0]*mV[0] + mV[1]*mV[1] + mV[2]*mV[2]);
+	F32 mag = (F32) sqrt(mV[0]*mV[0] + mV[1]*mV[1] + mV[2]*mV[2]);
 	F32 oomag;
 
 	if (mag)
@@ -309,7 +310,7 @@ inline F32		LLColor3::normalize(void)
 // deprecated
 inline F32		LLColor3::magVec(void) const
 {
-	return fsqrtf(mV[0]*mV[0] + mV[1]*mV[1] + mV[2]*mV[2]);
+	return (F32) sqrt(mV[0]*mV[0] + mV[1]*mV[1] + mV[2]*mV[2]);
 }
 
 // deprecated
@@ -321,7 +322,7 @@ inline F32		LLColor3::magVecSquared(void) const
 // deprecated
 inline F32		LLColor3::normVec(void)
 {
-	F32 mag = fsqrtf(mV[0]*mV[0] + mV[1]*mV[1] + mV[2]*mV[2]);
+	F32 mag = (F32) sqrt(mV[0]*mV[0] + mV[1]*mV[1] + mV[2]*mV[2]);
 	F32 oomag;
 
 	if (mag)
@@ -443,7 +444,7 @@ inline F32		distVec(const LLColor3 &a, const LLColor3 &b)
 	F32 x = a.mV[0] - b.mV[0];
 	F32 y = a.mV[1] - b.mV[1];
 	F32 z = a.mV[2] - b.mV[2];
-	return fsqrtf( x*x + y*y + z*z );
+	return (F32) sqrt( x*x + y*y + z*z );
 }
 
 inline F32		distVec_squared(const LLColor3 &a, const LLColor3 &b)

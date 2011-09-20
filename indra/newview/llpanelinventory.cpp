@@ -58,6 +58,7 @@
 #include "llfloaterproperties.h"
 #include "llfolderview.h"
 #include "llgl.h"
+#include "llinventoryicon.h"	// for getIcon
 #include "llinventorymodel.h"
 #include "llinventoryview.h"
 #include "llmenugl.h"
@@ -72,9 +73,10 @@
 #include "llselectmgr.h"
 #include "llstatusbar.h"
 #include "lltooldraganddrop.h"
+#include "llviewerassettype.h"
 #include "llviewercontrol.h"
 #include "llviewerregion.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llviewerinventory.h"
 #include "llviewermessage.h"
 #include "llviewerobject.h"
@@ -301,7 +303,7 @@ bool LLTaskInvFVBridge::commitBuyItem(const LLSD& notification, const LLSD& resp
 		msg->addUUIDFast(_PREHASH_ObjectID, notification["payload"]["task_id"].asUUID());
 		msg->addUUIDFast(_PREHASH_ItemID, notification["payload"]["item_id"].asUUID());
 		msg->addUUIDFast(_PREHASH_FolderID,
-			gInventory.findCategoryUUIDForType((LLAssetType::EType)notification["payload"]["type"].asInteger()));
+			gInventory.findCategoryUUIDForType(LLFolderType::assetTypeToFolderType((LLAssetType::EType)notification["payload"]["type"].asInteger())));
 		msg->sendReliable(object->getRegion()->getHost());
 	}
 	return false;
@@ -355,7 +357,9 @@ LLUIImagePtr LLTaskInvFVBridge::getIcon() const
 		item_is_multi = TRUE;
 	}
 
-	return get_item_icon(LLAssetType::AT_OBJECT, LLInventoryType::IT_OBJECT, 0, item_is_multi );
+	return LLInventoryIcon::getIcon(LLAssetType::AT_OBJECT,
+									LLInventoryType::IT_OBJECT,
+									0, item_is_multi);
 }
 
 void LLTaskInvFVBridge::openItem()
@@ -644,7 +648,7 @@ BOOL LLTaskInvFVBridge::startDrag(EDragAndDropType* type, LLUUID* id) const
 //				   || gAgent.isGodlike())
 
 				{
-					*type = LLAssetType::lookupDragAndDropType(inv->getType());
+					*type = LLViewerAssetType::lookupDragAndDropType(inv->getType());
 
 					*id = inv->getUUID();
 					return TRUE;
@@ -872,7 +876,7 @@ BOOL LLTaskCategoryBridge::startDrag(EDragAndDropType* type, LLUUID* id) const
 			const LLInventoryObject* cat = object->getInventoryObject(mUUID);
 			if ( (cat) && (move_inv_category_world_to_agent(mUUID, LLUUID::null, FALSE)) )
 			{
-				*type = LLAssetType::lookupDragAndDropType(cat->getType());
+				*type = LLViewerAssetType::lookupDragAndDropType(cat->getType());
 				*id = mUUID;
 				return TRUE;
 			}
@@ -904,18 +908,21 @@ BOOL LLTaskCategoryBridge::dragOrDrop(MASK mask, BOOL drop,
 		case DAD_BODYPART:
 		case DAD_ANIMATION:
 		case DAD_GESTURE:
+		case DAD_MESH:
+#if 0
 			// *HACK: In order to resolve SL-22177, we need to block
-			// drags from notecards and objects onto other
-			// objects. uncomment the simpler version when we have
-			// that right.
-			//accept = LLToolDragAndDrop::isInventoryDropAcceptable(object, (LLViewerInventoryItem*)cargo_data);
-			if(LLToolDragAndDrop::isInventoryDropAcceptable(
-				   object, (LLViewerInventoryItem*)cargo_data)
-			   && (LLToolDragAndDrop::SOURCE_WORLD != LLToolDragAndDrop::getInstance()->getSource())
-			   && (LLToolDragAndDrop::SOURCE_NOTECARD != LLToolDragAndDrop::getInstance()->getSource()))
+			// drags from notecards and objects onto other objects.
+			// Use the simpler version when we have that right.
+			if (LLToolDragAndDrop::isInventoryDropAcceptable(object,
+															 (LLViewerInventoryItem*)cargo_data)
+				&& LLToolDragAndDrop::SOURCE_WORLD != LLToolDragAndDrop::getInstance()->getSource()
+				&& LLToolDragAndDrop::SOURCE_NOTECARD != LLToolDragAndDrop::getInstance()->getSource())
 			{
 				accept = TRUE;
 			}
+#else
+			accept = LLToolDragAndDrop::isInventoryDropAcceptable(object, (LLViewerInventoryItem*)cargo_data);
+#endif
 			if(accept && drop)
 			{
 				LLToolDragAndDrop::dropInventory(object,
@@ -925,18 +932,20 @@ BOOL LLTaskCategoryBridge::dragOrDrop(MASK mask, BOOL drop,
 			}
 			break;
 		case DAD_SCRIPT:
+#if 1	// not yet right for scripts
 			// *HACK: In order to resolve SL-22177, we need to block
-			// drags from notecards and objects onto other
-			// objects. uncomment the simpler version when we have
-			// that right.
-			//accept = LLToolDragAndDrop::isInventoryDropAcceptable(object, (LLViewerInventoryItem*)cargo_data);
-			if(LLToolDragAndDrop::isInventoryDropAcceptable(
-				   object, (LLViewerInventoryItem*)cargo_data)
+			// drags from notecards and objects onto other objects.
+			// Use the simpler version when we have that right.
+			if (LLToolDragAndDrop::isInventoryDropAcceptable(object,
+															 (LLViewerInventoryItem*)cargo_data)
 			   && (LLToolDragAndDrop::SOURCE_WORLD != LLToolDragAndDrop::getInstance()->getSource())
 			   && (LLToolDragAndDrop::SOURCE_NOTECARD != LLToolDragAndDrop::getInstance()->getSource()))
 			{
 				accept = TRUE;
 			}
+#else
+			accept = LLToolDragAndDrop::isInventoryDropAcceptable(object, (LLViewerInventoryItem*)cargo_data);
+#endif
 			if(accept && drop)
 			{
 				LLViewerInventoryItem* item = (LLViewerInventoryItem*)cargo_data;
@@ -987,7 +996,8 @@ LLTaskTextureBridge::LLTaskTextureBridge(
 
 LLUIImagePtr LLTaskTextureBridge::getIcon() const
 {
-	return get_item_icon(LLAssetType::AT_TEXTURE, mInventoryType, 0, FALSE);
+	return LLInventoryIcon::getIcon(LLAssetType::AT_TEXTURE, mInventoryType,
+									0, FALSE);
 }
 
 void LLTaskTextureBridge::openItem()
@@ -1047,7 +1057,9 @@ LLTaskSoundBridge::LLTaskSoundBridge(
 
 LLUIImagePtr LLTaskSoundBridge::getIcon() const
 {
-	return get_item_icon(LLAssetType::AT_SOUND, LLInventoryType::IT_SOUND, 0, FALSE);
+	return LLInventoryIcon::getIcon(LLAssetType::AT_SOUND,
+									LLInventoryType::IT_SOUND,
+									0, FALSE);
 }
 
 void LLTaskSoundBridge::openItem()
@@ -1181,7 +1193,15 @@ LLTaskLandmarkBridge::LLTaskLandmarkBridge(
 
 LLUIImagePtr LLTaskLandmarkBridge::getIcon() const
 {
-	return get_item_icon(LLAssetType::AT_LANDMARK, LLInventoryType::IT_LANDMARK, 0, FALSE);
+	LLInventoryItem* item = findItem();
+	BOOL visited = FALSE;
+	if (item->getFlags() & LLInventoryItem::II_FLAGS_LANDMARK_VISITED)
+	{
+		visited = TRUE;
+	}
+	return LLInventoryIcon::getIcon(LLAssetType::AT_LANDMARK,
+									LLInventoryType::IT_LANDMARK,
+									visited, FALSE);
 }
 
 
@@ -1212,7 +1232,9 @@ LLTaskCallingCardBridge::LLTaskCallingCardBridge(
 
 LLUIImagePtr LLTaskCallingCardBridge::getIcon() const
 {
-	return get_item_icon(LLAssetType::AT_CALLINGCARD, LLInventoryType::IT_CALLINGCARD, 0, FALSE);
+	return LLInventoryIcon::getIcon(LLAssetType::AT_CALLINGCARD,
+									LLInventoryType::IT_CALLINGCARD,
+									0, FALSE);
 }
 
 BOOL LLTaskCallingCardBridge::isItemRenameable() const
@@ -1252,7 +1274,9 @@ LLTaskScriptBridge::LLTaskScriptBridge(
 
 LLUIImagePtr LLTaskScriptBridge::getIcon() const
 {
-	return get_item_icon(LLAssetType::AT_SCRIPT, LLInventoryType::IT_LSL, 0, FALSE);
+	return LLInventoryIcon::getIcon(LLAssetType::AT_SCRIPT,
+									LLInventoryType::IT_LSL,
+									0, FALSE);
 }
 
 
@@ -1367,7 +1391,9 @@ LLUIImagePtr LLTaskObjectBridge::getIcon() const
 		item_is_multi = TRUE;
 	}
 
-	return get_item_icon(LLAssetType::AT_OBJECT, LLInventoryType::IT_OBJECT, 0, item_is_multi);
+	return LLInventoryIcon::getIcon(LLAssetType::AT_OBJECT,
+									LLInventoryType::IT_OBJECT,
+									0, item_is_multi);
 }
 
 ///----------------------------------------------------------------------------
@@ -1457,7 +1483,9 @@ LLUIImagePtr LLTaskNotecardBridge::getIcon() const
 	}
 	else
 	{
-		return get_item_icon(LLAssetType::AT_NOTECARD, LLInventoryType::IT_NOTECARD, 0, FALSE);
+		return LLInventoryIcon::getIcon(LLAssetType::AT_NOTECARD,
+										LLInventoryType::IT_NOTECARD,
+										0, FALSE);
 	}
 }
 
@@ -1504,7 +1532,9 @@ LLTaskGestureBridge::LLTaskGestureBridge(
 
 LLUIImagePtr LLTaskGestureBridge::getIcon() const
 {
-	return get_item_icon(LLAssetType::AT_GESTURE, LLInventoryType::IT_GESTURE, 0, FALSE);
+	return LLInventoryIcon::getIcon(LLAssetType::AT_GESTURE,
+									LLInventoryType::IT_GESTURE,
+									0, FALSE);
 }
 
 void LLTaskGestureBridge::openItem()
@@ -1564,7 +1594,9 @@ LLTaskAnimationBridge::LLTaskAnimationBridge(
 
 LLUIImagePtr LLTaskAnimationBridge::getIcon() const
 {
-	return get_item_icon(LLAssetType::AT_ANIMATION, LLInventoryType::IT_ANIMATION, 0, FALSE);
+	return LLInventoryIcon::getIcon(LLAssetType::AT_ANIMATION,
+									LLInventoryType::IT_ANIMATION,
+									0, FALSE);
 }
 
 void LLTaskAnimationBridge::openItem()
@@ -1648,9 +1680,45 @@ LLTaskWearableBridge::LLTaskWearableBridge(
 
 LLUIImagePtr LLTaskWearableBridge::getIcon() const
 {
-	return get_item_icon(mAssetType, LLInventoryType::IT_WEARABLE, mFlags, FALSE );
+	return LLInventoryIcon::getIcon(mAssetType,
+									LLInventoryType::IT_WEARABLE,
+									mFlags, FALSE);
 }
 
+
+///----------------------------------------------------------------------------
+/// Class LLTaskMeshBridge
+///----------------------------------------------------------------------------
+
+class LLTaskMeshBridge : public LLTaskInvFVBridge
+{
+public:
+	LLTaskMeshBridge(LLPanelInventory* panel,
+					 const LLUUID& uuid,
+					 const std::string& name);
+
+	virtual LLUIImagePtr getIcon() const;
+	virtual void openItem();
+};
+
+LLTaskMeshBridge::LLTaskMeshBridge(LLPanelInventory* panel,
+								   const LLUUID& uuid,
+								   const std::string& name)
+:	LLTaskInvFVBridge(panel, uuid, name)
+{
+}
+
+LLUIImagePtr LLTaskMeshBridge::getIcon() const
+{
+	return LLInventoryIcon::getIcon(LLAssetType::AT_MESH,
+									LLInventoryType::IT_MESH,
+									0, FALSE);
+}
+
+void LLTaskMeshBridge::openItem()
+{
+	// open mesh
+}
 
 ///----------------------------------------------------------------------------
 /// LLTaskInvFVBridge impl
@@ -1731,6 +1799,11 @@ LLTaskInvFVBridge* LLTaskInvFVBridge::createObjectBridge(LLPanelInventory* panel
 		new_bridge = new LLTaskLSLBridge(panel,
 										 object->getUUID(),
 										 object->getName());
+		break;
+	case LLAssetType::AT_MESH:
+		new_bridge = new LLTaskMeshBridge(panel,
+										  object->getUUID(),
+										  object->getName());
 		break;
 	default:
 		llinfos << "Unhandled inventory type (llassetstorage.h): "

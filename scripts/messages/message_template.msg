@@ -2061,6 +2061,15 @@ version 2.0
 		{	IsPhantom		BOOL	}
 		{	CastsShadows	BOOL	}
 	}
+    {
+		ExtraPhysics        Variable
+		{   PhysicsShapeType U8     }
+        {   Density          F32    }
+        {   Friction         F32    }
+        {   Restitution      F32    }
+        {   GravityMultiplier    F32    }
+
+	}
 }
 
 
@@ -4241,6 +4250,10 @@ version 2.0
 	{
 		Buttons	Variable
 		{	ButtonLabel		Variable	1	}
+	}
+	{
+		OwnerData Variable
+		{	OwnerID		LLUUID	}
 	}
 }
 

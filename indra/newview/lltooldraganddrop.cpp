@@ -36,41 +36,38 @@
 #include "lltooldraganddrop.h"
 
 #include "llinstantmessage.h"
-#include "lldir.h"
+#include "llnotifications.h"
+#include "llparcel.h"
+#include "llui.h"
+#include "message.h"
+#include "object_flags.h"
 
 #include "llagent.h"
-#include "llviewercontrol.h"
 #include "llfirstuse.h"
-#include "llfloater.h"
 #include "llfloatertools.h"
-#include "llfocusmgr.h"
 #include "llgesturemgr.h"
 #include "llhudeffecttrail.h"
 #include "llhudmanager.h"
+#include "llimview.h"
 #include "llinventorybridge.h"
-#include "llinventorymodel.h"
 #include "llinventoryview.h"
 #include "llmutelist.h"
-#include "llnotify.h"
 #include "llpreviewnotecard.h"
 #include "llselectmgr.h"
+#include "lltooldraganddrop.h"
 #include "lltoolmgr.h"
 #include "lltrans.h"
-#include "llui.h"
-#include "llviewerimagelist.h"
+#include "llviewercontrol.h"
 #include "llviewerinventory.h"
-#include "llviewerobject.h"
 #include "llviewerobjectlist.h"
-#include "llviewerregion.h"
 #include "llviewerstats.h"
 #include "llviewerwindow.h"
 #include "llvoavatar.h"
 #include "llvolume.h"
 #include "llworld.h"
-#include "object_flags.h"
-#include "llimview.h"
-#include "llparcel.h" // moymod
 #include "llviewerparcelmgr.h" // moymod
+#include "llviewerregion.h"
+#include "llviewertexturelist.h"
 // [RLVa:KB] - Checked: 2010-03-04 (RLVa-1.2.0a)
 #include "rlvhandler.h"
 // [/RLVa:KB]
@@ -91,7 +88,7 @@ public:
 	virtual bool operator()(LLInventoryCategory* cat,
 							LLInventoryItem* item)
 	{
-		if(cat && (cat->getPreferredType() == LLAssetType::AT_NONE))
+		if(cat && (cat->getPreferredType() == LLFolderType::FT_NONE))
 		{
 			return true;
 		}
@@ -108,7 +105,7 @@ public:
 							LLInventoryItem* item)
 	{
 		if(item) return true;
-		if(cat && (cat->getPreferredType() == LLAssetType::AT_NONE))
+		if(cat && (cat->getPreferredType() == LLFolderType::FT_NONE))
 		{
 			return true;
 		}
@@ -481,6 +478,15 @@ LLToolDragAndDrop::dragOrDrop3dImpl LLToolDragAndDrop::sDragAndDrop3d[DAD_COUNT]
 		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_SELF
 		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_AVATAR
 		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_OBJECT
+		&LLToolDragAndDrop::dad3dNULL,//dad3dAssetOnLand, // Dest: DT_LAND
+	},
+	//	Source: DAD_MESH
+	// TODO: gesture on self could play it?  edit it?
+	{
+		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_NONE
+		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_SELF
+		&LLToolDragAndDrop::dad3dGiveInventory, // Dest: DT_AVATAR
+		&LLToolDragAndDrop::dad3dMeshObject, // Dest: DT_OBJECT
 		&LLToolDragAndDrop::dad3dNULL,//dad3dAssetOnLand, // Dest: DT_LAND
 	},
 };
@@ -1156,8 +1162,8 @@ void LLToolDragAndDrop::dropTextureAllFaces(LLViewerObject* hit_obj,
 	{
 		return;
 	}
-	LLViewerImage* image = gImageList.getImage(asset_id);
-	LLViewerStats::getInstance()->incStat(LLViewerStats::ST_EDIT_TEXTURE_COUNT );
+	LLViewerTexture* image = LLViewerTextureManager::getFetchedTexture(asset_id);
+	LLViewerStats::getInstance()->incStat(LLViewerStats::ST_EDIT_TEXTURE_COUNT);
 	S32 num_faces = hit_obj->getNumTEs();
 	for( S32 face = 0; face < num_faces; face++ )
 	{
@@ -1170,12 +1176,37 @@ void LLToolDragAndDrop::dropTextureAllFaces(LLViewerObject* hit_obj,
 	hit_obj->sendTEUpdate();
 }
 
+void LLToolDragAndDrop::dropMesh(LLViewerObject* hit_obj,
+								 LLInventoryItem* item,
+								 LLToolDragAndDrop::ESource source,
+								 const LLUUID& src_id)
+{
+	if (!item)
+	{
+		llwarns << "no inventory item." << llendl;
+		return;
+	}
+	LLUUID asset_id = item->getAssetUUID();
+	BOOL success = handleDropTextureProtections(hit_obj, item, source, src_id);
+	if(!success)
+	{
+		return;
+	}
+
+	LLSculptParams sculpt_params;
+	sculpt_params.setSculptTexture(asset_id);
+	sculpt_params.setSculptType(LL_SCULPT_TYPE_MESH);
+	hit_obj->setParameterEntry(LLNetworkData::PARAMS_SCULPT, sculpt_params, TRUE);
+
+	dialog_refresh_all();
+}
+
 /*
 void LLToolDragAndDrop::dropTextureOneFaceAvatar(LLVOAvatar* avatar, S32 hit_face, LLInventoryItem* item)
 {
 	if (hit_face == -1) return;
-	LLViewerImage* image = gImageList.getImage(item->getAssetUUID());
-	
+	LLViewerTexture* image = LLViewerTextureManager::getFetchedTexture(item->getAssetUUID());
+
 	avatar->userSetOptionalTE( hit_face, image);
 }
 */
@@ -1199,8 +1230,8 @@ void LLToolDragAndDrop::dropTextureOneFace(LLViewerObject* hit_obj,
 		return;
 	}
 	// update viewer side image in anticipation of update from simulator
-	LLViewerImage* image = gImageList.getImage(asset_id);
-	LLViewerStats::getInstance()->incStat(LLViewerStats::ST_EDIT_TEXTURE_COUNT );
+	LLViewerTexture* image = LLViewerTextureManager::getFetchedTexture(asset_id);
+	LLViewerStats::getInstance()->incStat(LLViewerStats::ST_EDIT_TEXTURE_COUNT);
 	hit_obj->setTEImage(hit_face, image);
 	dialog_refresh_all();
 
@@ -1324,8 +1355,7 @@ void LLToolDragAndDrop::dropObject(LLViewerObject* raycast_target,
 
 	// Check if it's in the trash.
 	bool is_in_trash = false;
-	LLUUID trash_id;
-	trash_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+	const LLUUID trash_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 	if(gInventory.isObjectDescendentOf(item->getUUID(), trash_id))
 	{
 		is_in_trash = true;
@@ -2126,7 +2156,7 @@ EAcceptance LLToolDragAndDrop::dad3dRezAttachmentFromInv(
 	if(!item || !item->isComplete()) return ACCEPT_NO;
 
 	// must not be in the trash
-	LLUUID trash_id(gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH));
+	const LLUUID trash_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 	if( gInventory.isObjectDescendentOf( item->getUUID(), trash_id ) )
 	{
 		return ACCEPT_NO;
@@ -2233,8 +2263,7 @@ EAcceptance LLToolDragAndDrop::dad3dRezObjectOnLand(
 	}
 
 	// Check if it's in the trash.
-	LLUUID trash_id;
-	trash_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+	const LLUUID trash_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 	if(gInventory.isObjectDescendentOf(item->getUUID(), trash_id))
 	{
 		accept = ACCEPT_YES_SINGLE;
@@ -2324,8 +2353,7 @@ EAcceptance LLToolDragAndDrop::dad3dRezObjectOnObject(
 	}
 
 	// Check if it's in the trash.
-	LLUUID trash_id;
-	trash_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+	const LLUUID trash_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 	if(gInventory.isObjectDescendentOf(item->getUUID(), trash_id))
 	{
 		accept = ACCEPT_YES_SINGLE;
@@ -2378,10 +2406,11 @@ EAcceptance LLToolDragAndDrop::dad3dRezScript(
 	return rv;
 }
 
-EAcceptance LLToolDragAndDrop::dad3dTextureObject(
-	LLViewerObject* obj, S32 face, MASK mask, BOOL drop)
+EAcceptance LLToolDragAndDrop::dad3dApplyToObject(LLViewerObject* obj, S32 face,
+												  MASK mask, BOOL drop,
+												  EDragAndDropType cargo_type)
 {
-	lldebugs << "LLToolDragAndDrop::dad3dTextureObject()" << llendl;
+	lldebugs << "LLToolDragAndDrop::dad3dApplyToObject()" << llendl;
 
 	// *HACK: In order to resolve SL-22177, we need to block drags
 	// from notecards and objects onto other objects.
@@ -2415,13 +2444,24 @@ EAcceptance LLToolDragAndDrop::dad3dTextureObject(
 
 	if(drop && (ACCEPT_YES_SINGLE <= rv))
 	{
-		if((mask & MASK_SHIFT))
+		if (cargo_type == DAD_TEXTURE)
 		{
-			dropTextureAllFaces(obj, item, mSource, mSourceID);
+			if((mask & MASK_SHIFT))
+			{
+				dropTextureAllFaces(obj, item, mSource, mSourceID);
+			}
+			else
+			{
+				dropTextureOneFace(obj, face, item, mSource, mSourceID);
+			}
+		}
+		else if (cargo_type == DAD_MESH)
+		{
+			dropMesh(obj, item, mSource, mSourceID);
 		}
 		else
 		{
-			dropTextureOneFace(obj, face, item, mSource, mSourceID);
+			llwarns << "unsupported asset type" << llendl;
 		}
 		
 		// VEFFECT: SetTexture
@@ -2435,6 +2475,19 @@ EAcceptance LLToolDragAndDrop::dad3dTextureObject(
 	// enable multi-drop, although last texture will win
 	return ACCEPT_YES_MULTI;
 }
+
+EAcceptance LLToolDragAndDrop::dad3dTextureObject(LLViewerObject* obj, S32 face,
+												  MASK mask, BOOL drop)
+{
+	return dad3dApplyToObject(obj, face, mask, drop, DAD_TEXTURE);
+}
+
+EAcceptance LLToolDragAndDrop::dad3dMeshObject(LLViewerObject* obj, S32 face,
+											   MASK mask, BOOL drop)
+{
+	return dad3dApplyToObject(obj, face, mask, drop, DAD_MESH);
+}
+
 /*
 EAcceptance LLToolDragAndDrop::dad3dTextureSelf(
 	LLViewerObject* obj, S32 face, MASK mask, BOOL drop)
@@ -2463,7 +2516,7 @@ EAcceptance LLToolDragAndDrop::dad3dWearItem(
 	if(mSource == SOURCE_AGENT || mSource == SOURCE_LIBRARY)
 	{
 		// it's in the agent inventory
-		LLUUID trash_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+		const LLUUID trash_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 		if( gInventory.isObjectDescendentOf( item->getUUID(), trash_id ) )
 		{
 			return ACCEPT_NO;
@@ -2525,7 +2578,7 @@ EAcceptance LLToolDragAndDrop::dad3dActivateGesture(
 	if(mSource == SOURCE_AGENT || mSource == SOURCE_LIBRARY)
 	{
 		// it's in the agent inventory
-		LLUUID trash_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
+		const LLUUID trash_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 		if( gInventory.isObjectDescendentOf( item->getUUID(), trash_id ) )
 		{
 			return ACCEPT_NO;
@@ -2584,7 +2637,7 @@ EAcceptance LLToolDragAndDrop::dad3dWearCategory(
 
 	if(mSource == SOURCE_AGENT)
 	{
-		LLUUID trash_id(gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH));
+		const LLUUID trash_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 		if( gInventory.isObjectDescendentOf( category->getUUID(), trash_id ) )
 		{
 			return ACCEPT_NO;

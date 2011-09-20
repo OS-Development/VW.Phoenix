@@ -52,7 +52,7 @@ class LLTextBox;
 class LLTextEditor;
 class LLTextureCtrl;
 class LLUICtrl;
-class LLViewerImage;
+class LLViewerTexture;
 class LLViewerObject;
 class LLMessageSystem;
 class LLIconCtrl;
@@ -282,7 +282,9 @@ public:
 	// and return FALSE.
 	BOOL canClose();
 
+	/*
 	void setAvatar(LLViewerObject *avatarp);
+	*/
 
 	// Fill in the avatar ID and handle some field fill-in, as well as 
 	// button enablement.

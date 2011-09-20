@@ -36,50 +36,42 @@
 
 #include "llviewerprecompiledheaders.h"
 
-#include "llpaneldirbrowser.h"
-
-// linden library includes
-#include "lldir.h"
-#include "lleventflags.h"
-#include "llfontgl.h"
-#include "llqueryflags.h"
-#include "message.h"
-
-// viewer project includes
-#include "llagent.h"
-#include "llbutton.h"
-#include "llcheckboxctrl.h"
-#include "llcombobox.h"
-#include "llfloateravatarinfo.h"
-#include "llfloaterdirectory.h" 
-#include "lllineeditor.h"
-#include "llmenucommands.h"
-#include "llmenugl.h"
-#include "llpanelavatar.h"
-#include "llpanelevent.h"
-#include "llpanelgroup.h"
-#include "llpanelclassified.h"
-#include "llpanelpick.h"
-#include "llpanelplace.h"
-#include "llpaneldirland.h"
-#include "llproductinforequest.h"
-#include "llscrolllistctrl.h"
-#include "lltextbox.h"
-#include "lltrans.h"
-#include "lluiconstants.h"
-#include "llviewercontrol.h"
-#include "llviewerimagelist.h"
-#include "llviewermessage.h"
-#include "lluictrlfactory.h"
-#include "llnotify.h"
-
-#include "llfloateravatarinfo.h" // popout button
-
 #include <string>
 #include <sstream>
 #include <vector>
 #include <algorithm>
 
+#include "llpaneldirbrowser.h"
+
+// linden library includes
+#include "llbutton.h"
+#include "llcheckboxctrl.h"
+#include "lldir.h"
+#include "lleventflags.h"
+#include "lllineeditor.h"
+#include "llqueryflags.h"
+#include "llscrolllistctrl.h"
+#include "lluictrlfactory.h"
+#include "message.h"
+
+// viewer project includes
+#include "llagent.h"
+#include "llfloateravatarinfo.h"
+#include "llfloaterdirectory.h" 
+#include "llmenucommands.h"
+#include "llpanelavatar.h"
+#include "llpanelclassified.h"
+#include "llpaneldirland.h"
+#include "llpanelevent.h"
+#include "llpanelgroup.h"
+#include "llpanelpick.h"
+#include "llpanelplace.h"
+#include "llproductinforequest.h"
+#include "lltrans.h"
+#include "lluiconstants.h"
+#include "llviewercontrol.h"
+#include "llviewermessage.h"
+#include "llviewertexturelist.h"
 
 //
 // Globals

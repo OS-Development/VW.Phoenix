@@ -237,7 +237,7 @@ const S32 LLVFSFileBlock::SERIAL_SIZE = 34;
 LLVFS::LLVFS(const std::string& index_filename, const std::string& data_filename, const BOOL read_only, const U32 presize, const BOOL remove_after_crash)
 :	mRemoveAfterCrash(remove_after_crash)
 {
-	mDataMutex = new LLMutex(0);
+	mDataMutex = new LLMutex;
 
 	S32 i;
 	for (i = 0; i < VFSLOCK_COUNT; i++)
@@ -2030,6 +2030,9 @@ std::string get_extension(LLAssetType::EType type)
 	case LLAssetType::AT_ANIMATION:
 		extension = ".lla";
 		break;
+	case LLAssetType::AT_MESH:
+		extension = ".slm";
+		break;
 	default:
 		// Just use the asset server filename extension in most cases
 		extension += ".";
@@ -2089,8 +2092,7 @@ void LLVFS::dumpFiles()
 			std::string filename = id.asString() + extension;
 			llinfos << " Writing " << filename << llendl;
 			
-			LLAPRFile outfile ;
-			outfile.open(filename, LL_APR_WB, LLAPRFile::global);
+			LLAPRFile outfile(filename, LL_APR_WB);
 			outfile.write(buffer, size);
 			outfile.close();
 			delete[] buffer;

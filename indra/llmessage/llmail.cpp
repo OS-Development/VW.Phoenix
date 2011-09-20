@@ -56,6 +56,7 @@
 #include "llstring.h"
 #include "lluuid.h"
 #include "net.h"
+#include "llaprpool.h"
 
 //
 // constants
@@ -63,7 +64,7 @@
 const size_t LL_MAX_KNOWN_GOOD_MAIL_SIZE = 4096;
 
 static bool gMailEnabled = true;
-static apr_pool_t* gMailPool;
+static LLAPRPool gMailPool;
 static apr_sockaddr_t* gSockAddr;
 static apr_socket_t* gMailSocket;
 
@@ -88,7 +89,7 @@ bool connect_smtp()
 		gSockAddr->sa.sin.sin_family,
 		SOCK_STREAM,
 		APR_PROTO_TCP,
-		gMailPool);
+		gMailPool());
 	if(ll_apr_warn_status(status)) return false;
 	status = apr_socket_connect(gMailSocket, gSockAddr);
 	if(ll_apr_warn_status(status))
@@ -145,19 +146,19 @@ BOOL LLMail::send(
 }
 
 // static
-void LLMail::init(const std::string& hostname, apr_pool_t* pool)
+void LLMail::init(const std::string& hostname)
 {
 	gMailSocket = NULL;
-	if(hostname.empty() || !pool)
+	if (hostname.empty())
 	{
-		gMailPool = NULL;
 		gSockAddr = NULL;
+		gMailPool.destroy();
 	}
 	else
 	{
-		gMailPool = pool;
+		gMailPool.create();
 
-		// collect all the information into a socaddr sturcture. the
+		// Collect all the information into a sockaddr structure. the
 		// documentation is a bit unclear, but I either have to
 		// specify APR_UNSPEC or not specify any flags. I am not sure
 		// which option is better.
@@ -167,7 +168,7 @@ void LLMail::init(const std::string& hostname, apr_pool_t* pool)
 			APR_UNSPEC,
 			25,
 			APR_IPV4_ADDR_OK,
-			gMailPool);
+			gMailPool());
 		ll_apr_warn_status(status);
 	}
 }
@@ -265,7 +266,7 @@ std::string LLMail::buildSMTPTransaction(
 // static
 bool LLMail::send(
 	const std::string& header,
-	const std::string& message,
+	const std::string& raw_message,
 	const char* from_address,
 	const char* to_address)
 {
@@ -276,8 +277,20 @@ bool LLMail::send(
 		return false;
 	}
 
-	// *FIX: this translation doesn't deal with a single period on a
-	// line by itself.
+	// remove any "." SMTP commands to prevent injection (DEV-35777)
+	// we don't need to worry about "\r\n.\r\n" because of the 
+	// "\n" --> "\n\n" conversion going into rfc2822_msg below
+	std::string message = raw_message;
+	std::string bad_string = "\n.\n";
+	std::string good_string = "\n..\n";
+	while (1)
+	{
+		int index = message.find(bad_string);
+		if (index == std::string::npos) break;
+		message.replace(index, bad_string.size(), good_string);
+	}
+
+	// convert all "\n" into "\r\n"
 	std::ostringstream rfc2822_msg;
 	for(U32 i = 0; i < message.size(); ++i)
 	{

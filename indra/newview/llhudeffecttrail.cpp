@@ -42,7 +42,7 @@
 #include "llbox.h"
 #include "lldrawable.h"
 #include "llhudrender.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llviewerobjectlist.h"
 #include "llviewerpartsim.h"
 #include "llviewerpartsource.h"
@@ -181,9 +181,7 @@ void LLHUDEffectSpiral::triggerLocal()
 {
 	mKillTime = mTimer.getElapsedTimeF32() + mDuration;
 
-	static BOOL* sShowSelectionBeam = rebind_llcontrol<BOOL>("ShowSelectionBeam", &gSavedSettings, true);
-
-	BOOL show_beam = *sShowSelectionBeam;
+	static LLCachedControl<bool> show_beam(gSavedSettings, "ShowSelectionBeam");
 
 	LLColor4 color;
 	color.setVec(mColor);
@@ -280,12 +278,12 @@ void LLHUDEffectSpiral::render()
 {
 	F32 time = mTimer.getElapsedTimeF32();
 
-	static BOOL* sShowSelectionBeam = rebind_llcontrol<BOOL>("ShowSelectionBeam", &gSavedSettings, true);
+	static LLCachedControl<bool> sShowSelectionBeam(gSavedSettings, "ShowSelectionBeam");
 
 	if ((!mSourceObject.isNull() && mSourceObject->isDead()) ||
 	    (!mTargetObject.isNull() && mTargetObject->isDead()) ||
 	    mKillTime < time ||
-		(!mPartSourcep.isNull() && !*sShowSelectionBeam) )
+		(!mPartSourcep.isNull() && !sShowSelectionBeam) )
 	{
 		markDead();
 		return;

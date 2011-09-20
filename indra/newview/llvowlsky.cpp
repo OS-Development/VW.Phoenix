@@ -334,11 +334,11 @@ BOOL LLVOWLSky::updateGeometry(LLDrawable * drawable)
 	}
 
 	{
-		static S32* sRenderMaxVBOSize = rebind_llcontrol<S32>("RenderMaxVBOSize", &gSavedSettings, true);
+		static LLCachedControl<U32> sRenderMaxVBOSize(gSavedSettings, "RenderMaxVBOSize");
 
-		const U32 max_buffer_bytes = (*sRenderMaxVBOSize)*1024;
+		const U32 max_buffer_bytes = sRenderMaxVBOSize*1024;
 		const U32 data_mask = LLDrawPoolWLSky::SKY_VERTEX_DATA_MASK;
-		const U32 max_verts = max_buffer_bytes / LLVertexBuffer::calcStride(data_mask);
+		const U32 max_verts = max_buffer_bytes / LLVertexBuffer::calcVertexSize(data_mask);
 
 		const U32 total_stacks = getNumStacks();
 
@@ -491,7 +491,7 @@ void LLVOWLSky::drawStars(void)
 	if (mStarsVerts.notNull())
 	{
 		mStarsVerts->setBuffer(LLDrawPoolWLSky::STAR_VERTEX_DATA_MASK);
-		mStarsVerts->draw(LLRender::POINTS, getStarsNumIndices(), 0);
+		mStarsVerts->drawArrays(LLRender::QUADS, 0, getStarsNumVerts() * 4);
 	}
 }
 
@@ -519,7 +519,7 @@ void LLVOWLSky::drawDome(void)
 			LLRender::TRIANGLE_STRIP, 
 			0, strips_segment->getRequestedVerts()-1, strips_segment->getRequestedIndices(), 
 			0);
-		gPipeline.addTrianglesDrawn(strips_segment->getRequestedIndices() - 2);
+		gPipeline.addTrianglesDrawn(strips_segment->getRequestedIndices(), LLRender::TRIANGLE_STRIP);
 	}
 
 #else
@@ -771,17 +771,17 @@ BOOL LLVOWLSky::updateStarGeometry(LLDrawable *drawable)
 {
 	LLStrider<LLVector3> verticesp;
 	LLStrider<LLColor4U> colorsp;
-	LLStrider<U16> indicesp;
+	LLStrider<LLVector2> texcoordsp;
 
 	if (mStarsVerts.isNull())
 	{
 		mStarsVerts = new LLVertexBuffer(LLDrawPoolWLSky::STAR_VERTEX_DATA_MASK, GL_DYNAMIC_DRAW);
-		mStarsVerts->allocateBuffer(getStarsNumVerts(), getStarsNumIndices(), TRUE);
+		mStarsVerts->allocateBuffer(getStarsNumVerts() * 4, 0, TRUE);
 	}
 
 	BOOL success = mStarsVerts->getVertexStrider(verticesp)
-		&& mStarsVerts->getIndexStrider(indicesp)
-		&& mStarsVerts->getColorStrider(colorsp);
+					&& mStarsVerts->getColorStrider(colorsp)
+					&& mStarsVerts->getTexCoord0Strider(texcoordsp);
 
 	if(!success)
 	{
@@ -791,11 +791,37 @@ BOOL LLVOWLSky::updateStarGeometry(LLDrawable *drawable)
 	// *TODO: fix LLStrider with a real prefix increment operator so it can be
 	// used as a model of OutputIterator. -Brad
 	// std::copy(mStarVertices.begin(), mStarVertices.end(), verticesp);
+
+	if (mStarVertices.size() < getStarsNumVerts())
+	{
+		llerrs << "Star reference geometry insufficient." << llendl;
+	}
+
 	for (U32 vtx = 0; vtx < getStarsNumVerts(); ++vtx)
 	{
+		LLVector3 at = mStarVertices[vtx];
+		at.normVec();
+		LLVector3 left = at%LLVector3(0,0,1);
+		LLVector3 up = at%left;
+
+		F32 sc = 0.5f+ll_frand()*1.25f;
+		left *= sc;
+		up *= sc;
+
 		*(verticesp++)  = mStarVertices[vtx];
+		*(verticesp++) = mStarVertices[vtx]+left;
+		*(verticesp++) = mStarVertices[vtx]+left+up;
+		*(verticesp++) = mStarVertices[vtx]+up;
+
+		*(texcoordsp++) = LLVector2(0,0);
+		*(texcoordsp++) = LLVector2(0,1);
+		*(texcoordsp++) = LLVector2(1,1);
+		*(texcoordsp++) = LLVector2(1,0);
+
 		*(colorsp++)    = LLColor4U(mStarColors[vtx]);
-		*(indicesp++)   = vtx;
+		*(colorsp++)    = LLColor4U(mStarColors[vtx]);
+		*(colorsp++)    = LLColor4U(mStarColors[vtx]);
+		*(colorsp++)    = LLColor4U(mStarColors[vtx]);
 	}
 
 	mStarsVerts->setBuffer(0);

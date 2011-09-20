@@ -166,6 +166,7 @@ public:
 	Translation()
 	{
 		mIgnore = FALSE;
+		mIgnorePositions = FALSE;
 		mRelativePositionKey = FALSE;
 		mRelativeRotationKey = FALSE;
 		mPriorityModifier = 0;
@@ -198,7 +199,7 @@ public:
 	~LLBVHLoader();
 	
 	// Status Codes
-	typedef const char *Status;
+	typedef const char *status_t;
 	static const char *ST_OK;
 	static const char *ST_EOF;
 	static const char *ST_NO_CONSTRAINT;
@@ -230,13 +231,14 @@ public:
 	static const char *ST_NO_XLT_EASEOUT;
 	static const char *ST_NO_XLT_HAND;
 	static const char *ST_NO_XLT_EMOTE;
+	static const char *ST_BAD_ROOT;
 
 	// Loads the specified translation table.
-	Status loadTranslationTable(const char *fileName);
+	status_t loadTranslationTable(const char *fileName);
 
 	// Load the specified BVH file.
 	// Returns status code.
-	Status loadBVHFile(const char *buffer, char *error_text, S32 &error_line);
+	status_t loadBVHFile(const char *buffer, char *error_text, S32 &error_line);
 
 	// Applies translations to BVH data loaded.
 	void applyTranslations();
@@ -260,7 +262,7 @@ public:
 
 	BOOL isInitialized() { return mInitialized; }
 
-	Status getStatus() { return mStatus; }
+	status_t getStatus() { return mStatus; }
 
 protected:
 	// Consumes one line of input from file.
@@ -287,7 +289,7 @@ protected:
 	std::string			mEmoteName;
 
 	BOOL				mInitialized;
-	Status				mStatus;
+	status_t			mStatus;
 	// computed values
 	F32	mDuration;
 };

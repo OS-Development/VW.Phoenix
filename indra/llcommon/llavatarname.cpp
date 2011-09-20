@@ -52,7 +52,7 @@ LLAvatarName::LLAvatarName()
 	mLegacyFirstName(),
 	mLegacyLastName(),
 	mIsDisplayNameDefault(false),
-	mIsDummy(false),
+	mIsTemporaryName(false),
 	mExpires(F64_MAX),
 	mNextUpdate(0.0)
 { }
@@ -94,7 +94,15 @@ void LLAvatarName::fromLLSD(const LLSD& sd)
 std::string LLAvatarName::getCompleteName(bool linefeed) const
 {
 	std::string name;
-	if (!mUsername.empty())
+	if (mUsername.empty() || mIsDisplayNameDefault)
+	{
+		// If the display name feature is off
+		// OR this particular display name is defaulted (i.e. based
+		// on user name), then display only the easier to read instance
+		// of the person's name.
+		name = mDisplayName;
+	}
+	else
 	{
 		if (linefeed)
 		{
@@ -104,11 +112,6 @@ std::string LLAvatarName::getCompleteName(bool linefeed) const
 		{
 			name = mDisplayName + " (" + mUsername + ")";
 		}
-	}
-	else
-	{
-		// ...display names are off, legacy name is in mDisplayName
-		name = mDisplayName;
 	}
 	return name;
 }

@@ -45,7 +45,9 @@ public:
 	LLGLDepthTest(GLboolean depth_enabled, GLboolean write_enabled = GL_TRUE, GLenum depth_func = GL_LEQUAL);
 	
 	~LLGLDepthTest();
-	
+
+	void checkState();
+
 	GLboolean mPrevDepthEnabled;
 	GLenum mPrevDepthFunc;
 	GLboolean mPrevWriteEnabled;
@@ -242,44 +244,28 @@ public:
 class LLGLSSpecular
 {
 public:
+	F32 mShininess;
 	LLGLSSpecular(const LLColor4& color, F32 shininess)
 	{
-		if (shininess > 0.0f)
+		mShininess = shininess;
+		if (mShininess > 0.0f)
 		{
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, color.mV);
-			S32 shiny = (S32)(shininess*128.f);
-			shiny = llclamp(shiny,0,128);
+			S32 shiny = (S32)(shininess * 128.f);
+			shiny = llclamp(shiny, 0, 128);
 			glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, shiny);
 		}
 	}
 	~LLGLSSpecular()
 	{
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, LLColor4(0.f,0.f,0.f,0.f).mV);
-		glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, 0);
+		if (mShininess > 0.f)
+		{
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, LLColor4(0.f, 0.f, 0.f, 0.f).mV);
+			glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, 0);
+		}
 	}
 };
 
 //----------------------------------------------------------------------------
-
-
-class LLGLSBlendFunc : public LLGLSPipeline {
-protected:
-	GLint mSavedSrc, mSavedDst;
-	LLGLEnable mBlend;
-
-public:
-	LLGLSBlendFunc(GLenum srcFunc, GLenum dstFunc) :
-		mBlend(GL_BLEND)
-	{
-		glGetIntegerv(GL_BLEND_SRC, &mSavedSrc);
-		glGetIntegerv(GL_BLEND_DST, &mSavedDst);
-		glBlendFunc(srcFunc, dstFunc);
-	}
-
-	~LLGLSBlendFunc(void) {
-		glBlendFunc(mSavedSrc, mSavedDst);
-	}
-};
-
 
 #endif

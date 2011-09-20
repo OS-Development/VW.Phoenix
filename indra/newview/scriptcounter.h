@@ -60,10 +60,11 @@ public:
 	static void radarScriptCount(LLUUID target);
 	static void finalize(LLSD data);
 	static void showResult();
-	static void checkCount();
+	static void checkCount(LLUUID targetID = LLUUID::null);
 	static U32 scriptcount;
 	static U32 scriptMemory;
 	static U32 toCount;
+	static F32 scriptTime;
 
 private:
 	static void subserialize(LLViewerObject* linkset);

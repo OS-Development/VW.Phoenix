@@ -35,6 +35,7 @@
 #include "lltemplatemessagebuilder.h"
 
 #include "llmessagetemplate.h"
+#include "llmath.h"
 #include "llquaternion.h"
 #include "u64.h"
 #include "v3dmath.h"
@@ -326,7 +327,7 @@ void LLTemplateMessageBuilder::addData(const char *varname, const void *data, EM
 			       << "(" << size << ").  Clamping size and truncating data." << llendl;
 			size = 255;
 			char *truncate = (char *)data;
-			truncate[255] = 0;
+			truncate[254] = 0; // array size is 255 but the last element index is 254
 		}
 
 		// no correct size for MVT_VARIABLE, instead we need to tell how many bytes the size will be encoded as
@@ -728,7 +729,7 @@ static S32 buildBlock(U8* buffer, S32 buffer_size, const LLMessageBlock* templat
 					    // out gracefully from this function. XXXTBD
 						llerrs << "buildBlock failed. "
 							<< "Attempted to pack "
-							<< result + mvci.getSize()
+							<< (result + mvci.getSize())
 							<< " bytes into a buffer with size "
 							<< buffer_size << "." << llendl;
 					}						
@@ -737,10 +738,13 @@ static S32 buildBlock(U8* buffer, S32 buffer_size, const LLMessageBlock* templat
 		}
 
 		--block_count;
-		++block_iter;
 		if (block_iter != message_data->mMemberBlocks.end())
 		{
-			mbci = block_iter->second;
+			++block_iter;
+			if (block_iter != message_data->mMemberBlocks.end())
+			{
+				mbci = block_iter->second;
+			}
 		}
 	}
 

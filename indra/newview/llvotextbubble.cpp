@@ -43,9 +43,10 @@
 #include "llbox.h"
 #include "lldrawable.h"
 #include "llface.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llvolume.h"
 #include "pipeline.h"
+#include "llvector4a.h"
 #include "llviewerregion.h"
 
 LLVOTextBubble::LLVOTextBubble(const LLUUID &id, const LLPCode pcode, LLViewerRegion *regionp)
@@ -125,7 +126,7 @@ void LLVOTextBubble::updateTextures()
 		const LLTextureEntry *te = getTE(i);
 		F32 texel_area_ratio = fabs(te->mScaleS * te->mScaleT);
 		texel_area_ratio = llclamp(texel_area_ratio, .125f, 16.f);
-		LLViewerImage *imagep = getTEImage(i);
+		LLViewerTexture *imagep = getTEImage(i);
 		if (imagep)
 		{
 			imagep->addTextureStats(mPixelArea / texel_area_ratio);
@@ -142,9 +143,9 @@ LLDrawable *LLVOTextBubble::createDrawable(LLPipeline *pipeline)
 	
 	for (U32 i = 0; i < getNumTEs(); i++)
 	{
-		LLViewerImage *imagep;
+		LLViewerTexture *imagep;
 		const LLTextureEntry *texture_entry = getTE(i);
-		imagep = gImageList.getImage(texture_entry->getID());
+		imagep = LLViewerTextureManager::getFetchedTexture(texture_entry->getID());
 
 		mDrawable->addFace((LLFacePool*) NULL, imagep);
 	}
@@ -194,7 +195,7 @@ BOOL LLVOTextBubble::updateGeometry(LLDrawable *drawable)
 	{
 		LLFace *face = drawable->getFace(i);
 		face->setTEOffset(i);
-		face->setTexture(LLViewerImage::sSmokeImagep);
+		face->setTexture(LLViewerFetchedTexture::sSmokeImagep);
 		face->setState(LLFace::FULLBRIGHT);
 	}
 
@@ -215,7 +216,7 @@ void LLVOTextBubble::updateFaceSize(S32 idx)
 	else
 	{
 		const LLVolumeFace& vol_face = getVolume()->getVolumeFace(idx);
-		face->setSize(vol_face.mVertices.size(), vol_face.mIndices.size());
+		face->setSize(vol_face.mNumVertices, vol_face.mNumIndices);
 	}
 }
 
@@ -233,19 +234,36 @@ void LLVOTextBubble::getGeometry(S32 idx,
 
 	const LLVolumeFace& face = getVolume()->getVolumeFace(idx);
 	
-	LLVector3 pos = getPositionAgent();
+	LLVector4a pos;
+	pos.load3(getPositionAgent().mV);
+
+	LLVector4a scale;
+	scale.load3(getScale().mV);
+
 	LLColor4U color = LLColor4U(getTE(idx)->getColor());
 	U32 offset = mDrawable->getFace(idx)->getGeomIndex();
 	
-	for (U32 i = 0; i < face.mVertices.size(); i++)
+	LLVector4a* dst_pos = (LLVector4a*) verticesp.get();
+	LLVector4a* src_pos = (LLVector4a*) face.mPositions;
+
+	LLVector4a* dst_norm = (LLVector4a*) normalsp.get();
+	LLVector4a* src_norm  = (LLVector4a*) face.mNormals;
+
+	LLVector2* dst_tc = (LLVector2*) texcoordsp.get();
+	LLVector2* src_tc = (LLVector2*) face.mTexCoords;
+
+	LLVector4a::memcpyNonAliased16((F32*) dst_norm, (F32*) src_norm, face.mNumVertices * 4 * sizeof(F32));
+	LLVector4a::memcpyNonAliased16((F32*) dst_tc, (F32*) src_tc, face.mNumVertices * 2 * sizeof(F32));
+
+	for (U32 i = 0; i < face.mNumVertices; i++)
 	{
-		*verticesp++ = face.mVertices[i].mPosition.scaledVec(getScale()) + pos;
-		*normalsp++ = face.mVertices[i].mNormal;
-		*texcoordsp++ = face.mVertices[i].mTexCoord;
+		LLVector4a t;
+		t.setMul(src_pos[i], scale);
+		dst_pos[i].setAdd(t, pos);
 		*colorsp++ = color;
 	}
 	
-	for (U32 i = 0; i < face.mIndices.size(); i++)
+	for (U32 i = 0; i < face.mNumIndices; i++)
 	{
 		*indicesp++ = face.mIndices[i] + offset;
 	}

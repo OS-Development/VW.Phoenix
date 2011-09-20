@@ -5,11 +5,13 @@ project(llxml)
 include(00-Common)
 include(LLCommon)
 include(LLMath)
+include(LLVFS)
 include(LLXML)
 
 include_directories(
     ${LLCOMMON_INCLUDE_DIRS}
     ${LLMATH_INCLUDE_DIRS}
+    ${LLVFS_INCLUDE_DIRS}
     )
 
 set(llxml_SOURCE_FILES
@@ -38,6 +40,7 @@ add_library (llxml ${llxml_SOURCE_FILES})
 add_dependencies(llxml prepare)
 target_link_libraries(
     llxml
-    ${Boost_SIGNALS_LIBRARY}
+    llvfs
+    llmath
     ${EXPAT_LIBRARIES}
     )

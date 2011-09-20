@@ -37,7 +37,7 @@
  * Base class and manager for in-world 2.5D non-interactive objects
  */
 
-#include "llmemory.h"
+#include "llpointer.h"
 
 #include "v4color.h"
 #include "v3math.h"
@@ -74,7 +74,6 @@ public:
 	static LLHUDEffect *addHUDEffect(const U8 type);
 	static void updateAll();
 	static void renderAll();
-	static void renderAllForSelect();
 
 	static void markViewerEffectsDead();
 	static void renderAllForTimer();
@@ -108,7 +107,6 @@ protected:
 	~LLHUDObject();
 
 	virtual void render() = 0;
-	virtual void renderForSelect() {};
 	virtual void renderForTimer() {};
 	
 protected:

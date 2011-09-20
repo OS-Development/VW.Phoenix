@@ -51,7 +51,11 @@ public:
 	 */
 public:
 	static void show(void*);
-	static void onAvatarNameLookup(const LLUUID& uuid, const std::string& strFirst, const std::string& strLast, BOOL fGroup, void* pParam);
+
+	// Ansariel: Changed to boost::bind callback
+	//static void onAvatarNameLookup(const LLUUID& uuid, const std::string& strFirst, const std::string& strLast, BOOL fGroup, void* pParam);
+	void onAvatarNameLookup(const LLUUID& uuid, const std::string& fullname, bool is_group);
+
 protected:
 	void refreshAll();
 private:

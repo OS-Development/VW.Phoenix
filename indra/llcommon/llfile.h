@@ -77,6 +77,8 @@ public:
 	static	LLFILE*	fopen(const std::string& filename,const char* accessmode);	/* Flawfinder: ignore */
 	static	LLFILE*	_fsopen(const std::string& filename,const char* accessmode,int	sharingFlag);
 
+	static	int		close(LLFILE * file);
+
 	// perms is a permissions mask like 0777 or 0700.  In most cases it will
 	// be overridden by the user's umask.  It is ignored on Windows.
 	static	int		mkdir(const std::string& filename, int perms = 0700);
@@ -231,7 +233,7 @@ public:
  * and should only be used for config files and the like -- not in a
  * loop.
  */
-std::streamsize llifstream_size(llifstream& fstr);
-std::streamsize llofstream_size(llofstream& fstr);
+std::streamsize LL_COMMON_API llifstream_size(llifstream& fstr);
+std::streamsize LL_COMMON_API llofstream_size(llofstream& fstr);
 
 #endif // not LL_LLFILE_H

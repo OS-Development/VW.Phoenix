@@ -53,7 +53,7 @@ class LLVector3d
 		inline LLVector3d(const F64 x, const F64 y, const F64 z);			// Initializes LLVector3d to (x. y, z)
 		inline explicit LLVector3d(const F64 *vec);				// Initializes LLVector3d to (vec[0]. vec[1], vec[2])
 		inline explicit LLVector3d(const LLVector3 &vec);
-		LLVector3d(const LLSD& sd)
+		explicit LLVector3d(const LLSD& sd)
 		{
 			setValue(sd);
 		}
@@ -63,12 +63,6 @@ class LLVector3d
 			mdV[0] = sd[0].asReal();
 			mdV[1] = sd[1].asReal();
 			mdV[2] = sd[2].asReal();
-		}
-
-		const LLVector3d& operator=(const LLSD& sd)
-		{
-			setValue(sd);
-			return *this;
 		}
 
 		LLSD getValue() const
@@ -246,7 +240,7 @@ inline const LLVector3d&	LLVector3d::setVec(const F64 *vec)
 
 inline F64 LLVector3d::normVec(void)
 {
-	F64 mag = fsqrtf(mdV[0]*mdV[0] + mdV[1]*mdV[1] + mdV[2]*mdV[2]);
+	F64 mag = (F32) sqrt(mdV[0]*mdV[0] + mdV[1]*mdV[1] + mdV[2]*mdV[2]);
 	F64 oomag;
 
 	if (mag > FP_MAG_THRESHOLD)
@@ -268,7 +262,7 @@ inline F64 LLVector3d::normVec(void)
 
 inline F64 LLVector3d::normalize(void)
 {
-	F64 mag = fsqrtf(mdV[0]*mdV[0] + mdV[1]*mdV[1] + mdV[2]*mdV[2]);
+	F64 mag = (F32) sqrt(mdV[0]*mdV[0] + mdV[1]*mdV[1] + mdV[2]*mdV[2]);
 	F64 oomag;
 
 	if (mag > FP_MAG_THRESHOLD)
@@ -292,7 +286,7 @@ inline F64 LLVector3d::normalize(void)
 
 inline F64	LLVector3d::magVec(void) const
 {
-	return fsqrtf(mdV[0]*mdV[0] + mdV[1]*mdV[1] + mdV[2]*mdV[2]);
+	return (F32) sqrt(mdV[0]*mdV[0] + mdV[1]*mdV[1] + mdV[2]*mdV[2]);
 }
 
 inline F64	LLVector3d::magVecSquared(void) const
@@ -302,7 +296,7 @@ inline F64	LLVector3d::magVecSquared(void) const
 
 inline F64	LLVector3d::length(void) const
 {
-	return fsqrtf(mdV[0]*mdV[0] + mdV[1]*mdV[1] + mdV[2]*mdV[2]);
+	return (F32) sqrt(mdV[0]*mdV[0] + mdV[1]*mdV[1] + mdV[2]*mdV[2]);
 }
 
 inline F64	LLVector3d::lengthSquared(void) const
@@ -412,7 +406,7 @@ inline F64	dist_vec(const LLVector3d &a, const LLVector3d &b)
 	F64 x = a.mdV[0] - b.mdV[0];
 	F64 y = a.mdV[1] - b.mdV[1];
 	F64 z = a.mdV[2] - b.mdV[2];
-	return fsqrtf( x*x + y*y + z*z );
+	return (F32) sqrt( x*x + y*y + z*z );
 }
 
 inline F64	dist_vec_squared(const LLVector3d &a, const LLVector3d &b)

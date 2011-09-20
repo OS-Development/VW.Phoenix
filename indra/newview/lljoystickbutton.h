@@ -35,7 +35,7 @@
 
 #include "llbutton.h"
 #include "llcoord.h"
-#include "llviewerimage.h"
+#include "llviewertexture.h"
 
 typedef enum e_joystick_quadrant
 {
@@ -127,7 +127,7 @@ class LLJoystickCameraRotate
 public:
 	LLJoystickCameraRotate(const std::string& name, LLRect rect, const std::string &out_img, const std::string &in_img);
 
-	virtual void	setToggleState( BOOL left, BOOL top, BOOL right, BOOL bottom );
+	virtual void	setToggleState(BOOL left, BOOL top, BOOL right, BOOL bottom);
 
 	virtual BOOL	handleMouseDown(S32 x, S32 y, MASK mask);
 	virtual void	onHeldDown();
@@ -136,7 +136,7 @@ public:
 protected:
 	F32				getOrbitRate();
 	virtual void	updateSlop();
-	void			drawRotatedImage( LLImageGL* image, S32 rotations );
+	void			drawRotatedImage(LLTexture* image, S32 rotations);
 
 protected:
 	BOOL			mInLeft;

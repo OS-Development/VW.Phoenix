@@ -41,16 +41,17 @@
 #include "llface.h"
 #include "llsky.h"
 #include "llviewercamera.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llviewerregion.h"
-#include "llviewerwindow.h"
 #include "llvosky.h"
 #include "llworld.h" // To get water height
 #include "pipeline.h"
 #include "llviewershadermgr.h"
 
-LLDrawPoolSky::LLDrawPoolSky() :
-	LLFacePool(POOL_SKY), mShader(NULL)
+LLDrawPoolSky::LLDrawPoolSky()
+:	LLFacePool(POOL_SKY),
+	mSkyTex(NULL),
+	mShader(NULL)
 {
 }
 
@@ -103,14 +104,15 @@ void LLDrawPoolSky::render(S32 pass)
 
 	LLGLSquashToFarClip far_clip(glh_get_current_projection());
 
-	LLGLEnable fog_enable( (mVertexShaderLevel < 1 && LLViewerCamera::getInstance()->cameraUnderWater()) ? GL_FOG : 0);
+	LLViewerCamera* camera = LLViewerCamera::getInstance();
+	LLGLEnable fog_enable(mVertexShaderLevel < 1 && camera->cameraUnderWater() ? GL_FOG : 0);
 
 	gPipeline.disableLights();
 	
 	LLGLDisable clip(GL_CLIP_PLANE0);
 
 	glPushMatrix();
-	LLVector3 origin = LLViewerCamera::getInstance()->getOrigin();
+	LLVector3 origin = camera->getOrigin();
 	glTranslatef(origin.mV[0], origin.mV[1], origin.mV[2]);
 
 	S32 face_count = (S32)mDrawFace.size();
@@ -133,6 +135,7 @@ void LLDrawPoolSky::renderSkyCubeFace(U8 side)
 		return;
 	}
 
+	llassert(mSkyTex);
 	mSkyTex[side].bindTexture(TRUE);
 	
 	face.renderIndexed();
@@ -144,10 +147,6 @@ void LLDrawPoolSky::renderSkyCubeFace(U8 side)
 		glColor4f(1, 1, 1, LLSkyTex::getInterpVal()); // lighting is disabled
 		face.renderIndexed();
 	}
-}
-
-void LLDrawPoolSky::renderForSelect()
-{
 }
 
 void LLDrawPoolSky::endRenderPass( S32 pass )

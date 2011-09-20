@@ -242,8 +242,9 @@ void lggAutoCorrectFloater::updateItemsList()
 	childSetValue("em_ac_text_name",listName);
 	childSetValue("em_ac_text_author",listData["author"]);
 	childSetValue("em_ac_priority",listData["priority"]);
-	static S32 *countAuto= rebind_llcontrol<S32>("PhoenixAutoCorrectCount", &gSavedSettings, true);
-	childSetValue("em_ac_stats",*countAuto);
+	static LLCachedControl<S32> countAuto(gSavedSettings, "PhoenixAutoCorrectCount");
+
+	childSetValue("em_ac_stats",S32(countAuto));
 	
 	LLSD autoCorrects = listData["data"];
 	LLSD::map_const_iterator loc_it = autoCorrects.beginMap();
@@ -273,14 +274,15 @@ void lggAutoCorrectFloater::updateItemsList()
 void lggAutoCorrectFloater::updateNamesList()
 {
 	namesList->deleteAllItems();
-	static BOOL *enabledd = rebind_llcontrol<BOOL>("PhoenixEnableAutoCorrect", &gSavedSettings, true);
-	if(!(*enabledd))
+	static LLCachedControl<bool> enabledd(gSavedSettings, "PhoenixEnableAutoCorrect");
+
+	if(!enabledd)
 	{
 		updateItemsList();
 		return;
 	}
-	static S32 *countAuto= rebind_llcontrol<S32>("PhoenixAutoCorrectCount", &gSavedSettings, true);
-	childSetValue("em_ac_stats",*countAuto);
+	static LLCachedControl<S32> countAuto(gSavedSettings, "PhoenixAutoCorrectCount");
+	childSetValue("em_ac_stats",S32(countAuto));
 	LLSD autoCorrects = LGGAutoCorrect::getInstance()->getAutoCorrects();
 	LLSD::map_const_iterator loc_it = autoCorrects.beginMap();
 	LLSD::map_const_iterator loc_end = autoCorrects.endMap();
@@ -323,8 +325,8 @@ void lggAutoCorrectFloater::updateListControlsEnabled(BOOL selected)
 }
 void lggAutoCorrectFloater::updateEnabledStuff()
 {
-	static BOOL *enabledd = rebind_llcontrol<BOOL>("PhoenixEnableAutoCorrect", &gSavedSettings, true);
-	if(!(*enabledd))
+	static LLCachedControl<bool> enabledd(gSavedSettings, "PhoenixEnableAutoCorrect");
+	if(!enabledd)
 	{
 		getChild<LLCheckBoxCtrl>("em_ac_enable")->setEnabledColor(LLColor4(1.0f,0.0f,0.0f,1.0f));		
 	}else
@@ -332,9 +334,9 @@ void lggAutoCorrectFloater::updateEnabledStuff()
 		getChild<LLCheckBoxCtrl>("em_ac_enable")->setEnabledColor(LLUI::sColorsGroup->getColor( "LabelTextColor" ));
 	}
 
-	childSetEnabled("em_ac_list_name",*enabledd);
-	childSetEnabled("em_ac_list_entry",*enabledd);
-	updateListControlsEnabled(*enabledd);
+	childSetEnabled("em_ac_list_name",enabledd);
+	childSetEnabled("em_ac_list_entry",enabledd);
+	updateListControlsEnabled(enabledd);
 	updateNamesList();
 	LGGAutoCorrect::getInstance()->save();
 

@@ -78,6 +78,14 @@ if [ "$GTK_IM_MODULE" = "scim" ]; then
     export GTK_IM_MODULE=xim
 fi
 
+# Work around for a crash bug when restarting OpenGL after a change in the
+# graphic settings (anti-aliasing, VBO, FSAA, full screen mode, UI scale).
+# When you enable this work around, you can change the settings without
+# crashing, but you will have to restart the viewer after changing them
+# because the display still gets corrupted.
+export LL_OPENGL_RESTART_CRASH_BUG=x
+
+
 ## - Automatically work around the ATI mouse cursor crash bug:
 ## (this workaround is disabled as most fglrx users do not see the bug)
 #if lsmod | grep fglrx &>/dev/null ; then
@@ -104,26 +112,26 @@ cd "${RUN_PATH}"
 ##  subprocesses that care.
 export SAVED_LD_LIBRARY_PATH="${LD_LIBRARY_PATH}"
 
-if [ -n "$LL_TCMALLOC" ]; then
-    tcmalloc_libs='/usr/lib/libtcmalloc.so.0 /usr/lib/libstacktrace.so.0 /lib/libpthread.so.0'
-    all=1
-    for f in $tcmalloc_libs; do
-        if [ ! -f $f ]; then
-	    all=0
-	fi
-    done
-    if [ $all != 1 ]; then
-        echo 'Cannot use tcmalloc libraries: components missing' 1>&2
-    else
-	export LD_PRELOAD=$(echo $tcmalloc_libs | tr ' ' :)
-	if [ -z "$HEAPCHECK" -a -z "$HEAPPROFILE" ]; then
-	    export HEAPCHECK=${HEAPCHECK:-normal}
-	fi
-    fi
-fi
+#if [ -n "$LL_TCMALLOC" ]; then
+#    tcmalloc_libs='/usr/lib/libtcmalloc.so.0 /usr/lib/libstacktrace.so.0 /lib/libpthread.so.0'
+#    all=1
+#    for f in $tcmalloc_libs; do
+#        if [ ! -f $f ]; then
+#	    all=0
+#	fi
+#    done
+#    if [ $all != 1 ]; then
+#        echo 'Cannot use tcmalloc libraries: components missing' 1>&2
+#    else
+#	export LD_PRELOAD=$(echo $tcmalloc_libs | tr ' ' :)
+#	if [ -z "$HEAPCHECK" -a -z "$HEAPPROFILE" ]; then
+#	    export HEAPCHECK=${HEAPCHECK:-normal}
+#	fi
+#    fi
+#fi
 
 export VIEWER_BINARY='snowglobe-do-not-run-directly'
-export SL_ENV='LD_LIBRARY_PATH="`pwd`"/lib:"`pwd`"/app_settings/mozilla-runtime-linux-i686:"${LD_LIBRARY_PATH}"'
+export SL_ENV='LD_LIBRARY_PATH="`pwd`""/lib:${LD_LIBRARY_PATH}"'
 export SL_CMD='$LL_WRAPPER bin/$VIEWER_BINARY'
 export SL_OPT="`cat gridargs.dat` $@"
 

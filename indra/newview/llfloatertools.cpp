@@ -34,38 +34,41 @@
 
 #include "llfloatertools.h"
 
-#include "llfontgl.h"
-#include "llcoord.h"
-#include "llgl.h"
-
-#include "llagent.h"
 #include "llbutton.h"
 #include "llcheckboxctrl.h"
 #include "llcombobox.h"
+#include "llcoord.h"
 #include "lldraghandle.h"
-#include "llfloaterbuildoptions.h"
-#include "llfloateropenobject.h"
 #include "llfocusmgr.h"
+#include "llfontgl.h"
+#include "llgl.h"
 #include "llmenugl.h"
-#include "llpanelcontents.h"
-#include "llpanelface.h"
-#include "llpanelland.h"
-#include "llpanelinventory.h"
-#include "llpanelobject.h"
-#include "llpanelvolume.h"
-#include "llpanelpermissions.h"
 #include "llresmgr.h"
-#include "llselectmgr.h"
 #include "llslider.h"
-#include "llstatusbar.h"
+#include "llspinctrl.h"
 #include "lltabcontainer.h"
 #include "lltextbox.h"
+#include "llui.h"
+#include "lluictrlfactory.h"
+
+#include "llagent.h"
+#include "llfloaterbuildoptions.h"
+#include "llfloateropenobject.h"
+#include "llmeshrepository.h"
+#include "llpanelcontents.h"
+#include "llpanelface.h"
+#include "llpanelinventory.h"
+#include "llpanelland.h"
+#include "llpanelobject.h"
+#include "llpanelpermissions.h"
+#include "llpanelvolume.h"
+#include "llselectmgr.h"
+#include "llstatusbar.h"
 #include "lltoolbrush.h"
 #include "lltoolcomp.h"
 #include "lltooldraganddrop.h"
 #include "lltoolface.h"
 #include "lltoolfocus.h"
-#include "lltoolgrab.h"
 #include "lltoolgrab.h"
 #include "lltoolindividual.h"
 #include "lltoolmgr.h"
@@ -73,13 +76,12 @@
 #include "lltoolpipette.h"
 #include "lltoolplacer.h"
 #include "lltoolselectland.h"
-#include "llui.h"
-#include "llviewermenu.h"
-#include "llviewerparcelmgr.h"
-#include "llviewerwindow.h"
 #include "llviewercontrol.h"
 #include "llviewerjoystick.h"
-#include "lluictrlfactory.h"
+#include "llviewermenu.h"
+#include "llviewerparcelmgr.h"
+#include "llviewerregion.h"
+#include "llviewerwindow.h"
 #include "qtoolalign.h"
 #include "llselectmgr.h" //Banana:KC
 
@@ -119,7 +121,7 @@ void commit_radio_orbit(LLUICtrl *, void*);
 void commit_radio_pan(LLUICtrl *, void*);
 void commit_grid_mode(LLUICtrl *, void*);
 void commit_slider_zoom(LLUICtrl *, void*);
-void commit_show_highlight(LLUICtrl *, void*); //Phoenix:KC
+//void commit_show_highlight(LLUICtrl *, void*); //Phoenix:KC
 
 //static
 void*	LLFloaterTools::createPanelPermissions(void* data)
@@ -242,9 +244,13 @@ BOOL	LLFloaterTools::postBuild()
 	childSetCommitCallback("combobox grid mode",commit_grid_mode, this);
 	
 	//Phoenix:KC show highlight
+	//mCheckShowHighlight = getChild<LLCheckBoxCtrl>("checkbox show highlight");
+	//childSetValue("checkbox show highlight", (BOOL)gSavedSettings.getBOOL("PhoenixRenderHighlightSelections"));
+	//childSetCommitCallback("checkbox show highlight",commit_show_highlight, this);
+	// Ansariel: Porting back from Firestorm for Mesh merge
 	mCheckShowHighlight = getChild<LLCheckBoxCtrl>("checkbox show highlight");
-	childSetValue("checkbox show highlight", (BOOL)gSavedSettings.getBOOL("PhoenixRenderHighlightSelections"));
-	childSetCommitCallback("checkbox show highlight",commit_show_highlight, this);
+	mOrginalShowHighlight = gSavedSettings.getBOOL("PhoenixRenderHighlightSelections");
+	mCheckShowHighlight->setValue(mOrginalShowHighlight);
 	
 	//Banana:KC - handiness
 	mCheckActualRoot = getChild<LLCheckBoxCtrl>("checkbox actual root");	
@@ -422,7 +428,8 @@ LLFloaterTools::LLFloaterTools()
 	mPanelLandInfo(NULL),
 
 	mTabLand(NULL),
-	mDirty(TRUE)
+	mDirty(TRUE),
+	mOpen(FALSE)
 {
 	setAutoFocus(FALSE);
 	LLCallbackMap::map_t factory_map;
@@ -536,7 +543,15 @@ void LLFloaterTools::refresh()
 	childSetTextArg("link_num_obj_count",  "[NUM]", value_string);
 	
 	std::string prim_count_string;
-	LLResMgr::getInstance()->getIntegerString(prim_count_string, LLSelectMgr::getInstance()->getSelection()->getObjectCount());
+	LLResMgr::getInstance()->getIntegerString(prim_count_string, prim_count);
+	if (gMeshRepo.meshRezEnabled())
+	{
+		S32 link_cost = (S32)LLSelectMgr::getInstance()->getSelection()->getSelectedLinksetCost();
+		if (link_cost > prim_count)
+		{
+			prim_count_string += " (" + llformat("%d", link_cost) + ")";
+		}
+	}
 	childSetTextArg("prim_count", "[COUNT]", prim_count_string);
 
 	// Refresh child tabs
@@ -850,7 +865,13 @@ void LLFloaterTools::onOpen()
 	//Phoenix:KC - set the check box value from the render setting
 	// this function runs on selection change and will cause it to become rechecked
 	//mCheckShowHighlight->setValue((BOOL)gSavedSettings.getBOOL("PhoenixRenderHighlightSelections"));
-	mCheckShowHighlight->setValue(LLSelectMgr::sRenderSelectionHighlights);
+	// Ansariel: Porting back from Firestorm for Mesh merge
+	if (!mOpen)
+	{
+		mOpen = TRUE;
+		mOrginalShowHighlight = gSavedSettings.getBOOL("PhoenixRenderHighlightSelections");
+		mCheckShowHighlight->setValue(mOrginalShowHighlight);
+	}
 
 	// gMenuBarView->setItemVisible(std::string("Tools"), TRUE);
 	// gMenuBarView->arrange();
@@ -873,8 +894,11 @@ void LLFloaterTools::onClose(bool app_quitting)
 	LLSelectMgr::getInstance()->promoteSelectionToRoot();
 	gSavedSettings.setBOOL("EditLinkedParts", FALSE);
 	//Phoenix:KC - restore the show highlight state to the saved setting
-	LLSelectMgr::sRenderSelectionHighlights = (BOOL)gSavedSettings.getBOOL("PhoenixRenderHighlightSelections");
-	
+//	LLSelectMgr::sRenderSelectionHighlights = (BOOL)gSavedSettings.getBOOL("PhoenixRenderHighlightSelections");
+	// Ansariel: Porting back from Firestorm for Mesh merge
+	gSavedSettings.setBOOL("PhoenixRenderHighlightSelections", mOrginalShowHighlight);
+	mOpen = FALSE; //hack cause onOpen runs on every selection change but onClose doesnt.
+
 	gViewerWindow->showCursor();
 
 	resetToolState();
@@ -1050,9 +1074,9 @@ void click_apply_to_selection(void* user)
 
 void commit_select_tool(LLUICtrl *ctrl, void *data)
 {
-	static BOOL* sShowParcelOwners = rebind_llcontrol<BOOL>("ShowParcelOwners", &gSavedSettings, true);
+	static LLCachedControl<bool> sShowParcelOwners(gSavedSettings, "ShowParcelOwners");
 	
-	S32 show_owners = *sShowParcelOwners;
+	S32 show_owners = sShowParcelOwners;
 	gFloaterTools->setEditTool(data);
 	gSavedSettings.setBOOL("ShowParcelOwners", show_owners);
 }
@@ -1089,11 +1113,12 @@ void commit_grid_mode(LLUICtrl *ctrl, void *data)
 } 
 
 //Phoenix:KC temporarily change the show highlight state
-void commit_show_highlight(LLUICtrl *ctrl, void*)
-{
-	LLCheckBoxCtrl* check = (LLCheckBoxCtrl*)ctrl;
-	LLSelectMgr::sRenderSelectionHighlights = check->getValue().asBoolean();
-}
+// Ansariel: Not needed anymore after Mesh merge
+//void commit_show_highlight(LLUICtrl *ctrl, void*)
+//{
+//	LLCheckBoxCtrl* check = (LLCheckBoxCtrl*)ctrl;
+//	LLSelectMgr::sRenderSelectionHighlights = check->getValue().asBoolean();
+//}
 
 // static 
 void LLFloaterTools::setObjectType( void* data )

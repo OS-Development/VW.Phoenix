@@ -37,7 +37,6 @@
 #include "llfloater.h"
 #include "llfloaterland.h"
 #include "lllineeditor.h"
-#include "llnotify.h"
 #include "llparcel.h"
 #include "llselectmgr.h"
 #include "lltexturectrl.h"

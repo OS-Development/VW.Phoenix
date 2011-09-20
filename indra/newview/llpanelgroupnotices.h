@@ -34,7 +34,7 @@
 #define LL_LLPANELGROUPNOTICES_H
 
 #include "llpanelgroup.h"
-#include "llmemory.h"
+#include "llpointer.h"
 #include "llinventory.h"
 
 class LLLineEditor;

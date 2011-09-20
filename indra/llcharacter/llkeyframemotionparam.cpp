@@ -347,15 +347,16 @@ BOOL LLKeyframeMotionParam::loadMotions()
 	// Load named file by concatenating the character prefix with the motion name.
 	// Load data into a buffer to be parsed.
 	//-------------------------------------------------------------------------
-	std::string path = gDirUtilp->getExpandedFilename(LL_PATH_MOTIONS,mCharacter->getAnimationPrefix())
-		+ "_" + getName() + ".llp";
+	//std::string path = gDirUtilp->getExpandedFilename(LL_PATH_MOTIONS,mCharacter->getAnimationPrefix())
+	//	+ "_" + getName() + ".llp";
+	//RN: deprecated unused reference to "motion" directory
+	std::string path;
 
 	//-------------------------------------------------------------------------
 	// open the file
 	//-------------------------------------------------------------------------
 	S32 fileSize = 0;
-	LLAPRFile infile ;
-	infile.open(path, LL_APR_R, LLAPRFile::global, &fileSize);
+	LLAPRFile infile(path, LL_APR_R, &fileSize);
 	apr_file_t* fp = infile.getFileHandle() ;
 	if (!fp || fileSize == 0)
 	{
@@ -364,18 +365,13 @@ BOOL LLKeyframeMotionParam::loadMotions()
 	}
 
 	// allocate a text buffer
-	char *text = new char[ fileSize+1 ];
-	if ( !text )
-	{
-		llinfos << "ERROR: can't allocated keyframe text buffer." << llendl;
-		return FALSE;
-	}
+	std::vector<char> text(fileSize+1);
 
 	//-------------------------------------------------------------------------
 	// load data from file into buffer
 	//-------------------------------------------------------------------------
 	bool error = false;
-	char *p = text;
+	char *p = &text[0];
 	while ( 1 )
 	{
 		if (apr_file_eof(fp) == APR_EOF)
@@ -399,12 +395,11 @@ BOOL LLKeyframeMotionParam::loadMotions()
 	//-------------------------------------------------------------------------
 	// check for error
 	//-------------------------------------------------------------------------
-	llassert( p <= (text+fileSize) );
+	llassert(p <= (&text[0] + fileSize));
 
 	if ( error )
 	{
 		llinfos << "ERROR: error while reading from " << path << llendl;
-		delete [] text;
 		return FALSE;
 	}
 
@@ -413,7 +408,7 @@ BOOL LLKeyframeMotionParam::loadMotions()
 	//-------------------------------------------------------------------------
 	// parse the text and build keyframe data structures
 	//-------------------------------------------------------------------------
-	p = text;
+	p = &text[0];
 	S32 num;
 	char strA[80]; /* Flawfinder: ignore */
 	char strB[80]; /* Flawfinder: ignore */
@@ -432,7 +427,6 @@ BOOL LLKeyframeMotionParam::loadMotions()
 		if ((num != 3))
 		{
 			llinfos << "WARNING: can't read parametric motion" << llendl;
-			delete [] text;
 			return FALSE;
 		}
 
@@ -453,7 +447,6 @@ BOOL LLKeyframeMotionParam::loadMotions()
 		num = sscanf(p, "%79s %79s %f", strA, strB, &floatA);	/* Flawfinder: ignore */
 	}
 
-	delete [] text;
 	return TRUE;
 }
 

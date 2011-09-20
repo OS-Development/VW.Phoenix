@@ -677,6 +677,9 @@ Only large parcels can be listed in search.
 				<combo_item name="Parks&amp;Nature" value="park">
 					Parks &amp; Nature
 				</combo_item>
+				<combo_item name="Rental" value="rental">
+					Rental
+				</combo_item>
 				<combo_item name="Residential" value="home">
 					Residential
 				</combo_item>
@@ -720,6 +723,9 @@ Only large parcels can be listed in search.
 				</combo_item>
 				<combo_item name="Parks&amp;Nature" value="park">
 					Parks &amp; Nature
+				</combo_item>
+				<combo_item name="Rental" value="rental">
+					Rental
 				</combo_item>
 				<combo_item name="Residential" value="home">
 					Residential

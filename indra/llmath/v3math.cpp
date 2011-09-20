@@ -134,11 +134,25 @@ BOOL LLVector3::clampLength( F32 length_limit )
 			mV[0] *= length_limit;
 			mV[1] *= length_limit;
 			mV[2] *= length_limit;
-			changed = TRUE;
 		}
 	}
 
 	return changed;
+}
+
+BOOL LLVector3::clamp(const LLVector3 &min_vec, const LLVector3 &max_vec)
+{
+	BOOL ret = FALSE;
+
+	if (mV[0] < min_vec[0]) { mV[0] = min_vec[0]; ret = TRUE; }
+	if (mV[1] < min_vec[1]) { mV[1] = min_vec[1]; ret = TRUE; }
+	if (mV[2] < min_vec[2]) { mV[2] = min_vec[2]; ret = TRUE; }
+
+	if (mV[0] > max_vec[0]) { mV[0] = max_vec[0]; ret = TRUE; }
+	if (mV[1] > max_vec[1]) { mV[1] = max_vec[1]; ret = TRUE; }
+	if (mV[2] > max_vec[2]) { mV[2] = max_vec[2]; ret = TRUE; }
+
+	return ret;
 }
 
 
@@ -186,14 +200,6 @@ void 	LLVector3::snap(S32 sig_digits)
 	mV[VZ] = snap_to_sig_figs(mV[VZ], sig_digits);
 }
 
-
-std::ostream& operator<<(std::ostream& s, const LLVector3 &a) 
-{
-	s << "{ " << a.mV[VX] << ", " << a.mV[VY] << ", " << a.mV[VZ] << " }";
-	return s;
-}
-
-
 const LLVector3&	LLVector3::rotVec(const LLMatrix3 &mat)
 {
 	*this = *this * mat;
@@ -203,6 +209,27 @@ const LLVector3&	LLVector3::rotVec(const LLMatrix3 &mat)
 const LLVector3&	LLVector3::rotVec(const LLQuaternion &q)
 {
 	*this = *this * q;
+	return *this;
+}
+
+const LLVector3& LLVector3::transVec(const LLMatrix4& mat)
+{
+	setVec(
+			mV[VX] * mat.mMatrix[VX][VX] + 
+			mV[VY] * mat.mMatrix[VX][VY] + 
+			mV[VZ] * mat.mMatrix[VX][VZ] +
+			mat.mMatrix[VX][VW],
+			 
+			mV[VX] * mat.mMatrix[VY][VX] + 
+			mV[VY] * mat.mMatrix[VY][VY] + 
+			mV[VZ] * mat.mMatrix[VY][VZ] +
+			mat.mMatrix[VY][VW],
+
+			mV[VX] * mat.mMatrix[VZ][VX] + 
+			mV[VY] * mat.mMatrix[VZ][VY] + 
+			mV[VZ] * mat.mMatrix[VZ][VZ] +
+			mat.mMatrix[VZ][VW]);
+
 	return *this;
 }
 
@@ -313,12 +340,6 @@ void LLVector3::setValue(const LLSD& sd)
 	mV[0] = (F32) sd[0].asReal();
 	mV[1] = (F32) sd[1].asReal();
 	mV[2] = (F32) sd[2].asReal();
-}
-
-const LLVector3& LLVector3::operator=(const LLSD& sd)
-{
-	setValue(sd);
-	return *this;
 }
 
 const LLVector3& operator*=(LLVector3 &a, const LLQuaternion &rot)

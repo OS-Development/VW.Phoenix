@@ -57,7 +57,7 @@ class LLFloaterObjectIMInfo : public LLFloater, public LLFloaterSingleton<LLFloa
 {
 public:
 	LLFloaterObjectIMInfo(const LLSD& sd);
-	virtual ~LLFloaterObjectIMInfo() { };
+	virtual ~LLFloaterObjectIMInfo();
 
 	BOOL postBuild(void);
 
@@ -68,9 +68,11 @@ public:
 	static void onClickOwner(void* data);
 	static void onClickMute(void* data);
 
-	static void nameCallback(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* data);
+	static void nameCallback(const LLUUID& id, const std::string& full_name, bool is_group, LLFloaterObjectIMInfo* self);
 
 private:
+	static std::set<LLFloaterObjectIMInfo*> sInstances;
+
 	LLUUID mObjectID;
 	std::string mObjectName;
 	std::string mSlurl;
@@ -79,16 +81,25 @@ private:
 	bool mOwnerIsGroup;
 };
 
+std::set<LLFloaterObjectIMInfo*> LLFloaterObjectIMInfo::sInstances;
+
 LLFloaterObjectIMInfo::LLFloaterObjectIMInfo(const LLSD& seed)
 : mObjectID(), mObjectName(), mSlurl(), mOwnerID(), mOwnerName(), mOwnerIsGroup(false)
 {
 	LLUICtrlFactory::getInstance()->buildFloater(this, "floater_object_im_info.xml");
-	
+
+	sInstances.insert(this);
+
 	if (getRect().mLeft == 0 
 		&& getRect().mBottom == 0)
 	{
 		center();
 	}
+}
+
+LLFloaterObjectIMInfo::~LLFloaterObjectIMInfo()
+{
+	sInstances.erase(this);
 }
 
 BOOL LLFloaterObjectIMInfo::postBuild(void)
@@ -127,7 +138,25 @@ void LLFloaterObjectIMInfo::update(const LLUUID& object_id, const std::string& n
 	mOwnerID = owner_id;
 	mOwnerIsGroup = owner_is_group;
 
-	if (gCacheName) gCacheName->get(owner_id,owner_is_group,nameCallback,this);
+	if (gCacheName) gCacheName->get(owner_id, owner_is_group, boost::bind(&LLFloaterObjectIMInfo::nameCallback, _1, _2, _3, this));
+}
+
+//static
+void LLFloaterObjectIMInfo::nameCallback(const LLUUID& id, const std::string& full_name, bool is_group, LLFloaterObjectIMInfo* self)
+{
+	if (sInstances.count(self))
+	{
+		self->mOwnerName = full_name;
+	}
+
+// [RLVa:KB] - Version: 1.23.4 | Checked: 2009-07-08 (RLVa-1.0.0e) | Added: RLVa-0.2.0g
+	if ( (!is_group) && (gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES)) && (RlvUtil::isNearbyAgent(id)) )
+	{
+		self->mOwnerName = RlvStrings::getAnonym(self->mOwnerName);
+	}
+// [/RLVa:KB]
+
+	self->childSetText("OwnerName", self->mOwnerName);
 }
 
 //static 
@@ -175,26 +204,6 @@ void LLFloaterObjectIMInfo::onClickMute(void* data)
 	LLMuteList::getInstance()->add(mute);
 	LLFloaterMute::showInstance();
 	self->close();
-}
-
-//static 
-void LLFloaterObjectIMInfo::nameCallback(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* data)
-{
-	LLFloaterObjectIMInfo* self = (LLFloaterObjectIMInfo*)data;
-	self->mOwnerName = first;
-	if (!last.empty())
-	{
-		self->mOwnerName += " " + last;
-	}
-
-// [RLVa:KB] - Version: 1.23.4 | Checked: 2009-07-08 (RLVa-1.0.0e) | Added: RLVa-0.2.0g
-	if ( (!is_group) && (gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES)) && (RlvUtil::isNearbyAgent(id)) )
-	{
-		self->mOwnerName = RlvStrings::getAnonym(self->mOwnerName);
-	}
-// [/RLVa:KB]
-
-	self->childSetText("OwnerName",self->mOwnerName);
 }
 
 ////////////////////////////////////////////////////////////////////////////

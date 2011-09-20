@@ -40,7 +40,7 @@
 #include "llcurl.h"
 #include "lltextureinfo.h"
 
-class LLViewerImage;
+class LLViewerTexture;
 class LLTextureFetchWorker;
 class HTTPGetResponder;
 class LLTextureCache;

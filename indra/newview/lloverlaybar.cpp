@@ -50,7 +50,7 @@
 #include "lltextbox.h"
 #include "llui.h"
 #include "llviewercontrol.h"
-#include "llviewerimagelist.h"
+#include "llviewertexturelist.h"
 #include "llviewerjoystick.h"
 #include "llviewermedia.h"
 #include "llviewermenu.h"	// handle_reset_view()
@@ -155,7 +155,8 @@ BOOL LLOverlayBar::postBuild()
 
 	sAdvSettingsPopup = gSavedSettings.getBOOL("wlfAdvSettingsPopup");
 	
-	gSavedSettings.getControl("wlfAdvSettingsPopup")->getSignal()->connect((boost::function<void (const LLSD &)>) &updateAdvSettingsPopup);
+	//gSavedSettings.getControl("wlfAdvSettingsPopup")->getSignal()->connect((boost::function<void (const LLSD &)>) &updateAdvSettingsPopup);
+	gSavedSettings.getControl("wlfAdvSettingsPopup")->getSignal()->connect(boost::bind(&updateAdvSettingsPopup, _2));
 	
 	
 	
@@ -367,9 +368,9 @@ void LLOverlayBar::refresh()
 	}
 	if(!in_mouselook)childSetVisible("voice_remote_container", LLVoiceClient::voiceEnabled());
 
-	static BOOL *sChatVisible = rebind_llcontrol<BOOL>("ChatVisible", &gSavedSettings, true);
 	// always let user toggle into and out of chatbar
-	childSetVisible("chat_bar", *sChatVisible);//gSavedSettings.getBOOL("ChatVisible"));
+	static LLCachedControl<bool> sChatVisible(gSavedSettings, "ChatVisible");
+	childSetVisible("chat_bar", sChatVisible);//gSavedSettings.getBOOL("ChatVisible"));
 
 
 	if (buttons_changed)

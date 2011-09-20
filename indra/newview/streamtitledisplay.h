@@ -30,7 +30,7 @@
 #ifndef STREAMTITLEDISPLAY_H
 #define STREAMTITLEDISPLAY_H
 
-#include "lltimer.h"
+#include "lleventtimer.h"
 
 class StreamTitleDisplay : LLEventTimer
 {

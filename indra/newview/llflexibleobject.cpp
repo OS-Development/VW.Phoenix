@@ -39,14 +39,13 @@
 #include "llglheaders.h"
 #include "llrendersphere.h"
 #include "llviewerobject.h"
-#include "llimagegl.h"
 #include "llagent.h"
 #include "llsky.h"
 #include "llviewercamera.h"
-#include "llviewerimagelist.h"
 #include "llviewercontrol.h"
 #include "llviewerobjectlist.h"
 #include "llviewerregion.h"
+#include "llviewertexturelist.h"
 #include "llworld.h"
 #include "llvoavatar.h"
 
@@ -71,7 +70,7 @@ LLVolumeImplFlexible::LLVolumeImplFlexible(LLViewerObject* vo, LLFlexibleObjectD
 
 	if(mVO->mDrawable.notNull())
 	{
-		mVO->mDrawable->makeActive() ;
+		mVO->mDrawable->makeActive();
 	}
 }//-----------------------------------------------
 
@@ -94,11 +93,13 @@ void LLVolumeImplFlexible::onParameterChanged(U16 param_type, LLNetworkData *dat
 	}
 }
 
-void LLVolumeImplFlexible::onShift(const LLVector3 &shift_vector)
+void LLVolumeImplFlexible::onShift(const LLVector4a &shift_vector)
 {	
+	//VECTORIZE THIS
+	LLVector3 shift(shift_vector.getF32ptr());
 	for (int section = 0; section < (1<<FLEXIBLE_OBJECT_MAX_SECTIONS)+1; ++section)
 	{
-		mSection[section].mPosition += shift_vector;	
+		mSection[section].mPosition += shift;	
 	}
 }
 
@@ -317,13 +318,15 @@ BOOL LLVolumeImplFlexible::doIdleUpdate(LLAgent &agent, LLWorld &world, const F6
 		return FALSE; // (we are not initialized or updated)
 	}
 
-	if (force_update)
+	bool visible = mVO->mDrawable->isVisible();
+
+	if (force_update && visible)
 	{
 		gPipeline.markRebuild(mVO->mDrawable, LLDrawable::REBUILD_POSITION, FALSE);
 	}
-	else if	(mVO->mDrawable->isVisible() &&
-		!mVO->mDrawable->isState(LLDrawable::IN_REBUILD_Q1) &&
-		mVO->getPixelArea() > 256.f)
+	else if	(visible &&
+			 !mVO->mDrawable->isState(LLDrawable::IN_REBUILD_Q1) &&
+			 mVO->getPixelArea() > 256.f)
 	{
 		U32 id;
 		F32 pixel_area = mVO->getPixelArea();
@@ -373,10 +376,10 @@ void LLVolumeImplFlexible::doFlexibleUpdate()
 		}
 	}
 
-	if(!mInitialized) 
+	if (!mInitialized) 
 	{
 		//the object is not visible
-		return ;
+		return;
 	}
 	
 	S32 num_sections = 1 << mSimulateRes;
@@ -700,6 +703,7 @@ BOOL LLVolumeImplFlexible::doUpdateGeometry(LLDrawable *drawable)
 	{
 		doFlexibleUpdate();
 	}
+
 	// Object may have been rotated, which means it needs a rebuild.  See SL-47220
 	BOOL	rotated = FALSE;
 	LLQuaternion cur_rotation = getFrameRotation();

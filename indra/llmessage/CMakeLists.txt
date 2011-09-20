@@ -8,7 +8,6 @@ include(LLMath)
 include(LLMessage)
 include(LLVFS)
 #include(LLAddBuildTest)
-include(Tut)
 
 include_directories (${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -21,6 +20,7 @@ include_directories(
 
 set(llmessage_SOURCE_FILES
     llares.cpp
+    llareslistener.cpp
     llassetstorage.cpp
     llavatarnamecache.cpp
     llblowfishcipher.cpp
@@ -65,6 +65,7 @@ set(llmessage_SOURCE_FILES
     llregionpresenceverifier.cpp
     llsdappservices.cpp
     llsdhttpserver.cpp
+    llsdmessage.cpp
     llsdmessagebuilder.cpp
     llsdmessagereader.cpp
     llsdrpcclient.cpp
@@ -90,6 +91,7 @@ set(llmessage_SOURCE_FILES
     llxfer_mem.cpp
     llxfer_vfile.cpp
     llxorcipher.cpp
+    machine.cpp
     message.cpp
     message_prehash.cpp
     message_string_table.cpp
@@ -99,12 +101,14 @@ set(llmessage_SOURCE_FILES
     patch_dct.cpp
     patch_idct.cpp
     llsocks5.cpp
+    sound_ids.cpp
     )
 
 set(llmessage_HEADER_FILES
     CMakeLists.txt
 
     llares.h
+    llareslistener.h
     llassetstorage.h
     llavatarnamecache.h
     llblowfishcipher.h
@@ -161,6 +165,7 @@ set(llmessage_HEADER_FILES
     llregionpresenceverifier.h
     llsdappservices.h
     llsdhttpserver.h
+    llsdmessage.h
     llsdmessagebuilder.h
     llsdmessagereader.h
     llsdrpcclient.h

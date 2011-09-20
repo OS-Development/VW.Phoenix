@@ -46,8 +46,8 @@
 #include "llui.h"
 #include "llviewercontrol.h"
 #include "llfloatergroupinfo.h"
-#include "llinventoryview.h"
 #include "llinventory.h"
+#include "llinventoryicon.h"	// for getIcon
 
 #include "llglheaders.h"
 #include "llagent.h"
@@ -116,9 +116,9 @@ LLGroupNotifyBox::LLGroupNotifyBox(const std::string& subject,
 	setBackgroundVisible(TRUE);
 	setBackgroundOpaque(TRUE);
 
-	static LLColor4* sGroupNotifyBoxColor = rebind_llcontrol<LLColor4>("GroupNotifyBoxColor", &gColors, true);
+	static LLCachedControl<LLColor4U> sGroupNotifyBoxColor(gColors, "GroupNotifyBoxColor");
 
-	setBackgroundColor( (*sGroupNotifyBoxColor) );
+	setBackgroundColor((LLColor4)sGroupNotifyBoxColor);
 
 	LLIconCtrl* icon;
 	LLTextEditor* text;
@@ -137,9 +137,9 @@ LLGroupNotifyBox::LLGroupNotifyBox(const std::string& subject,
 			setBorderVisible(FALSE);
 			setColor( gColors.getColor("GroupNotifyTextColor") );
 
-			static LLColor4* sGroupNotifyBoxColor = rebind_llcontrol<LLColor4>("GroupNotifyBoxColor", &gColors, true);
+			static LLCachedControl<LLColor4U> sGroupNotifyBoxColor(gColors, "GroupNotifyBoxColor");
 
-			setBackgroundColor( (*sGroupNotifyBoxColor) );
+			setBackgroundColor((LLColor4)sGroupNotifyBoxColor);
 		}
 	};
 
@@ -220,11 +220,9 @@ LLGroupNotifyBox::LLGroupNotifyBox(const std::string& subject,
 	{
 			addChild(new NoticeText(std::string("subjecttitle"),LLRect(x,y,x + LABEL_WIDTH,y - LINE_HEIGHT),std::string("Attached: "),LLFontGL::getFontSansSerif()));
 
-			LLUIImagePtr item_icon = get_item_icon(mInventoryOffer->mType,
-													LLInventoryType::IT_TEXTURE,
-													0, FALSE);
-
-
+			LLUIImagePtr item_icon = LLInventoryIcon::getIcon(mInventoryOffer->mType,
+															  LLInventoryType::IT_TEXTURE,
+															  0, FALSE);
 			x += LABEL_WIDTH + HPAD;
 
 			std::stringstream ss;
