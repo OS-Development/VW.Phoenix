@@ -1,58 +1,127 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <panel label="Tekstchat" name="chat">
-	<text name="text_box">
-		Chat lettertype grootte:
-	</text>
-	<radio_group name="chat_font_size">
-		<radio_item name="radio">
-			Klein
-		</radio_item>
-		<radio_item name="radio2">
-			Middel
-		</radio_item>
-		<radio_item name="radio3">
-			Groot
-		</radio_item>
-	</radio_group>
-	<text name="text_box2">
-		Chatkleur:
-	</text>
-	<color_swatch label="U" name="user" width="54"/>
-	<color_swatch label="Anderen" name="agent" left_delta="58"/>
-	<color_swatch label="IM" name="im"/>
-	<color_swatch label="Systeem" name="system"/>
-	<color_swatch label="Fouten" name="script_error"/>
-	<color_swatch label="Objecten" name="objects" width="54"/>
-	<color_swatch label="Eigenaar" name="owner" left_delta="58"/>
-	<color_swatch label="Ballon" name="background"/>
-	<color_swatch label="URL&apos;s" name="links"/>
-	<text name="text_box8">
-		Scriptfouten:
-	</text>
-	<check_box label="Toon scriptfouten en -waarschuwingen als reguliere chat" name="script_errors_as_chat"/>
-	<text name="text_box3">
-		Chatconsole:
-	</text>
-	<spinner label="Vervaag chat na" name="fade_chat_time" label_width="85" width="135"/>
-	<text name="text_box4" left="285">
-		(seconden)
-	</text>
-	<spinner left="350" name="max_chat_count"/>
-	<text name="text_box5" left="412">
-		(regels)
-	</text>
-	<slider label="Opaakheid" name="console_opacity"/>
-	<check_box label="Gebruik volledige schermbreedte (herstart vereist)" name="chat_full_width_check"/>
-	<text name="text_box6">
-		Chatopties:
-	</text>
-	<check_box label="Sluit de chatbalk na het indrukken van Return" name="close_chat_on_return_check"/>
-	<check_box label="Pijltjestoetsen verplaatsen avatar altijd tijdens chat" name="arrow_keys_move_avatar_check"/>
-	<check_box label="Toon tijdstempels in lokale chat" name="show_timestamps_check"/>
-	<check_box label="Speel typeanimatie tijdens chat" name="play_typing_animation"/>
-	<text name="text_box7">
-		Ballonchat:
-	</text>
-	<check_box label="Toon chatballonnen" name="bubble_text_chat"/>
-	<slider label="Opaakheid" name="bubble_chat_opacity"/>
+  <text name="text_box">
+  Chatlettertype-grootte:
+  </text>
+  <radio_group name="chat_font_size">
+  <radio_item name="radio">
+    Klein
+  </radio_item>
+  <radio_item name="radio2">
+    Middel
+  </radio_item>
+  <radio_item name="radio3">
+    Groot
+  </radio_item>
+  </radio_group>
+  <text name="text_box2">
+Chatkleur:
+  </text>
+  <color_swatch label="Uzelf" name="user" />
+  <color_swatch label="Anderen" name="agent" />
+  <color_swatch label="IM's" name="im" />
+  <color_swatch label="Vrienden" name="friend"/>
+  <color_swatch label="Systeem" name="system" />
+  <color_swatch label="Fouten" name="script_error" />
+  <color_swatch label="Linden" name="Linden" />
+  <color_swatch label="Object" name="objects" />
+  <color_swatch label="Obj. IMs" name="object_ims" />
+  <color_swatch label="Eigenaar" name="owner" />
+  <color_swatch label="Bubbel" name="background"/>
+  <color_swatch label="URLs" name="links"/>
+  <text name="PhoenixEncrypted">
+    Versleuteld
+  </text>
+  <color_swatch name="encrypted" />	
+  <text name="text_box3">
+    Chatconsole:
+  </text>
+  <spinner label="Uitvagen na:" name="fade_chat_time" />
+  <text name="text_box4">
+    (seconden)
+  </text>
+  <spinner left="350" name="max_chat_count"/>
+  <text left="415" name="text_box5">
+    (# regels)
+  </text>
+  <slider label="Doorzichtigheid" name="console_opacity" />
+  <check_box label="Gebruik volledige schermbreedte (vereist herstart)" name="chat_full_width_check" />
+  <text name="text_box6">
+Chatopties:
+  </text>
+  <check_box label="Linden's tekstchat kleuren" name="PhoenixColorLindensChat"/>
+  <check_box label="Sluit chatbalk na het aanslaan van Enter" name="close_chat_on_return_check" />
+  <check_box label="Pijltoetsen bewegen altijd de avatar tijdens chatten" name="arrow_keys_move_avatar_check" />
+  <check_box label="Tijdstempels in lokale chat weergeven" name="show_timestamps_check" />
+  <check_box label="Scriptfouten/waarschuwingen als gewone chat weergeven" name="script_errors_as_chat" />
+  <check_box label="Typeanimatie tijdens chatten weergeven" name="play_typing_animation" />
+  <check_box label="Chattekst van mijn vrienden in een andere kleur weergeven" name="PhoenixColorFriendsChat" />
+  <text name="text_box7">
+Bubbelchat:
+  </text>
+  <check_box label="Chatbubbels weergeven" name="bubble_text_chat" />
+  <slider label="Doorzichtigheid" name="bubble_chat_opacity" />
+  <text name="text_translate_chat">
+  Chatvertaling:
+  </text>
+  <check_box label="Gebruik machinevertaling tijdens chatten (powered by Google)" name="translate_chat" />
+  <text name="text_translate_chat">
+Vertaal naar deze taal:
+  </text>
+  <combo_box name="translate_language_combobox">
+  <combo_item name="System Default Language">
+    Systeem standaard
+  </combo_item>
+  <combo_item name="English">
+    English (Engels)
+  </combo_item>
+  
+  <!-- After "System Default" and "English", please keep the rest of these combo_items in alphabetical order by the first character in the string. -->
+  
+  <combo_item name="Danish">
+    Dansk (Deens)
+  </combo_item>
+  <combo_item name="Deutsch(German)">
+    Deutsch (Duits)
+  </combo_item>
+  <combo_item name="Spanish">
+    Español (Spaans)
+  </combo_item>
+  <combo_item name="French">
+    Français (Frans)
+  </combo_item>
+  <combo_item name="Italian">
+    Italiano (Italiaans)
+  </combo_item>
+  <combo_item name="Hungarian">
+    Magyar (Hongaars)
+  </combo_item>
+  <combo_item name="Dutch">
+    Nederlands
+  </combo_item>
+  <combo_item name="Polish">
+    Polski (Pools)
+  </combo_item>
+  <combo_item name="Portugese">
+    Portugués (Portugees)
+  </combo_item>
+  <combo_item name="Russian">
+    Русский (Russisch)
+  </combo_item>
+  <combo_item name="Turkish">
+    Türkçe (Turks)
+  </combo_item>
+  <combo_item name="Ukrainian">
+    Українська (Oekraïens)
+  </combo_item>
+  <combo_item name="Chinese">
+    中文 (简体) (Chinees)
+  </combo_item>
+  <combo_item name="(Japanese)">
+    日本語 (Japans)
+  </combo_item>
+  <combo_item name="(Korean)">
+    한국어 (Koreaans)
+  </combo_item>
+</combo_box>
 </panel>

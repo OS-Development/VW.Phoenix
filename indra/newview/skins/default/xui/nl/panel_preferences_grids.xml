@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<panel label="Grids" name="Grids panel">
+	<!-- Grid Selector -->
+	<text name="grid_selector_label" >
+		Kies een grid:
+	</text>
+	<combo_box name="grid_selector" />
+		<button label="Standaard" name="btn_default" />
+    <text name="default_grid">
+        ([DEFAULT])
+    </text>
+    <!-- Buttons -->
+    <button label="Wissen" name="btn_delete" />
+	    <button label="Toevoegen" name="btn_add" />
+	    <button label="Kopiëren" name="btn_copy" />
+	<!-- Login URI -->
+	<text name="loginuri_label">
+		Login URI:
+	</text>
+	<line_editor name="loginuri" />
+		<button label="Grid info ophalen" name="btn_gridinfo" />
+	<!-- Platform -->
+	<text name="platform_label">
+		Platform:
+	</text>
+	<combo_box name="platform" />
+	<!-- Grid Nickname -->
+	<text name="gridnick_label">
+		Grid bijnaam:
+	</text>
+	<line_editor name="gridnick" />
+	<!-- Grid Name -->
+	<text name="gridname_label">
+		Gridnaam:
+	</text>
+	<line_editor name="gridname" />
+	<!-- Helper URI -->
+	<text name="helperuri_label">
+		Helper URL:
+	</text>
+	<line_editor name="helperuri" />
+    <!-- Web Site -->
+    <text name="website_label">
+        Website:
+    </text>
+    <line_editor name="website" />
+    <!-- Support URL -->
+    <text name="support_label">
+        Ondersteuning URL:
+    </text>
+    <line_editor name="support" />
+    <!-- Account URL -->
+    <text name="register_label">
+        Account URL:
+    </text>
+    <line_editor name="register" />
+    <!-- Password URL -->
+    <text name="password_label">
+        Wachtwoord URL:
+    </text>
+    <line_editor name="password"/>
+    <!-- Search URL -->
+	<!--
+    <text name="search_label">
+        Search URL:
+    </text>
+    <line_editor name="search"/>
+	-->
+    <!-- Rendering Compatibility -->
+	<check_box label="Render-compatibiliteit" name="render_compat" />
+	<button label="?" name="btn_help_render_compat" />
+</panel>

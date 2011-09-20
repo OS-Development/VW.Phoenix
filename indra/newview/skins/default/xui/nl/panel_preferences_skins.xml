@@ -1,14 +1,34 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<panel label="Weergaves" name="Skins panel">
-	<text name="muting_text">
-		Selecteer een weergave (herstart vereist):
-	</text>
-	<radio_group name="skin_selection">
-		<radio_item name="default">
-			Standaard
-		</radio_item>
-		<radio_item name="silver">
-			Zilver
-		</radio_item>
-	</radio_group>
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<panel label="Weergaven" name="Skins panel">
+<text name="EmSkin_txt1">
+  Geselecteerde weergave
+</text>
+<combo_box name="emrd_skin_combo"/>
+<button label="Meer..." name="emrd_skin_browser_button" />
+<text name="EmSkin_txt2">
+  Primaire auteur
+</text>
+<view_border name="emrd_box1" />
+<text name="emrd_skin_author">
+  Auteur
+</text>
+<text name="EmSkin_txt3">
+  Aanvullende auteurs
+</text>
+<view_border name="emrd_box2"/>
+<text name="emrd_skin_ad_authors">
+  aanvullende weergave-auteurs
+</text>
+<text name="EmSkin_txt4">
+  Weergavenmap
+</text>
+<view_border name="emrd_box3"/>
+<text name="emrd_skin_folder">
+  weergavenmap
+</text>
+<button name="emrd_skin_preview" tool_tip="Weergave-voorbeeld" />
+<text name="EmSkin_txt5">
+  Aanvullende informatie
+</text>
+<text_editor name="emrd_skin_info" />
 </panel>

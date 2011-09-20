@@ -1,52 +1,100 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<panel label="Netwerk" name="network">
-	<text name="text_box">
-		Maximale bandbreedte:
-	</text>
-  <slider name="max_bandwidth" left_delta="130"/>
-  <text name="text_box2">
-		kbps (kilobits per seconde)
-	</text>
-	<text name="cache_size_label_l">
-		Diskcache grootte:
-	</text>
-	<text name="text_box5">
-		MB
-	</text>
-	<text name="cache_location_label">
-    Plaats van schijfcache:
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<panel label="Netwerk/mappen" name="network">
+  <text name="text_box">
+		Max. bandbreedte:
+      </text>
+      <slider name="max_bandwidth" />
+	<text name="text_box2">
+    Kilobits per seconde
+    </text>
+    <text name="cache_size_label_l">
+    Diskcache-grootte:
   </text>
-  <button name="open_cache_loc" label="Openen" width="80" tool_tip="Deze lokatie verkennen"/>
-  <button name="set_cache" label="Instellen" label_selected="Instellen" left_delta="60" width="85" tool_tip="Kies een nieuwe plaats voor de cache."/>
-	<button name="reset_cache" label="Herstellen" label_selected="Instellen" left_delta="65" width="91" tool_tip="Herstel de standaardlokatie voor de cache."/>
-  <text name="sound_cache_location_label">
+  <slider name="cache_size" />
+    <text name="text_box5">
+      Megabytes
+    </text>
+    <text name="cache_location_label">
+    Plaats van de schijfcache:
+  </text>
+  <line_editor name="cache_location" />    
+    <button name="open_cache_loc" width="80" tool_tip="Deze locatie verkennen"/>
+  <button label="Instellen" left_delta="65" name="set_cache" width="75" tool_tip="Kies een nieuwe plaats voor de cache."/>
+  <button label="Herstel" name="reset_cache" tool_tip="Herstel de standaardlocatie voor de cache."/>
+    <text name="sound_cache_location_label">
     Plaats van geluidencache:
   </text>
-  <button name="open_soundcache_loc" label="Openen" width="80" tool_tip="Deze lokatie verkennen"/>
-  <button name="set_sound_cache" label="Instellen" label_selected="Instellen" left_delta="60" width="85" tool_tip="Kies een nieuwe plaats voor de cache."/>
-  <button name="reset_sound_cache" label="Herstellen" label_selected="Instellen" left_delta="65" width="91" tool_tip="Herstel de standaardlokatie voor de cache."/>
+  <line_editor name="sound_cache_location" />
+    <button name="open_soundcache_loc" width="80" tool_tip="Deze locatie verkennen."/>
+<button label="Instellen" left_delta="60" name="set_sound_cache" width="85" tool_tip="Kies een nieuwe plaats voor de cache."/>
+<button label="Herstel" left_delta="65" name="reset_sound_cache" width="75" tool_tip="Herstel de standaardlocatie voor de cache."/>
   <text name="chat_location_label">
     Plaats van chatlogbestanden:
   </text>
-  <button name="open_chat_logs_loc" label="Openen" width="80" tool_tip="Deze lokatie verkennen"/>
-  <button name="set_chat_logs" label="Instellen" label_selected="Instellen" left_delta="60" width="85" tool_tip="Kies een nieuwe plaats voor de chatlogbestanden."/>
-  <button name="reset_chat_logs" label="Herstellen" label_selected="Instellen" left_delta="65" width="91" tool_tip="Herstel de standaardlokatie voor de chatlogbestanden"/>
-  <text name="crash_location_label">
+  <line_editor name="chat_logs_location" />
+    <button label="Openen" name="open_chat_logs_loc" width="80" tool_tip="Deze locatie verkennen."/>
+  <button label="Instellen" left_delta="60" name="set_chat_logs" width="85" tool_tip="Kies een nieuwe plaats voor de chatlogbestanden."/>
+  <button label="Herstel" left_delta="65" name="reset_chat_logs" width="75" tool_tip="Herstel de standaardlocatie voor de chatlogbestanden."/>
+    <text name="crash_location_label">
     Plaats van crashlogbestanden:
   </text>
-  <button name="open_crash_logs_loc" label="Openen" width="80" tool_tip="Deze lokatie verkennen"/>
-  <text name="cannot_change_crash_label" left_delta="60">
-    (Kan niet wijzigen)
+  <line_editor name="crash_logs_location" />
+    <button label="Openen" name="open_crash_logs_loc" width="80" tool_tip="Deze locatie verkennen."/>
+      <text name="cannot_change_crash_label">
+    (Onwijzigbaar)
   </text>
   <text name="user_location_label">
     Plaats van gebruikersinstellingen:
   </text>
-  <button name="open_user_loc" label="Openen" width="80" tool_tip="Deze lokatie verkennen"/>
-  <text name="cannot_change_user_label" left_delta="60">
-    (Kan niet wijzigen)
+  <line_editor name="user_setting_location" />
+    <button label="Openen" name="open_user_loc" width="80" tool_tip="Deze locatie verkennen."/>
+    <text tname="cannot_change_user_label">
+    (Onwijzigbaar)
   </text>
-  <button name="clear_cache" label="Cache wissen" width="100"/>
-  <button name="clear_inv_cache" label="Inventariscache wissen" width="150" left_delta="110"/>
-  <check_box name="connection_port_enabled" label="Aangepaste poortverbinding"/>
-  <spinner name="connection_port" label="Poortnummer:"/>
+  <check_box label="Aangepaste poort:" name="connection_port_enabled"  />
+ <!-- Label for this spinner needs to remain empty, or spinner won't display! -->
+ <spinner name="connection_port" />
+<button label="Cache wissen" name="clear_cache" width="100" />
+  <button label="Inventariscache wissen" name="clear_inv_cache"
+          tool_tip="U moet aangemeld zijn om uw inventariscache te kunnen wissen." />
+    <check_box label="SOCKS 5 proxy gebruiken" name="socks5_proxy_enabled" />
+  <text name="socks5_type_label">
+    HTTP proxy:
+  </text>
+  <radio_group name="socks5_http_proxy_type">
+    <radio_item name="None" tool_tip="Geen HTTP proxy">
+      Geen
+    </radio_item>
+    <radio_item name="Socks" width="50" tool_tip="Gebruik SOCKS als HTTP proxy">
+      Socks
+    </radio_item>
+    <radio_item name="Web" width="50" tool_tip="Gebruik een web proxy als HTTP proxy">
+      Web
+    </radio_item>
+  </radio_group>
+  <text name="socks5_host_label">
+    Socks 5 host:
+  </text>
+  <line_editor name="socks5_proxy_host" tool_tip="De naam of het IP adres van de SOCKS5 proxy die u wil gebruiken." />
+    <spinner name="socks5_proxy_port" />
+  <text name="socks5_auth_label">
+    SOCKS5 verificatie:
+  </text>
+  <radio_group name="socks5_auth">
+    <radio_item name="None" tool_tip="Geen verificatie">
+      Geen
+    </radio_item>
+    <radio_item name="UserPass" tool_tip="Gebruikersnaam / wachtwoord  verificatie">
+      Gebruikersnaam/wachtwoord 
+    </radio_item>
+  </radio_group>
+  <text name="socks5_username_label">
+    Gebruikersnaam:
+  </text>
+  <line_editor name="socks5_proxy_username" tool_tip="Uw gebruikersnaam voor de SOCKS5 proxy" />
+    
+    <text name="socks5_password_label">
+      Wachtwoord:
+    </text>
+    <line_editor tool_tip="Uw wachtwoord voor de SOCKS5 proxy" />
 </panel>
