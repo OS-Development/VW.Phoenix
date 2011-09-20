@@ -1,24 +1,31 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<panel label="Audio &amp; Video" name="Media panel">
-	<text name="muting_text">
-		Volume:
-	</text>
-	<text name="streaming_prefs_text" bottom="-195" >
-		Streaming voorkeuren:
-	</text>
-	<text name="audio_prefs_text">
-		Audiovoorkeuren:
-	</text>
-	<panel label="Volume" name="Volume Panel"/>
-	<check_box bottom="-200" height="32" label="Speel streaming muziek af wanneer beschikbaar  &#10;
-(gebruikt meer bandbreedte)" name="streaming_music"/>
-	<check_box bottom_delta="-32" height="32" label="Speel streaming media af wanneer beschikbaar  &#10;
-(gebruikt meer bandbreedte)" name="streaming_video"/>
-	<check_box bottom_delta="-32" label="Automatisch media afspelen" name="auto_streaming_video"/>
-	<check_box label="Audio dempen wanneer het venster geminimaliseerd is" name="mute_when_minimized"/>
-	<slider label="Dopplereffect" name="Doppler Effect"/>
-	<slider label="Afstandsfactor" name="Distance Factor"/>
-	<slider label="Wegdraaifactor" name="Rolloff Factor"/>
-	<spinner label="L$ Wijzigingsdrempel" name="L$ Change Threshold" label_width="165" width="229"/>
-	<spinner label="Wijzig letseldrempelwaarde" name="Health Change Threshold" label_width="165" width="229"/>
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<panel label="Audio &amp; video" name="Media panel">
+  <text name="muting_text">
+    Volume:
+  </text>
+  <text name="streaming_prefs_text">
+Streaming voorkeuren:
+</text>
+<text name="audio_prefs_text">
+Audiovoorkeuren:
+  </text>
+  <panel name="Volume Panel" />
+  <check_box label="Speel streaming muziek indien beschikbaar" name="streaming_music" />
+  <check_box label="Speel streaming media indien beschikbaar" name="streaming_video" />
+  <check_box label="Automatisch media afspelen" name="auto_streaming_video"
+  tool_tip="Als u dit heeft aangevinkt, zal bij het betreden van een nieuw perceel uw media na enkele seconden automatisch beginnen met spelen, zelfs als u tevoren uw media hebt gestopt." />
+  <check_box label="Sta scripts toe mijn afspeelknop te bedienen" name="scripted_media"
+  tool_tip="Dit inschakelen verhindert scripts ervan om uw media in te schakelen (als het reeds was uitgeschakeld) totdat u zelf op de afspeelknop klikt, of tot het wordt ingeschakeld door automatisch afspelen." />
+  <check_box label="Media uitschakelen bij betreden van ander perceel." name="auto_streaming_music"
+  tool_tip="Als u een ander perceel betreedt, zal de streaming muziek of spelende media worden uitgeschakeld. Dit duurt totdat het wordt ingeschakeld door automatisch spelen, door een script, of door uw afspeelknop."/>
+  <check_box label="Mediafilter (extra beveiliging)" name="media_filter"
+  tool_tip="Als u dit inschakelt, zal u de URL worden getoond van alle media die u wordt aangeboden, en laat u de keuze het al dan niet af te spelen. U kunt eventueel ook deze keuze vastleggen voor alle URLs van dat domein."/>
+  <button label="Instellingen" name="open_media_lists" width="110"
+  tool_tip="Open de instellingen voor het mediafilter."/>
+  <check_box label="Audio dempen bij geminimaliseerd venster" name="mute_when_minimized" />
+  <slider label="Dopplereffect" name="Doppler Effect" />
+  <slider label="Wegdraaifactor" name="Rolloff Factor" />
+  <spinner label="L$ wijzigingsdrempel" name="L$ Change Threshold"
+  tool_tip="Laat een geluid horen als een bedrag wordt uitgegeven of ontvangen, hoger dan de hier ingestelde waarde." />
+  <spinner label="Letseldrempel" name="Health Change Threshold" />
 </panel>
