@@ -174,6 +174,7 @@ public:
 	// otherwise it is loaded from file, added to the table, and returned.
 	static LLPolyMesh *getMesh( const std::string &name, LLPolyMesh* reference_mesh = NULL);
 
+#if MESHES_AND_MORPHS
 	// Saves the mesh information as a binary Linden Lab Mesh file.
 	BOOL saveLLM(LLFILE *fp);
 
@@ -191,6 +192,7 @@ public:
 
 	// Requests mesh data by name.  Returns null if not found.
 	static LLPolyMeshSharedData *getMeshData( const std::string &name );
+#endif //MESHES_AND_MORPHS
 
 	// Frees all loaded meshes.
 	// This should only be called once you know there are no outstanding
@@ -332,7 +334,9 @@ public:
 
 	typedef std::map<std::string,LLPolyMorphData*> morph_list_t;
 
+#if MESHES_AND_MORPHS
 	static void getMorphList (const std::string& mesh_name, morph_list_t* morph_list);
+#endif // MESHES_AND_MORPHS
 
 	LLPolyMorphData*	getMorphData(const std::string& morph_name);
 // 	void	removeMorphData(LLPolyMorphData *morph_target);
@@ -358,7 +362,7 @@ public:
 	U32				mCurVertexCount;
 
 	// Dumps diagnostic information about the global mesh table
-	static void dumpDiagInfo(void *);
+	static void dumpDiagInfo();
 
 private:
 	void initializeForMorph();
