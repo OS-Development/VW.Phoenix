@@ -3652,11 +3652,6 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
 		{
 			// show on screen and add to history
 			check_translate_chat(mesg, chat, FALSE);
-
-			// Growl notifications, if this is a highlight...
-			if(from_id != gAgent.getID() && MfdKeywordFloaterStart::hasKeyword(mesg, MfdKeywordFloaterStart::LocalChat))
-				gGrowlManager->notify("Keyword Alert", chat.mText, "Keyword Alert");
-
 		}
 		else
 		{

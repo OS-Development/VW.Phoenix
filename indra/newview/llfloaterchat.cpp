@@ -654,6 +654,7 @@ LLColor4 get_text_color(const LLChat& chat)
 	{
 		if(MfdKeywordFloaterStart::hasKeyword(chat.mText,1))
 		{
+			gGrowlManager->notify("Keyword Alert", chat.mText, "Keyword Alert");
 			if(gSavedPerAccountSettings.getBOOL("PhoenixKeywordChangeColor"))
 				text_color = gSavedPerAccountSettings.getColor4("PhoenixKeywordColor");
 		}
