@@ -347,7 +347,7 @@ void lggContactSetsFloater::drawRightClick()
 		return;
 	}
 	int heightPer = 17;
-	int width = 208;
+	int width = 258;
 	BOOL drawRemove=FALSE;
 
 	int extras = 5;//make sure we have room for the extra options
@@ -1009,7 +1009,7 @@ void lggContactSetsFloater::draw()
 		//need scroll bars
 		sizeV = minSize;
 //#pragma region ScrollBars
-		if (this->hasFocus()&&this->hasMouseCapture())
+		if (this->hasFocus())//&&this->hasMouseCapture())
 		{
 			LLUIImage *arrowUpImage = LLUI::getUIImage("map_avatar_above_32.tga");
 			LLUIImage *arrowDownImage = LLUI::getUIImage("map_avatar_below_32.tga");

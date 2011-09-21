@@ -232,6 +232,8 @@
 #include "floaterblacklist.h"
 #include "floatermedialists.h"
 
+#include "lggcontactsetsfloater.h"
+
 using namespace LLVOAvatarDefines;
 
 void init_client_menu(LLMenuGL* menu);
@@ -6226,6 +6228,10 @@ class LLShowFloater : public view_listener_t
         {
         	JCFloaterAreaSearch::toggle();
         }
+		else if (floater_name == "contactsets")
+		{
+			lggContactSetsFloaterStart::show(TRUE,NULL);
+		}
 		else if (floater_name == "mediabrowser")
         {
 			LLFloaterMediaBrowser::showInstance("http://");

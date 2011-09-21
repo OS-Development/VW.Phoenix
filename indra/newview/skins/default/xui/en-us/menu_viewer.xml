@@ -711,9 +711,12 @@
 		<menu_item_call enabled="false" label="Local Bitmap Browser">
 			<on_click function="ShowFloater" userdata="localassetbrowser" />
 		</menu_item_call>
-		<menu_item_call enabled="false" label="Area Search">
-			<on_click function="ShowFloater" userdata="areasearch" />
-		</menu_item_call>
+    <menu_item_call enabled="false" label="Area Search">
+      <on_click function="ShowFloater" userdata="areasearch" />
+    </menu_item_call>
+    <menu_item_call enabled="false" label="Contact Sets" shortcut="control|alt|shift|c">
+      <on_click function="ShowFloater" userdata="contactsets" />
+    </menu_item_call>
 		<menu_item_call enabled="false" label="Avatar List" shortcut="control|shift|a">
 			<on_click function="Phoenix.ToggleAvatarList" userdata="avatars" />
 			<on_check control="ShowAvatarList" />
