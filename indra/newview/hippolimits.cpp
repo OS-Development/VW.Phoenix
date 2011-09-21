@@ -92,7 +92,7 @@ void HippoLimits::onRegionCapsReceived(const LLUUID& region_id)
 void HippoLimits::doSecondLifeMeshCheck()
 {
 	// check if the region has mesh for 64m prim support
-	if (gMeshRepo.meshRezEnabled())
+	if (!gAgent.getRegion()->getCapability("GetMesh").empty())
 	{
 		mMaxPrimScale = 64.0f;
 		gSavedSettings.setBOOL("Phoenix64mPrimSupport", TRUE);
