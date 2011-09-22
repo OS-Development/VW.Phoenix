@@ -9466,6 +9466,17 @@
 			<key>Value</key>
 			<integer>0</integer>
 		</map>
+		<key>PhoenixMarketPlaceTabURLdispatch</key>
+		<map>
+			<key>Comment</key>
+			<string>Enable the clickable URL to dispatch to the marketplace tab instead of browser setting</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>Boolean</string>
+			<key>Value</key>
+			<integer>0</integer>
+		</map>
 		<key>PhoenixMaxBeamsPerSecond</key>
 		<map>
 			<key>Comment</key>

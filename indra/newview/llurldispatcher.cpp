@@ -160,8 +160,11 @@ bool LLURLDispatcherImpl::dispatchCore(const std::string& url,
 	if (dispatchHelp(url, right_mouse)) return true;
 	if (dispatchApp(url, right_mouse, web, trusted_browser)) return true;
 	if (dispatchRegion(url, right_mouse)) return true;
-	if (dispatchMarket(url, right_mouse)) return true;
-
+	if (gSavedSettings.getBOOL("PhoenixMarketPlaceTabURLdispatch"))
+	{
+		if (dispatchMarket(url, right_mouse)) return true;
+	}
+	
 	/*
 	// Inform the user we can't handle this
 	std::map<std::string, std::string> args;
