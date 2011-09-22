@@ -25,32 +25,32 @@
 		     tool_tip="You can edit this friend&apos;s objects" width="20" />
 		<column name="friend_last_update_generation" width="0" />
 	</scroll_list>
-	<pad bottom="-7" height="0" left="-90" width="1" />
-	<button bottom_delta="-25" follows="top|right" height="22" label="IM/Call"
+	<pad bottom="-5" height="0" left="-90" width="1" />
+	<button bottom_delta="-24" follows="top|right" height="22" label="IM/Call"
 	     left_delta="0" name="im_btn" tool_tip="Open Instant Message session"
 	     width="80" />
-	<button bottom_delta="-25" follows="top|right" height="22" label="Profile"
+	<button bottom_delta="-24" follows="top|right" height="22" label="Profile"
 	     left_delta="0" name="profile_btn"
 	     tool_tip="Show picture, groups, and other information" width="80" />
-	<button bottom_delta="-25" follows="top|right" height="22" label="Teleport..."
+	<button bottom_delta="-24" follows="top|right" height="22" label="Teleport..."
 	     left_delta="0" name="offer_teleport_btn"
 	     tool_tip="Offer this friend a teleport to your current location" width="80" />
-	<button bottom_delta="-25" follows="top|right" height="22" label="Pay..."
+	<button bottom_delta="-24" follows="top|right" height="22" label="Pay..."
 	     left_delta="0" name="pay_btn"
 	     tool_tip="Give Linden dollars (L$) to this friend" width="80" />
-	<button bottom_delta="-25" follows="top|right" height="22" label="Remove..."
+	<button bottom_delta="-24" follows="top|right" height="22" label="Remove..."
 	     left_delta="0" name="remove_btn"
 	     tool_tip="Remove this person from your friends list" width="80" />
-	<button bottom_delta="-25" follows="top|right" height="22" label="Add..."
+	<button bottom_delta="-24" follows="top|right" height="22" label="Add..."
 	     left_delta="0" name="add_btn" tool_tip="Offer friendship to a resident"
 	     width="80" />
-	<button bottom_delta="-25" follows="top|right" height="22" label="Contact Sets"
+	<button bottom_delta="-24" follows="top|right" height="22" label="Contact Sets"
 	     left_delta="-3" name="lgg_fg_openFG" tool_tip="List your friends divided in groups"
 	     width="85" />
-	<button bottom_delta="-30" follows="top|right" height="22" label="Import"
+	<button bottom_delta="-24" follows="top|right" height="22" label="Import"
 	     left_delta="3" name="import_btn" tool_tip="Import friends list from HDD"
 	     width="80" />
-    <button bottom_delta="-25" follows="top|right" height="22" label="Export"
+    <button bottom_delta="-24" follows="top|right" height="22" label="Export"
 	     left_delta="0" name="export_btn" tool_tip="Export friends list to HDD"
 	     width="80" />
 </panel>
