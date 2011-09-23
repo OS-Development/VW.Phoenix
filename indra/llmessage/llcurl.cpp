@@ -305,6 +305,7 @@ public:
 
 private:
 	friend class LLCurl;
+	friend class LLCurl::Multi;
 
 	CURL*				mCurlEasyHandle;
 	struct curl_slist*	mHeaders;
@@ -324,6 +325,7 @@ private:
 	static std::set<CURL*> sFreeHandles;
 	static std::set<CURL*> sActiveHandles;
 	static LLMutex* sHandleMutex;
+	static LLMutex* sMultiMutex;
 };
 
 LLCurl::Easy::Easy()
@@ -336,7 +338,7 @@ LLCurl::Easy::Easy()
 std::set<CURL*> LLCurl::Easy::sFreeHandles;
 std::set<CURL*> LLCurl::Easy::sActiveHandles;
 LLMutex* LLCurl::Easy::sHandleMutex = NULL;
-
+LLMutex* LLCurl::Easy::sMultiMutex = NULL;
 
 //static
 CURL* LLCurl::Easy::allocEasyHandle()
@@ -749,6 +751,11 @@ LLCurl::Multi::~Multi()
 {
 	llassert(isStopped());
 
+	if (LLCurl::sMultiThreaded)
+	{
+		LLCurl::Easy::sMultiMutex->lock();
+	}
+
 	delete mSignal;
 	mSignal = NULL;
 
@@ -769,6 +776,11 @@ LLCurl::Multi::~Multi()
 
 	check_curl_multi_code(curl_multi_cleanup(mCurlMultiHandle));
 	--gCurlMultiCount;
+
+	if (LLCurl::sMultiThreaded)
+	{
+		LLCurl::Easy::sMultiMutex->unlock();
+	}
 }
 
 CURLMsg* LLCurl::Multi::info_read(S32* msgs_in_queue)
@@ -802,6 +814,7 @@ void LLCurl::Multi::run()
 		mPerformState = PERFORM_STATE_PERFORMING;
 		if (!mQuitting)
 		{
+			LLMutexLock lock(LLCurl::Easy::sMultiMutex);
 			doPerform();
 		}
 	}
@@ -1382,6 +1395,7 @@ void LLCurl::initClass(bool multi_threaded)
 	check_curl_code(code);
 
 	Easy::sHandleMutex = new LLMutex();
+	Easy::sMultiMutex = new LLMutex();
 
 	
 #if SAFE_SSL
@@ -1403,6 +1417,8 @@ void LLCurl::cleanupClass()
 #endif
 	delete Easy::sHandleMutex;
 	Easy::sHandleMutex = NULL;
+	delete Easy::sMultiMutex;
+	Easy::sMultiMutex = NULL;
 
 	for (std::set<CURL*>::iterator iter = Easy::sFreeHandles.begin(); iter != Easy::sFreeHandles.end(); ++iter)
 	{
