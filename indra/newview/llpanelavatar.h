@@ -156,18 +156,25 @@ public:
 	void load(std::string url);
 	static void onURLKeystroke(LLLineEditor* editor, void* data);
 	static void onCommitLoad(LLUICtrl* ctrl, void* data);
+	static void onCommitWebProfile(LLUICtrl* ctrl, void* data);
 	static void onCommitURL(LLUICtrl* ctrl, void* data);
 	static void onClickWebProfileHelp(void *);
 
 	// inherited from LLViewerMediaObserver
 	/*virtual*/ void handleMediaEvent(LLPluginClassMedia* self, EMediaEvent event);
 
+	static void callbackAvatarName(const LLUUID& id, const std::string& full_name, bool is_group, void* data);
+	void setAgent(const LLUUID& avatar_id);
+
 private:
 	std::string			mHome;
+	std::string			mProfile;
 	std::string         mNavigateTo;
 	LLMediaCtrl*		mWebBrowser;
+	LLFrameTimer 	mPerformanceTimer;
+	bool 		mFirstNavigate;
+	bool mCompleted;
 };
-
 
 class LLPanelAvatarAdvanced : public LLPanelAvatarTab
 {

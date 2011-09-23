@@ -97,6 +97,8 @@
 
 #include "llavatarname.h"
 #include "lggcontactsets.h"
+#include "hippogridmanager.h"
+#include "llfloatermediabrowser.h"
 
 // Statics
 std::list<LLPanelAvatar*> LLPanelAvatar::sAllPanels;
@@ -508,6 +510,9 @@ BOOL LLPanelAvatarWeb::postBuild(void)
 {
 	childSetKeystrokeCallback("url_edit", onURLKeystroke, this);
 	childSetCommitCallback("load", onCommitLoad, this);
+	
+	childSetCommitCallback("web_profile", onCommitWebProfile, this);
+	childSetVisible("web_profile", gHippoGridManager->getCurrentGrid()->isSecondLife());
 
 	childSetAction("web_profile_help",onClickWebProfileHelp,this);
 
@@ -585,40 +590,56 @@ void LLPanelAvatarWeb::refresh()
 	if (mNavigateTo != "")
 	{
 		llinfos << "Loading " << mNavigateTo << llendl;
-		mWebBrowser->navigateTo( mNavigateTo );
+		mWebBrowser->navigateTo( mNavigateTo, "text/html" );
 		mNavigateTo = "";
 	}
 }
-
 
 void LLPanelAvatarWeb::enableControls(BOOL self)
 {	
 	childSetEnabled("url_edit",self);
 }
 
-void LLPanelAvatarWeb::setWebURL(std::string url)
+// static
+void LLPanelAvatarWeb::callbackAvatarName(const LLUUID& id, const std::string& full_name, bool is_group, void* data)
 {
-	bool changed_url = (mHome != url);
-
-	mHome = url;
-	bool have_url = !mHome.empty();
-	
-	childSetText("url_edit", mHome);
-	childSetEnabled("load", mHome.length() > 0);
-
-	if (have_url
-		&& gSavedSettings.getBOOL("AutoLoadWebProfiles"))
+	LLPanelAvatarWeb* self = (LLPanelAvatarWeb*)data;
+	if (self)
 	{
-		if (changed_url)
-		{
-			load(mHome);
-		}
+		self->childSetEnabled("web_profile", true);
+		self->childSetVisible("profile_html",true);
+		self->mProfile = getProfileURL(gCacheName->buildUsername(full_name));
+		self->mPerformanceTimer.start();
+		self->mNavigateTo = self->mProfile;
+		self->refresh();
+	}
+}
+
+void LLPanelAvatarWeb::setAgent(const LLUUID& avatar_id)
+{
+	mCompleted = false;
+	std::string av_name;
+	if (gCacheName->getFullName(avatar_id, av_name))
+	{
+		childSetEnabled("web_profile", true);
+		childSetVisible("profile_html",true);
+		mProfile = getProfileURL(gCacheName->buildUsername(av_name));
+		mPerformanceTimer.start();
+		mNavigateTo = mProfile;
+		refresh();
 	}
 	else
 	{
-		childSetVisible("profile_html",false);
-		childSetVisible("status_text", false);
+		gCacheName->get(avatar_id, false, boost::bind(&LLPanelAvatarWeb::callbackAvatarName, _1, _2, _3, (void*)this));
 	}
+}
+
+void LLPanelAvatarWeb::setWebURL(std::string url)
+{
+	mHome = url;
+	
+	childSetText("url_edit", mHome);
+	childSetEnabled("load", mHome.length() > 0);
 }
 
 // static
@@ -691,6 +712,34 @@ void LLPanelAvatarWeb::onCommitLoad(LLUICtrl* ctrl, void* data)
 	}
 }
 
+// static
+void LLPanelAvatarWeb::onCommitWebProfile(LLUICtrl* ctrl, void * data)
+{
+	LLPanelAvatarWeb* self = (LLPanelAvatarWeb*)data;
+	if (!self) return;
+
+	LLSD::String valstr = ctrl->getValue().asString();
+	if (valstr == "")
+	{
+		self->mWebBrowser->setTrusted(true);
+		if (!self->mProfile.empty())
+		{
+			self->childSetVisible("profile_html",true);
+			self->mNavigateTo = self->mProfile;
+		}
+	}
+	else if (valstr == "sl_builtin")
+	{
+		 // open in a trusted built-in browser
+		LLFloaterMediaBrowser::showInstance(self->mProfile);
+	}
+	else if (valstr == "sl_open")
+	{
+		 // open in user's external browser
+		LLWeb::loadURLExternal(self->mProfile);
+	}
+}
+
 void LLPanelAvatarWeb::handleMediaEvent(LLPluginClassMedia* self, EMediaEvent event)
 {
 	switch(event)
@@ -700,7 +749,28 @@ void LLPanelAvatarWeb::handleMediaEvent(LLPluginClassMedia* self, EMediaEvent ev
 		break;
 		
 		case MEDIA_EVENT_LOCATION_CHANGED:
-			childSetText("url_edit", self->getLocation() );
+			// don't set this or user will set there url to profile url
+			// when clicking ok on there own profile.
+			// childSetText("url_edit", self->getLocation() );
+		break;
+		
+		case MEDIA_EVENT_NAVIGATE_BEGIN:
+		{
+			if (mFirstNavigate)
+			{
+				mFirstNavigate = false;
+			}
+			else
+			{
+				mPerformanceTimer.start();
+			}
+		}
+		break;
+		
+		case MEDIA_EVENT_NAVIGATE_COMPLETE:
+		{
+			childSetText("status_text", llformat("Load Time: %.2f seconds", mPerformanceTimer.getElapsedTimeF32()));
+		}
 		break;
 		
 		default:
@@ -1532,6 +1602,7 @@ void LLPanelAvatar::setAvatarID(const LLUUID &avatar_id, const std::string &name
 
 	mPanelSecondLife->enableControls(own_avatar && mAllowEdit);
 	mPanelWeb->enableControls(own_avatar && mAllowEdit);
+	mPanelWeb->setAgent(avatar_id);
 	mPanelAdvanced->enableControls(own_avatar && mAllowEdit);
 	// Teens don't have this.
 	if (mPanelFirstLife) mPanelFirstLife->enableControls(own_avatar && mAllowEdit);
