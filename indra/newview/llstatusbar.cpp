@@ -487,7 +487,7 @@ void LLStatusBar::refresh()
 		x += buttonRect.getWidth();
 	}
 	//KC: icon to show that WL settings are being overridden locally
-	BOOL status_wl = KCWindlightInterface::instance().WLset;
+	BOOL status_wl = KCWindlightInterface::instance().getWLset();
 	childSetVisible("status_wl", status_wl);
 	if (status_wl)
 	{

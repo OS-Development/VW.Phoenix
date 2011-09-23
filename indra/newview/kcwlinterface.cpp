@@ -28,6 +28,7 @@
 #include "llagent.h"
 #include "llcallingcard.h" // isBuddy
 #include "llstartup.h"
+//#include "llstatusbar.h"
 #include "llparcel.h"
 #include "llviewercontrol.h" // gSavedSettings, gSavedPerAccountSettings
 #include "llviewermenu.h" // is_agent_friend
@@ -45,7 +46,7 @@ const S32 PARCEL_WL_MIN_ALT_CHANGE = 3;
 
 KCWindlightInterface::KCWindlightInterface() :
 	LLEventTimer(PARCEL_WL_CHECK_TIME),
-	WLset(FALSE),
+	mWLset(false),
 	mWeChangedIt(false),
 	mCurrentSpace(-2.f),
 	mLastParcelID(-1),
@@ -53,13 +54,17 @@ KCWindlightInterface::KCWindlightInterface() :
 	mRegionOverride(false),
 	mHaveRegionSettings(false)
 {
-
+	if (!gSavedSettings.getBOOL("PhoenixWLParcelEnabled") ||
+	!gSavedSettings.getBOOL("UseEnvironmentFromRegionAlways"))
+	{
+		mEventTimer.stop();
+		mDisabled = true;
+	}
 }
 
 void KCWindlightInterface::ParcelChange()
 {
-	if (!gSavedSettings.getBOOL("PhoenixWLParcelEnabled") ||
-	(rlv_handler_t::isEnabled() && gRlvHandler.hasBehaviour(RLV_BHVR_SETENV)) )
+	if (checkSettings())
 		return;
 
 	LLParcel *parcel = NULL;
@@ -91,7 +96,7 @@ void KCWindlightInterface::ParcelChange()
 		mLastParcelDesc = desc;
 		mCurrentSpace = -2.f;
 		mCurrentSettings.clear();
-		WLset = false; //clear the status bar icon
+		setWL_Status(false); //clear the status bar icon
 		const LLVector3& agent_pos_region = gAgent.getPositionAgent();
 		mLastZ = lltrunc( agent_pos_region.mV[VZ] );
 
@@ -117,7 +122,7 @@ void KCWindlightInterface::ParcelChange()
 
 BOOL KCWindlightInterface::tick()
 {
-	if(LLStartUp::getStartupState() < STATE_STARTED)
+	if ((LLStartUp::getStartupState() < STATE_STARTED) || checkSettings())
 		return FALSE;
 	
 	//TODO: there has to be a better way of doing this...
@@ -162,7 +167,7 @@ void KCWindlightInterface::ApplySettings(const LLSD& settings)
 		if (settings.has("water") && (!mHaveRegionSettings || mRegionOverride))
 		{
 			LLEnvManagerNew::instance().setUseWaterPreset(settings["water"].asString(), gSavedSettings.getBOOL("PhoenixInterpolateParcelWL"));
-			WLset = true;
+			setWL_Status(true);
 		}
 	}
 }
@@ -221,14 +226,14 @@ void KCWindlightInterface::ApplyWindLightPreset(const std::string& preset)
 	if ( (preset != "Default") && (wlprammgr->hasParamSet(key)) )
 	{
 		LLEnvManagerNew::instance().setUseSkyPreset(preset, gSavedSettings.getBOOL("PhoenixInterpolateParcelWL"));
-		WLset = true;
+		setWL_Status(true);
 		mWeChangedIt = true;
 	}
 	else
 	{
 		if (!LLEnvManagerNew::instance().getUseRegionSettings())
 			LLEnvManagerNew::instance().setUseRegionSettings(true, gSavedSettings.getBOOL("PhoenixInterpolateParcelWL"));
-		WLset = false;
+		setWL_Status(false);
 		mWeChangedIt = false;
 	}
 }
@@ -442,7 +447,7 @@ void KCWindlightInterface::onClickWLStatusButton()
 		mClearWLNotification->respond(response);
 	}
 
-	if (WLset)
+	if (mWLset)
 	{
 		LLParcel *parcel = NULL;
  		parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
@@ -566,4 +571,37 @@ bool KCWindlightInterface::haveParcelOverride(const LLEnvironmentSettings& new_s
 	mHaveRegionSettings = new_settings.getWLDayCycle().size() > 0;
 	
 	return  mRegionOverride || mCurrentSpace != -1.f;
+}
+
+void KCWindlightInterface::setWL_Status(bool pwl_status)
+{
+	mWLset = pwl_status;
+//	gStatusBar->updateParcelIcons();
+}
+
+bool KCWindlightInterface::checkSettings()
+{
+	static LLCachedControl<bool> sPhoenixWLParcelEnabled(gSavedSettings, "PhoenixWLParcelEnabled");
+	static LLCachedControl<bool> sUseEnvironmentFromRegionAlways(gSavedSettings, "UseEnvironmentFromRegionAlways");
+	if (!sPhoenixWLParcelEnabled || !sUseEnvironmentFromRegionAlways ||
+	(rlv_handler_t::isEnabled() && gRlvHandler.hasBehaviour(RLV_BHVR_SETENV)))
+	{
+		// The setting changed, clear everything
+		if (!mDisabled)
+		{
+			mCurrentSettings.clear();
+			mWeChangedIt = false;
+			mCurrentSpace = -2.f;
+			mLastParcelID = -1;
+			mRegionOverride = false;
+			mHaveRegionSettings = false;
+			mLastRegion = NULL;
+			mEventTimer.stop();
+			setWL_Status(false);
+			mDisabled = true;
+		}
+		return true;
+	}
+	mDisabled = false;
+	return false;
 }
