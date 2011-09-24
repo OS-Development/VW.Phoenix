@@ -1349,11 +1349,14 @@ bool LLAppViewer::cleanup()
 	gMeshRepo.shutdown();
 
 	// Must clean up texture references before viewer window is destroyed.
-	LLHUDManager::getInstance()->updateEffects();
-	LLHUDObject::updateAll();
-	LLHUDManager::getInstance()->cleanupEffects();
-	LLHUDObject::cleanupHUDObjects();
-	llinfos << "HUD Objects cleaned up" << llendflush;
+	if	(LLHUDManager::instanceExists())
+	{
+		LLHUDManager::getInstance()->updateEffects();
+		LLHUDObject::updateAll();
+		LLHUDManager::getInstance()->cleanupEffects();
+		LLHUDObject::cleanupHUDObjects();
+		llinfos << "HUD Objects cleaned up" << llendflush;
+	}
 
 	LLKeyframeDataCache::clear();
 
@@ -1365,7 +1368,10 @@ bool LLAppViewer::cleanup()
 	// Note: this is where gWorldMap used to be deleted.
 
 	// Note: this is where gHUDManager used to be deleted.
-	LLHUDManager::getInstance()->shutdownClass();
+	if (LLHUDManager::instanceExists())
+	{
+		LLHUDManager::getInstance()->shutdownClass();
+	}
 
 	delete gAssetStorage;
 	gAssetStorage = NULL;
@@ -2792,7 +2798,10 @@ void LLAppViewer::handleViewerCrash()
 		gMessageSystem->stopLogging();
 	}
 
-	LLWorld::getInstance()->getInfo(gDebugInfo);
+	if (LLWorld::instanceExists())
+	{
+		LLWorld::getInstance()->getInfo(gDebugInfo);
+	}
 
 	// Close the debug file
 	pApp->writeDebugInfo();
@@ -4097,7 +4106,10 @@ void LLAppViewer::sendLogoutRequest()
 		gLogoutMaxTime = LOGOUT_REQUEST_TIME;
 		mLogoutRequestSent = TRUE;
 
-		gVoiceClient->leaveChannel();
+		if (LLVoiceClient::instanceExists())
+		{
+			LLVoiceClient::getInstance()->leaveChannel();
+		}
 
 		//Set internal status variables and marker files
 		gLogoutInProgress = TRUE;
@@ -4318,7 +4330,10 @@ void LLAppViewer::disconnectViewer()
 
 	// This is where we used to call gObjectList.destroy() and then delete gWorldp.
 	// Now we just ask the LLWorld singleton to cleanly shut down.
-	LLWorld::getInstance()->destroyClass();
+	if (LLWorld::instanceExists())
+	{
+		LLWorld::getInstance()->destroyClass();
+	}
 
 	// call all self-registered classes
 	LLDestroyClassList::instance().fireCallbacks();

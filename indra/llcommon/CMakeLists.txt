@@ -71,6 +71,7 @@ set(llcommon_SOURCE_FILES
     llsdserialize_xml.cpp
     llsdutil.cpp
     llsecondlifeurls.cpp
+    llsingleton.cpp
     llstat.cpp
     llstreamtools.cpp
     llstring.cpp

@@ -68,7 +68,7 @@
 #include "llviewerparcelmgr.h"
 #include "llviewerthrottle.h"
 #include "lluictrlfactory.h"
-#include "llvoiceclient.h"	// for gVoiceClient
+#include "llvoiceclient.h"
 
 #include "kcwlinterface.h"
 

@@ -355,7 +355,7 @@ std::string LLFloaterAbout::get_viewer_misc_info()
 	
 
 	support.append("Vivox Version: ");
-	support.append( gVoiceClient ? gVoiceClient->getAPIVersion() : "Unknown" );
+	support.append( LLVoiceClient::instanceExists() ? LLVoiceClient::getInstance()->getAPIVersion() : "Unknown" );
 	support.append("\n");
 
 

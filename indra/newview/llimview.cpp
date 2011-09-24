@@ -477,10 +477,10 @@ bool inviteUserResponse(const LLSD& notification, const LLSD& response)
 	{
 		if (type == IM_SESSION_P2P_INVITE)
 		{
-			if(gVoiceClient)
+			if(LLVoiceClient::instanceExists())
 			{
 				std::string s = payload["session_handle"].asString();
-				gVoiceClient->declineInvite(s);
+				LLVoiceClient::getInstance()->declineInvite(s);
 			}
 		}
 		else

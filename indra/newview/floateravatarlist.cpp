@@ -1239,7 +1239,7 @@ void LLFloaterAvatarList::updateAvatarListVoice()
 	std::string first;
 	std::string last;
 
-	LLVoiceClient::participantMap* participants = gVoiceClient->getParticipantList();
+	LLVoiceClient::participantMap* participants = LLVoiceClient::getInstance()->getParticipantList();
 	if(participants)
 	{
 		LLVoiceClient::participantMap::iterator participant_it;
@@ -1298,7 +1298,7 @@ void LLFloaterAvatarList::expireAvatarList()
 		LLAvatarListEntry *ent = &iter->second;
 		LLUUID av_id = ent->getID();
 
-		if (ent->getIsVoice() && (gVoiceClient->findParticipantByID(av_id)==NULL))
+		if (ent->getIsVoice() && (LLVoiceClient::getInstance()->findParticipantByID(av_id)==NULL))
 		{
 			ent->setIsVoice(FALSE);
 			//delete_queue.push(av_id);
@@ -1450,7 +1450,7 @@ void LLFloaterAvatarList::refreshAvatarList()
 
 		if (av_isvoice)
 		{
-			F32 power = gVoiceClient->getCurrentPower(av_id);
+			F32 power = LLVoiceClient::getInstance()->getCurrentPower(av_id);
 			S32 icon_image_idx = llmin(2, llfloor((power / LLVoiceClient::OVERDRIVEN_POWER_LEVEL) * 3.f));
 
 			std::string icon_image_id;

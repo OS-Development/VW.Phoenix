@@ -1870,7 +1870,7 @@ bool idle_startup()
 			}
 
 			// Pass the user information to the voice chat server interface.
-			gVoiceClient->userAuthorized(firstname, lastname, gAgentID);
+			LLVoiceClient::getInstance()->userAuthorized(firstname, lastname, gAgentID);
 		}
 		else // if(successful_login)
 		{

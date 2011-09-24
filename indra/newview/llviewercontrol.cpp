@@ -456,9 +456,9 @@ bool handleVectorizeChanged(const LLSD& newvalue)
 
 bool handleVoiceClientPrefsChanged(const LLSD& newvalue)
 {
-	if(gVoiceClient)
+	if(LLVoiceClient::instanceExists())
 	{
-		gVoiceClient->updateSettings();
+		LLVoiceClient::getInstance()->updateSettings();
 	}
 	return true;
 }

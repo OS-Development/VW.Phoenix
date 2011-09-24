@@ -762,8 +762,6 @@ static	std::string nameFromsipURI(const std::string &uri);
 
 };
 
-extern LLVoiceClient *gVoiceClient;
-
 #endif //LL_VOICE_CLIENT_H
 
 

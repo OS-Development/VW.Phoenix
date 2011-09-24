@@ -33,6 +33,41 @@
 
 #include "llerror.h"	// *TODO: eliminate this
 
+#include <typeinfo>
+#include <boost/noncopyable.hpp>
+
+/// @brief A global registry of all singletons to prevent duplicate allocations
+/// across shared library boundaries
+class LL_COMMON_API LLSingletonRegistry {
+	private:
+		typedef std::map<std::string, void *> TypeMap;
+		static TypeMap * sSingletonMap;
+
+		static void checkInit()
+		{
+			if(sSingletonMap == NULL)
+			{
+				sSingletonMap = new TypeMap();
+			}
+		}
+
+	public:
+		template<typename T> static void * & get()
+		{
+			std::string name(typeid(T).name());
+
+			checkInit();
+
+			// the first entry of the pair returned by insert will be either the existing
+			// iterator matching our key, or the newly inserted NULL initialized entry
+			// see "Insert element" in http://www.sgi.com/tech/stl/UniqueAssociativeContainer.html
+			TypeMap::iterator result =
+				sSingletonMap->insert(std::make_pair(name, (void*)NULL)).first;
+
+			return result->second;
+		}
+};
+
 // LLSingleton implements the getInstance() method part of the Singleton
 // pattern. It can't make the derived class constructors protected, though, so
 // you have to do that yourself.
@@ -56,44 +91,139 @@
 // available
 //
 // As currently written, it is not thread-safe.
-template <typename T>
-class LLSingleton
+template <typename DERIVED_TYPE>
+class LLSingleton : private boost::noncopyable
 {
-public:
-	virtual ~LLSingleton() {}
-#ifdef  LL_MSVC7
-// workaround for VC7 compiler bug
-// adapted from http://www.codeproject.com/KB/tips/VC2003MeyersSingletonBug.aspx
-// our version doesn't introduce a nested struct so that you can still declare LLSingleton<MyClass>
-// a friend and hide your constructor
-	static T* getInstance()
-    {
-        LLSingleton<T> singleton;
-        return singleton.vsHack();
-    }
-
-	T* vsHack()
-#else
-	static T* getInstance()
-#endif
+private:
+	typedef enum e_init_state
 	{
-		static T instance;
-		static bool needs_init = true;
-		if (needs_init)
+		UNINITIALIZED,
+		CONSTRUCTING,
+		INITIALIZING,
+		INITIALIZED,
+		DELETED
+	} EInitState;
+	
+	// stores pointer to singleton instance
+	// and tracks initialization state of singleton
+	struct SingletonInstanceData
+	{
+		EInitState		mInitState;
+		DERIVED_TYPE*	mSingletonInstance;
+		
+		SingletonInstanceData()
+		:	mSingletonInstance(NULL),
+			mInitState(UNINITIALIZED)
+		{}
+
+		~SingletonInstanceData()
 		{
-			needs_init = false;
-			instance.initSingleton();
+			if (mInitState != DELETED)
+			{
+				deleteSingleton();
+			}
 		}
-		return &instance;
+	};
+	
+public:
+	virtual ~LLSingleton()
+	{
+		SingletonInstanceData& data = getData();
+		data.mSingletonInstance = NULL;
+		data.mInitState = DELETED;
 	}
 
-	static T& instance()
+	/**
+	 * @brief Immediately delete the singleton.
+	 *
+	 * A subsequent call to LLProxy::getInstance() will construct a new
+	 * instance of the class.
+	 *
+	 * LLSingletons are normally destroyed after main() has exited and the C++
+	 * runtime is cleaning up statically-constructed objects. Some classes
+	 * derived from LLSingleton have objects that are part of a runtime system
+	 * that is terminated before main() exits. Calling the destructor of those
+	 * objects after the termination of their respective systems can cause
+	 * crashes and other problems during termination of the project. Using this
+	 * method to destroy the singleton early can prevent these crashes.
+	 *
+	 * An example where this is needed is for a LLSingleton that has an APR
+	 * object as a member that makes APR calls on destruction. The APR system is
+	 * shut down explicitly before main() exits. This causes a crash on exit.
+	 * Using this method before the call to apr_terminate() and NOT calling
+	 * getInstance() again will prevent the crash.
+	 */
+	static void deleteSingleton()
+	{
+		delete getData().mSingletonInstance;
+		getData().mSingletonInstance = NULL;
+		getData().mInitState = DELETED;
+	}
+
+	static SingletonInstanceData& getData()
+	{
+		// this is static to cache the lookup results
+		static void * & registry = LLSingletonRegistry::get<DERIVED_TYPE>();
+
+		// *TODO - look into making this threadsafe
+		if(NULL == registry)
+		{
+			static SingletonInstanceData data;
+			registry = &data;
+		}
+
+		return *static_cast<SingletonInstanceData *>(registry);
+	}
+
+	static DERIVED_TYPE* getInstance()
+	{
+		SingletonInstanceData& data = getData();
+
+		if (data.mInitState == CONSTRUCTING)
+		{
+			llerrs << "Tried to access singleton " << typeid(DERIVED_TYPE).name() << " from singleton constructor!" << llendl;
+		}
+
+		if (data.mInitState == DELETED)
+		{
+			llwarns << "Trying to access deleted singleton " << typeid(DERIVED_TYPE).name() << " creating new instance" << llendl;
+		}
+		
+		if (!data.mSingletonInstance) 
+		{
+			data.mInitState = CONSTRUCTING;
+			data.mSingletonInstance = new DERIVED_TYPE(); 
+			data.mInitState = INITIALIZING;
+			data.mSingletonInstance->initSingleton(); 
+			data.mInitState = INITIALIZED;	
+		}
+		
+		return data.mSingletonInstance;
+	}
+
+	// Reference version of getInstance()
+	// Preferred over getInstance() as it disallows checking for NULL
+	static DERIVED_TYPE& instance()
 	{
 		return *getInstance();
+	}
+	
+	// Has this singleton been created uet?
+	// Use this to avoid accessing singletons before the can safely be constructed
+	static bool instanceExists()
+	{
+		return getData().mInitState == INITIALIZED;
+	}
+	
+	// Has this singleton already been deleted?
+	// Use this to avoid accessing singletons from a static object's destructor
+	static bool destroyed()
+	{
+		return getData().mInitState == DELETED;
 	}
 
 private:
 	virtual void initSingleton() {}
 };
 
-#endif
+#endif	// LLSINGLETON_H
