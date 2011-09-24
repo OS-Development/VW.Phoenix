@@ -32,11 +32,7 @@
 
 #include "linden_common.h"
 
-//#include "v3coloru.h"
 #include "v4coloru.h"
-#include "v4color.h"
-//#include "vmath.h"
-#include "llmath.h"
 
 // LLColor4U
 LLColor4U LLColor4U::white(255, 255, 255, 255);
@@ -126,32 +122,48 @@ BOOL LLColor4U::parseColor4U(const std::string& buf, LLColor4U* value)
 }
 
 
+#if LL_MSVC && _M_X64
+# define LL_X86_64 1
+#elif LL_GNUC && (defined(__amd64__) || defined(__x86_64__))
+# define LL_X86_64 1
+#else
+# define LL_X86_64 0
+#endif
+
 U32 LLColor4U::asRGBA() const
 {
-	U32 nRet(0);
+#if LL_X86_64
+	U32 rgba(0);
 
-	// Little endian: values are swapped in memory. The original code access the array like a U32, so we need to swap here
+	// Little endian: values are swapped in memory. The original code access
+	// the array like a U32, so we need to swap here
+	rgba |= mV[3];
+	rgba <<= 8;
+	rgba |= mV[2];
+	rgba <<= 8;
+	rgba |= mV[1];
+	rgba <<= 8;
+	rgba |= mV[0];
 
-	nRet |= mV[3];
-	nRet <<= 8;
-	nRet |= mV[2];
-	nRet <<= 8;
-	nRet |= mV[1];
-	nRet <<= 8;
-	nRet |= mV[0];
-
-	return nRet;
+	return rgba;
+#else
+	return mAll;
+#endif
 }
 
-void LLColor4U::fromRGBA( U32 aVal )
+void LLColor4U::fromRGBA(U32 rgba)
 {
-	// Little endian: values are swapped in memory. The original code access the array like a U32, so we need to swap here
-
-	mV[0] = aVal & 0xFF;
-	aVal >>= 8;
-	mV[1] = aVal & 0xFF;
-	aVal >>= 8;
-	mV[2] = aVal & 0xFF;
-	aVal >>= 8;
-	mV[3] = aVal & 0xFF;
+#if LL_X86_64
+	// Little endian: values are swapped in memory. The original code access
+	// the array like a U32, so we need to swap here
+	mV[0] = rgba & 0xFF;
+	rgba >>= 8;
+	mV[1] = rgba & 0xFF;
+	rgba >>= 8;
+	mV[2] = rgba & 0xFF;
+	rgba >>= 8;
+	mV[3] = rgba & 0xFF;
+#else
+	mAll = rgba;
+#endif
 }
