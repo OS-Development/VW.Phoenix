@@ -43,7 +43,7 @@ LLPanelDirPopular::LLPanelDirPopular(const std::string& name, LLFloaterDirectory
 // virtual
 void LLPanelDirPopular::search(const std::string& search_text)
 {
-	mWebBrowser->navigateTo(getString("default_search_page"));
+	mWebBrowser->navigateTo(getString("default_search_page"), "text/html");
 }
 
 // marketplace panel
@@ -59,6 +59,13 @@ void LLPanelDirMarket::search(const std::string& url)
 	if (mWebBrowser)
 	{
 		LL_INFOS("Marketplace") << "Sending navigateTo " << url << LL_ENDL;
-		mWebBrowser->navigateTo(url);
+		if (url.empty())
+		{
+			mWebBrowser->navigateTo(getString("default_search_page"), "text/html");
+		}
+		else
+		{
+			mWebBrowser->navigateTo(url, "text/html");
+		}
 	}
 }

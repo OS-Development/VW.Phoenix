@@ -208,7 +208,7 @@ void LLPanelDirFindAll::reshape(S32 width, S32 height, BOOL called_from_parent =
 {
 	if (mWebBrowser)
 	{
-		mWebBrowser->navigateTo(mWebBrowser->getCurrentNavUrl());
+		mWebBrowser->navigateTo(mWebBrowser->getCurrentNavUrl(), "text/html");
 	}
 	LLUICtrl::reshape(width, height, called_from_parent);
 }
@@ -278,7 +278,7 @@ void LLPanelDirFindAll::search(const std::string& search_text)
 
 	if (mWebBrowser)
 	{
-		mWebBrowser->navigateTo(url);
+		mWebBrowser->navigateTo(url, "text/html");
 	}
 
 	childSetText("search_editor", search_text);
@@ -308,7 +308,7 @@ void LLPanelDirFind::navigateToDefaultPage()
 
 	if (mWebBrowser)
 	{
-		mWebBrowser->navigateTo( start_url );
+		mWebBrowser->navigateTo( start_url, "text/html" );
 	}
 }
 
