@@ -346,6 +346,7 @@ BOOL LLGLSLShader::link(BOOL suppress_errors)
 
 void LLGLSLShader::bind()
 {
+	gGL.flush();
 	if (gGLManager.mHasShaderObjects)
 	{
 		glUseProgramObjectARB(mProgramObject);
@@ -360,6 +361,7 @@ void LLGLSLShader::bind()
 
 void LLGLSLShader::unbind()
 {
+	gGL.flush();
 	if (gGLManager.mHasShaderObjects)
 	{
 		stop_glerror();
@@ -367,7 +369,7 @@ void LLGLSLShader::unbind()
 		{
 			for (U32 i = 0; i < mAttribute.size(); ++i)
 			{
-				vertexAttrib4f(i, 0,0,0,1);
+				vertexAttrib4f(i, 0, 0, 0, 1);
 				stop_glerror();
 			}
 		}

@@ -540,7 +540,7 @@ void LLImageRaw::composite( LLImageRaw* src )
 	LLImageRaw* dst = this;  // Just for clarity.
 
 	llassert(3 == src->getComponents());
-	llassert(3 == dst->getComponents());
+	llassert(3 == src->getComponents() && 3 == dst->getComponents());
 
 	if( 3 == dst->getComponents() )
 	{
@@ -1196,7 +1196,7 @@ file_extensions[] =
 static std::string find_file(std::string &name, S8 *codec)
 {
 	std::string tname;
-	for (int i=0; i<(int)(NUM_FILE_EXTENSIONS); i++)
+	for (S32 i=0; i<(S32)(NUM_FILE_EXTENSIONS); i++)
 	{
 		tname = name + "." + std::string(file_extensions[i].exten);
 		llifstream ifs(tname, llifstream::binary);
@@ -1213,7 +1213,7 @@ static std::string find_file(std::string &name, S8 *codec)
 
 EImageCodec LLImageBase::getCodecFromExtension(const std::string& exten)
 {
-	for (int i=0; i<(int)(NUM_FILE_EXTENSIONS); i++)
+	for (S32 i=0; i<(S32)(NUM_FILE_EXTENSIONS); i++)
 	{
 		if (exten == file_extensions[i].exten)
 			return file_extensions[i].codec;

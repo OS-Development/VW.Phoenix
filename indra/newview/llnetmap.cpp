@@ -139,12 +139,18 @@ LLNetMap::~LLNetMap()
 
 void LLNetMap::setScale( F32 scale )
 {
+	static F32 old_scale = 0.0f;
+
 	mScale = scale;
 	if (mScale == 0.f)
 	{
 		mScale = 0.1f;
 	}
-	gSavedSettings.setF32("MiniMapScale", mScale);
+	if (mScale != old_scale)
+	{
+		gSavedSettings.setF32("MiniMapScale", mScale);
+		old_scale = mScale;
+	}
 
 	if (mObjectImagep.notNull())
 	{
@@ -194,11 +200,14 @@ void LLNetMap::draw()
 		createObjectImage();
 	}
 
-	if (gSavedSettings.getS32( "MiniMapCenter" ) != MAP_CENTER_NONE)
+	LLCachedControl<S32> minimap_center(gSavedSettings, "MiniMapCenter");
+	if (minimap_center != MAP_CENTER_NONE)
 	{
 		mCurPanX = lerp(mCurPanX, mTargetPanX, LLCriticalDamp::getInterpolant(0.1f));
 		mCurPanY = lerp(mCurPanY, mTargetPanY, LLCriticalDamp::getInterpolant(0.1f));
 	}
+
+	LLViewerCamera* camera = LLViewerCamera::getInstance();
 
 	F32 rotation = 0;
 
@@ -232,7 +241,7 @@ void LLNetMap::draw()
 		if( rotate_map )
 		{
 			// rotate subsequent draws to agent rotation
-			rotation = atan2( LLViewerCamera::getInstance()->getAtAxis().mV[VX], LLViewerCamera::getInstance()->getAtAxis().mV[VY] );
+			rotation = atan2( camera->getAtAxis().mV[VX], LLViewerCamera::getInstance()->getAtAxis().mV[VY] );
 			glRotatef( rotation * RAD_TO_DEG, 0.f, 0.f, 1.f);
 		}
 
@@ -317,7 +326,9 @@ void LLNetMap::draw()
 
 			// Draw buildings
 			//gObjectList.renderObjectsForMap(*this);
-			if(!gSavedSettings.getBOOL("mm_fastminimap")){
+			LLCachedControl<bool> mm_fastminimap(gSavedSettings, "mm_fastminimap");
+			if (!mm_fastminimap)
+			{
 				gObjectList.renderObjectsForMap(*this);
 				mObjectImagep->setSubImage(mObjectRawImagep, 0, 0, mObjectImagep->getWidth(), mObjectImagep->getHeight());
 			}
@@ -469,8 +480,8 @@ void LLNetMap::draw()
 		// Draw frustum
 		F32 meters_to_pixels = mScale/ LLWorld::getInstance()->getRegionWidthInMeters();
 
-		F32 horiz_fov = LLViewerCamera::getInstance()->getView() * LLViewerCamera::getInstance()->getAspect();
-		F32 far_clip_meters = LLViewerCamera::getInstance()->getFar();
+		F32 horiz_fov = camera->getView() * LLViewerCamera::getInstance()->getAspect();
+		F32 far_clip_meters = camera->getFar();
 		F32 far_clip_pixels = far_clip_meters * meters_to_pixels;
 
 		F32 half_width_meters = far_clip_meters * tan( horiz_fov / 2 );
@@ -499,7 +510,7 @@ void LLNetMap::draw()
 			// If we don't rotate the map, we have to rotate the frustum.
 			gGL.pushMatrix();
 				gGL.translatef( ctr_x, ctr_y, 0 );
-				glRotatef( atan2( LLViewerCamera::getInstance()->getAtAxis().mV[VX], LLViewerCamera::getInstance()->getAtAxis().mV[VY] ) * RAD_TO_DEG, 0.f, 0.f, -1.f);
+				glRotatef( atan2( camera->getAtAxis().mV[VX], camera->getAtAxis().mV[VY] ) * RAD_TO_DEG, 0.f, 0.f, -1.f);
 				gGL.begin( LLRender::TRIANGLES  );
 					gGL.vertex2f( 0, 0 );
 					gGL.vertex2f( -half_width_pixels, far_clip_pixels );
