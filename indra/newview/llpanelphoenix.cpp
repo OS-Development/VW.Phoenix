@@ -398,6 +398,14 @@ BOOL LLPanelPhoenix::postBuild()
 	
 	getChild<LLCheckBoxCtrl>("HTTPGetTextures")->setCommitCallback(onHTTPGetTexturesCommit);
 
+    getChild<LLCheckBoxCtrl>("UseEnvironmentFromRegionAlways")->setCommitCallback(onAutoEnvToggle);
+    const bool auto_env = gSavedSettings.getBOOL("UseEnvironmentFromRegionAlways");
+    getChild<LLCheckBoxCtrl>("PhoenixWLParcelEnabled")->setEnabled(auto_env);
+    getChild<LLCheckBoxCtrl>("PhoenixWLWhitelistFriends")->setEnabled(auto_env);
+    getChild<LLCheckBoxCtrl>("PhoenixWLWhitelistGroups")->setEnabled(auto_env);
+    getChild<LLCheckBoxCtrl>("PhoenixWLWhitelistAll")->setEnabled(auto_env);
+    getChild<LLCheckBoxCtrl>("PhoenixInterpolateParcelWL")->setEnabled(auto_env);
+
 	refresh();
 	return TRUE;
 }
@@ -913,4 +921,15 @@ void LLPanelPhoenix::onHTTPGetTexturesCommit(LLUICtrl* ctrl, void* userdata)
 		gSavedSettings.setBOOL("PurgeCacheOnNextStartup", TRUE);
 		LLNotifications::instance().add("CacheWillClear");
 	}	
+}
+
+void LLPanelPhoenix::onAutoEnvToggle(LLUICtrl* ctrl, void* userdata)
+{
+	LLPanelPhoenix* self = (LLPanelPhoenix*)ctrl->getParent();
+	const bool auto_env = gSavedSettings.getBOOL("UseEnvironmentFromRegionAlways");
+    self->getChild<LLCheckBoxCtrl>("PhoenixWLParcelEnabled")->setEnabled(auto_env);
+    self->getChild<LLCheckBoxCtrl>("PhoenixWLWhitelistFriends")->setEnabled(auto_env);
+    self->getChild<LLCheckBoxCtrl>("PhoenixWLWhitelistGroups")->setEnabled(auto_env);
+    self->getChild<LLCheckBoxCtrl>("PhoenixWLWhitelistAll")->setEnabled(auto_env);
+    self->getChild<LLCheckBoxCtrl>("PhoenixInterpolateParcelWL")->setEnabled(auto_env);
 }

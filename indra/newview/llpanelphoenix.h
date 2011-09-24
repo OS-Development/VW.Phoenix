@@ -116,6 +116,7 @@ private:
 	static void onPhoenixShowChatChannel(LLUICtrl* ctrl, void* userdata);
 	static void onCommitCopy(LLUICtrl* ctrl, void* data);
 	static void onHTTPGetTexturesCommit(LLUICtrl* ctrl, void* userdata);
+	static void onAutoEnvToggle(LLUICtrl* ctrl, void* userdata);
 
 private:
 	std::string mSkin;
