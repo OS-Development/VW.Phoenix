@@ -9103,23 +9103,23 @@ class LLWorldEnvSettings : public view_listener_t
 		
 		if (tod == "sunrise")
 		{
-			LLEnvManagerNew::instance().setUseSkyPreset("Sunrise", true);
+			LLEnvManagerNew::instance().setUseSkyPreset("Sunrise", gSavedSettings.getBOOL("PhoenixInterpolateSky"));
 		}
 		else if (tod == "noon")
 		{
-			LLEnvManagerNew::instance().setUseSkyPreset("Midday", true);
+			LLEnvManagerNew::instance().setUseSkyPreset("Midday", gSavedSettings.getBOOL("PhoenixInterpolateSky"));
 		}
 		else if (tod == "sunset")
 		{
-			LLEnvManagerNew::instance().setUseSkyPreset("Sunset", true);
+			LLEnvManagerNew::instance().setUseSkyPreset("Sunset", gSavedSettings.getBOOL("PhoenixInterpolateSky"));
 		}
 		else if (tod == "midnight")
 		{
-			LLEnvManagerNew::instance().setUseSkyPreset("Midnight", true);
+			LLEnvManagerNew::instance().setUseSkyPreset("Midnight", gSavedSettings.getBOOL("PhoenixInterpolateSky"));
 		}
 		else // Use Region Environment Settings
 		{
-			LLEnvManagerNew::instance().setUseRegionSettings(true, true);
+			LLEnvManagerNew::instance().setUseRegionSettings(true, gSavedSettings.getBOOL("PhoenixInterpolateSky"));
 		}
 		return true;
 	}
