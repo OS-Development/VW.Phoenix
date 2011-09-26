@@ -564,9 +564,6 @@ Go to World menu > About Land or select another parcel to show its details.
                              tool_tip="If checked, anyone can terraform your land. It is best to leave this unchecked, as you can always edit your own land."
                              width="268" />
 			<check_box bottom="-60" enabled="true" follows="left|top" font="SansSerifSmall"
-			     height="16" initial_value="false" label="Create Landmarks" left="14"
-			     mouse_opaque="true" name="check landmark" radio_style="false" width="268" />
-			<check_box bottom="-80" enabled="true" follows="left|top" font="SansSerifSmall"
 			     height="16" initial_value="false" label="Fly" left="14" mouse_opaque="true"
 			     name="check fly" radio_style="false"
                              tool_tip="If checked, Residents can fly on your land. If unchecked, they can only fly into and over your land."

@@ -1728,7 +1728,6 @@ LLPanelLandOptions::LLPanelLandOptions(LLParcelSelectionHandle& parcel)
 	mCheckFly(NULL),
 	mCheckGroupScripts(NULL),
 	mCheckOtherScripts(NULL),
-	mCheckLandmark(NULL),
 	mCheckShowDirectory(NULL),
 	mCategoryCombo(NULL),
 	mLandingTypeCombo(NULL),
@@ -1761,9 +1760,6 @@ BOOL LLPanelLandOptions::postBuild()
 	
 	mCheckEditLand = getChild<LLCheckBoxCtrl>("edit land check");
 	childSetCommitCallback("edit land check", onCommitAny, this);
-
-	mCheckLandmark = getChild<LLCheckBoxCtrl>("check landmark");
-	childSetCommitCallback("check landmark", onCommitAny, this);
 
 	mCheckGroupScripts = getChild<LLCheckBoxCtrl>("check group scripts");
 	childSetCommitCallback("check group scripts", onCommitAny, this);
@@ -1884,9 +1880,6 @@ void LLPanelLandOptions::refresh()
 		mCheckFly->set(FALSE);
 		mCheckFly->setEnabled(FALSE);
 
-		mCheckLandmark->set(FALSE);
-		mCheckLandmark->setEnabled(FALSE);
-
 		mCheckGroupScripts->set(FALSE);
 		mCheckGroupScripts->setEnabled(FALSE);
 
@@ -1938,9 +1931,6 @@ void LLPanelLandOptions::refresh()
 
 		mCheckFly->set( parcel->getAllowFly());
 		mCheckFly->setEnabled( can_change_options);
-
-		mCheckLandmark->set( parcel->getAllowLandmark());
-		mCheckLandmark->setEnabled( can_change_options);
 
 		mCheckGroupScripts->set(parcel->getAllowGroupScripts() || parcel->getAllowOtherScripts());
 		mCheckGroupScripts->setEnabled(can_change_options && !parcel->getAllowOtherScripts());

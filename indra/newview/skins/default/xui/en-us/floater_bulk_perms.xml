@@ -34,12 +34,6 @@
 	     height="16" initial_value="false" label="Gestures" left_delta="18"
 	     mouse_opaque="true" name="check_gesture" control_name="BulkChangeIncludeGestures" width="126" />
   <icon bottom_delta="-20" color="1 1 1 1" enabled="true" follows="left|top" height="16"
-	     image_name="inv_item_landmark_visited.tga" left="12" mouse_opaque="true"
-	     name="icon_landmark" width="16" />
-  <check_box bottom_delta="0" enabled="true" follows="left|top" font="SansSerifSmall"
-	     height="16" initial_value="false" label="Landmarks" left_delta="18"
-	     mouse_opaque="true" name="check_landmark" control_name="BulkChangeIncludeLandmarks" width="126" />
-  <icon bottom_delta="-20" color="1 1 1 1" enabled="true" follows="left|top" height="16"
 	     image_name="inv_item_notecard.tga" left="12" mouse_opaque="true"
 	     name="icon_notecard" width="16" />
   <check_box bottom_delta="0" enabled="true" follows="left|top" font="SansSerifSmall"
