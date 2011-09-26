@@ -252,7 +252,6 @@ extern "C" { int yyerror(const char *fmt, ...); }
 "OBJECT_GROUP"			{ count(); yylval.ival = OBJECT_GROUP; return(INTEGER_CONSTANT); }
 "OBJECT_CREATOR"		{ count(); yylval.ival = OBJECT_CREATOR; return(INTEGER_CONSTANT); }
 "OBJECT_RUNNING_SCRIPT_COUNT"	{ count(); yylval.ival = OBJECT_RUNNING_SCRIPT_COUNT; return(INTEGER_CONSTANT); }
-"OBJECT_RUNNING_SCRIPT_COUNT"	{ count(); yylval.ival = OBJECT_RUNNING_SCRIPT_COUNT; return(INTEGER_CONSTANT); }
 "OBJECT_SCRIPT_MEMORY"	{ count(); yylval.ival = OBJECT_SCRIPT_MEMORY; return(INTEGER_CONSTANT); }
 "OBJECT_SCRIPT_TIME"	{ count(); yylval.ival = OBJECT_SCRIPT_TIME; return(INTEGER_CONSTANT); }
 
