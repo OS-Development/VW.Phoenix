@@ -444,7 +444,9 @@ BOOL LLFont::addGlyphFromFont(const LLFont *fontp, const llwchar wch, const U32 
 		default:
 			break;
 		}
-		delete[] tmp_graydata;
+
+		if (tmp_graydata)
+			delete[] tmp_graydata;
 	} else {
 		// we don't know how to handle this pixel format from FreeType;
 		// omit it from the font-image.

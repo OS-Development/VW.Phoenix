@@ -265,12 +265,6 @@ void LLFontGL::destroyAllGL()
 {
 	if (sFontRegistry)
 	{
-		sFontRegistry->destroyGL();
-	}
-}
-
-void LLFontGL::destroyGL()
-{
 		if (LLFont::sOpenGLcrashOnRestart)
 		{
 			// This will leak memory but will prevent a crash...
@@ -280,6 +274,12 @@ void LLFontGL::destroyGL()
 		{
 			sFontRegistry->destroyGL();
 		}
+	}
+}
+
+void LLFontGL::destroyGL()
+{
+	mFontBitmapCachep->destroyGL();
 }
 
 
