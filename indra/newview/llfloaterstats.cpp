@@ -72,7 +72,7 @@ void LLFloaterStats::buildStats()
 
 	stat_barp = stat_viewp->addStat("Bandwidth", &(LLViewerStats::getInstance()->mKBitStat), "DebugStatModeBandwidth", TRUE, FALSE);
 	stat_barp->setUnitLabel(" kbps");
-	stat_barp->mPrecision = 1;
+	stat_barp->mPrecision = 0;
 	stat_barp->mMinBar = 0.f;
 	stat_barp->mMaxBar = 5000.f;
 	stat_barp->mTickSpacing = 500.f;
@@ -117,16 +117,16 @@ void LLFloaterStats::buildStats()
 	stat_barp->setUnitLabel("/sec");
 	stat_barp->mPrecision = 0;
 	stat_barp->mMinBar = 0.f;
-	stat_barp->mMaxBar = 200000.f;
-	stat_barp->mTickSpacing = 20000.f;
-	stat_barp->mLabelSpacing = 40000.f;
+	stat_barp->mMaxBar = 210000.f;
+	stat_barp->mTickSpacing = 35000.f;
+	stat_barp->mLabelSpacing = 70000.f;
 
 	stat_barp = render_statviewp->addStat("Total Objs", &(gObjectList.mNumObjectsStat), "DebugStatModeTotalObjs");
 	stat_barp->mPrecision = 0;
 	stat_barp->mMinBar = 0.f;
-	stat_barp->mMaxBar = 50000.f;
-	stat_barp->mTickSpacing = 5000.f;
-	stat_barp->mLabelSpacing = 10000.f;
+	stat_barp->mMaxBar = 48000.f;
+	stat_barp->mTickSpacing = 6000.f;
+	stat_barp->mLabelSpacing = 12000.f;
 	stat_barp->mPerSec = FALSE;
 
 	stat_barp = render_statviewp->addStat("New Objs", &(gObjectList.mNumNewObjectsStat), "DebugStatModeNewObjs");
@@ -246,7 +246,7 @@ void LLFloaterStats::buildStats()
 	stat_barp->mTickSpacing = 128.f;
 	stat_barp->mLabelSpacing = 256.f;
 
-	stat_barp = net_statviewp->addStat("Actual In", &(LLViewerStats::getInstance()->mActualInKBitStat), "DebugStatModeActualIn", TRUE, FALSE);
+	stat_barp = net_statviewp->addStat("Actual In", &(LLViewerStats::getInstance()->mActualInKBitStat), "DebugStatModeActualIn");
 	stat_barp->setUnitLabel(" kbps");
 	stat_barp->mPrecision = 1;
 	stat_barp->mMinBar = 0.f;
@@ -254,7 +254,7 @@ void LLFloaterStats::buildStats()
 	stat_barp->mTickSpacing = 128.f;
 	stat_barp->mLabelSpacing = 256.f;
 
-	stat_barp = net_statviewp->addStat("Actual Out", &(LLViewerStats::getInstance()->mActualOutKBitStat), "DebugStatModeActualOut", TRUE, FALSE);
+	stat_barp = net_statviewp->addStat("Actual Out", &(LLViewerStats::getInstance()->mActualOutKBitStat), "DebugStatModeActualOut");
 	stat_barp->setUnitLabel(" kbps");
 	stat_barp->mPrecision = 1;
 	stat_barp->mMinBar = 0.f;
@@ -367,18 +367,18 @@ void LLFloaterStats::buildStats()
 	stat_barp = sim_statviewp->addStat("Active Objects", &(LLViewerStats::getInstance()->mSimActiveObjects), "DebugStatModeSimActiveObjects");
 	stat_barp->mPrecision = 0;
 	stat_barp->mMinBar = 0.f;
-	stat_barp->mMaxBar = 800.f;
-	stat_barp->mTickSpacing = 100.f;
-	stat_barp->mLabelSpacing = 200.f;
+	stat_barp->mMaxBar = 5000.f;
+	stat_barp->mTickSpacing = 750.f;
+	stat_barp->mLabelSpacing = 1250.f;
 	stat_barp->mPerSec = FALSE;
 	stat_barp->mDisplayMean = FALSE;
 
 	stat_barp = sim_statviewp->addStat("Active Scripts", &(LLViewerStats::getInstance()->mSimActiveScripts), "DebugStatModeSimActiveScripts");
 	stat_barp->mPrecision = 0;
 	stat_barp->mMinBar = 0.f;
-	stat_barp->mMaxBar = 800.f;
-	stat_barp->mTickSpacing = 100.f;
-	stat_barp->mLabelSpacing = 200.f;
+	stat_barp->mMaxBar = 15000.f;
+	stat_barp->mTickSpacing = 1875.f;
+	stat_barp->mLabelSpacing = 3750.f;
 	stat_barp->mPerSec = FALSE;
 	stat_barp->mDisplayMean = FALSE;
 
@@ -386,9 +386,9 @@ void LLFloaterStats::buildStats()
 	stat_barp->setUnitLabel(" eps");
 	stat_barp->mPrecision = 0;
 	stat_barp->mMinBar = 0.f;
-	stat_barp->mMaxBar = 20000.f;
-	stat_barp->mTickSpacing = 2500.f;
-	stat_barp->mLabelSpacing = 5000.f;
+	stat_barp->mMaxBar = 5000.f;
+	stat_barp->mTickSpacing = 750.f;
+	stat_barp->mLabelSpacing = 1250.f;
 	stat_barp->mPerSec = FALSE;
 	stat_barp->mDisplayMean = FALSE;
 
@@ -537,7 +537,7 @@ void LLFloaterStats::buildStats()
 		stat_barp->mPerSec = FALSE;
 		stat_barp->mDisplayMean = FALSE;
 
-		stat_barp = detailed_time_viewp->addStat("  Update Physics Shapes", &(LLViewerStats::getInstance()->mSimSimPhysicsShapeUpdateMsec), "DebugStatModeSimSimPhysicsShapeUpdateMsec");
+		stat_barp = detailed_time_viewp->addStat("  Update Phys Shapes", &(LLViewerStats::getInstance()->mSimSimPhysicsShapeUpdateMsec), "DebugStatModeSimSimPhysicsShapeUpdateMsec");
 		stat_barp->setUnitLabel("ms");
 		stat_barp->mPrecision = 3;
 		stat_barp->mMinBar = 0.f;
