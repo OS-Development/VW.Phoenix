@@ -1659,7 +1659,8 @@ BOOL LLFace::calcPixelArea(F32& cos_angle_to_view_dir, F32& radius)
 	}
 #endif
 
-	if (dist < mBoundingSphereRadius || dist < 10.0f) //camera is very close
+	// Ansariel: Disable check for everything within 10m radius to greatly reduce memory usage
+	if (dist < mBoundingSphereRadius /*|| dist < 10.0f*/) //camera is very close
 	{
 		cos_angle_to_view_dir = 1.0f;
 		mImportanceToCamera = 1.0f;
