@@ -375,7 +375,6 @@ BOOL LLPanelPhoenix::postBuild()
 	getChild<LLCheckBoxCtrl>("PhoenixInstantMessageAnnounceIncoming")->setCommitCallback(onPhoenixInstantMessageAnnounceIncoming);
 	getChild<LLCheckBoxCtrl>("wear-inv-toggle")->setCommitCallback(onWearInvToggle);
 	childSetValue("PhoenixInstantMessageAnnounceStealFocus", gSavedPerAccountSettings.getBOOL("PhoenixInstantMessageAnnounceStealFocus"));
-	childSetValue("PhoenixShadowsON", gSavedSettings.getBOOL("PhoenixShadowsToggle"));
 
 	childSetAction("set_mirror", onClickSetMirror, this);
 	childSetCommitCallback("mirror_location", onCommitApplyControl);
@@ -530,26 +529,6 @@ void LLPanelPhoenix::apply()
 	gSavedPerAccountSettings.setBOOL("PhoenixInstantMessageResponseItem", childGetValue("PhoenixInstantMessageResponseItem").asBoolean());
 	gSavedPerAccountSettings.setBOOL("PhoenixInstantMessageAnnounceIncoming", childGetValue("PhoenixInstantMessageAnnounceIncoming").asBoolean());
 	gSavedPerAccountSettings.setBOOL("PhoenixInstantMessageAnnounceStealFocus", childGetValue("PhoenixInstantMessageAnnounceStealFocus").asBoolean());
-	if(((gSavedSettings.getU32("RenderQualityPerformance")>=3) && gSavedSettings.getBOOL("WindLightUseAtmosShaders") && gSavedSettings.getBOOL("VertexShaderEnable")) && childGetValue("PhoenixShadowsON").asBoolean())
-	{
-		gSavedSettings.setBOOL("RenderUseFBO", childGetValue("PhoenixShadowsON").asBoolean());
-		gSavedSettings.setBOOL("RenderDeferred", childGetValue("PhoenixShadowsON").asBoolean());
-	}
-	else if(!childGetValue("PhoenixShadowsON").asBoolean())
-	{
-		if(gSavedSettings.getBOOL("RenderDeferred"))
-		{
-			gSavedSettings.setBOOL("RenderDeferred", childGetValue("PhoenixShadowsON").asBoolean());
-			gSavedSettings.setBOOL("RenderUseFBO", childGetValue("PhoenixShadowsON").asBoolean());
-		}
-	}
-	else if(((gSavedSettings.getU32("RenderQualityPerformance")<3) && !gSavedSettings.getBOOL("WindLightUseAtmosShaders") && !gSavedSettings.getBOOL("VertexShaderEnable")) && childGetValue("PhoenixShadowsON").asBoolean())
-	{
-		childSetValue("PhoenixShadowsON",false);
-		LLNotifications::instance().add("NoShadows");
-		llwarns<<"Attempt to enable shadow rendering while graphics settings not on ultra!"<<llendl;
-	}
-	gSavedSettings.setBOOL("PhoenixShadowsToggle", childGetValue("PhoenixShadowsON").asBoolean());
 	gSavedSettings.setU32("PhoenixUseOTR", (U32)childGetValue("PhoenixUseOTR").asReal());
 	gLggBeamMaps.forceUpdate();
 
