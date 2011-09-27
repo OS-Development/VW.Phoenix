@@ -1433,9 +1433,10 @@ void LLViewerRegion::setSeedCapability(const std::string& url)
 	capabilityNames.append("FetchInventory");
 	capabilityNames.append("FetchLib");
 	capabilityNames.append("FetchLibDescendents");
-	capabilityNames.append("GetTexture");
+	capabilityNames.append("GetMesh");
 	capabilityNames.append("GetObjectCost");
 	capabilityNames.append("GetObjectPhysicsData");
+	capabilityNames.append("GetTexture");
 	capabilityNames.append("GroupProposalBallot");
 	capabilityNames.append("GetDisplayNames");
 	capabilityNames.append("HomeLocation");
