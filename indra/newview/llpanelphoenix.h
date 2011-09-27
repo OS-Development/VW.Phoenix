@@ -67,6 +67,7 @@ public:
 	void refresh();
 	void apply();
 	void cancel();
+	static void setDofEnabled(BOOL enabled);
 
 private:
 	//static void onSelectSkin(LLUICtrl* ctrl, void* data);

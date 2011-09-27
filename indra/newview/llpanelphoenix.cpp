@@ -78,6 +78,7 @@
 #include "llvoavatar.h"
 
 #include "llfloaterchat.h"
+#include "llfeaturemanager.h"
 
 ////////begin drop utility/////////////
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -405,6 +406,19 @@ BOOL LLPanelPhoenix::postBuild()
     getChild<LLCheckBoxCtrl>("PhoenixWLWhitelistGroups")->setEnabled(auto_env);
     getChild<LLCheckBoxCtrl>("PhoenixWLWhitelistAll")->setEnabled(auto_env);
     getChild<LLCheckBoxCtrl>("PhoenixInterpolateParcelWL")->setEnabled(auto_env);
+
+	// Disable DoF if no deferred rendering available
+	if (!LLFeatureManager::getInstance()->isFeatureAvailable("RenderDeferred") ||
+		!gGLManager.mHasFramebufferObject ||
+		!gSavedSettings.getBOOL("RenderDeferred"))
+	{
+		getChild<LLCheckBoxCtrl>("DOFEnabled")->setEnabled(FALSE);
+		getChild<LLSliderCtrl>("CameraFNum")->setEnabled(FALSE);
+		getChild<LLSliderCtrl>("CameraFocal")->setEnabled(FALSE);
+		getChild<LLSliderCtrl>("Camera FOV")->setEnabled(FALSE);
+		//getChild<LLSliderCtrl>("CameraAspectRatio")->setEnabled(FALSE);
+		getChild<LLSliderCtrl>("CameraFocusTrans")->setEnabled(FALSE);
+	}
 
 	refresh();
 	return TRUE;
@@ -932,4 +946,17 @@ void LLPanelPhoenix::onAutoEnvToggle(LLUICtrl* ctrl, void* userdata)
     self->getChild<LLCheckBoxCtrl>("PhoenixWLWhitelistGroups")->setEnabled(auto_env);
     self->getChild<LLCheckBoxCtrl>("PhoenixWLWhitelistAll")->setEnabled(auto_env);
     self->getChild<LLCheckBoxCtrl>("PhoenixInterpolateParcelWL")->setEnabled(auto_env);
+}
+
+void LLPanelPhoenix::setDofEnabled(BOOL enabled)
+{
+	if (sInstance)
+	{
+		sInstance->getChild<LLCheckBoxCtrl>("DOFEnabled")->setEnabled(enabled);
+		sInstance->getChild<LLSliderCtrl>("CameraFNum")->setEnabled(enabled);
+		sInstance->getChild<LLSliderCtrl>("CameraFocal")->setEnabled(enabled);
+		sInstance->getChild<LLSliderCtrl>("Camera FOV")->setEnabled(enabled);
+		//sInstance->getChild<LLSliderCtrl>("CameraAspectRatio")->setEnabled(enabled);
+		sInstance->getChild<LLSliderCtrl>("CameraFocusTrans")->setEnabled(enabled);
+	}
 }

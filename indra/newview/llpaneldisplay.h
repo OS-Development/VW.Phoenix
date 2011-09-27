@@ -194,6 +194,7 @@ protected:
 	static void onApplyResolution(LLUICtrl* ctrl, void* data);
 	static void updateSliderText(LLUICtrl* ctrl, void* user_data);
 	static void updateMeterText(LLUICtrl* ctrl, void* user_data);
+	static void updateRenderDeferred(LLUICtrl* ctrl, void* user_data);
 
 	/// callback for defaults
 	static void setHardwareDefaults(void *data);

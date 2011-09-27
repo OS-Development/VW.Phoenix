@@ -81,6 +81,7 @@
 
 // parent
 #include "llfloaterpreference.h"
+#include "llpanelphoenix.h"
 
 // [RLVa:KB]
 #include "rlvhandler.h"
@@ -263,6 +264,7 @@ BOOL LLPanelDisplay::postBuild()
 	//----------------------------------------------------------------------------
 	// Deferred Rendering Enable
 	mCtrlDeferredEnable = getChild<LLCheckBoxCtrl>("RenderDeferred");
+	mCtrlDeferredEnable->setCommitCallback(&LLPanelDisplay::updateRenderDeferred);
 
 	//============================================================================
 
@@ -1027,5 +1029,8 @@ void LLPanelDisplay::updateMeterText(LLUICtrl* ctrl, void* user_data)
 	m2->setVisible(!two_digits);
 }
 
-
-
+void LLPanelDisplay::updateRenderDeferred(LLUICtrl* ctrl, void* user_data)
+{
+	LLCheckBoxCtrl* cbx = (LLCheckBoxCtrl*) ctrl;
+	LLPanelPhoenix::setDofEnabled(cbx->getValue().asBoolean());
+}
