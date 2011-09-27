@@ -312,6 +312,10 @@ BOOL LLPanelDisplay::postBuild()
 	// Particle detail slider
 	mCtrlMaxParticle = getChild<LLSliderCtrl>("MaxParticleCount");
 
+	// Avatar physics slider
+	mAvatarPhysics = getChild<LLCheckBoxCtrl>("AvatarPhysics");
+	mCrtlAvatarPhysicsLOD = getChild<LLSliderCtrl>("AvatarPhysicsDetail");
+
 	// Glow detail slider
 	mCtrlPostProcess = getChild<LLSliderCtrl>("RenderPostProcess");
 	mPostProcessText = getChild<LLTextBox>("PostProcessText");
@@ -408,6 +412,7 @@ void LLPanelDisplay::refresh()
 	mFlexLOD = gSavedSettings.getF32("RenderFlexTimeFactor");
 	mTreeLOD = gSavedSettings.getF32("RenderTreeLODFactor");
 	mAvatarLOD = gSavedSettings.getF32("RenderAvatarLODFactor");
+	mAvatarPhysicsLOD = gSavedSettings.getF32("RenderAvatarPhysicsLODFactor");
 	mTerrainLOD = gSavedSettings.getF32("RenderTerrainLODFactor");
 	mSkyLOD = gSavedSettings.getU32("WLSkyDetail");
 	mParticleCount = gSavedSettings.getS32("RenderMaxPartCount");
@@ -427,6 +432,8 @@ void LLPanelDisplay::refresh()
 	updateSliderText(mCtrlTerrainFactor, mTerrainFactorText);
 	updateSliderText(mCtrlPostProcess, mPostProcessText);
 	updateSliderText(mCtrlSkyFactor, mSkyFactorText);
+
+
 
 	refreshEnabledState();
 }
@@ -615,6 +622,8 @@ void LLPanelDisplay::setHiddenGraphicsState(bool isHidden)
 	llassert(mCtrlSkyFactor != NULL);
 	llassert(mCtrlMaxParticle != NULL);
 	llassert(mCtrlPostProcess != NULL);
+	llassert(mAvatarPhysics != NULL);
+	llassert(mCrtlAvatarPhysicsLOD != NULL);
 
 	llassert(mLODFactorText != NULL);
 	llassert(mFlexFactorText != NULL);
@@ -662,6 +671,8 @@ void LLPanelDisplay::setHiddenGraphicsState(bool isHidden)
 	mCtrlSkyFactor->setVisible(!isHidden);
 	mCtrlMaxParticle->setVisible(!isHidden);
 	mCtrlPostProcess->setVisible(!isHidden);
+	mAvatarPhysics->setVisible(!isHidden);
+	mCrtlAvatarPhysicsLOD->setVisible(!isHidden);
 
 	mLODFactorText->setVisible(!isHidden);	
 	mFlexFactorText->setVisible(!isHidden);	
@@ -731,6 +742,7 @@ void LLPanelDisplay::cancel()
 	gSavedSettings.setF32("RenderFlexTimeFactor", mFlexLOD);
 	gSavedSettings.setF32("RenderTreeLODFactor", mTreeLOD);
 	gSavedSettings.setF32("RenderAvatarLODFactor", mAvatarLOD);
+	gSavedSettings.setF32("RenderAvatarPhysicsLODFactor", mAvatarPhysicsLOD);
 	gSavedSettings.setF32("RenderTerrainLODFactor", mTerrainLOD);
 	gSavedSettings.setU32("WLSkyDetail", mSkyLOD);
 	gSavedSettings.setS32("RenderMaxPartCount", mParticleCount);

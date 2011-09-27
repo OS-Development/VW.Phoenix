@@ -104,7 +104,9 @@ protected:
 	LLSliderCtrl	*mCtrlSkyFactor;				// LOD for terrain
 	LLSliderCtrl	*mCtrlMaxParticle;				// Max Particle
 	LLSliderCtrl	*mCtrlPostProcess;				// Max Particle
+	LLSliderCtrl	*mCrtlAvatarPhysicsLOD;			// AV physics
 
+	LLCheckBoxCtrl	*mAvatarPhysics;				// AV physics
 	LLCheckBoxCtrl	*mCtrlBumpShiny;
 	LLCheckBoxCtrl	*mCtrlReflections;
 	LLCheckBoxCtrl	*mCtrlWindLight;
@@ -168,6 +170,7 @@ protected:
 	F32 mFlexLOD;
 	F32 mTreeLOD;
 	F32 mAvatarLOD;
+	F32 mAvatarPhysicsLOD;
 	F32 mTerrainLOD;
 	S32 mSkyLOD;
 	S32 mParticleCount;
