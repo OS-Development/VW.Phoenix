@@ -66,9 +66,9 @@ void LLFloaterStats::buildStats()
 	stat_barp->setUnitLabel(" fps");
 	stat_barp->mPrecision = 1;
 	stat_barp->mMinBar = 0.f;
-	stat_barp->mMaxBar = 60.f;
-	stat_barp->mTickSpacing = 6.f;
-	stat_barp->mLabelSpacing = 12.f;
+	stat_barp->mMaxBar = 100.f;
+	stat_barp->mTickSpacing = 10.f;
+	stat_barp->mLabelSpacing = 20.f;
 
 	stat_barp = stat_viewp->addStat("Bandwidth", &(LLViewerStats::getInstance()->mKBitStat), "DebugStatModeBandwidth", TRUE, FALSE);
 	stat_barp->setUnitLabel(" kbps");
@@ -161,36 +161,36 @@ void LLFloaterStats::buildStats()
 	stat_barp = texture_statviewp->addStat("GL Mem", &(gTextureList.sGLTexMemStat), "DebugStatModeGLMem");
 	stat_barp->setUnitLabel("");
 	stat_barp->mMinBar = 0.f;
-	stat_barp->mMaxBar = 400.f;
-	stat_barp->mTickSpacing = 100.f;
-	stat_barp->mLabelSpacing = 200.f;
+	stat_barp->mMaxBar = 512.f;
+	stat_barp->mTickSpacing = 128.f;
+	stat_barp->mLabelSpacing = 256.f;
 	stat_barp->mPrecision = 1;
 	stat_barp->mPerSec = FALSE;
 
 	stat_barp = texture_statviewp->addStat("Formatted Mem", &(gTextureList.sFormattedMemStat), "DebugStatModeFormattedMem");
 	stat_barp->setUnitLabel("");
 	stat_barp->mMinBar = 0.f;
-	stat_barp->mMaxBar = 400.f;
-	stat_barp->mTickSpacing = 100.f;
-	stat_barp->mLabelSpacing = 200.f;
+	stat_barp->mMaxBar = 512.f;
+	stat_barp->mTickSpacing = 128.f;
+	stat_barp->mLabelSpacing = 256.f;
 	stat_barp->mPrecision = 1;
 	stat_barp->mPerSec = FALSE;
 
 	stat_barp = texture_statviewp->addStat("Raw Mem", &(gTextureList.sRawMemStat), "DebugStatModeRawMem");
 	stat_barp->setUnitLabel("");
 	stat_barp->mMinBar = 0.f;
-	stat_barp->mMaxBar = 400.f;
-	stat_barp->mTickSpacing = 100.f;
-	stat_barp->mLabelSpacing = 200.f;
+	stat_barp->mMaxBar = 512.f;
+	stat_barp->mTickSpacing = 128.f;
+	stat_barp->mLabelSpacing = 256.f;
 	stat_barp->mPrecision = 1;
 	stat_barp->mPerSec = FALSE;
 
 	stat_barp = texture_statviewp->addStat("Bound Mem", &(gTextureList.sGLBoundMemStat), "DebugStatModeBoundMem");
 	stat_barp->setUnitLabel("");
 	stat_barp->mMinBar = 0.f;
-	stat_barp->mMaxBar = 400.f;
-	stat_barp->mTickSpacing = 100.f;
-	stat_barp->mLabelSpacing = 200.f;
+	stat_barp->mMaxBar = 512.f;
+	stat_barp->mTickSpacing = 128.f;
+	stat_barp->mLabelSpacing = 256.f;
 	stat_barp->mPrecision = 1;
 	stat_barp->mPerSec = FALSE;
 
