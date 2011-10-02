@@ -11940,7 +11940,7 @@
 			<key>Type</key>
 			<string>S32</string>
 			<key>Value</key>
-			<integer>8192</integer>
+			<integer>65536</integer>
 		</map>
 		<key>RenderMaxPartCount</key>
 		<map>
