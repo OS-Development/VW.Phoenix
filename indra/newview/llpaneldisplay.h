@@ -69,7 +69,6 @@ public:
 
 	void refresh();	// Refresh enable/disable
 	void refreshEnabledState();
-	void disableUnavailableSettings();
 	void setHiddenGraphicsState(bool isHidden);
 	void apply();	// Apply the changed values.
 	void applyResolution();
@@ -164,6 +163,15 @@ protected:
 	S32 mAvatarMode;
 	S32 mLightingDetail;
 	S32 mTerrainDetail;
+
+	bool mCanDoObjectBump;
+	bool mCanDoBasicShaders;
+	bool mCanDoReflections;
+	bool mCanDoWindlight;
+	bool mCanDoSkinning;
+	bool mCanDoCloth;
+	bool mCanDoImpostors;
+	bool mCanDoDeferred;
 
 	F32 mRenderFarClip;
 	F32 mPrimLOD;

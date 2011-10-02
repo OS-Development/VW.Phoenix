@@ -101,9 +101,22 @@ LLPanelDisplay::LLPanelDisplay()
 
 BOOL LLPanelDisplay::postBuild()
 {
+	// Setup graphic card capabilities
+	bool cubemap = gGLManager.mHasCubeMap && LLCubeMap::sUseCubeMaps;
+	LLFeatureManager* fm = LLFeatureManager::getInstance();
+	mCanDoObjectBump	= fm->isFeatureAvailable("RenderObjectBump") && cubemap;
+	mCanDoImpostors		= fm->isFeatureAvailable("RenderUseImpostors");
+	mCanDoBasicShaders	= fm->isFeatureAvailable("VertexShaderEnable");
+	mCanDoWindlight		= mCanDoBasicShaders && fm->isFeatureAvailable("WindLightUseAtmosShaders");
+	mCanDoReflections	= mCanDoBasicShaders && fm->isFeatureAvailable("RenderWaterReflections") && cubemap;
+	mCanDoSkinning		= mCanDoBasicShaders && fm->isFeatureAvailable("RenderAvatarVP");
+	mCanDoCloth			= mCanDoSkinning && fm->isFeatureAvailable("RenderAvatarCloth");
+	mCanDoDeferred		= mCanDoWindlight && mCanDoSkinning && gGLManager.mHasFramebufferObject &&
+						  fm->isFeatureAvailable("RenderDeferred");
+
 	// return to default values
 	childSetAction("Defaults", setHardwareDefaults, NULL);
-	
+
 	// Help button
 	childSetAction("GraphicsPreferencesHelpButton", onOpenHelp, this);
 
@@ -112,10 +125,10 @@ BOOL LLPanelDisplay::postBuild()
 
 	//============================================================================
 	// Resolution
-	
+
 	// radio set for fullscreen size
-	
-	mCtrlWindowed = getChild<LLCheckBoxCtrl>( "windowed mode");
+
+	mCtrlWindowed = getChild<LLCheckBoxCtrl>("windowed mode");
 	mCtrlWindowed->setCommitCallback(onCommitWindowedMode);
 	mCtrlWindowed->setCallbackUserData(this);
 
@@ -128,24 +141,24 @@ BOOL LLPanelDisplay::postBuild()
 
 	S32 fullscreen_mode = num_resolutions - 1;
 
-	mCtrlFullScreen = getChild<LLComboBox>( "fullscreen combo");
-	
+	mCtrlFullScreen = getChild<LLComboBox>("fullscreen combo");
+
 	LLUIString resolution_label = getString("resolution_format");
 
 	for (S32 i = 0; i < num_resolutions; i++)
 	{
 		resolution_label.setArg("[RES_X]", llformat("%d", supported_resolutions[i].mWidth));
 		resolution_label.setArg("[RES_Y]", llformat("%d", supported_resolutions[i].mHeight));
-		mCtrlFullScreen->add( resolution_label, ADD_BOTTOM );
+		mCtrlFullScreen->add(resolution_label, ADD_BOTTOM);
 	}
 
 	{
 		BOOL targetFullscreen;
 		S32 targetWidth;
 		S32 targetHeight;
-		
+
 		gViewerWindow->getTargetWindow(targetFullscreen, targetWidth, targetHeight);
-		
+
 		if (targetFullscreen)
 		{
 			fullscreen_mode = 0; // default to 800x600
@@ -172,7 +185,7 @@ BOOL LLPanelDisplay::postBuild()
 	}
 
 	initWindowSizeControls();
-	
+
 	if (gSavedSettings.getBOOL("FullScreenAutoDetectAspectRatio"))
 	{
 		mAspectRatio = gViewerWindow->getDisplayAspectRatio();
@@ -197,7 +210,7 @@ BOOL LLPanelDisplay::postBuild()
 		aspect_ratio_text = llformat("%.3f", mAspectRatio);
 	}
 
-	mCtrlAspectRatio = getChild<LLComboBox>( "aspect_ratio");
+	mCtrlAspectRatio = getChild<LLComboBox>("aspect_ratio");
 	mCtrlAspectRatio->setTextEntryCallback(onKeystrokeAspectRatio);
 	mCtrlAspectRatio->setCommitCallback(onSelectAspectRatio);
 	mCtrlAspectRatio->setCallbackUserData(this);
@@ -205,7 +218,7 @@ BOOL LLPanelDisplay::postBuild()
 	mCtrlAspectRatio->add(aspect_ratio_text, &mAspectRatio, ADD_TOP);
 	mCtrlAspectRatio->setCurrentByIndex(0);
 
-	mCtrlAutoDetectAspect = getChild<LLCheckBoxCtrl>( "aspect_auto_detect");
+	mCtrlAutoDetectAspect = getChild<LLCheckBoxCtrl>("aspect_auto_detect");
 	mCtrlAutoDetectAspect->setCommitCallback(onCommitAutoDetectAspect);
 	mCtrlAutoDetectAspect->setCallbackUserData(this);
 
@@ -223,14 +236,14 @@ BOOL LLPanelDisplay::postBuild()
 	//----------------------------------------------------------------------------
 	// Enable Bump/Shiny
 	mCtrlBumpShiny = getChild<LLCheckBoxCtrl>("BumpShiny");
-	
+
 	//----------------------------------------------------------------------------
 	// Enable Reflections
 	mCtrlReflections = getChild<LLCheckBoxCtrl>("Reflections");
 	mCtrlReflections->setCommitCallback(&LLPanelDisplay::onVertexShaderEnable);
 	mCtrlReflections->setCallbackUserData(this);
 	mRadioReflectionDetail = getChild<LLRadioGroup>("ReflectionDetailRadio");
-	
+
 	// WindLight
 	mCtrlWindLight = getChild<LLCheckBoxCtrl>("WindLightUseAtmosShaders");
 	mCtrlWindLight->setCommitCallback(&LLPanelDisplay::onVertexShaderEnable);
@@ -260,7 +273,7 @@ BOOL LLPanelDisplay::postBuild()
 	mCtrlShaderEnable = getChild<LLCheckBoxCtrl>("BasicShaders");
 	mCtrlShaderEnable->setCommitCallback(&LLPanelDisplay::onVertexShaderEnable);
 	mCtrlShaderEnable->setCallbackUserData(this);
-	
+
 	//----------------------------------------------------------------------------
 	// Deferred Rendering Enable
 	mCtrlDeferredEnable = getChild<LLCheckBoxCtrl>("RenderDeferred");
@@ -384,27 +397,25 @@ LLPanelDisplay::~LLPanelDisplay()
 void LLPanelDisplay::refresh()
 {
 	LLPanel::refresh();
-	
+
 	mFSAutoDetectAspect = gSavedSettings.getBOOL("FullScreenAutoDetectAspectRatio");
 
 	mQualityPerformance = gSavedSettings.getU32("RenderQualityPerformance");
 	mCustomSettings = gSavedSettings.getBOOL("RenderCustomSettings");
 
 	// shader settings
-	static LLCachedControl<bool> sRenderObjectBump(gSavedSettings, "RenderObjectBump");
-
-	mBumpShiny = (BOOL)sRenderObjectBump;
-	mShaderEnable = gSavedSettings.getBOOL("VertexShaderEnable");
-	mWindLight = gSavedSettings.getBOOL("WindLightUseAtmosShaders");
-	mReflections = gSavedSettings.getBOOL("RenderWaterReflections");
-	mAvatarVP = gSavedSettings.getBOOL("RenderAvatarVP");
+	mBumpShiny = mCanDoObjectBump && gSavedSettings.getBOOL("RenderObjectBump");
+	mShaderEnable = mCanDoBasicShaders && gSavedSettings.getBOOL("VertexShaderEnable");
+	mWindLight = mCanDoWindlight && gSavedSettings.getBOOL("WindLightUseAtmosShaders");
+	mReflections = mCanDoReflections && gSavedSettings.getBOOL("RenderWaterReflections");
+	mAvatarVP = mCanDoSkinning && gSavedSettings.getBOOL("RenderAvatarVP");
 
 	// reflection radio
 	mReflectionDetail = gSavedSettings.getS32("RenderReflectionDetail");
 
 	// avatar settings
-	mAvatarImpostors = gSavedSettings.getBOOL("RenderUseImpostors");
-	mAvatarCloth = gSavedSettings.getBOOL("RenderAvatarCloth");
+	mAvatarImpostors = mCanDoImpostors && gSavedSettings.getBOOL("RenderUseImpostors");
+	mAvatarCloth = mCanDoCloth && gSavedSettings.getBOOL("RenderAvatarCloth");
 
 	// Draw distance
 	mRenderFarClip = gSavedSettings.getF32("RenderFarClip");
@@ -419,7 +430,7 @@ void LLPanelDisplay::refresh()
 	mSkyLOD = gSavedSettings.getU32("WLSkyDetail");
 	mParticleCount = gSavedSettings.getS32("RenderMaxPartCount");
 	mPostProcess = gSavedSettings.getS32("RenderGlowResolutionPow");
-	
+
 	// lighting and terrain radios
 	mLightingDetail = gSavedSettings.getS32("RenderLightingDetail");
 	mRenderDeferred = gSavedSettings.getBOOL("RenderDeferred");
@@ -434,8 +445,6 @@ void LLPanelDisplay::refresh()
 	updateSliderText(mCtrlTerrainFactor, mTerrainFactorText);
 	updateSliderText(mCtrlPostProcess, mPostProcessText);
 	updateSliderText(mCtrlSkyFactor, mSkyFactorText);
-
-
 
 	refreshEnabledState();
 }
@@ -453,57 +462,43 @@ void LLPanelDisplay::refreshEnabledState()
 	mFullScreenInfo->setVisible(!isFullScreen);
 	mWindowSizeLabel->setVisible(!isFullScreen);
 
-	// disable graphics settings and exit if it's not set to custom
-	if(!gSavedSettings.getBOOL("RenderCustomSettings"))
+	if (!gSavedSettings.getBOOL("RenderCustomSettings"))
 	{
+		// disable graphics settings and exit if it's not set to custom
 		setHiddenGraphicsState(true);
 		return;
 	}
-
-	// otherwise turn them all on and selectively turn off others
 	else
 	{
+		// otherwise turn them all on and selectively turn off others
 		setHiddenGraphicsState(false);
 	}
 
-	// Reflections
-	BOOL reflections = gSavedSettings.getBOOL("VertexShaderEnable") 
-		&& gGLManager.mHasCubeMap 
-		&& LLCubeMap::sUseCubeMaps;
-	mCtrlReflections->setEnabled(reflections);
-	
-	// Bump & Shiny
-	bool bumpshiny = gGLManager.mHasCubeMap && LLCubeMap::sUseCubeMaps && LLFeatureManager::getInstance()->isFeatureAvailable("RenderObjectBump");
-	mCtrlBumpShiny->setEnabled(bumpshiny ? TRUE : FALSE);
-	
-	for (S32 i = 0; i < mRadioReflectionDetail->getItemCount(); ++i)
+	// Bump & shiny
+	if (!mCanDoObjectBump)
 	{
-		mRadioReflectionDetail->setIndexEnabled(i, mCtrlReflections->get() && reflections);
+		// Turn off bump & shiny
+		mCtrlBumpShiny->setEnabled(FALSE);
+		mCtrlBumpShiny->setValue(FALSE);
 	}
 
-	// Avatar Mode
-	S32 max_avatar_shader = LLViewerShaderMgr::instance()->mMaxAvatarShaderLevel;
-	mCtrlAvatarVP->setEnabled((max_avatar_shader > 0) ? TRUE : FALSE);
-	
-	if (gSavedSettings.getBOOL("VertexShaderEnable") == FALSE || 
-		gSavedSettings.getBOOL("RenderAvatarVP") == FALSE)
+	// Basic shaders
+	if (!mCanDoBasicShaders)
 	{
-		mCtrlAvatarCloth->setEnabled(false);
-	} 
+		mCtrlShaderEnable->setEnabled(FALSE);
+		mCtrlShaderEnable->setValue(FALSE);
+	}
+// [RLVa:KB] - Checked: 2009-07-10 (RLVa-1.0.0g) | Modified: RLVa-0.2.0a
 	else
 	{
-		mCtrlAvatarCloth->setEnabled(true);
+		// "Basic Shaders" can't be disabled - but can be enabled - under @setenv=n
+		mCtrlShaderEnable->setEnabled(!gRlvHandler.hasBehaviour(RLV_BHVR_SETENV) || !mShaderEnable);
 	}
-
-	// Vertex Shaders
-//	mCtrlShaderEnable->setEnabled(LLFeatureManager::getInstance()->isFeatureAvailable("VertexShaderEnable"));
-// [RLVa:KB] - Checked: 2009-07-10 (RLVa-1.0.0g) | Modified: RLVa-0.2.0a
-	// "Basic Shaders" can't be disabled - but can be enabled - under @setenv=n
-	bool fCtrlShaderEnable = LLFeatureManager::getInstance()->isFeatureAvailable("VertexShaderEnable");
-	mCtrlShaderEnable->setEnabled(fCtrlShaderEnable && (!gRlvHandler.hasBehaviour(RLV_BHVR_SETENV) || !mShaderEnable));
 // [/RLVa:KB]
 
 	BOOL shaders = mCtrlShaderEnable->get();
+
+	// Terrain detail
 	if (shaders)
 	{
 		mRadioTerrainDetail->setValue(1);
@@ -514,99 +509,71 @@ void LLPanelDisplay::refreshEnabledState()
 		mRadioTerrainDetail->setEnabled(TRUE);
 	}
 
-	// Deferred rendering
-	BOOL enabled = shaders && gGLManager.mHasFramebufferObject &&
-				   gSavedSettings.getBOOL("RenderAvatarVP") &&
-				   LLFeatureManager::getInstance()->isFeatureAvailable("RenderDeferred") && 
-				   gSavedSettings.getBOOL("RenderAvatarVP") &&
-				   mCtrlWindLight->get();
-	mCtrlDeferredEnable->setEnabled(enabled);
+	// Reflections
+	BOOL reflections = mCanDoReflections && shaders;
+	mCtrlReflections->setEnabled(reflections);
+	if (!reflections)
+	{
+		mCtrlReflections->setValue(FALSE);
+	}
+	else
+	{
+		reflections = mCtrlReflections->get();
+	}
 
-	// *HACK just checks to see if we can use shaders... 
-	// maybe some cards that use shaders, but don't support windlight
-//	mCtrlWindLight->setEnabled(mCtrlShaderEnable->getEnabled() && shaders);
+	// Reflection details
+	for (S32 i = 0; i < mRadioReflectionDetail->getItemCount(); ++i)
+	{
+		mRadioReflectionDetail->setIndexEnabled(i, reflections);
+	}
+
+	BOOL windlight = mCanDoWindlight && shaders;
 // [RLVa:KB] - Checked: 2009-07-10 (RLVa-1.0.0g) | Modified: RLVa-0.2.0a
-	// "Atmospheric Shaders" can't be disabled - but can be enabled - under @setenv=n
-	bool fCtrlWindLightEnable = fCtrlShaderEnable && shaders;
-	mCtrlWindLight->setEnabled(fCtrlWindLightEnable && (!gRlvHandler.hasBehaviour(RLV_BHVR_SETENV) || !mWindLight));
+// "Atmospheric Shaders" can't be disabled - but can be enabled - under @setenv=n
+//	mCtrlWindLight->setEnabled(windlight);
+	mCtrlWindLight->setEnabled(windlight && (!gRlvHandler.hasBehaviour(RLV_BHVR_SETENV) || !mWindLight));
 // [/RLVa:KB]
-
-	// turn off sky detail if atmostpherics isn't on
-	mCtrlSkyFactor->setEnabled(gSavedSettings.getBOOL("WindLightUseAtmosShaders"));
-	mSkyFactorText->setEnabled(gSavedSettings.getBOOL("WindLightUseAtmosShaders"));
-
-	// now turn off any features that are unavailable
-	disableUnavailableSettings();
-}
-
-void LLPanelDisplay::disableUnavailableSettings()
-{	
-	// if vertex shaders off, disable all shader related products
-	if(!LLFeatureManager::getInstance()->isFeatureAvailable("VertexShaderEnable"))
+	if (!windlight)
 	{
-		mCtrlShaderEnable->setEnabled(FALSE);
-		mCtrlShaderEnable->setValue(FALSE);
-
-		mCtrlWindLight->setEnabled(FALSE);
 		mCtrlWindLight->setValue(FALSE);
+	}
+	else
+	{
+		windlight = mCtrlWindLight->get();
+	}
 
-		mCtrlReflections->setEnabled(FALSE);
-		mCtrlReflections->setValue(FALSE);
+	// Sky detail depend on Windlight Atmospheric shaders
+	mCtrlSkyFactor->setEnabled(windlight);
+	mSkyFactorText->setEnabled(windlight);
 
-		mCtrlAvatarVP->setEnabled(FALSE);
+	// Avatar Mode
+	BOOL skinning = mCanDoSkinning &&
+					(LLStartUp::getStartupState() != STATE_STARTED ||
+					 LLViewerShaderMgr::instance()->mMaxAvatarShaderLevel > 0);
+	mCtrlAvatarVP->setEnabled(skinning);
+	if (!skinning)
+	{
 		mCtrlAvatarVP->setValue(FALSE);
-
-		mCtrlAvatarCloth->setEnabled(FALSE);
-		mCtrlAvatarCloth->setValue(FALSE);
-
-		mCtrlDeferredEnable->setEnabled(false);
+	}
+	else
+	{
+		skinning = mCtrlAvatarVP->get();
 	}
 
-	// disabled windlight
-	if(!LLFeatureManager::getInstance()->isFeatureAvailable("WindLightUseAtmosShaders"))
+	BOOL cloth = mCanDoCloth && shaders && skinning;
+	// Avatar cloth
+	mCtrlAvatarCloth->setEnabled(cloth);
+	if (!cloth)
 	{
-		mCtrlWindLight->setEnabled(FALSE);
-		mCtrlWindLight->setValue(FALSE);
-
-		mCtrlDeferredEnable->setEnabled(false);
-	}
-
-	// disabled reflections
-	if(!LLFeatureManager::getInstance()->isFeatureAvailable("RenderWaterReflections"))
-	{
-		mCtrlReflections->setEnabled(FALSE);
-		mCtrlReflections->setValue(FALSE);
-	}
-
-	// disabled av
-	if(!LLFeatureManager::getInstance()->isFeatureAvailable("RenderAvatarVP"))
-	{
-		mCtrlAvatarVP->setEnabled(FALSE);
-		mCtrlAvatarVP->setValue(FALSE);
-
-		mCtrlAvatarCloth->setEnabled(FALSE);
-		mCtrlAvatarCloth->setValue(FALSE);
-
-		mCtrlDeferredEnable->setEnabled(false);
-	}
-	// disabled cloth
-	if(!LLFeatureManager::getInstance()->isFeatureAvailable("RenderAvatarCloth"))
-	{
-		mCtrlAvatarCloth->setEnabled(FALSE);
 		mCtrlAvatarCloth->setValue(FALSE);
 	}
-	// disabled impostors
-	if(!LLFeatureManager::getInstance()->isFeatureAvailable("RenderUseImpostors"))
-	{
-		mCtrlAvatarImpostors->setEnabled(FALSE);
-		mCtrlAvatarImpostors->setValue(FALSE);
-	}
 
-	// disabled deferred rendering
-	if (!LLFeatureManager::getInstance()->isFeatureAvailable("RenderDeferred") ||
-		!gGLManager.mHasFramebufferObject)
+	// Deferred rendering
+	BOOL deferred = mCanDoDeferred && windlight && skinning;
+	mCtrlDeferredEnable->setEnabled(deferred);
+	if (!deferred)
 	{
-		mCtrlDeferredEnable->setEnabled(false);
+		mCtrlDeferredEnable->setValue(FALSE);
 	}
 }
 
@@ -753,7 +720,7 @@ void LLPanelDisplay::cancel()
 
 void LLPanelDisplay::apply()
 {
-	gSavedSettings.setBOOL("RenderDeferred", childGetValue("RenderDeferred").asBoolean());
+	gSavedSettings.setBOOL("RenderDeferred", mCtrlDeferredEnable->get());
 	applyResolution();
 	
 	// Only set window size if we're not in fullscreen mode
