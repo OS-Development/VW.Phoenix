@@ -368,6 +368,7 @@ void handle_admin_override_toggle(void*);
 void handle_toggle_hacked_godmode(void*);
 BOOL check_toggle_hacked_godmode(void*);
 #endif
+void handle_reload_avatar_cloud_particles(void*);
 
 void toggle_glow(void *);
 BOOL check_glow(void *);
@@ -1524,6 +1525,7 @@ void init_debug_avatar_menu(LLMenuGL* menu)
 	mesh_item->setUserData((void*)mesh_item);  // So we can remove it later
 	menu->append(mesh_item);
 #endif //MESHES_AND_MORPHS
+	menu->append(new LLMenuItemCallGL("Reload Avatar Cloud Particle", handle_reload_avatar_cloud_particles));
 	menu->createJumpKeys();
 }
 
@@ -7366,6 +7368,11 @@ void handle_dump_attachments(void*)
 					<< llendl;
 		}
 	}
+}
+
+void handle_reload_avatar_cloud_particles(void*)
+{
+	LLVOAvatar::initCloud();
 }
 
 //---------------------------------------------------------------------

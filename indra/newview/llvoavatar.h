@@ -102,6 +102,7 @@ public:
 public:
 	static void initClass(); // Initialize data that's only init'd once per class.
 	static void cleanupClass();	// Cleanup data that's only init'd once per class.
+	static void initCloud();
 	static BOOL parseSkeletonFile(const std::string& filename);
 	virtual void updateGL();
 	virtual	LLVOAvatar* asAvatar();
@@ -611,9 +612,11 @@ public:
 	static BOOL		sDebugInvisible;
 	static BOOL		sShowAttachmentPoints;
 	static F32		sLODFactor; // user-settable LOD factor
-	static F32    sPhysicsLODFactor; // user-settable physics LOD factor
+	static F32		sPhysicsLODFactor; // user-settable physics LOD factor
 	static BOOL		sJointDebug; // output total number of joints being touched for each avatar
 	static BOOL     sDebugAvatarRotation;
+	static LLPartSysData sCloud;
+	static LLPartSysData sCloudMuted;
 
 	static S32 sNumVisibleAvatars; // Number of instances of this class
 	

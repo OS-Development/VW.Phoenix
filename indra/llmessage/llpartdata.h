@@ -154,7 +154,9 @@ public:
 	BOOL unpack(LLDataPacker &dp);
 	BOOL pack(LLDataPacker &dp);
 
-	
+	LLSD asLLSD() const;
+	bool fromLLSD(LLSD& sd);
+
 	BOOL unpackBlock(const S32 block_num);
 	BOOL packBlock();
 
