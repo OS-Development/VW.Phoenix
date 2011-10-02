@@ -813,8 +813,14 @@ bool LLAppViewer::init()
 	settings_setup_listeners();
 	// Modify settings based on system configuration and compile options
 	settings_modify();
+
 	// Work around for a crash bug when changing OpenGL settings
+	// and rebuilding fonts
+#if LL_DARWIN
+	LLFont::sOpenGLcrashOnRestart = true;
+#else
 	LLFont::sOpenGLcrashOnRestart = (getenv("LL_OPENGL_RESTART_CRASH_BUG") != NULL);
+#endif
 
 	// Find partition serial number (Windows) or hardware serial (Mac)
 	mSerialNumber = generateSerialNumber();

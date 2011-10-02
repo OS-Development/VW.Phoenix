@@ -34,19 +34,23 @@
 
 #include "apr_pools.h"
 #include "apr_dso.h"
-#include "llhttpstatuscodes.h"
+
+#include <queue>
+#include <boost/lexical_cast.hpp>
+
+#ifndef LL_WINDOWS
+#include "netdb.h"
+#endif
+
 #include "llmeshrepository.h"
 
-#include "llagent.h"
-#include "llappviewer.h"
-#include "llassetuploadresponders.h"
 #include "llbufferstream.h"
-#include "llcallbacklist.h"
 #include "llcurl.h"
 #include "lldatapacker.h"
-#include "llfloaterperms.h"
 #include "lleconomy.h"
+#include "llfoldertype.h"
 #include "llimagej2c.h"
+#include "llhttpstatuscodes.h"
 #include "llhost.h"
 #include "llnotifications.h"
 #include "llsd.h"
@@ -54,28 +58,25 @@
 #include "llsdserialize.h"
 #include "llthread.h"
 #include "llvfile.h"
+#include "llvolumemgr.h"
+#include "material_codes.h"
+
+#include "llagent.h"
+#include "llappviewer.h"
+#include "llassetuploadresponders.h"
+#include "llcallbacklist.h"
+#include "llfloaterperms.h"
+#include "llinventorymodel.h"
 #include "llviewercontrol.h"
 #include "llviewerinventory.h"
 #include "llviewermenufile.h"
 #include "llviewerobjectlist.h"
+#include "llviewerparcelmgr.h"
 #include "llviewerregion.h"
 #include "llviewertexturelist.h"
-#include "llvolume.h"
-#include "llvolumemgr.h"
 #include "llvovolume.h"
 #include "llworld.h"
-#include "material_codes.h"
 #include "pipeline.h"
-#include "llinventorymodel.h"
-#include "llfoldertype.h"
-#include "llviewerparcelmgr.h"
-
-#ifndef LL_WINDOWS
-#include "netdb.h"
-#endif
-
-#include <queue>
-#include <boost/lexical_cast.hpp>
 
 LLMeshRepository gMeshRepo;
 
@@ -1334,6 +1335,7 @@ void LLMeshUploadThread::wholeModelToLLSD(LLSD& dest, bool include_textures)
 
 	std::map<LLModel*,S32> mesh_index;
 	std::string model_name;
+	std::string model_metric;
 
 	S32 instance_num = 0;
 	
@@ -1353,6 +1355,11 @@ void LLMeshUploadThread::wholeModelToLLSD(LLSD& dest, bool include_textures)
 			if (model_name.empty())
 			{
 				model_name = data.mBaseModel->getName();
+			}
+
+			if (model_metric.empty())
+			{
+				model_metric = data.mBaseModel->getMetric();
 			}
 
 			std::stringstream ostr;
@@ -1464,14 +1471,18 @@ void LLMeshUploadThread::wholeModelToLLSD(LLSD& dest, bool include_textures)
 
 	if (model_name.empty()) model_name = "mesh model";
 	result["name"] = model_name;
+	if (model_metric.empty()) model_metric = "MUT_Unspecified";
+	res["metric"] = model_metric;
 	result["asset_resources"] = res;
-	dump_llsd_to_file(result,make_dump_name("whole_model_",dump_num));
+	dump_llsd_to_file(result, make_dump_name("whole_model_", dump_num));
 
 	dest = result;
 }
 
 void LLMeshUploadThread::generateHulls()
 {
+	bool has_valid_requests = false;
+
 	for (instance_map::iterator iter = mInstance.begin();
 		 iter != mInstance.end(); ++iter)
 	{
@@ -1511,12 +1522,16 @@ void LLMeshUploadThread::generateHulls()
 		if (request->isValid())
 		{
 			gMeshRepo.mDecompThread->submitRequest(request);
+			has_valid_requests = true;
 		}
 	}
 
-	while (!mPhysicsComplete)
+	if (has_valid_requests)
 	{
-		apr_sleep(100);
+		while (!mPhysicsComplete)
+		{
+			apr_sleep(100);
+		}
 	}
 }
 
@@ -1995,14 +2010,15 @@ void LLMeshHeaderResponder::completedRaw(U32 status, const std::string& reason,
 				lod_bytes = llmax(lod_bytes, header[lod_name]["offset"].asInteger() + header[lod_name]["size"].asInteger());
 			}
 		
-			//just in case skin info or decomposition is at the end of the file (which it shouldn't be)
+			// Just in case skin info or decomposition is at the end of the file
+			// (which it shouldn't be)
 			lod_bytes = llmax(lod_bytes, header["skin"]["offset"].asInteger() + header["skin"]["size"].asInteger());
 			lod_bytes = llmax(lod_bytes, header["physics_convex"]["offset"].asInteger() + header["physics_convex"]["size"].asInteger());
 
 			S32 header_bytes = (S32) gMeshRepo.mThread->mMeshHeaderSize[mesh_id];
 			S32 bytes = lod_bytes + header_bytes; 
 
-			//it's possible for the remote asset to have more data than is
+			// It's possible for the remote asset to have more data than is
 			// needed for the local cache: only allocate as much space in the
 			// VFS as is needed for the local cache
 			data_size = llmin(data_size, bytes);
@@ -2504,7 +2520,7 @@ S32 LLMeshRepository::getActualMeshLOD(const LLVolumeParams& mesh_params, S32 lo
 	return mThread->getActualMeshLOD(mesh_params, lod);
 }
 
-const LLMeshSkinInfo* LLMeshRepository::getSkinInfo(const LLUUID& mesh_id, LLVOVolume* requesting_obj)
+const LLMeshSkinInfo* LLMeshRepository::getSkinInfo(const LLUUID& mesh_id, const LLVOVolume* requesting_obj)
 {
 	if (mesh_id.notNull())
 	{
@@ -2770,7 +2786,7 @@ void LLMeshRepository::uploadError(LLSD& args)
 }
 
 //static
-F32 LLMeshRepository::getStreamingCost(LLSD& header, F32 radius, S32* bytes, S32* bytes_visible, S32 lod)
+F32 LLMeshRepository::getStreamingCost(LLSD& header, F32 radius, S32* bytes, S32* bytes_visible, S32 lod, F32 *unscaled_value)
 {
 	F32 max_distance = 512.f;
 
@@ -2858,6 +2874,11 @@ F32 LLMeshRepository::getStreamingCost(LLSD& header, F32 radius, S32* bytes, S32
 					   triangles_mid * mid_area +
 					   triangles_low * low_area +
 					   triangles_lowest * lowest_area;
+
+	if (unscaled_value)
+	{
+		*unscaled_value = weighted_avg;
+	}
 
 	return weighted_avg / gSavedSettings.getU32("MeshTriangleBudget") * 15000.f;
 }
@@ -3144,38 +3165,41 @@ void LLPhysicsDecomp::doDecompositionSingleHull()
 	setMeshData(mesh, true);
 
 	LLCDResult ret = decomp->buildSingleHull();
-	if(ret)
+	if (ret)
 	{
 		LL_WARNS("Mesh") << "Could not execute decomposition stage when attempting to create single hull." << LL_ENDL;
 		make_box(mCurRequest);
 	}
-
-	mMutex->lock();
-	mCurRequest->mHull.clear();
-	mCurRequest->mHull.resize(1);
-	mCurRequest->mHullMesh.clear();
-	mMutex->unlock();
-
-	std::vector<LLVector3> p;
-	LLCDHull hull;
-
-	// if LLConvexDecomposition is a stub, num_hulls should have been set to 0 above, and we should not reach this code
-	decomp->getSingleHull(&hull);
-
-	const F32* v = hull.mVertexBase;
-
-	for (S32 j = 0; j < hull.mNumVertices; ++j)
+	else
 	{
-		LLVector3 vert(v[0], v[1], v[2]); 
-		p.push_back(vert);
-		v = (F32*) (((U8*) v) + hull.mVertexStrideBytes);
-	}
+		mMutex->lock();
+		mCurRequest->mHull.clear();
+		mCurRequest->mHull.resize(1);
+		mCurRequest->mHullMesh.clear();
+		mMutex->unlock();
 
-	mMutex->lock();
-	mCurRequest->mHull[0] = p;
-	mMutex->unlock();	
+		std::vector<LLVector3> p;
+		LLCDHull hull;
+
+		// if LLConvexDecomposition is a stub, num_hulls should have been set
+		// to 0 above, and we should not reach this code
+		decomp->getSingleHull(&hull);
+
+		const F32* v = hull.mVertexBase;
+
+		for (S32 j = 0; j < hull.mNumVertices; ++j)
+		{
+			LLVector3 vert(v[0], v[1], v[2]); 
+			p.push_back(vert);
+			v = (F32*) (((U8*) v) + hull.mVertexStrideBytes);
+		}
+
+		mMutex->lock();
+		mCurRequest->mHull[0] = p;
+		mMutex->unlock();
+	}
 #else
-	setMeshData(mesh);
+	setMeshData(mesh, false);
 
 	//set all parameters to default
 	std::map<std::string, const LLCDParam*> param_map;
@@ -3185,7 +3209,7 @@ void LLPhysicsDecomp::doDecompositionSingleHull()
 
 	if (!params)
 	{
-		param_count = LLConvexDecomposition::getInstance()->getParameters(&params);
+		param_count = decomp->getParameters(&params);
 	}
 
 	for (S32 i = 0; i < param_count; ++i)

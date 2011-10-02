@@ -64,8 +64,11 @@ std::string model_names[] =
 const int MODEL_NAMES_LENGTH = sizeof(model_names) / sizeof(std::string);
 
 LLModel::LLModel(LLVolumeParams& params, F32 detail)
-	: LLVolume(params, detail), mNormalizedScale(1,1,1), mNormalizedTranslation(0,0,0)
-	, mPelvisOffset( 0.0f ), mStatus(NO_ERRORS)
+:	LLVolume(params, detail),
+	mNormalizedScale(1,1,1),
+	mNormalizedTranslation(0,0,0),
+	mPelvisOffset(0.0f),
+	mStatus(NO_ERRORS)
 {
 	mDecompID = -1;
 	mLocalID = -1;
@@ -146,7 +149,9 @@ bool get_dom_sources(const domInputLocalOffset_Array& inputs, S32& pos_offset, S
 	return true;
 }
 
-LLModel::EModelStatus load_face_from_dom_triangles(std::vector<LLVolumeFace>& face_list, std::vector<std::string>& materials, domTrianglesRef& tri)
+LLModel::EModelStatus load_face_from_dom_triangles(std::vector<LLVolumeFace>& face_list,
+												   std::vector<std::string>& materials,
+												   domTrianglesRef& tri)
 {
 	LLVolumeFace face;
 	std::vector<LLVolumeFace::VertexData> verts;
@@ -164,7 +169,8 @@ LLModel::EModelStatus load_face_from_dom_triangles(std::vector<LLVolumeFace>& fa
 
 	S32 idx_stride = 0;
 
-	if ( !get_dom_sources(inputs, pos_offset, tc_offset, norm_offset, idx_stride, pos_source, tc_source, norm_source) || !pos_source )
+	if (!get_dom_sources(inputs, pos_offset, tc_offset, norm_offset, idx_stride,
+						 pos_source, tc_source, norm_source) || !pos_source)
 	{
 		return LLModel::BAD_ELEMENT;
 	}
@@ -172,11 +178,11 @@ LLModel::EModelStatus load_face_from_dom_triangles(std::vector<LLVolumeFace>& fa
 	
 	domPRef p = tri->getP();
 	domListOfUInts& idx = p->getValue();
-	
-	domListOfFloats  dummy ;
-	domListOfFloats& v = pos_source ? pos_source->getFloat_array()->getValue() : dummy ;
-	domListOfFloats& tc = tc_source ? tc_source->getFloat_array()->getValue() : dummy ;
-	domListOfFloats& n = norm_source ? norm_source->getFloat_array()->getValue() : dummy ;
+
+	domListOfFloats  dummy;
+	domListOfFloats& v = pos_source ? pos_source->getFloat_array()->getValue() : dummy;
+	domListOfFloats& tc = tc_source ? tc_source->getFloat_array()->getValue() : dummy;
+	domListOfFloats& n = norm_source ? norm_source->getFloat_array()->getValue() : dummy;
 
 	if (pos_source)
 	{
@@ -234,7 +240,7 @@ LLModel::EModelStatus load_face_from_dom_triangles(std::vector<LLVolumeFace>& fa
 			if (verts.size() >= 65535)
 			{
 				//llerrs << "Attempted to write model exceeding 16-bit index buffer limitation." << llendl;
-				return LLModel::VERTEX_NUMBER_OVERFLOW ;
+				return LLModel::VERTEX_NUMBER_OVERFLOW;
 			}
 			U16 index = (U16) (verts.size()-1);
 			indices.push_back(index);
@@ -303,7 +309,7 @@ LLModel::EModelStatus load_face_from_dom_triangles(std::vector<LLVolumeFace>& fa
 		}
 	}
 
-	return LLModel::NO_ERRORS ;
+	return LLModel::NO_ERRORS;
 }
 
 LLModel::EModelStatus load_face_from_dom_polylist(std::vector<LLVolumeFace>& face_list, std::vector<std::string>& materials, domPolylistRef& poly)
@@ -313,7 +319,7 @@ LLModel::EModelStatus load_face_from_dom_polylist(std::vector<LLVolumeFace>& fac
 
 	if (idx.getCount() == 0)
 	{
-		return LLModel::NO_ERRORS ;
+		return LLModel::NO_ERRORS;
 	}
 
 	const domInputLocalOffset_Array& inputs = poly->getInput_array();
@@ -438,7 +444,7 @@ LLModel::EModelStatus load_face_from_dom_polylist(std::vector<LLVolumeFace>& fac
 				if (verts.size() >= 65535)
 				{
 					//llerrs << "Attempted to write model exceeding 16-bit index buffer limitation." << llendl;
-					return LLModel::VERTEX_NUMBER_OVERFLOW ;
+					return LLModel::VERTEX_NUMBER_OVERFLOW;
 				}
 				U16 index = (U16) (verts.size()-1);
 			
@@ -525,7 +531,7 @@ LLModel::EModelStatus load_face_from_dom_polylist(std::vector<LLVolumeFace>& fac
 		}
 	}
 
-	return LLModel::NO_ERRORS ;
+	return LLModel::NO_ERRORS;
 }
 
 LLModel::EModelStatus load_face_from_dom_polygons(std::vector<LLVolumeFace>& face_list, std::vector<std::string>& materials, domPolygonsRef& poly)
@@ -725,7 +731,7 @@ LLModel::EModelStatus load_face_from_dom_polygons(std::vector<LLVolumeFace>& fac
 		}
 	}
 
-	return LLModel::NO_ERRORS ;
+	return LLModel::NO_ERRORS;
 }
 
 //static
@@ -733,18 +739,18 @@ std::string LLModel::getStatusString(U32 status)
 {
 	const static std::string status_strings[(S32)INVALID_STATUS] = {"status_no_error", "status_vertex_number_overflow","bad_element"};
 
-	if(status < INVALID_STATUS)
+	if (status < INVALID_STATUS)
 	{
-		if(status_strings[status] == std::string())
+		if (status_strings[status] == std::string())
 		{
-			llerrs << "No valid status string for this status: " << (U32)status << llendl ;
+			llerrs << "No valid status string for this status: " << (U32)status << llendl;
 		}
-		return status_strings[status] ;
+		return status_strings[status];
 	}
 
-	llerrs << "Invalid model status: " << (U32)status << llendl ;
+	llerrs << "Invalid model status: " << (U32)status << llendl;
 
-	return std::string() ;
+	return std::string();
 }
 
 void LLModel::addVolumeFacesFromDomMesh(domMesh* mesh)
@@ -757,11 +763,11 @@ void LLModel::addVolumeFacesFromDomMesh(domMesh* mesh)
 
 		mStatus = load_face_from_dom_triangles(mVolumeFaces, mMaterialList, tri);
 		
-		if(mStatus != NO_ERRORS)
+		if (mStatus != NO_ERRORS)
 		{
-			mVolumeFaces.clear() ;
-			mMaterialList.clear() ;
-			return ; //abort
+			mVolumeFaces.clear();
+			mMaterialList.clear();
+			return; //abort
 		}
 	}
 
@@ -771,11 +777,11 @@ void LLModel::addVolumeFacesFromDomMesh(domMesh* mesh)
 		domPolylistRef& poly = polys.get(i);
 		mStatus = load_face_from_dom_polylist(mVolumeFaces, mMaterialList, poly);
 
-		if(mStatus != NO_ERRORS)
+		if (mStatus != NO_ERRORS)
 		{
-			mVolumeFaces.clear() ;
-			mMaterialList.clear() ;
-			return ; //abort
+			mVolumeFaces.clear();
+			mMaterialList.clear();
+			return; //abort
 		}
 	}
 	
@@ -786,11 +792,11 @@ void LLModel::addVolumeFacesFromDomMesh(domMesh* mesh)
 		domPolygonsRef& poly = polygons.get(i);
 		mStatus = load_face_from_dom_polygons(mVolumeFaces, mMaterialList, poly);
 
-		if(mStatus != NO_ERRORS)
+		if (mStatus != NO_ERRORS)
 		{
-			mVolumeFaces.clear() ;
-			mMaterialList.clear() ;
-			return ; //abort
+			mVolumeFaces.clear();
+			mMaterialList.clear();
+			return; //abort
 		}
 	}
  
@@ -824,19 +830,20 @@ BOOL LLModel::createVolumeFacesFromDomMesh(domMesh* mesh)
 	return FALSE;
 }
 
-void LLModel::offsetMesh( const LLVector3& pivotPoint )
+void LLModel::offsetMesh(const LLVector3& pivotPoint)
 {
-	LLVector4a pivot( pivotPoint[VX], pivotPoint[VY], pivotPoint[VZ] );
-	
-	for (std::vector<LLVolumeFace>::iterator faceIt = mVolumeFaces.begin(); faceIt != mVolumeFaces.end(); )
+	LLVector4a pivot(pivotPoint[VX], pivotPoint[VY], pivotPoint[VZ]);
+
+	for (std::vector<LLVolumeFace>::iterator faceIt = mVolumeFaces.begin();
+		 faceIt != mVolumeFaces.end(); )
 	{
 		std::vector<LLVolumeFace>:: iterator currentFaceIt = faceIt++;
 		LLVolumeFace& face = *currentFaceIt;
 		LLVector4a *pos = (LLVector4a*) face.mPositions;
 		
-		for (U32 i=0; i<face.mNumVertices; ++i )
+		for (U32 i=0; i<face.mNumVertices; ++i)
 		{
-			pos[i].add( pivot );
+			pos[i].add(pivot);
 		}
 	}
 }
@@ -1686,6 +1693,20 @@ LLSD LLModel::writeModelToStream(std::ostream& ostr, LLSD& mdl, BOOL nowrite, BO
 
 LLModel::weight_list& LLModel::getJointInfluences(const LLVector3& pos)
 {
+	// 1. If a vertex has been weighted then we'll find it via pos and return
+	// it's weight list
+	weight_map::iterator iterPos = mSkinWeights.begin();
+	weight_map::iterator iterEnd = mSkinWeights.end();
+
+	for ( ; iterPos!=iterEnd; ++iterPos)
+	{
+		if (jointPositionalLookup(iterPos->first, pos))
+		{
+			return iterPos->second;
+		}
+	}
+
+	// 2. Otherwise we'll use the older implementation
 	weight_map::iterator iter = mSkinWeights.find(pos);
 	
 	if (iter != mSkinWeights.end())
@@ -1699,24 +1720,24 @@ LLModel::weight_list& LLModel::getJointInfluences(const LLVector3& pos)
 	}
 	else
 	{  //no exact match found, get closest point
-		const F32 epsilon = 2.f/65536;
+		const F32 epsilon = 1e-5f;
 		weight_map::iterator iter_up = mSkinWeights.lower_bound(pos);
 		weight_map::iterator iter_down = ++iter_up;
 
 		weight_map::iterator best = iter_up;
 
-		F32 min_dist = (iter->first - pos).magVecSquared();
+		F32 min_dist = (iter->first - pos).magVec();
 
 		bool done = false;
 		while (!done)
-		{ //search up and down mSkinWeights from lower bound of pos until a 
-		  //match is found within epsilon.  If no match is found within epsilon,
-		  //return closest match
+		{	//search up and down mSkinWeights from lower bound of pos until a 
+			//match is found within epsilon.  If no match is found within epsilon,
+			//return closest match
 			done = true;
 			if (iter_up != mSkinWeights.end() && ++iter_up != mSkinWeights.end())
 			{
 				done = false;
-				F32 dist = (iter_up->first - pos).magVecSquared();
+				F32 dist = (iter_up->first - pos).magVec();
 
 				if (dist < epsilon)
 				{
@@ -1734,7 +1755,7 @@ LLModel::weight_list& LLModel::getJointInfluences(const LLVector3& pos)
 			{
 				done = false;
 
-				F32 dist = (iter_down->first - pos).magVecSquared();
+				F32 dist = (iter_down->first - pos).magVec();
 
 				if (dist < epsilon)
 				{
@@ -1825,7 +1846,7 @@ bool LLModel::loadModel(std::istream& is)
 	S32 lod = llclamp((S32) mDetail, 0, MODEL_LODS);
 
 	if (header[nm[lod]]["offset"].asInteger() == -1 || 
-		header[nm[lod]]["size"].asInteger() == 0 )
+		header[nm[lod]]["size"].asInteger() == 0)
 	{ //cannot load requested LOD
 		llwarns << "LoD data is invalid!" << llendl;
 		return false;
@@ -1894,12 +1915,66 @@ bool LLModel::loadModel(std::istream& is)
 	}
 
 	return false;
+}
+ 
+bool LLModel::isMaterialListSubset(LLModel* ref)
+{
+	int refCnt = ref->mMaterialList.size();
+	int modelCnt = mMaterialList.size();
 
+	for (U32 src = 0; src < modelCnt; ++src)
+	{
+		bool foundRef = false;
+
+		for (U32 dst = 0; dst < refCnt; ++dst)
+		{
+			//llinfos<<mMaterialList[src]<<" "<<ref->mMaterialList[dst]<<llendl;
+			foundRef = mMaterialList[src] == ref->mMaterialList[dst];
+
+			if (foundRef)
+			{
+				break;
+			}
+		}
+		if (!foundRef)
+		{
+			return false;
+		}
+	}
+
+	return true;
 }
 
-void LLModel::matchMaterialOrder(LLModel* ref)
+bool LLModel::needToAddFaces(LLModel* ref, int& refFaceCnt, int& modelFaceCnt)
 {
-	llassert(ref->mMaterialList.size() == mMaterialList.size());
+	bool changed = false;
+	if (refFaceCnt< modelFaceCnt)
+	{
+		refFaceCnt += modelFaceCnt - refFaceCnt;
+		changed = true;
+	}
+	else if (modelFaceCnt < refFaceCnt)
+	{
+		modelFaceCnt += refFaceCnt - modelFaceCnt;
+		changed = true;
+	}
+
+	return changed;
+}
+
+bool LLModel::matchMaterialOrder(LLModel* ref, int& refFaceCnt, int& modelFaceCnt)
+{
+	//Is this a subset?
+	//LODs cannot currently add new materials, e.g.
+	//1. ref = a,b,c lod1 = d,e => This is not permitted
+	//2. ref = a,b,c lod1 = c => This would be permitted
+
+	bool isASubset = isMaterialListSubset(ref);
+	if (!isASubset)
+	{
+		llinfos<<"Material of model is not a subset of reference."<<llendl;
+		return false;
+	}
 
 	std::map<std::string, U32> index_map;
 	
@@ -1946,7 +2021,10 @@ void LLModel::matchMaterialOrder(LLModel* ref)
 
 	//override material list with reference model ordering
 	mMaterialList = ref->mMaterialList;
+
+	return true;
 }
+
 
 
 bool LLModel::loadSkinInfo(LLSD& header, std::istream &is)
@@ -2083,7 +2161,7 @@ LLSD LLMeshSkinInfo::asLLSD(bool include_joints) const
 		}
 	}
 		
-	if ( include_joints && mAlternateBindMatrix.size() > 0 )
+	if (include_joints && mAlternateBindMatrix.size() > 0)
 	{
 		for (U32 i = 0; i < mJointNames.size(); ++i)
 		{
@@ -2210,7 +2288,7 @@ void LLModel::Decomposition::fromLLSD(LLSD& decomp)
 
 bool LLModel::Decomposition::hasHullList() const
 {
-	return !mHull.empty() ;
+	return !mHull.empty();
 }
 
 LLSD LLModel::Decomposition::asLLSD() const
@@ -2292,9 +2370,9 @@ LLSD LLModel::Decomposition::asLLSD() const
 				for (U32 k = 0; k < 3; k++)
 				{
 					//convert to 16-bit normalized across domain
-					U16 val = (U16) (((src[k]-min.mV[k])/range.mV[k])*65535);
+					U16 val = (U16) (((src[k] - min.mV[k]) / range.mV[k]) * 65535);
 
-					if(valid.size() < 3)
+					if (valid.size() < 3)
 					{
 						switch (k)
 						{
@@ -2327,7 +2405,7 @@ LLSD LLModel::Decomposition::asLLSD() const
 
 	if (!mBaseHull.empty())
 	{
-		LLSD::Binary p(mBaseHull.size()*3*2);
+		LLSD::Binary p(mBaseHull.size() * 6);
 
 		U32 vert_idx = 0;
 		for (U32 j = 0; j < mBaseHull.size(); ++j)
@@ -2336,10 +2414,8 @@ LLSD LLModel::Decomposition::asLLSD() const
 
 			for (U32 k = 0; k < 3; k++)
 			{
-				llassert(v[k] <= 0.51f && v[k] >= -0.51f);
-
 				//convert to 16-bit normalized across domain
-				U16 val = (U16) (((v[k]-min.mV[k])/range.mV[k])*65535);
+				U16 val = (U16)(((v[k] - min.mV[k]) / range.mV[k]) * 65535);
 
 				U8* buff = (U8*) &val;
 				//write to binary buffer

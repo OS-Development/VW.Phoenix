@@ -769,8 +769,10 @@ F32 LLVOAvatar::sGreyUpdateTime = 0.f;
 // Helper functions
 //-----------------------------------------------------------------------------
 static F32 calc_bouncy_animation(F32 x);
+#define NEW_RENDER_COSTS 1
+#if !NEW_RENDER_COSTS
 static U32 calc_shame(LLVOVolume* volume, std::set<LLUUID> &textures);
-
+#endif
 //-----------------------------------------------------------------------------
 // LLVOAvatar()
 //-----------------------------------------------------------------------------
@@ -10730,6 +10732,83 @@ void LLVOAvatar::getImpostorValues(LLVector4a* extents, LLVector3& angle, F32& d
 	angle.mV[2] = da;
 }
 
+#if NEW_RENDER_COSTS
+void LLVOAvatar::idleUpdateRenderCost()
+{
+	static const U32 ARC_BODY_PART_COST = 200;
+	static const U32 ARC_LIMIT = 2048;
+
+	if (!gPipeline.hasRenderDebugMask(LLPipeline::RENDER_DEBUG_SHAME))
+	{
+		return;
+	}
+
+	U32 cost = 0;
+	LLVOVolume::texture_cost_t textures;
+
+	for (U8 baked_index = 0; baked_index < BAKED_NUM_INDICES; baked_index++)
+	{
+		const LLVOAvatarDictionary::BakedDictionaryEntry* baked_dict = LLVOAvatarDictionary::getInstance()->getBakedTexture((EBakedTextureIndex)baked_index);
+		ETextureIndex tex_index = baked_dict->mTextureIndex;
+		if (tex_index != TEX_SKIRT_BAKED || isWearingWearableType(WT_SKIRT))
+		{
+			if (isTextureVisible(tex_index))
+			{
+				cost += ARC_BODY_PART_COST;
+			}
+		}
+	}
+
+	for (attachment_map_t::const_iterator iter = mAttachmentPoints.begin(); 
+		 iter != mAttachmentPoints.end(); ++iter)
+	{
+		LLViewerJointAttachment* attachment = iter->second;
+		for (LLViewerJointAttachment::attachedobjs_vec_t::iterator attachment_iter = attachment->mAttachedObjects.begin();
+			 attachment_iter != attachment->mAttachedObjects.end();
+			 ++attachment_iter)
+		{
+			const LLViewerObject* attached_object = (*attachment_iter);
+			if (attached_object && !attached_object->isHUDAttachment())
+			{
+				textures.clear();
+				const LLDrawable* drawable = attached_object->mDrawable;
+				if (drawable)
+				{
+					const LLVOVolume* volume = drawable->getVOVolume();
+					if (volume)
+					{
+						cost += volume->getRenderCost(textures);
+
+						const_child_list_t children = volume->getChildren();
+						for (const_child_list_t::const_iterator child_iter = children.begin();
+							 child_iter != children.end(); ++child_iter)
+						{
+							LLViewerObject* child_obj = *child_iter;
+							LLVOVolume *child = dynamic_cast<LLVOVolume*>(child_obj);
+							if (child)
+							{
+								cost += child->getRenderCost(textures);
+							}
+						}
+
+						for (LLVOVolume::texture_cost_t::iterator iter = textures.begin(); iter != textures.end(); ++iter)
+						{
+							// add the cost of each individual texture in the linkset
+							cost += iter->second;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	setDebugText(llformat("%d", cost));
+	cost /= 50;
+	F32 green = 1.f - llclamp(((F32)cost - (F32)ARC_LIMIT) / (F32)ARC_LIMIT, 0.f, 1.f);
+	F32 red = llmin((F32)cost / (F32)ARC_LIMIT, 1.f);
+	mText->setColor(LLColor4(red, green, 0, 1));
+}
+#else
 void LLVOAvatar::idleUpdateRenderCost()
 {
 	if (!gPipeline.hasRenderDebugMask(LLPipeline::RENDER_DEBUG_SHAME))
@@ -10775,6 +10854,7 @@ void LLVOAvatar::idleUpdateRenderCost()
 	F32 red = llmin((F32) shame/1024.f, 1.f);
 	mText->setColor(LLColor4(red,green,0,1));
 }
+#endif
 
 // static
 BOOL LLVOAvatar::isIndexLocalTexture(ETextureIndex index)
@@ -10814,6 +10894,7 @@ const std::string LLVOAvatar::getBakedStatusForPrintout() const
 }
 
 
+#if ! NEW_RENDER_COSTS
 U32 calc_shame(LLVOVolume* volume, std::set<LLUUID> &textures)
 {
 	if (!volume)
@@ -10917,6 +10998,7 @@ U32 calc_shame(LLVOVolume* volume, std::set<LLUUID> &textures)
 
 	return shame;
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Utility functions

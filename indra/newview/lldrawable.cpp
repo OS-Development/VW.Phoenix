@@ -1509,10 +1509,6 @@ BOOL LLDrawable::isAnimating() const
 	{
 		return TRUE;
 	}
-	if (mVObjp->getPCode() == LLViewerObject::LL_VO_CLOUDS)
-	{
-		return TRUE;
-	}
 
 	if (!isRoot() && !mVObjp->getAngularVelocity().isExactlyZero())
 	{

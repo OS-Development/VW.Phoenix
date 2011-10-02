@@ -268,7 +268,12 @@ void LLFont::resetBitmapCache()
 	}
 	mFontBitmapCachep->reset();
 
-	if (!mIsFallback || !sOpenGLcrashOnRestart)	// because this often crashes under Linux...
+	if (sOpenGLcrashOnRestart)	// work-around for crashes under Linux and MacOS-X...
+	{
+		mIsFallback = false;
+	}
+
+	if (!mIsFallback)
 	{
 		// Add the empty glyph`5
 		addGlyph(0, 0);

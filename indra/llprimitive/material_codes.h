@@ -33,9 +33,9 @@
 #ifndef LL_MATERIAL_CODES_H
 #define LL_MATERIAL_CODES_H
 
-#include "lluuid.h"
+class LLUUID;
 
-	// material types
+// material types
 const U8	LL_MCODE_STONE   = 0;
 const U8	LL_MCODE_METAL   = 1;
 const U8	LL_MCODE_GLASS   = 2;
@@ -47,13 +47,14 @@ const U8	LL_MCODE_LIGHT   = 7;
 const U8    LL_MCODE_END     = 8;
 const U8	LL_MCODE_MASK    = 0x0F;
 
-extern LLUUID const LL_DEFAULT_STONE_UUID;
-extern LLUUID const LL_DEFAULT_METAL_UUID;
-extern LLUUID const LL_DEFAULT_GLASS_UUID;
-extern LLUUID const LL_DEFAULT_WOOD_UUID;
-extern LLUUID const LL_DEFAULT_FLESH_UUID;
-extern LLUUID const LL_DEFAULT_PLASTIC_UUID;
-extern LLUUID const LL_DEFAULT_RUBBER_UUID;
-extern LLUUID const LL_DEFAULT_LIGHT_UUID;
+// *NOTE: Define these in .cpp file to reduce duplicate instances
+extern const LLUUID LL_DEFAULT_STONE_UUID;
+extern const LLUUID LL_DEFAULT_METAL_UUID;
+extern const LLUUID LL_DEFAULT_GLASS_UUID;
+extern const LLUUID LL_DEFAULT_WOOD_UUID;
+extern const LLUUID LL_DEFAULT_FLESH_UUID;
+extern const LLUUID LL_DEFAULT_PLASTIC_UUID;
+extern const LLUUID LL_DEFAULT_RUBBER_UUID;
+extern const LLUUID LL_DEFAULT_LIGHT_UUID;
 
 #endif

@@ -37,6 +37,8 @@
 #include "v4color.h"
 #include "llsd.h"
 
+// These bits are used while unpacking TEM messages to tell which aspects of
+// the texture entry changed.
 const S32 TEM_CHANGE_NONE = 0x0;
 const S32 TEM_CHANGE_COLOR = 0x1;
 const S32 TEM_CHANGE_TEXTURE = 0x2;
@@ -87,7 +89,7 @@ public:
 	LLTextureEntry(const LLTextureEntry &rhs);
 
 	LLTextureEntry &operator=(const LLTextureEntry &rhs);
-    ~LLTextureEntry();
+    virtual ~LLTextureEntry();
 
 	bool operator==(const LLTextureEntry &rhs) const;
 	bool operator!=(const LLTextureEntry &rhs) const;
@@ -126,7 +128,7 @@ public:
 	S32  setMediaTexGen(U8 media);
     S32  setGlow(F32 glow);
 
-	const LLUUID &getID() const { return mID; }
+	virtual const LLUUID &getID() const { return mID; }
 	const LLColor4 &getColor() const { return mColor; }
 	void getScale(F32 *s, F32 *t) const { *s = mScaleS; *t = mScaleT; }
 	void getOffset(F32 *s, F32 *t) const { *s = mOffsetS; *t = mOffsetT; }
