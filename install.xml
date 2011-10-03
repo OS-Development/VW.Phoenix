@@ -775,9 +775,9 @@
 					<key>windows</key>
 					<map>
 						<key>md5sum</key>
-						<string>97bb29f7ea3b8603edaf5dfab7c8d9c1</string>
+						<string>4f787437a5e063ccde6637dfb1ebc01d</string>
 						<key>url</key>
-						<uri>http://sldev.free.fr/libraries/google-perftools-1.7-windows-20110624.tar.bz2</uri>
+						<uri>https://bitbucket.org/Ansariel/phoenix-prebuilts/downloads/google_perftools-1.8-windows-20111005.tar.bz2</uri>
 					</map>
 				</map>
 			</map>
