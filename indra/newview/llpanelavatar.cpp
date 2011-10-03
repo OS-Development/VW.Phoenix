@@ -604,14 +604,19 @@ void LLPanelAvatarWeb::enableControls(BOOL self)
 void LLPanelAvatarWeb::callbackAvatarName(const LLUUID& id, const std::string& full_name, bool is_group, void* data)
 {
 	LLPanelAvatarWeb* self = (LLPanelAvatarWeb*)data;
-	if (self)
+	// crashfix, make sure panel still exists.
+	for (std::list<LLPanelAvatar*>::iterator iter = LLPanelAvatar::sAllPanels.begin(); iter != LLPanelAvatar::sAllPanels.end(); ++iter)
 	{
-		self->childSetEnabled("web_profile", true);
-		self->childSetVisible("profile_html",true);
-		self->mProfile = getProfileURL(gCacheName->buildUsername(full_name));
-		self->mPerformanceTimer.start();
-		self->mNavigateTo = self->mProfile;
-		self->refresh();
+		if(self == (*iter)->mPanelWeb)
+		{
+			self->childSetEnabled("web_profile", true);
+			self->childSetVisible("profile_html",true);
+			self->mProfile = getProfileURL(gCacheName->buildUsername(full_name));
+			self->mPerformanceTimer.start();
+			self->mNavigateTo = self->mProfile;
+			self->refresh();
+			break;
+		}
 	}
 }
 

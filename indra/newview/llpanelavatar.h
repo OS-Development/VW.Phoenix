@@ -376,7 +376,9 @@ public:
 	// Teen users are not allowed to see or enter data into the first life page,
 	// or their own about/interests text entry fields.
 	static BOOL sAllowFirstLife;
-	
+
+	typedef std::list<LLPanelAvatar*> panel_list_t;
+	static panel_list_t sAllPanels;
 private:
 	LLUUID						mAvatarID;			// for which avatar is this window?
 	BOOL						mIsFriend;			// Are we friends?
@@ -388,9 +390,6 @@ private:
 	std::string					mLastNotes;
 	LLTabContainer*		mTab;
 	BOOL						mAllowEdit;
-
-	typedef std::list<LLPanelAvatar*> panel_list_t;
-	static panel_list_t sAllPanels;
 };
 
 class LLPanelAvatarRatingsDownloader : public LLHTTPClient::Responder
