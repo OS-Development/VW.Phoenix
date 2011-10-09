@@ -638,6 +638,8 @@ public:
 	BOOL mIsSitting; // sitting state
 
 	static bool loadClientTags();
+    const std::string& getClientTag() const { return mClientTagName; }
+    const LLColor4& getClientTagColor() const { return mClientTagColor; }
 	//--------------------------------------------------------------------
 	// Private member variables.
 	//--------------------------------------------------------------------
@@ -698,7 +700,7 @@ private:
 
 	static LLSD sClientResolutionList;
 
-	static void resolveClient(LLColor4& avatar_name_color, std::string& client, LLVOAvatar* avatar);
+    void resolveClientTag();
 	friend class LLFloaterAvatarList;
 	
 	std::map<LLUUID, LLQuaternion> oldAttachmentRots;
@@ -720,7 +722,6 @@ protected:
 	F32		  mNameAlpha;
 	bool	  mNameCloud;
 	BOOL      mRenderGroupTitles;
-	std::string mNameClient;
 	LLColor4 mNameTagColor;
 	std::string      mRenderedName;
 	std::string      mClientName;
@@ -730,7 +731,20 @@ protected:
 	U64		  mLastRegionHandle;
 	LLFrameTimer mRegionCrossingTimer;
 	S32		  mRegionCrossingCount;
-	
+
+    // The values for this enumerations are aligned to PhoenixClientTagsVisibility
+    enum  e_tagtype {
+        TT_NONE = 0,
+        TT_TPVD = 1,
+        TT_KNOWN = 2,
+        TT_ANY = 3
+    };
+
+    // Viewer Tag Info
+    std::string     mClientTagName;
+    LLColor4        mClientTagColor;
+    e_tagtype       mClientTagType;
+
 	//--------------------------------------------------------------------
 	// local textures for compositing.
 	//--------------------------------------------------------------------

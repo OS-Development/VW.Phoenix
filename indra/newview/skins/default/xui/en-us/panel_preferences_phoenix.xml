@@ -280,10 +280,66 @@
         <combo_box name="TagCombo" bottom_delta="-20" left_delta="0" follows="left|top" height="18" width="180" max_chars="128" mouse_opaque="true" tool_tip="Client tag color." />
         <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Show your own color" left_delta="0" mouse_opaque="true" name="PhShowOwnClientColor-toggle" control_name="PhoenixShowOwnClientColor" radio_style="false" width="270" tool_tip="When checked, your Tag will be shown in the given color."/>
         <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Display Client Tags" left_delta="-0" mouse_opaque="true" name="DisplayTags_toggle" radio_style="false" width="270" control_name="PhoenixClientTagDisplay" tool_tip="Shows you what client people are using beside their names. (If their client is identifiable) "/>
-        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Color Name Tags" left_delta="-0" mouse_opaque="true" name="ColorTags_toggle" radio_style="false" width="270" control_name="PhoenixChangeColorOnClient" tool_tip="Displays their tag in colors."/>
-        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Make name Tags of the same client be the same color" left_delta="-0" mouse_opaque="true" name="ColorTagsClient_toggle" radio_style="false" width="270" control_name="PhoenixDontUseMultipleColorTags" tool_tip="Displays their tag in colors depending on client they are using."/>
+<!--
+         <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Color Name Tags" left_delta="-0" mouse_opaque="true" name="ColorTags_toggle" radio_style="false" width="270" control_name="PhoenixChangeColorOnClient" tool_tip="Displays their tag in colors."/>
+       <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Make name Tags of the same client be the same color (one color per viewer)" left_delta="-0" mouse_opaque="true" name="ColorTagsClient_toggle" radio_style="false" width="270" control_name="PhoenixDontUseMultipleColorTags" tool_tip="Displays their tag in colors depending on client they are using."/>
         <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Display any client tags (including those from older viewers)" left_delta="0" mouse_opaque="true" name="PhoenixClientTagsShowAny" radio_style="false" width="270" control_name="PhoenixClientTagsShowAny" tool_tip=""/>
-      <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="true" label="Use Oldstyle user status display" left_delta="-0" mouse_opaque="true" name="OldStyleNameTagStatus_toggle" radio_style="false" width="270" control_name="PhoenixNameTagOldStyle" tool_tip="Displays the Userstatus behind the Avatarname instead of above."/>
+-->
+        <text
+         type="string"
+         length="1"
+         follows="left|top"
+         height="15"
+         bottom_delta="-20"
+         left="10"
+         name="whattagstoshow"
+         width="220">
+          What tags do you want to see?
+        </text>
+        <combo_box
+         follows="left|top"
+         height="18"
+         bottom_delta="-20"
+         left="12"
+         max_chars="135"
+         width="220"
+         allow_text_entry="false"
+         control_name="PhoenixClientTagsVisibility"
+         name="PhoenixClientTagsVisibility">
+          <combo_item name="No Viewertags" value="0">No Viewertags</combo_item>
+          <combo_item name="TPVD Viewer" value="1">TPVD Viewers (using a list)</combo_item>
+          <combo_item name="All known Viewers" value="2">All known Viewers (using a list)</combo_item>
+          <combo_item name="All Viewers" value="3">All Viewers</combo_item>
+        </combo_box>
+        
+        <text
+         type="string"
+         length="1"
+         follows="left|top"
+         height="15"
+         bottom_delta="-20"
+         left="10"
+         name="colorbasedonviewer"
+         top_pad="10"
+         width="220">
+          Tag Color based on Viewer?
+        </text>
+        <combo_box
+         follows="left|top"
+         height="18"
+         bottom_delta="-20"
+         left="12"
+         max_chars="135"
+         width="220"
+         allow_text_entry="false"
+         control_name="PhoenixColorClienttags"
+         name="PhoenixColorClienttags">
+          <combo_item name="Color not based on Viewer" value="0">Color not based on Viewer</combo_item>
+          <combo_item name="Single color per Viewer" value="1">Single color per Viewer</combo_item>
+          <combo_item name="Multiple colors per Viewer" value="2">Multiple colors per Viewer</combo_item>
+          <combo_item name="Userdefined color" value="3">Userdefined Color</combo_item>
+        </combo_box>
+      <check_box bottom_delta="-25" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="true" label="Use Oldstyle user status display" left="10" mouse_opaque="true" name="OldStyleNameTagStatus_toggle" radio_style="false" width="270" control_name="PhoenixNameTagOldStyle" tool_tip="Displays the Userstatus behind the Avatarname instead of above."/>
       <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Color friend's name tags differently" left_delta="-0" mouse_opaque="true" name="ColorFriendsNameTags_toggle" radio_style="false" width="270" control_name="PhoenixColorFriendsNameTags" tool_tip="Displays friend's tag in a different color (this overrides client tag colors on friends' name tags)"/>
       <color_swatch bottom_delta="-14" enabled="true" follows="left|top" font="SansSerifSmall" height="32" color="0.447 0.784 0.663 1" border_color="0.45098 0.517647 0.607843 1" label="" left_delta="210" mouse_opaque="true" name="friend_tag_color_swatch" width="18" control_name="PhoenixFriendNameColor" can_apply_immediately="false" tool_tip="Click to open Color Picker" />
       <check_box bottom_delta="-6" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Color usernames differently" left_delta="-210" mouse_opaque="true" name="ColorUserNameTags_toggle" radio_style="false" width="270" control_name="PhoenixUseCustomUsernameColor" tool_tip="Displays usernames in a different color (this overrides client tag colors for usernames)"/>

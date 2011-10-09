@@ -419,6 +419,10 @@ BOOL LLPanelPhoenix::postBuild()
 		getChild<LLSliderCtrl>("CameraFocusTrans")->setEnabled(FALSE);
 	}
 
+    //HACK* Because apparently LLComboBox doesnt set the saved value initially, do it manually here -KC
+	getChild<LLComboBox>("PhoenixClientTagsVisibility")->setCurrentByIndex(gSavedSettings.getU32("PhoenixClientTagsVisibility"));
+	getChild<LLComboBox>("PhoenixColorClienttags")->setCurrentByIndex(gSavedSettings.getU32("PhoenixColorClientTags"));
+    
 	refresh();
 	return TRUE;
 }

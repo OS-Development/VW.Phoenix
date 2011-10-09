@@ -1590,21 +1590,23 @@ void LLFloaterAvatarList::refreshAvatarList()
 
 		static LLCachedControl<LLColor4U> sAvatarNameColor(gColors, "AvatarNameColor");
 		LLColor4 avatar_name_color = (LLColor4)sAvatarNameColor;
-		std::string client;
 
 		static LLCachedControl<LLColor4U> ScrollUnselectedColor(gColors, "ScrollUnselectedColor");
 		LLColor4 sScrollUnselectedColor = (LLColor4)ScrollUnselectedColor;
 
 		if(av)
 		{
-			LLVOAvatar::resolveClient(avatar_name_color, client, av);
-			if(client == "")
+            const std::string client = av->getClientTag();
+			if (!client.empty())
+			{
+				avatar_name_color = av->getClientTagColor();
+				element["columns"][LIST_CLIENT]["value"] = client.c_str();
+			}
+			else
 			{
 				avatar_name_color = sScrollUnselectedColor;
-				client = "?";
+				element["columns"][LIST_CLIENT]["value"] = "?";
 			}
-			element["columns"][LIST_CLIENT]["value"] = client.c_str();
-			//element["columns"][LIST_CLIENT]["color"] = avatar_name_color.getValue();
 		}
 		else
 		{

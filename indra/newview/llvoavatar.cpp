@@ -810,7 +810,6 @@ LLVOAvatar::LLVOAvatar(const LLUUID& id,
 	mNameFriend(FALSE),
 	mNameAlpha(0.f),
 	mNameCloud(false),
-	mNameClient(""),
 	mNameTagColor(),
 	mLastRegionHandle(0),
 	mRegionCrossingCount(0),
@@ -831,7 +830,10 @@ LLVOAvatar::LLVOAvatar(const LLUUID& id,
 #ifdef OLD_BREAST_PHYSICS
 	mFirstSetActualBoobGravRan( false ),
 #endif
-	mSupportsPhysics( false )
+	mSupportsPhysics( false ),
+    mClientTagName(""),
+    mClientTagColor(),
+    mClientTagType(TT_NONE)
 {
 	LLMemType mt(LLMemType::MTYPE_AVATAR);
 	//VTResume();  // VTune
@@ -3325,6 +3327,7 @@ void LLVOAvatar::idleUpdateWindEffect()
 	}
 }
 
+// static
 bool LLVOAvatar::loadClientTags()
 {
 	std::string client_list_filename = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "client_list_v2.xml");
@@ -3364,126 +3367,199 @@ bool LLVOAvatar::loadClientTags()
 	}
 	return true;
 }
-void LLVOAvatar::resolveClient(LLColor4& avatar_name_color, std::string& client, LLVOAvatar* avatar)
-{
-	LLColor4 colourBackup = avatar_name_color;
-	LLUUID idx = avatar->getTE(0)->getID();
 
-	if(LLVOAvatar::sClientResolutionList.has("isComplete") && LLVOAvatar::sClientResolutionList.has(idx.asString()) && avatar->isReallyFullyLoaded())
+//------------------------------------------------------------------------
+// resolveClientTag()
+// Is called by processAvatarAppearance() after unpackTEMessage
+// Resloves and stores the client's viewer tag name and color
+//------------------------------------------------------------------------
+void LLVOAvatar::resolveClientTag()
+{
+    // Tag visibility setting
+    // 0 = Off
+    // 1 = TPVD only
+    // 2 = Any known
+    // 3 = Any
+	static LLCachedControl<U32> sPhoenixClientTagsVisibility(gSavedSettings, "PhoenixClientTagsVisibility");
+
+    // Tag color visibility setting
+    // 0 = Off
+    // 1 = One color per viewer
+    // 2 = Old style user definied
+    // 3 = Any user definied
+	static LLCachedControl<U32> sPhoenixColorClientTags(gSavedSettings, "PhoenixColorClientTags");
+
+	// get the uuid of the texture, this is used
+	const LLTextureEntry* tex = getTE(0);
+	const LLUUID id = tex->getID();
+	const bool is_new_system = tex->getGlow() > 0.0f;
+
+	// clear the tag current info
+	mClientTagType = TT_NONE;
+	mClientTagName = "";
+    static LLCachedControl<LLColor4U> sAvatarNameColor(gColors, "AvatarNameColor");
+	mClientTagColor = (LLColor4)sAvatarNameColor;
+
+	// Reslove any known tag from the list and store the result
+	// Visibility filtering is handled in idleUpdateNameTagText()
+	if (LLVOAvatar::sClientResolutionList.has("isComplete") && LLVOAvatar::sClientResolutionList.has(id.asString()))
 	{
-		LLSD cllsd = LLVOAvatar::sClientResolutionList[idx.asString()];
-		static LLCachedControl<bool> sPhoenixClientTagsShowAny(gSavedSettings, "PhoenixClientTagsShowAny");
-		if (sPhoenixClientTagsShowAny || (cllsd.has("tpvd") && cllsd["tpvd"].asBoolean()))
+		LLSD cllsd = LLVOAvatar::sClientResolutionList[id.asString()];
+		if ((sPhoenixColorClientTags == 1 || !cllsd.has("color")) && cllsd.has("alt"))
 		{
-			LLColor4 colour;
-			static LLCachedControl<bool> sPhoenixDontUseMultipleColorTags(gSavedSettings, "PhoenixDontUseMultipleColorTags");
-			if ((sPhoenixDontUseMultipleColorTags || !cllsd.has("color")) && cllsd.has("alt"))
+			cllsd = LLVOAvatar::sClientResolutionList[cllsd["alt"].asString()];
+		}
+		mClientTagName = cllsd["name"].asString();
+		mClientTagColor = LLColor4(cllsd["color"]);
+        
+        if (cllsd.has("tpvd2") && cllsd["tpvd2"].asBoolean())
+        {
+            mClientTagType = TT_TPVD;
+        }
+        else
+        {
+            mClientTagType = TT_KNOWN;
+        }
+	}
+	else //legacy tag code incase the tag list failed
+	{
+		if (id == LLUUID("5d9581af-d615-bc16-2667-2f04f8eeefe4")) // green
+		{
+			mClientTagName = "Phoenix";
+			mClientTagColor = LLColor4::green;
+		}
+		else if (id == LLUUID("e35f7d40-6071-4b29-9727-5647bdafb5d5")) // white
+		{
+			mClientTagName = "Phoenix";			
+			mClientTagColor = LLColor4::white;
+		}
+		else if (id == LLUUID("ae4e92fb-023d-23ba-d060-3403f953ab1a")) // pink
+		{
+			mClientTagName = "Phoenix";
+			mClientTagColor = LLColor4::pink;
+		}
+		else if (id == LLUUID("e71b780e-1a57-400d-4649-959f69ec7d51")) // red
+		{
+			mClientTagName = "Phoenix";
+			mClientTagColor = LLColor4::red;
+		}
+		else if (id == LLUUID("c1c189f5-6dab-fc03-ea5a-f9f68f90b018")) // orange
+		{
+			mClientTagName = "Phoenix";
+			mClientTagColor = LLColor4::orange;
+		}
+		else if (id == LLUUID("8cf0577c-22d3-6a73-523c-15c0a90d6c27")) // purple
+		{
+			mClientTagName = "Phoenix";
+			mClientTagColor = LLColor4::purple;
+		}
+		else if (id == LLUUID("5f0e7c32-38c3-9214-01f0-fb16a5b40128")) // yellow
+		{
+			mClientTagName = "Phoenix";
+			mClientTagColor = LLColor4::yellow;
+		}
+		else if (id == LLUUID("5bb6e4a6-8e24-7c92-be2e-91419bb0ebcb")) // blue
+		{
+			mClientTagName = "Phoenix";
+			mClientTagColor = LLColor4::blue;
+		}
+		else if (id == LLUUID("ed63fbd0-589e-fe1d-a3d0-16905efaa96b")) // default (red)
+		{
+			mClientTagName = "Phoenix";
+			mClientTagColor = LLColor4::red;
+		}	
+		else if(id == LLUUID("c228d1cf-4b5d-4ba8-84f4-899a0796aa97")) // viewer 2.0
+		{
+			mClientTagName = "Viewer 2";
+		}
+		else if (id == LLUUID("cc7a030f-282f-c165-44d2-b5ee572e72bf")) // Imprudence
+		{
+			mClientTagName = "Imprudence";
+		}
+		else if (id == LLUUID("54d93609-1392-2a93-255c-a9dd429ecca5")) // Emergence
+		{
+			mClientTagName = "Emergence";
+		}
+		else if (id == LLUUID("8873757c-092a-98fb-1afd-ecd347566fcd")) // Ascent
+		{
+			mClientTagName = "Ascent";
+		}
+		else if (id == LLUUID("f25263b7-6167-4f34-a4ef-af65213b2e39")) // Singularity
+		{
+			mClientTagName = "Singularity";
+		}
+        
+		if (!mClientTagName.empty())
+		{
+			mClientTagType = TT_TPVD;
+		}
+	}
+	
+	//WS: If we have a tag using the new system, check if we want to display it's name and/or color
+	if (is_new_system)
+	{
+		// only try to decode the tag if we haven't done so already
+        if (mClientTagName.empty())
+        {
+            // strnlen() doesn't exist on OS X before 10.7. -- TS
+            char tag_temp[UUID_BYTES+1];
+            strncpy(tag_temp,(const char*)&id.mData[0], UUID_BYTES);
+            tag_temp[UUID_BYTES] = '\0';
+            U32 tag_len = strlen(tag_temp);
+            std::string clienttagname = std::string((const char*)&id.mData[0], tag_len);
+            LLStringFn::replace_ascii_controlchars(clienttagname, LL_UNKNOWN_CHAR);
+            mClientTagName = clienttagname;
+			
+			if (!mClientTagName.empty())
 			{
-				cllsd = LLVOAvatar::sClientResolutionList[cllsd["alt"].asString()];
+                if (mClientTagName == "Firestorm" || mClientTagName == "Kokua")
+                {
+                    mClientTagType = TT_TPVD;
+                }
+                else
+                {
+                    mClientTagType = TT_ANY;
+                }
 			}
-			client = cllsd["name"].asString();
-			colour.setValue(cllsd["color"]);
-			avatar_name_color = colour;
-		}
-	}else
-	{
-		//legacy code
-		if(idx == LLUUID("5d9581af-d615-bc16-2667-2f04f8eeefe4"))//green
+        }
+		
+        // Process the tag color
+		if (mClientTagType == TT_TPVD || sPhoenixColorClientTags >= 3)
 		{
-			avatar_name_color += LLColor4::green;//phoenix
-			avatar_name_color += LLColor4::green;
-			avatar_name_color = avatar_name_color * (F32)0.333333333333;
-			client = "Phoenix";
-		}
-		else if(idx == LLUUID("e35f7d40-6071-4b29-9727-5647bdafb5d5"))//white
-		{
-			avatar_name_color += LLColor4::white;//phoenix
-			avatar_name_color = avatar_name_color * (F32)0.5;
-			client = "Phoenix";
-		}
-		else if(idx == LLUUID("ae4e92fb-023d-23ba-d060-3403f953ab1a"))//pink
-		{
-			avatar_name_color += LLColor4::pink;//phoenix
-			avatar_name_color += LLColor4::pink;
-			avatar_name_color = avatar_name_color * (F32)0.5;
-			client = "Phoenix";
-		}
-		else if(idx == LLUUID("e71b780e-1a57-400d-4649-959f69ec7d51"))//red
-		{
-			avatar_name_color += LLColor4::red;//phoenix
-			avatar_name_color += LLColor4::red;
-			avatar_name_color = avatar_name_color * (F32)0.5;
-			client = "Phoenix";
-		}
-		else if(idx == LLUUID("c1c189f5-6dab-fc03-ea5a-f9f68f90b018"))//orange
-		{
-			avatar_name_color += LLColor4::orange;//phoenix
-			avatar_name_color += LLColor4::orange;
-			avatar_name_color = avatar_name_color * (F32)0.5;
-			client = "Phoenix";
-		}
-		else if(idx == LLUUID("8cf0577c-22d3-6a73-523c-15c0a90d6c27")) //purple
-		{
-			avatar_name_color += LLColor4::purple;//phoenix
-			avatar_name_color += LLColor4::purple;
-			avatar_name_color = avatar_name_color * (F32)0.5;
-			client = "Phoenix";
-		}
-		else if(idx == LLUUID("5f0e7c32-38c3-9214-01f0-fb16a5b40128"))//yellow
-		{
-			avatar_name_color += LLColor4::yellow;//phoenix
-			avatar_name_color += LLColor4::yellow;
-			avatar_name_color = avatar_name_color * (F32)0.5;
-			client = "Phoenix";
-		}
-		else if(idx == LLUUID("5bb6e4a6-8e24-7c92-be2e-91419bb0ebcb"))//blue
-		{
-			avatar_name_color += LLColor4::blue;//phoenix
-			avatar_name_color += LLColor4::blue;
-			avatar_name_color = avatar_name_color * (F32)0.5;
-			client = "Phoenix";
-		}
-		else if(idx == LLUUID("ed63fbd0-589e-fe1d-a3d0-16905efaa96b"))//default (red)
-		{
-			avatar_name_color += LLColor4::red;//phoenix
-			avatar_name_color += LLColor4::red;
-			avatar_name_color = avatar_name_color * (F32)0.5;
-			client = "Phoenix";
-		}
-		else if(idx == LLUUID("c228d1cf-4b5d-4ba8-84f4-899a0796aa97"))//viewer 2.0
-		{
-			avatar_name_color = LLColor4(0.9058823529f,0.5647058824f,0.5137254902f);
-			client = "Viewer 2";
+			LLColor4 tex_color = tex->getColor();
+
+			// For simplicity, colors for NaCl style tags will be either:
+            // -limited to these palette colors
+            // -allow any color if PhoenixColorClientTags is set to 3
+			if (sPhoenixColorClientTags >= 3
+                || tex_color == LLColor4::blue 
+                || tex_color == LLColor4::yellow 
+                || tex_color == LLColor4::purple 
+                || tex_color == LLColor4((F32)0.99,(F32)0.39,(F32)0.12,(F32)1) 
+                || tex_color == LLColor4::red 
+                || tex_color == LLColor4((F32)0.99,(F32)0.56,(F32)0.65,(F32)1) 
+                || tex_color == LLColor4::white 
+                || tex_color == LLColor4::green
+            )
+			{
+				mClientTagColor = tex_color;
+			}
 		}
 	}
-	if(avatar->getTE(5)->getID() != avatar->getTE(6)->getID() && client != "" && avatar->isReallyFullyLoaded())
+    
+    // Do not show blank tags if they happen to make it thru
+    if (mClientTagName.empty())
+    {
+        mClientTagType = TT_NONE;
+    }
+
+	// If the tag is going to be visiable, force the name tag to rebuild
+	if (sPhoenixClientTagsVisibility >= mClientTagType)
 	{
-		client = "Failure";
-		avatar_name_color = LLColor4::grey;
-	}
-	else if(client == "")
-	{
-		//LLPointer<LLViewerImage> image_point = gImageList.getImage(idx, MIPMAP_YES, IMMEDIATE_NO);
-		LLPointer<LLViewerTexture> image_point = LLViewerTextureManager::getFetchedTexture(idx, MIPMAP_YES); 
-		if(image_point.notNull() && image_point->isMissingAsset())
-		{
-			avatar_name_color += LLColor4::grey;//anomalous
-			avatar_name_color = avatar_name_color * 0.5;
-			client = "Invalid";
-		}
-	}
-	if(client == "" && LLVOAvatar::sClientResolutionList.has("default"))
-	{
-		LLSD cllsd = LLVOAvatar::sClientResolutionList["default"];
-		client = cllsd["name"].asString();
-		LLColor4 colour;
-		colour.setValue(cllsd["color"]);
-		avatar_name_color += colour;
-		avatar_name_color *= 1.0/(cllsd["multiple"].asReal()+1.0f);
+		//WS: Clear mNameString to force a rebuild
+		mNameString.clear();
 	}
 }
-
-
 
 //Phoenix: Wolfspirit Magic: Ported over from Viewer2 for better DN integration.
 void LLVOAvatar::idleUpdateNameTag(const LLVector3& root_pos_last)
@@ -3618,7 +3694,7 @@ void LLVOAvatar::idleUpdateNameTag(const LLVector3& root_pos_last)
 }
 
 void LLVOAvatar::idleUpdateNameTagText(BOOL new_name)
-			{
+{
 		LLNameValue *title = getNVPair("Title");
 		LLNameValue* firstname = getNVPair("FirstName");
 		LLNameValue* lastname = getNVPair("LastName");
@@ -3640,45 +3716,48 @@ void LLVOAvatar::idleUpdateNameTagText(BOOL new_name)
 	bool is_cloud = getIsCloud();
 
 	static LLCachedControl<LLColor4U> sAvatarNameColor(gColors, "AvatarNameColor");
-	static LLCachedControl<bool> sPhoenixChangeColorOnClient(gSavedSettings, "PhoenixChangeColorOnClient");
 	static LLCachedControl<bool> sPhoenixClientTagDisplay(gSavedSettings, "PhoenixClientTagDisplay");
+	static LLCachedControl<U32> sPhoenixClientTagsVisibility(gSavedSettings, "PhoenixClientTagsVisibility");
+	static LLCachedControl<U32> sPhoenixColorClientTags(gSavedSettings, "PhoenixColorClientTags");
 	static LLCachedControl<bool> sPhoenixShowOwnClientColor(gSavedSettings, "PhoenixShowOwnClientColor");
-	
-	// Get Clientname + Color
-	std::string client;
+	const bool should_show_client_tag = sPhoenixClientTagDisplay
+                                         && !mClientTagName.empty()
+                                         && (mClientTagType > 0)
+                                         && (sPhoenixClientTagsVisibility >= mClientTagType);
+
 	LLColor4 name_tag_color = (LLColor4)sAvatarNameColor;
-	LLColor4 avatar_name_tag_color = (LLColor4)sAvatarNameColor;
 
-	if(!isSelf()) resolveClient(avatar_name_tag_color,client, this);
-	else if(sPhoenixShowOwnClientColor && LLVOAvatar::sClientResolutionList.has("isComplete") && LLVOAvatar::sClientResolutionList.has(LLPrimitive::tagstring))
-	{
-		LLSD cllsd = LLVOAvatar::sClientResolutionList[LLPrimitive::tagstring];
-		LLColor4 colour;
-		colour.setValue(cllsd["color"]);
-		avatar_name_tag_color = colour;
-	}
-
-	if(sPhoenixChangeColorOnClient && (!isSelf() || sPhoenixShowOwnClientColor))
-	{
-		name_tag_color = avatar_name_tag_color;
-	}
-	if(!sPhoenixClientTagDisplay)
-	{
-		client = "";
-	}
-
-	
-	//Phoenix:KC - color friend's name tags
-	static LLCachedControl<bool> sPhoenixColorFriendsNameTags(gSavedSettings, "PhoenixColorFriendsNameTags");
-	static LLCachedControl<bool> sPhoenixContactSetsColorizeNameTag(gSavedSettings, "PhoenixContactSetsColorizeNameTag");
-	static LLCachedControl<LLColor4> PhoenixFriendNameColor(gSavedSettings, "PhoenixFriendNameColor");
-	
-	if (is_friend && sPhoenixColorFriendsNameTags) name_tag_color = PhoenixFriendNameColor;
-	if (sPhoenixContactSetsColorizeNameTag)
-	{
-		LLColor4 fgColor = LGGContactSets::getInstance()->getFriendColor(getID());
-		if(fgColor!=LGGContactSets::getInstance()->getDefaultColor())
-			name_tag_color=fgColor;
+	if(isSelf())
+    {
+        if (sPhoenixShowOwnClientColor
+        && LLVOAvatar::sClientResolutionList.has("isComplete")
+        && LLVOAvatar::sClientResolutionList.has(LLPrimitive::tagstring))
+        {
+            LLSD cllsd = LLVOAvatar::sClientResolutionList[LLPrimitive::tagstring];
+            name_tag_color.setValue(cllsd["color"]);
+        }
+    }
+	else
+    {
+        //Phoenix:KC - color friend's name tags
+        static LLCachedControl<bool> sPhoenixColorFriendsNameTags(gSavedSettings, "PhoenixColorFriendsNameTags");
+        static LLCachedControl<LLColor4> PhoenixFriendNameColor(gSavedSettings, "PhoenixFriendNameColor");
+        if (is_friend && sPhoenixColorFriendsNameTags)
+        {
+            name_tag_color = PhoenixFriendNameColor;
+        }
+        else if (should_show_client_tag && (sPhoenixColorClientTags > 0))
+        {
+            name_tag_color = mClientTagColor;
+        }
+        
+        static LLCachedControl<bool> sPhoenixContactSetsColorizeNameTag(gSavedSettings, "PhoenixContactSetsColorizeNameTag");
+        if (sPhoenixContactSetsColorizeNameTag)
+        {
+            LLColor4 fgColor = LGGContactSets::getInstance()->getFriendColor(getID());
+            if (fgColor != LGGContactSets::getInstance()->getDefaultColor())
+                name_tag_color = fgColor;
+        }
 	}
 
 	// Rebuild name tag if state change detected
@@ -3692,9 +3771,8 @@ void LLVOAvatar::idleUpdateNameTagText(BOOL new_name)
 		|| is_appearance != mNameAppearance 
 		|| is_friend != mNameFriend
 		|| is_cloud != mNameCloud
-		|| client != mNameClient
 		|| name_tag_color != mNameTagColor)
-				{
+	{
 
 		clearNameTag();
 
@@ -3708,7 +3786,7 @@ void LLVOAvatar::idleUpdateNameTagText(BOOL new_name)
 		}
 
 		std::string line;
-		if (client!="" || is_away || is_muted || is_busy || is_appearance)
+		if (is_away || is_muted || is_busy || is_appearance || should_show_client_tag)
 		{
 			if (is_away)
 			{
@@ -3735,9 +3813,9 @@ void LLVOAvatar::idleUpdateNameTagText(BOOL new_name)
 				line += "Rezzing";
 				line += ", ";
 			}
-			if (client!="")
+			if (should_show_client_tag)
 			{
-				line += client;
+				line += mClientTagName;
 				line += ", ";
 			}
 			// trim last ", "
@@ -3844,7 +3922,6 @@ void LLVOAvatar::idleUpdateNameTagText(BOOL new_name)
 				mNameAppearance = is_appearance;
 				mNameFriend = is_friend;
 				mNameCloud = is_cloud;
-				mNameClient = client;
 				mNameTagColor = name_tag_color; 
 				mTitle = title ? title->getString() : "";
 				LLStringFn::replace_ascii_controlchars(mTitle,LL_UNKNOWN_CHAR);
@@ -9414,10 +9491,13 @@ void LLVOAvatar::processAvatarAppearance( LLMessageSystem* mesgsys )
 
 	ESex old_sex = getSex();
 
-//	llinfos << "ady LLVOAvatar::processAvatarAppearance()" << llendl;
+//	llinfos << "LLVOAvatar::processAvatarAppearance()" << llendl;
 //	dumpAvatarTEs( "PRE  processAvatarAppearance()" );
 	unpackTEMessage(mesgsys, _PREHASH_ObjectData);
 //	dumpAvatarTEs( "POST processAvatarAppearance()" );
+
+	//KC: resolve the tag info
+	resolveClientTag();
 
 	// prevent the overwriting of valid baked textures with invalid baked textures
 	for (U8 baked_index = 0; baked_index < mBakedTextureData.size(); baked_index++)
