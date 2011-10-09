@@ -131,7 +131,6 @@ public:
 private:
 	ETime mTimeType;
 	bool mIsRunning, mIsInterpolating, mIsInterpolatingSky;
-private:
 	LLWLParamSet *mInterpBeginWL, *mInterpEndWL;
 	LLWaterParamSet *mInterpBeginWater, *mInterpEndWater;
 	clock_t mInterpStartTime, mInterpEndTime;

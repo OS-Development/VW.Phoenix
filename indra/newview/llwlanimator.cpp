@@ -120,7 +120,9 @@ void LLWLAnimator::update(LLWLParamSet& curParams)
 			if (mIsInterpolatingSky)
 			{
 				deactivate();
-				// curParams.setAll(*mInterpEndWL);
+				// FIRE-3245: Some settings do not get fully mixed properly (possibly due to value extremes)
+				// at the end of the interp cycle, force the end settings to get applied
+				curParams.setAll(mInterpEndWL->getAll());
 			}
 			mIsInterpolating = false;
 			mIsInterpolatingSky = false;
@@ -250,15 +252,8 @@ void LLWLAnimator::startInterpolation(const LLSD& targetWater)
 
 void LLWLAnimator::startInterpolationSky(const LLSD& targetSky)
 {
-	// mInterpBeginWL->setAll(LLWLParamManager::instance()->mCurParams.getAll());
-	// mInterpBeginWater->setAll(LLWaterParamManager::instance()->mCurParams.getAll());
-	
-	// mInterpStartTime = clock();
-	// mInterpEndTime = mInterpStartTime + clock_t(INTERP_TOTAL_SECONDS) * CLOCKS_PER_SEC;
-	
 	mInterpEndWL->setAll(targetSky);
 
-	// mIsInterpolating = true;
 	mIsInterpolatingSky = true;
 }
 
