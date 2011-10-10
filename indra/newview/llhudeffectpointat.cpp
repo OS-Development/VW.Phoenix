@@ -330,6 +330,7 @@ void LLHUDEffectPointAt::render()
 	if (sDebugPointAt && mTargetType != POINTAT_TARGET_NONE)
 	{
 		gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
+		LLGLDepthTest gls_depth(GL_TRUE);
 
 		LLVector3 target = mTargetPos + mSourceObject->getRenderPosition();
 		gGL.pushMatrix();

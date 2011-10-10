@@ -516,6 +516,7 @@ void LLHUDEffectLookAt::render()
 		if (sDebugLookAt && mSourceObject.notNull())
 		{
 			gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
+			LLGLDepthTest gls_depth(GL_TRUE);
 
 			LLVector3 target = mTargetPos + ((LLVOAvatar*)(LLViewerObject*)mSourceObject)->mHeadp->getWorldPosition();
 			glMatrixMode(GL_MODELVIEW);
