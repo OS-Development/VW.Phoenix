@@ -8005,6 +8005,17 @@
 			<key>Value</key>
 			<integer>1</integer>
 		</map>
+		<key>PhoenixClientTagsVisibility</key>
+		<map>
+			<key>Comment</key>
+			<string>Show clienttags: 0=Clienttags Off, 1=That are on the TPVD (needs FSUseLegacyClienttags), 2=That are on the client_tag.xml (needs FSUseLegacyClienttags), 3=That using the new system</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>U32</string>
+			<key>Value</key>
+			<integer>1</integer>
+		</map>
 		<key>PhoenixCmdLine</key>
 		<map>
 			<key>Comment</key>
@@ -8224,6 +8235,17 @@
 			<string>String</string>
 			<key>Value</key>
 			<string>tp2cam</string>
+		</map>
+		<key>PhoenixColorClientTags</key>
+		<map>
+			<key>Comment</key>
+			<string>Color Clienttags by: 0=Off, 1=Single color per Viewer, 2=Userdefinied color (one color per UUID), 3=New Tagsystem Color</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>U32</string>
+			<key>Value</key>
+			<integer>2</integer>
 		</map>
 		<key>PhoenixColorFriendsChat</key>
 		<map>
@@ -17268,27 +17290,5 @@
 			<key>Value</key>
 			<integer>1750.0</integer>
 		</map>
-        <key>PhoenixClientTagsVisibility</key>
-        <map>
-            <key>Comment</key>
-            <string>Show clienttags: 0=Clienttags Off, 1=That are on the TPVD (needs FSUseLegacyClienttags), 2=That are on the client_tag.xml (needs FSUseLegacyClienttags), 3=That using the new system</string>
-            <key>Persist</key>
-            <integer>1</integer>
-            <key>Type</key>
-            <string>U32</string>
-            <key>Value</key>
-            <integer>1</integer>
-        </map>
-        <key>PhoenixColorClientTags</key>
-        <map>
-            <key>Comment</key>
-            <string>Color Clienttags by: 0=Off, 1=Single color per Viewer, 2=Userdefinied color (one color per UUID), 3=New Tagsystem Color</string>
-            <key>Persist</key>
-            <integer>1</integer>
-            <key>Type</key>
-            <string>U32</string>
-            <key>Value</key>
-            <integer>2</integer>
-        </map>
 	</map>
 </llsd>
