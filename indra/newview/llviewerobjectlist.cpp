@@ -1253,8 +1253,7 @@ void LLViewerObjectList::killObjects(LLViewerRegion *regionp)
 			killObject(objectp);
 			// invalidate region pointer. region will become invalid, but 
 			// refcounted objects may survive the cleanDeadObjects() call below
-			// Ansariel: Commented out during merge
-			// objectp->mRegionp = NULL;
+			objectp->mRegionp = NULL;
 		}
 	}
 
