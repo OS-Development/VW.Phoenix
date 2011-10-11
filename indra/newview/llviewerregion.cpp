@@ -1650,12 +1650,26 @@ void LLViewerRegion::showReleaseNotes()
 
 bool LLViewerRegion::meshUploadEnabled() const
 {
-	return (mSimulatorFeatures.has("MeshUploadEnabled") &&
-			mSimulatorFeatures["MeshUploadEnabled"].asBoolean());
+	if (getCapability("SimulatorFeatures").empty())
+	{
+		return !getCapability("MeshUploadFlag").empty();
+	}
+	else
+	{
+		return (mSimulatorFeatures.has("MeshUploadEnabled") &&
+				mSimulatorFeatures["MeshUploadEnabled"].asBoolean());
+	}
 }
 
 bool LLViewerRegion::meshRezEnabled() const
 {
-	return (mSimulatorFeatures.has("MeshRezEnabled") &&
-			mSimulatorFeatures["MeshRezEnabled"].asBoolean());
+	if (getCapability("SimulatorFeatures").empty())
+	{
+		return !getCapability("GetMesh").empty();
+	}
+	else
+	{
+		return (mSimulatorFeatures.has("MeshRezEnabled") &&
+				mSimulatorFeatures["MeshRezEnabled"].asBoolean());
+	}
 }
