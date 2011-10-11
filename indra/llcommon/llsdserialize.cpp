@@ -2038,10 +2038,12 @@ std::string zip_llsd(LLSD& data)
 
 		ret = deflate(&strm, Z_FINISH);
 		if (ret == Z_OK || ret == Z_STREAM_END)
-		{ //copy result into output
+		{	//copy result into output
 			if (strm.avail_out >= CHUNK)
 			{
-				llerrs << "WTF?" << llendl;
+				free(output);
+				llwarns << "Failed to compress LLSD block." << llendl;
+				return std::string();
 			}
 
 			have = CHUNK-strm.avail_out;
