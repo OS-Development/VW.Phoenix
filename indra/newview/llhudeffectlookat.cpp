@@ -509,70 +509,57 @@ void LLHUDEffectLookAt::setSourceObject(LLViewerObject* objectp)
 //-----------------------------------------------------------------------------
 void LLHUDEffectLookAt::render()
 {
-	static LLCachedControl<bool> sPhoenixDontShowMyLookAt(gSavedSettings, "PhoenixDontShowMyLookAt");
-	
-	if (sPhoenixDontShowMyLookAt &&
-        (gAgent.getAvatarObject() == ((LLVOAvatar*)(LLViewerObject*)mSourceObject))) return;
-		if (sDebugLookAt && mSourceObject.notNull())
+    if (sDebugLookAt && mSourceObject.notNull())
+    {
+        static LLCachedControl<bool> hide_own(gSavedSettings, "PhoenixDontShowMyLookAt", false);
+        if (hide_own && ((LLVOAvatar*)(LLViewerObject*)mSourceObject)->isSelf())
+            return;
+
+        LLVector3 target = mTargetPos + ((LLVOAvatar*)(LLViewerObject*)mSourceObject)->mHeadp->getWorldPosition();
+        LLColor3 lookAtColor = (*mAttentions)[mTargetType].mColor;
+
+        static LLCachedControl<bool> occlude_lookat(gSavedSettings, "PhoenixShowLookAtOcclusion");
+
+        static LLCachedControl<bool> show_names(gSavedSettings, "PhoenixShowLookAtNames");
+        if (show_names && !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES))
+        {
+            // render name for crosshair
+            const LLFontGL* fontp=LLFontGL::getFont(LLFontDescriptor("SansSerif","Small",LLFontGL::NORMAL));
+            LLGLDepthTest gls_depth(occlude_lookat ? GL_TRUE : GL_FALSE, GL_FALSE);
+            glMatrixMode(GL_MODELVIEW);
+            glPushMatrix();
+            LLVector3 position=target+LLVector3(0.f,0.f,0.3f);
+            
+            const std::string name = ((LLVOAvatar*)(LLViewerObject*)mSourceObject)->getFullname();
+
+            gViewerWindow->setup3DRender();
+            hud_render_utf8text(name,position,*fontp,LLFontGL::NORMAL,-0.5*fontp->getWidthF32(name),3.0,lookAtColor,FALSE);
+
+            glPopMatrix();
+        }
+
+		// render crosshair
+		gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
+        LLGLDepthTest gls_depth(occlude_lookat ? GL_TRUE : GL_FALSE, GL_FALSE);
+		glMatrixMode(GL_MODELVIEW);
+		gGL.pushMatrix();
+
+		gGL.translatef(target.mV[VX], target.mV[VY], target.mV[VZ]);
+		glScalef(0.3f, 0.3f, 0.3f);
+		gGL.begin(LLRender::LINES);
 		{
-			gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
-			LLGLDepthTest gls_depth(GL_TRUE);
+			gGL.color3f(lookAtColor.mV[VRED], lookAtColor.mV[VGREEN], lookAtColor.mV[VBLUE]);
+			gGL.vertex3f(-1.f, 0.f, 0.f);
+			gGL.vertex3f(1.f, 0.f, 0.f);
 
-			LLVector3 target = mTargetPos + ((LLVOAvatar*)(LLViewerObject*)mSourceObject)->mHeadp->getWorldPosition();
-			glMatrixMode(GL_MODELVIEW);
-			gGL.pushMatrix();
-			gGL.translatef(target.mV[VX], target.mV[VY], target.mV[VZ]);
-			glScalef(0.3f, 0.3f, 0.3f);
-			gGL.begin(LLRender::LINES);
-			{
-				LLColor3 color = (*mAttentions)[mTargetType].mColor;
-				gGL.color3f(color.mV[VRED], color.mV[VGREEN], color.mV[VBLUE]);
-				gGL.vertex3f(-1.f, 0.f, 0.f);
-				gGL.vertex3f(1.f, 0.f, 0.f);
+			gGL.vertex3f(0.f, -1.f, 0.f);
+			gGL.vertex3f(0.f, 1.f, 0.f);
 
-				gGL.vertex3f(0.f, -1.f, 0.f);
-				gGL.vertex3f(0.f, 1.f, 0.f);
-
-				gGL.vertex3f(0.f, 0.f, -1.f);
-				gGL.vertex3f(0.f, 0.f, 1.f);
-			} gGL.end();
-			gGL.popMatrix();
-
-			static LLCachedControl<bool> sPhoenixShowLookAtNames(gSavedSettings, "PhoenixShowLookAtNames");
-			if (sPhoenixShowLookAtNames)
-				{
-					const LLFontGL* fontp = LLResMgr::getInstance()->getRes( LLFONT_SANSSERIF_SMALL );
-					LLGLEnable color_mat(GL_COLOR_MATERIAL);
-					LLGLDepthTest gls_depth(GL_TRUE, GL_FALSE);
-					LLGLState gls_blend(GL_BLEND, TRUE);
-					LLGLState gls_alpha(GL_ALPHA_TEST, TRUE);
-					glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-					gGL.getTexUnit(0)->setTextureBlendType(LLTexUnit::TB_MULT);
-					gGL.getTexUnit(0)->enable(LLTexUnit::TT_TEXTURE);
-
-					// Well.. after that nasty complex try at somehow getting it to work initialising all sorts of stuff
-					// It seems to work and fix the previous bug of merely displaying untextured cubes, 
-					// probably due to the helpful getTexUnit->enable. - Nexii
-					glMatrixMode(GL_MODELVIEW);
-					glPushMatrix();
-					LLVector3 render_pos = target + LLVector3( 0.f, 0.f, 0.25f );
-					LLColor4 Color = LLColor4( (*mAttentions)[mTargetType].mColor, 1.0f ); 
-					std::string text = ((LLVOAvatar*)(LLViewerObject*)mSourceObject)->getFullname();
-					
-// [RLVa:KB] - Alternate: Phoenix-370
-					// Show anonyms in place of actual names when @shownames=n restricted
-					if (gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES))
-					{
-						text = RlvStrings::getAnonym(text);
-					}
-// [/RLVa:KB]
-
-					gViewerWindow->setupViewport();
-					hud_render_utf8text(text, render_pos, *fontp, LLFontGL::NORMAL, -0.5f * fontp->getWidthF32(text), 3.f, Color, FALSE );
-					
-					glPopMatrix();
-				}
-		}
+			gGL.vertex3f(0.f, 0.f, -1.f);
+			gGL.vertex3f(0.f, 0.f, 1.f);
+		} gGL.end();
+		gGL.popMatrix();
+	}
 }
 
 //-----------------------------------------------------------------------------
