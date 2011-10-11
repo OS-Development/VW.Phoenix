@@ -76,7 +76,7 @@ private:
 
 	void savePersistentNotifications()
 	{
-		//llinfos << "Saving open notifications to " << mFileName << llendl;
+		LL_DEBUGS("Notifications") << "Saving open notifications to " << mFileName << LL_ENDL;
 
 		llofstream notify_file(mFileName.c_str());
 		if (!notify_file.is_open()) 
