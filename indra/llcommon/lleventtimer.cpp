@@ -43,34 +43,21 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#if V1_IMPLEMENTATION
-std::list<LLEventTimer*> LLEventTimer::sActiveList;
-#endif
-
 LLEventTimer::LLEventTimer(F32 period)
 : mEventTimer()
 {
 	mPeriod = period;
-#if V1_IMPLEMENTATION
-	sActiveList.push_back(this);
-#endif
 }
 
 LLEventTimer::LLEventTimer(const LLDate& time)
 : mEventTimer()
 {
 	mPeriod = (F32)(time.secondsSinceEpoch() - LLDate::now().secondsSinceEpoch());
-#if V1_IMPLEMENTATION
-	sActiveList.push_back(this);
-#endif
 }
 
 
 LLEventTimer::~LLEventTimer()
 {
-#if V1_IMPLEMENTATION
-	sActiveList.remove(this);
-#endif
 }
 
 //static
@@ -78,36 +65,19 @@ void LLEventTimer::updateClass()
 {
 	std::list<LLEventTimer*> completed_timers;
 
-#if V1_IMPLEMENTATION
-	for (std::list<LLEventTimer*>::iterator iter = sActiveList.begin(); iter != sActiveList.end(); ) 
+	for (instance_iter iter = beginInstances(); iter != endInstances(); )
 	{
-		LLEventTimer* timer = *iter++;
-		F32 et = timer->mEventTimer.getElapsedTimeF32();
-		if (timer->mEventTimer.getStarted() && et > timer->mPeriod) {
-			timer->mEventTimer.reset();
-			if ( timer->tick() )
-			{
-				completed_timers.push_back( timer );
-			}
-		}
-	}
-#else
-	{
-		LLInstanceTrackerScopedGuard guard;
-		for (instance_iter iter = guard.beginInstances(); iter != guard.endInstances(); ) 
+		LLEventTimer& timer = *iter++;
+		F32 et = timer.mEventTimer.getElapsedTimeF32();
+		if (timer.mEventTimer.getStarted() && et > timer.mPeriod)
 		{
-			LLEventTimer& timer = *iter++;
-			F32 et = timer.mEventTimer.getElapsedTimeF32();
-			if (timer.mEventTimer.getStarted() && et > timer.mPeriod) {
-				timer.mEventTimer.reset();
-				if ( timer.tick() )
-				{
-					completed_timers.push_back( &timer );
-				}
+			timer.mEventTimer.reset();
+			if (timer.tick())
+			{
+				completed_timers.push_back(&timer);
 			}
 		}
 	}
-#endif
 
 	if ( completed_timers.size() > 0 )
 	{

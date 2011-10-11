@@ -33,32 +33,13 @@
 #ifndef LL_EVENTTIMER_H					
 #define LL_EVENTTIMER_H
 
-// This class should be declared like in v2 viewers (V1_IMPLEMENTATION = 0)
-// but this causes an error at compilation time in newview/llnotify.cpp
-// (which does not exist in v2 any more) because the latter is also using
-// a LLInstanceTracker (LLInstanceTracker<LLNotifyBox, LLUUID>) and gcc
-// stupidely stops with an error, telling us that
-// static T* LLInstanceTracker<T, KEY>::getInstance(const KEY&) [with T = LLNotifyBox, KEY = LLUUID]
-// and
-// static T* LLInstanceTracker<T, T*>::getInstance(T*) [with T = LLEventTimer]
-// are ambiguous !
-// So, we will keep track of LLEventTimer timers the good old way (which
-// takes less overhead anyway)...
-#define V1_IMPLEMENTATION 0
-
 #include "stdtypes.h"
 #include "lldate.h"
-#include "lltimer.h"
-#if ! V1_IMPLEMENTATION
 #include "llinstancetracker.h"
-#endif
+#include "lltimer.h"
 
 // class for scheduling a function to be called at a given frequency (approximate, inprecise)
-#if V1_IMPLEMENTATION
-class LL_COMMON_API LLEventTimer
-#else
 class LL_COMMON_API LLEventTimer : public LLInstanceTracker<LLEventTimer>
-#endif
 {
 public:
 	LLEventTimer(F32 period);	// period is the amount of time between each call to tick() in seconds
@@ -74,12 +55,6 @@ public:
 protected:
 	LLTimer mEventTimer;
 	F32 mPeriod;
-
-#if V1_IMPLEMENTATION
-private:
-	//list of active timers
-	static std::list<LLEventTimer*> sActiveList; // TODO should this be a vector
-#endif
 };
 
 #endif //LL_EVENTTIMER_H
