@@ -9884,6 +9884,17 @@
 			<key>Value</key>
 			<integer>1</integer>
 		</map>
+		<key>PhoenixShowLookAtOcclusion</key>
+		<map>
+			<key>Comment</key>
+			<string>Occlude lookat crosshairs with scene.</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>Boolean</string>
+			<key>Value</key>
+			<integer>1</integer>
+		</map>
 		<key>PhoenixShowMoneyChangeInChat</key>
 		<map>
 			<key>Comment</key>
@@ -17289,17 +17300,6 @@
 			<string>F32</string>
 			<key>Value</key>
 			<integer>1750.0</integer>
-		</map>
-		<key>PhoenixShowLookAtOcclusion</key>
-		<map>
-			<key>Comment</key>
-			<string>Occlude lookat crosshairs with scene.</string>
-			<key>Persist</key>
-			<integer>1</integer>
-			<key>Type</key>
-			<string>Boolean</string>
-			<key>Value</key>
-			<integer>1</integer>
 		</map>
 	</map>
 </llsd>
