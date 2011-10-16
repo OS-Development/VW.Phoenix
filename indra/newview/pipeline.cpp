@@ -2098,7 +2098,8 @@ void LLPipeline::doOcclusion(LLCamera& camera)
 
 		LLGLDisable cull(GL_CULL_FACE);
 
-		for (LLCullResult::sg_list_t::iterator iter = sCull->beginOcclusionGroups(); iter != sCull->endOcclusionGroups(); ++iter)
+		for (LLCullResult::sg_list_t::iterator iter = sCull->beginOcclusionGroups();
+			 iter != sCull->endOcclusionGroups(); ++iter)
 		{
 			LLSpatialGroup* group = *iter;
 			group->doOcclusion(&camera);
@@ -3515,7 +3516,7 @@ void LLPipeline::renderGeom(LLCamera& camera, BOOL forceVBOUpdate)
 				occlude = FALSE;
 				gGLLastMatrix = NULL;
 				glLoadMatrixd(gGLModelView);
-				LLGLSLShader::bindNoShader();
+				//LLGLSLShader::bindNoShader();
 				doOcclusion(camera);
 			}
 
@@ -3581,7 +3582,7 @@ void LLPipeline::renderGeom(LLCamera& camera, BOOL forceVBOUpdate)
 			occlude = FALSE;
 			gGLLastMatrix = NULL;
 			glLoadMatrixd(gGLModelView);
-			LLGLSLShader::bindNoShader();
+			//LLGLSLShader::bindNoShader();
 			doOcclusion(camera);
 		}
 	}
@@ -3780,7 +3781,7 @@ void LLPipeline::renderGeomPostDeferred(LLCamera& camera)
 			occlude = FALSE;
 			gGLLastMatrix = NULL;
 			glLoadMatrixd(gGLModelView);
-			LLGLSLShader::bindNoShader();
+			//LLGLSLShader::bindNoShader();
 			doOcclusion(camera);
 			gGL.setColorMask(true, false);
 		}
@@ -3848,7 +3849,7 @@ void LLPipeline::renderGeomPostDeferred(LLCamera& camera)
 		occlude = FALSE;
 		gGLLastMatrix = NULL;
 		glLoadMatrixd(gGLModelView);
-		LLGLSLShader::bindNoShader();
+		//LLGLSLShader::bindNoShader();
 		doOcclusion(camera);
 		gGLLastMatrix = NULL;
 		glLoadMatrixd(gGLModelView);
