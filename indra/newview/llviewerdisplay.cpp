@@ -537,7 +537,6 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 	{
 		LLAppViewer::instance()->pingMainloopTimeout("Display:Disconnected");
 		render_ui();
-		render_disconnected_background();
 	}
 	
 	//////////////////////////
@@ -1375,10 +1374,6 @@ void render_ui_2d()
 		stop_glerror();
 	}
 	gViewerWindow->draw();
-	if (gDebugSelect)
-	{
-		gViewerWindow->drawPickBuffer();
-	}
 
 	// reset current origin for font rendering, in case of tiling render
 	LLFontGL::sCurOrigin.set(0, 0);
