@@ -42,7 +42,7 @@ class LLFloaterModelUploadBase
 	public LLWholeModelUploadObserver
 {
 public:
-	LLFloaterModelUploadBase(const LLSD& key);
+	LLFloaterModelUploadBase(const std::string& name);
 
 	virtual ~LLFloaterModelUploadBase(){};
 

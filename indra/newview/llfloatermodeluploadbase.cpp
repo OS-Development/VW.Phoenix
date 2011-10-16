@@ -39,8 +39,8 @@
 #include "llagent.h"
 #include "llviewerregion.h"
 
-LLFloaterModelUploadBase::LLFloaterModelUploadBase(const LLSD& key)
-:	LLFloater(key),
+LLFloaterModelUploadBase::LLFloaterModelUploadBase(const std::string& name)
+:	LLFloater(name),
 	mHasUploadPerm(false)
 {
 }

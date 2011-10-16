@@ -1144,6 +1144,7 @@ void init_debug_ui_menu(LLMenuGL* menu)
 	menu->appendSeparator();
 	menu->append(new LLMenuItemCheckGL("Show Time", menu_toggle_control, NULL, menu_check_control, (void*)"DebugShowTime"));
 	menu->append(new LLMenuItemCheckGL("Show Render Info", menu_toggle_control, NULL, menu_check_control, (void*)"DebugShowRenderInfo"));
+	menu->append(new LLMenuItemCheckGL("Show Mesh Queue", menu_toggle_control, NULL, menu_check_control, (void*)"DebugShowMeshQueue"));
 	menu->append(new LLMenuItemCheckGL("Show Matrices", menu_toggle_control, NULL, menu_check_control, (void*)"DebugShowRenderMatrices"));
 	menu->append(new LLMenuItemCheckGL("Show Color Under Cursor", menu_toggle_control, NULL, menu_check_control, (void*)"DebugShowColor"));
 	

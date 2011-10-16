@@ -438,4 +438,9 @@
    <!-- Kitty Viewer Art -->
    <texture name="Inv_WindLight" file_name="Inv_WindLight.png" preload="false" />
    <texture name="Inv_WaterLight" file_name="Inv_WaterLight.png" preload="false" />
+   
+ <texture name="ModelImport_Status_Good" file_name="green_checkmark.png" preload="false"/>
+ <texture name="ModelImport_Status_Warning" file_name="lag_status_warning.tga" preload="false"/>
+ <texture name="ModelImport_Status_Error" file_name="red_x.png" preload="false"/>
+
 </textures>

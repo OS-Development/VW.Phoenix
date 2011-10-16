@@ -362,9 +362,8 @@ class LLFileUploadModel : public view_listener_t
 {
 	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
 	{
-		std::string filename = upload_pick((void *)LLFilePicker::FFLOAD_MODEL);
 #ifdef MESH_UPLOAD
-		LLFloaterModelPreview* fmp = new LLFloaterModelPreview(filename);
+		LLFloaterModelPreview* fmp = new LLFloaterModelPreview("Model Preview");
 		if (fmp)
 		{
 			fmp->loadModel(3);
