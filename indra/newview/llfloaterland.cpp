@@ -329,11 +329,11 @@ BOOL LLPanelLandGeneral::postBuild()
 	mEditDesc = getChild<LLTextEditor>("Description");
 	mEditDesc->setCommitOnFocusLost(TRUE);
 	mEditDesc->setCommitCallback(onCommitAny);	
+	childSetUserData("Description", this);
 	// No prevalidate function - historically the prevalidate function was broken,
 	// allowing residents to put in characters like U+2661 WHITE HEART SUIT, so
 	// preserve that ability.
 	//childSetPrevalidate("Description", LLLineEditor::prevalidatePrintableNotPipe);
-	//childSetUserData("Description", this);
 	
 	mTextSalePending = getChild<LLTextBox>("SalePending");
 	mTextOwnerLabel = getChild<LLTextBox>("Owner:");
