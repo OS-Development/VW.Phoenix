@@ -313,6 +313,7 @@ public:
 
 	LLRender();
 	~LLRender();
+	void init();
 	void shutdown();
 	
 	// Refreshes renderer state to the cached values
