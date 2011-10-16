@@ -1570,12 +1570,11 @@ bool LLPanelGroupMembersSubTab::getRoleChangeType(const LLUUID& member_id,
 
 void LLPanelGroupMembersSubTab::draw()
 {
-	LLPanelGroupSubTab::draw();
-
 	if (mPendingMemberUpdate)
 	{
 		updateMembers();
 	}
+	LLPanelGroupSubTab::draw();
 }
 
 void LLPanelGroupMembersSubTab::update(LLGroupChange gc)
@@ -1666,9 +1665,10 @@ void LLPanelGroupMembersSubTab::updateMembers()
 		// Do filtering on name if it is already in the cache.
 		bool add_member = true;
 
-		std::string fullname;
-		if (gCacheName->getFullName(mMemberProgress->first, fullname))
+		LLAvatarName av_name;
+		if (LLAvatarNameCache::get(mMemberProgress->first, &av_name))
 		{
+			std::string fullname = av_name.getLegacyName();	// We are only using legacy names there
 			if ( !matchesSearchFilter(fullname) )
 			{
 				add_member = false;

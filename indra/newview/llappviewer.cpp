@@ -1577,9 +1577,13 @@ bool LLAppViewer::cleanup()
 	// save their rects on delete.
 	gSavedSettings.saveToFile(gSavedSettings.getString("ClientSettingsFile"), TRUE);
 
-	// PerAccountSettingsFile should be empty if no use has been logged on.
-	// *FIX:Mani This should get really saved in a "logoff" mode.
-	gSavedPerAccountSettings.saveToFile(gSavedSettings.getString("PerAccountSettingsFile"), TRUE);
+	// PerAccountSettingsFile is empty if the user never logged on.
+	std::string filename = gSavedSettings.getString("PerAccountSettingsFile");
+	if (!filename.empty())
+	{
+		gSavedPerAccountSettings.saveToFile(filename, TRUE);
+	}
+
 	llinfos << "Saved settings" << llendflush;
 
 	std::string crash_settings_filename = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, CRASH_SETTINGS_FILE);

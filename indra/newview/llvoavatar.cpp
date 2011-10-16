@@ -5440,13 +5440,17 @@ void LLVOAvatar::updateTextures()
 		return;
 	}
 
-	if( mIsSelf )
+	if (mIsSelf)
 	{
 		render_avatar = TRUE;
 	}
+	else if (!isVisible())
+	{
+		return;
+	}
 	else
 	{
-		render_avatar = isVisible() && !mCulled;
+		render_avatar = !mCulled;
 	}
 
 	std::vector<bool> layer_baked;
@@ -6143,20 +6147,6 @@ void LLVOAvatar::resetSpecificJointPosition(const std::string& name)
 //-----------------------------------------------------------------------------
 void LLVOAvatar::resetJointPositionsToDefault(void)
 {
-	const LLVector3& avPos = getCharacterPosition();
-
-	//Reposition the pelvis
-	LLJoint* pPelvis = mRoot.findJoint("mPelvis");
-	if (pPelvis)
-	{
-		pPelvis->setPosition(avPos + pPelvis->getPosition());
-	}
-	else 
-	{
-		llwarns << "Can't get pelvis joint." << llendl;
-		return;
-	}
-
 	//Subsequent joints are relative to pelvis
 	for (S32 i = 0; i < (S32)mNumJoints; ++i)
 	{
@@ -6166,7 +6156,7 @@ void LLVOAvatar::resetJointPositionsToDefault(void)
 
 			pJoint->setId(LLUUID::null);
 			//restore joints to default positions, however skip over the pelvis
-			if (pJoint && pPelvis != pJoint)
+			if (pJoint)
 			{
 				pJoint->restoreOldXform();
 			}
