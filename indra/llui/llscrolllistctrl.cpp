@@ -1801,7 +1801,8 @@ void LLScrollListCtrl::drawItems()
 				}
 				else 
 				{
-					if (mDrawStripes && (line % 2 == 0) && (max_columns > 1))
+					// Stripes drawing are now only controlled by the XML definitions, via the draw_stripes parameter
+					if (mDrawStripes && (line % 2 == 0) /*&& (max_columns > 1)*/)
 					{
 						bg_color = mBgStripeColor;
 					}
