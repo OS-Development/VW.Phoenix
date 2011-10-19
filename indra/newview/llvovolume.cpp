@@ -706,6 +706,8 @@ void LLVOVolume::updateTextureVirtualSize(bool forced)
 {
 	// Update the pixel area of all faces
 
+	if(mDrawable.isNull())
+		return;
 	if(!forced)
 	{
 		if (!isVisible())
@@ -1215,9 +1217,7 @@ BOOL LLVOVolume::calcLOD()
 	if (distance < rampDist)
 	{
 		// Boost LOD when you're REALLY close
-		distance *= 1.0f/rampDist;
-		distance *= distance;
-		distance *= rampDist;
+		distance *= distance/rampDist;
 	}
 	
 	// DON'T Compensate for field of view changing on FOV zoom.

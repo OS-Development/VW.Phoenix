@@ -1590,8 +1590,8 @@ F32 LLFace::getTextureVirtualSize()
 	}
 
 	face_area = LLFace::adjustPixelArea(mImportanceToCamera, face_area);
-	if (mImportanceToCamera < 1.0f && face_area > LLViewerTexture::sMinLargeImageSize) //if is large image, shrink face_area by considering the partial overlapping.
 
+	if (/*mImportanceToCamera < 1.0f && */face_area > LLViewerTexture::sMinLargeImageSize) //if is large image, shrink face_area by considering the partial overlapping.
 	{
 		if (mImportanceToCamera > LEAST_IMPORTANCE_FOR_LARGE_IMAGE && mTexture.notNull() && mTexture->isLargeImage())
 		{		

@@ -1291,7 +1291,6 @@ void LLDrawPoolAvatar::updateRiggedFaceVertexBuffer(LLVOAvatar* avatar, LLFace* 
 	{
 		face->setGeomIndex(0);
 		face->setIndicesIndex(0);
-		face->setSize(vol_face.mNumVertices, vol_face.mNumIndices, true);
 
 		if (buffer.isNull() || buffer->getTypeMask() != data_mask)
 		{	//make a new buffer
