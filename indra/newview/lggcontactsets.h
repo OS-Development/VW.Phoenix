@@ -1,4 +1,3 @@
-#include "v4color.h"
 /* Copyright (C) 2011 Greg Hendrickson (LordGregGreg Back)
 
    This is free software; you can redistribute it and/or modify it
@@ -19,6 +18,9 @@
 
 #ifndef LGG_FRIENDS_GROUPS_H
 #define LGG_FRIENDS_GROUPS_H
+
+#include "v4color.h"
+
 class LGGContactSets
 {
 	LGGContactSets();
