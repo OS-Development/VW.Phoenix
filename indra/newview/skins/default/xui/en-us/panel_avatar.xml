@@ -141,9 +141,16 @@ Phoenix Support
       </text>
       <button follows="left|top" left="40"  bottom="-280" height="20" halign="center"
               label="+" label_selected="+" name="PhoenixGroupInvite_Button" tool_tip="Invite to Group." width="40" />
-      <scroll_list background_visible="true" bottom="-282" column_padding="5" draw_border="true"
+      <scroll_list background_visible="true" bottom="-282" column_padding="2" draw_border="true"
 			     follows="left|top" height="90" left="79" mouse_opaque="false"
-			     multi_select="false" name="groups" width="321" />
+			     multi_select="false" name="groups" width="321" 
+				 can_resize="true" draw_heading="true" search_column="0"
+				 tool_tip="">
+				 <column name="group_name" label="Group Name" width="161"/>
+				 <column name="title_name" label="Active Title" width="120"/>
+				 <column name="is_mod" label="" width="20" tool_tip="Has Chat Moderation Powers"/>
+		</scroll_list>
+        <column name="voice" label="Voice" width="15"/>
       <text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
 			     bottom="-304" drop_shadow_visible="true" follows="left|top"
 			     font="SansSerifSmall" h_pad="0" halign="right" height="16" left="4"

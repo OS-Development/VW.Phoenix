@@ -5970,6 +5970,7 @@ class LLAgentGroupDataUpdateViewerNode : public LLHTTPNode
 			group.mInsigniaID = (*iter_group)["GroupInsigniaID"].asUUID();
 			group.mName = (*iter_group)["GroupName"].asString();
 			group.mContribution = (*iter_group)["Contribution"].asInteger();
+			group.mActiveTitle =  (*iter_group)["GroupTitle"].asString();
 
 			group_index++;
 

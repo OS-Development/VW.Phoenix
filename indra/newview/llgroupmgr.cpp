@@ -1279,6 +1279,7 @@ void LLGroupMgr::processCreateGroupReply(LLMessageSystem* msg, void ** data)
 		gd.mContribution = 0;
 		gd.mID = group_id;
 		gd.mName = "new group";
+		gd.mActiveTitle = "new title";
 		gd.mPowers = GP_ALL_POWERS;
 
 		gAgent.mGroups.push_back(gd);

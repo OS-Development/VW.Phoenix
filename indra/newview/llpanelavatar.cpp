@@ -1814,8 +1814,10 @@ void LLPanelAvatar::resetGroupList()
 				LLSD row;
 
 				row["id"] = id ;
+				row["columns"][0]["column"] = "group_name";
 				row["columns"][0]["value"] = group_string;
 				row["columns"][0]["font"] = "SANSSERIF_SMALL";
+				row["columns"][0]["type"] = "text";
 				if (!group_data.mListInProfile)
 				{
 					static LLCachedControl<LLColor4U> sScrollUnselectedColor((*LLUI::sColorsGroup), "ScrollUnselectedColor");
@@ -1823,7 +1825,20 @@ void LLPanelAvatar::resetGroupList()
 					LLColor4 tmpcol = (LLColor4)sScrollUnselectedColor;
 					row["columns"][0]["color"] = tmpcol.getValue();
 				}
-				row["columns"][0]["width"] = 0;
+
+				row["columns"][1]["column"] = "title_name";
+				row["columns"][1]["value"] = group_data.mActiveTitle;
+				row["columns"][1]["font"] = "SANSSERIF_SMALL";
+				row["columns"][1]["type"] = "text";
+
+				row["columns"][2]["column"] = "is_mod";
+				row["columns"][2]["type"] = "text";
+				if((BOOL)((group_data.mPowers & GP_SESSION_MODERATOR ) > 0))
+				{
+					row["columns"][2]["type"] = "icon";
+					row["columns"][2]["value"] = "icon_event_mature.tga";
+				}
+
 				group_list->addElement(row);
 			}
 			group_list->sortByColumnIndex(0, TRUE);
@@ -2419,6 +2434,21 @@ void LLPanelAvatar::processAvatarGroupsReply(LLMessageSystem *msg, void**)
 
 					LLColor4 tmpcol = (LLColor4)sScrollUnselectedColor;
 					row["columns"][0]["color"] = tmpcol.getValue();
+				}
+				row["columns"][0]["column"] = "group_name";
+				row["columns"][0]["type"] = "text";
+				
+				row["columns"][1]["column"] = "title_name";
+				row["columns"][1]["value"] = group_title;
+				row["columns"][1]["font"] = "SANSSERIF_SMALL";
+				row["columns"][1]["type"] = "text";
+
+				row["columns"][2]["column"] = "is_mod";
+				row["columns"][2]["type"] = "text";
+				if((BOOL)((group_powers & GP_SESSION_MODERATOR ) > 0))
+				{
+					row["columns"][2]["type"] = "icon";
+					row["columns"][2]["value"] = "icon_event_mature.tga";
 				}
 				if (group_list)
 				{
