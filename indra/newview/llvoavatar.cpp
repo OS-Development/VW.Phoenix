@@ -7198,7 +7198,7 @@ BOOL LLVOAvatar::attachObject(LLViewerObject *viewer_object)
 		const LLUUID& idItem = viewer_object->getAttachmentItemID();
 	
 	// Force-detach attachments using secondary attachment points
-	if ( (ATTACHMENT_ID_FROM_STATE(viewer_object->getState()) > 38) && (ATTACHMENT_ID_FROM_STATE(viewer_object->getState()) <= 70) )
+	if ( (ATTACHMENT_ID_FROM_STATE(viewer_object->getState()) > 40) && (ATTACHMENT_ID_FROM_STATE(viewer_object->getState()) <= 70) )
 	{
 		static const std::string cstrAlert("PhoenixUsingDeprecatedAttachPoint");
 
