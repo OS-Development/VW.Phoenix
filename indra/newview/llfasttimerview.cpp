@@ -229,10 +229,10 @@ static struct ft_display_info ft_display_table[] =
 	{ LLFastTimer::FTM_RENDER_BLOOM,		"   Bloom",				&LLColor4::blue4, 0 },
 	{ LLFastTimer::FTM_RENDER_BLOOM_FBO,	"    First FBO",		&LLColor4::blue, 0 },
 	{ LLFastTimer::FTM_RENDER_UI,			"  UI",					&LLColor4::cyan4, 1 },
-	{ LLFastTimer::FTM_RENDER_TIMER,		"   Timers",			&LLColor4::cyan5, 1,},
 	{ LLFastTimer::FTM_RENDER_FONTS,		"   Fonts",				&LLColor4::pink1, 0 },
+	{ LLFastTimer::FTM_SWAP,				"   Swap",				&LLColor4::pink2, 0 },
+	{ LLFastTimer::FTM_RENDER_TIMER,		"   Timers",			&LLColor4::cyan5, 1,},
 	{ LLFastTimer::FTM_RESIZE_SCREEN_TEXTURE,"  Resize Screen Tex.",&LLColor4::red2, 0 },
-	{ LLFastTimer::FTM_SWAP,				"  Swap",				&LLColor4::pink2, 0 },
 	{ LLFastTimer::FTM_CLIENT_COPY,			"  Client Copy",		&LLColor4::red1, 1 },
 
 #if 0 || !LL_RELEASE_FOR_DOWNLOAD
