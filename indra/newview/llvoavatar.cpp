@@ -1660,7 +1660,14 @@ const LLVector3 LLVOAvatar::getRenderPosition() const
 	}
 	else
 	{
-		return getPosition() * mDrawable->getParent()->getRenderMatrix();
+		if (mDrawable->getParent())
+		{
+			return getPosition() * mDrawable->getParent()->getRenderMatrix();
+		}
+		else
+		{
+			return getPositionAgent();
+		}
 	}
 }
 
