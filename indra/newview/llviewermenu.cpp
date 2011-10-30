@@ -3408,8 +3408,14 @@ class LLSelfEnableSitOrStand : public view_listener_t
 // [RLVa:KB] - Alternate: Snowglobe-1.3.X | Checked: 2009-12-29 (RLVa-1.1.0k) | Added: RLVa-1.1.0k | OK
 		gMenuHolder->findControl(userdata["control"].asString())->setValue(new_value);
 // [/RLVa:KB]
-		gMenuHolder->childSetText("Self Sit", label);
-		gMenuHolder->childSetText("Self Sit Attachment", label);
+		if (gMenuHolder->getChild<LLView>("Self Sit", TRUE, FALSE))
+		{
+			gMenuHolder->childSetText("Self Sit", label);
+		}
+		if (gMenuHolder->getChild<LLView>("Self Sit Attachment", TRUE, FALSE))
+		{
+			gMenuHolder->childSetText("Self Sit Attachment", label);
+		}
 
 		return true;
 	}
