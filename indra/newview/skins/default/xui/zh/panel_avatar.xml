@@ -2,11 +2,6 @@
 <panel name="Panel Avatar">
 	<tab_container name="tab">
 		<panel label="第二人生" name="2nd Life">
-			<string name="CaptionTextAcctInfo">
-				[ACCTTYPE]
-[PAYMENTINFO]
-[AGEVERIFICATION]
-			</string>
 			<string name="AcctTypeResident">
 				居民
 			</string>
