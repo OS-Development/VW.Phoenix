@@ -491,6 +491,9 @@ void LLScriptLibrary::init()
 	addFunction(10.f, 0.f, dummy_func, "llGetMassMKS", "f", NULL);
 	addFunction(10.f, 0.f, dummy_func, "llSetPhysicsMaterial", NULL, "iffff");
 	addFunction(10.f, 0.f, dummy_func, "llGetPhysicsMaterial", "l", NULL);
+
+	// Server v11.10.18.243270 new functions:
+	addFunction(10.f, 0.f, dummy_func, "llManageEstateAccess", "i", "ik");
 }
 
 LLScriptLibraryFunction::LLScriptLibraryFunction(F32 eu, F32 st, void (*exec_func)(LLScriptLibData *, LLScriptLibData *, const LLUUID &), const char *name, const char *ret_type, const char *args, BOOL god_only)

@@ -254,6 +254,10 @@ extern "C" { int yyerror(const char *fmt, ...); }
 "OBJECT_RUNNING_SCRIPT_COUNT"	{ count(); yylval.ival = OBJECT_RUNNING_SCRIPT_COUNT; return(INTEGER_CONSTANT); }
 "OBJECT_SCRIPT_MEMORY"	{ count(); yylval.ival = OBJECT_SCRIPT_MEMORY; return(INTEGER_CONSTANT); }
 "OBJECT_SCRIPT_TIME"	{ count(); yylval.ival = OBJECT_SCRIPT_TIME; return(INTEGER_CONSTANT); }
+"OBJECT_PRIM_EQUIVALENCE"	{ count(); yylval.ival = OBJECT_PRIM_EQUIVALENCE; return(INTEGER_CONSTANT); }
+"OBJECT_SERVER_COST"	{ count(); yylval.ival = OBJECT_SERVER_COST; return(INTEGER_CONSTANT); }
+"OBJECT_STREAMING_COST"	{ count(); yylval.ival = OBJECT_STREAMING_COST; return(INTEGER_CONSTANT); }
+"OBJECT_PHYSICS_COST"	{ count(); yylval.ival = OBJECT_SCRIPT_TIME; return(INTEGER_CONSTANT); }
 
 "TYPE_INTEGER"			{ count(); yylval.ival = LST_INTEGER; return(INTEGER_CONSTANT); }	
 "TYPE_FLOAT"			{ count(); yylval.ival = LST_FLOATINGPOINT; return(INTEGER_CONSTANT); }	
@@ -716,6 +720,13 @@ extern "C" { int yyerror(const char *fmt, ...); }
 "RC_GET_NORMAL"                      { count(); yylval.ival = LSL_RC_GET_NORMAL; return(INTEGER_CONSTANT); }
 "RC_GET_ROOT_KEY"                    { count(); yylval.ival = LSL_RC_GET_ROOT_KEY; return(INTEGER_CONSTANT); }
 "RC_GET_LINK_NUM"                    { count(); yylval.ival = LSL_RC_GET_LINK_NUM; return(INTEGER_CONSTANT); }
+
+"ESTATE_ACCESS_ALLOWED_AGENT_ADD"    { count(); yylval.ival = LSL_ESTATE_ACCESS_ALLOWED_AGENT_ADD; return(INTEGER_CONSTANT); }
+"ESTATE_ACCESS_ALLOWED_AGENT_REMOVE" { count(); yylval.ival = LSL_ESTATE_ACCESS_ALLOWED_AGENT_REMOVE; return(INTEGER_CONSTANT); }
+"ESTATE_ACCESS_ALLOWED_GROUP_ADD"    { count(); yylval.ival = LSL_ESTATE_ACCESS_ALLOWED_GROUP_ADD; return(INTEGER_CONSTANT); }
+"ESTATE_ACCESS_ALLOWED_GROUP_REMOVE" { count(); yylval.ival = LSL_ESTATE_ACCESS_ALLOWED_GROUP_REMOVE; return(INTEGER_CONSTANT); }
+"ESTATE_ACCESS_BANNED_AGENT_ADD"     { count(); yylval.ival = LSL_ESTATE_ACCESS_BANNED_AGENT_ADD; return(INTEGER_CONSTANT); }
+"ESTATE_ACCESS_BANNED_AGENT_REMOVE"  { count(); yylval.ival = LSL_ESTATE_ACCESS_BANNED_AGENT_REMOVE; return(INTEGER_CONSTANT); }
 
 {L}({L}|{N})*		{ count(); yylval.sval = new char[strlen(yytext) + 1]; strcpy(yylval.sval, yytext); return(IDENTIFIER); }
 

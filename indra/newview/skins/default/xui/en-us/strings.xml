@@ -1821,5 +1821,12 @@ Requests name of an avatar.  When data is available the dataserver event will be
 	list llGetPhysicsMaterial()
 	Returns a list of the object physics properties: [ float gravity_multiplier, float restitution, float friction, float density ]
   </string>
+  <string name="LSLTipText_llManageEstateAccess" translate="false">
+integer llManageEstateAccess(integer action, key id)
+To add or remove agents from the estate's agent access or ban lists or groups from the estate's group access list.
+Only works for objects owned by the Estate Owner or an Estate Manager.
+Returns TRUE if successful and FALSE if throttled, on invalid action, on invalid or null id, or if object owner is not allowed to manage the estate.
+'action' can be any of: ESTATE_ACCESS_ALLOWED_[AGENT/GROUP]_[ADD/REMOVE] or ESTATE_ACCESS_BANNED_AGENT_[ADD/REMOVE]
+  </string>
 </strings>
 
