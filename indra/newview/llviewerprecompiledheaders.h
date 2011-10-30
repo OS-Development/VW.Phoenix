@@ -89,7 +89,6 @@
 #include "llprocessor.h"
 #include "llrefcount.h"
 #include "llsafehandle.h"
-//#include "llsecondlifeurls.h"
 #include "llsingleton.h"
 #include "llstack.h"
 #include "llstat.h"

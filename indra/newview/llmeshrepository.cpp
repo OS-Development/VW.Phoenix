@@ -2936,8 +2936,47 @@ S32 LLPhysicsDecomp::llcdCallback(const char* status, S32 p1, S32 p2)
 	return 1;
 }
 
+bool needTriangles(LLConvexDecomposition *decomp)
+{
+	if (!decomp)
+	{
+		return false;
+	}
+
+	const LLCDParam *params(0);
+	S32 n_params = decomp->getParameters(&params);
+
+	if (n_params <= 0)
+	{
+		return false;
+	}
+
+	for (S32 i = 0; i < n_params; ++i)
+	{
+		if (params[i].mName &&
+			strcmp("nd_AlwaysNeedTriangles", params[i].mName) == 0)
+		{
+			return (LLCDParam::LLCD_BOOLEAN == params[i].mType &&
+					params[i].mDefault.mBool);
+		}
+	}
+
+	return false;
+}
+
 void LLPhysicsDecomp::setMeshData(LLCDMeshData& mesh, bool vertex_based)
 {
+	if (LLConvexDecomposition::getInstance() == NULL)
+	{
+		// stub library. do nothing.
+		return;
+	}
+
+	if (vertex_based)
+	{
+		vertex_based = !needTriangles(LLConvexDecomposition::getInstance());
+	}
+
 	mesh.mVertexBase = mCurRequest->mPositions[0].mV;
 	mesh.mVertexStrideBytes = 12;
 	mesh.mNumVertices = mCurRequest->mPositions.size();
@@ -2954,10 +2993,7 @@ void LLPhysicsDecomp::setMeshData(LLCDMeshData& mesh, bool vertex_based)
 	if ((vertex_based || mesh.mNumTriangles > 0) && mesh.mNumVertices > 2)
 	{
 		LLCDResult ret = LLCD_OK;
-		if (LLConvexDecomposition::getInstance() != NULL)
-		{
-			ret  = LLConvexDecomposition::getInstance()->setMeshData(&mesh, vertex_based);
-		}
+		ret  = LLConvexDecomposition::getInstance()->setMeshData(&mesh, vertex_based);
 
 		if (ret)
 		{

@@ -69,6 +69,7 @@
 #include "llmatrix4a.h"
 #include "llnotifications.h"
 #include "llrender.h"
+#include "llsecondlifeurls.h"
 #include "llsdserialize.h"
 #include "llsdutil_math.h"
 #include "llsliderctrl.h"
@@ -401,7 +402,7 @@ BOOL LLFloaterModelPreview::postBuild()
 	childSetCommitCallback("crease_angle", onGenerateNormalsCommit, this);
 	childSetCommitCallback("gen_normals", toggleGenerateNormals, this);
 
-	childSetCommitCallback("lod_generate", onAutoFillCommit, this);
+	//childSetCommitCallback("lod_generate", onAutoFillCommit, this);
 
 	for (S32 lod = 0; lod <= LLModel::LOD_HIGH; ++lod)
 	{
@@ -452,16 +453,45 @@ BOOL LLFloaterModelPreview::postBuild()
 
 	initModelPreview();
 
+	//set callbacks for left click on line editor rows
+	for (U32 i = 0; i <= LLModel::LOD_HIGH; i++)
+	{
+		LLTextBox* text = getChild<LLTextBox>(lod_label_name[i]);
+		if (text)
+		{
+			text->setClickedCallback(onClickTextLOD, (void*)i);
+		}
+
+		text = getChild<LLTextBox>(lod_triangles_name[i]);
+		if (text)
+		{
+			text->setClickedCallback(onClickTextLOD, (void*)i);
+		}
+
+		text = getChild<LLTextBox>(lod_vertices_name[i]);
+		if (text)
+		{
+			text->setClickedCallback(onClickTextLOD, (void*)i);
+		}
+
+		text = getChild<LLTextBox>(lod_status_name[i]);
+		if (text)
+		{
+			text->setClickedCallback(onClickTextLOD, (void*)i);
+		}
+	}
+
 	std::string validate_url;
+	LLViewerLogin* vl = LLViewerLogin::getInstance();
 	if (gHippoGridManager->getCurrentGrid()->isSecondLife())
 	{
-		if (LLViewerLogin::getInstance()->isInProductionGrid())
+		if (vl->isInProductionGrid())
 		{
-			validate_url = "http://secondlife.com/my/account/mesh.php";
+			validate_url = AGNI_VALIDATE_MESH_UPLOAD_PAGE_URL;
 		}
 		else
 		{
-			validate_url = "http://secondlife.aditi.lindenlab.com/my/account/mesh.php";
+			validate_url = ADITI_VALIDATE_MESH_UPLOAD_PAGE_URL;
 		}
 	}
 	else
@@ -656,6 +686,16 @@ void LLFloaterModelPreview::onUploadSkinCommit(LLUICtrl*,void* userdata)
 	fp->mModelPreview->clearBuffers();
 }
 
+// static
+void LLFloaterModelPreview::onClickTextLOD(void* userdata)
+{
+	S32 lod = (S32)userdata;
+	if (sInstance)
+	{
+		sInstance->mModelPreview->setPreviewLOD(lod);
+	}
+}
+
 //static
 void LLFloaterModelPreview::onPreviewLODCommit(LLUICtrl* ctrl, void* userdata)
 {
@@ -689,6 +729,7 @@ void LLFloaterModelPreview::toggleGenerateNormals(LLUICtrl* ctrl, void* userdata
 	LLFloaterModelPreview* fp = (LLFloaterModelPreview*) userdata;
 
 	bool enabled = fp->childGetValue("gen_normals").asBoolean();
+	fp->childSetEnabled("crease_label", enabled);
 	fp->childSetEnabled("crease_angle", enabled);
 }
 
@@ -759,10 +800,10 @@ void LLFloaterModelPreview::draw()
 		}
 	}
 
-	childSetTextArg("prim_cost", "[PRIM_COST]",
-					llformat("%d", mModelPreview->mResourceCost));
-	childSetTextArg("description_label", "[TEXTURES]",
-					llformat("%d", mModelPreview->mTextureSet.size()));
+	//childSetTextArg("prim_cost", "[PRIM_COST]",
+	//				llformat("%d", mModelPreview->mResourceCost));
+	//childSetTextArg("description_label", "[TEXTURES]",
+	//				llformat("%d", mModelPreview->mTextureSet.size()));
 
 	if (mModelPreview)
 	{
@@ -1092,8 +1133,8 @@ void LLFloaterModelPreview::initDecompControls()
 		// protected against stub by stage_count being 0 for stub above
 		LLConvexDecomposition::getInstance()->registerCallback(j, LLPhysicsDecomp::llcdCallback);
 
-		//llinfos << "Physics decomp stage " << stage[j].mName << " (" << j << ") parameters:" << llendl;
-		//llinfos << "------------------------------------" << llendl;
+		llinfos << "Physics decomp stage " << stage[j].mName << " (" << j << ") parameters:" << llendl;
+		llinfos << "------------------------------------" << llendl;
 
 		for (S32 i = 0; i < param_count; ++i)
 		{
@@ -1112,7 +1153,7 @@ void LLFloaterModelPreview::initDecompControls()
 			if (param[i].mType == LLCDParam::LLCD_FLOAT)
 			{
 				mDecompParams[param[i].mName] = LLSD(param[i].mDefault.mFloat);
-				//llinfos << "Type: float, Default: " << param[i].mDefault.mFloat << llendl;
+				llinfos << "Type: float, Default: " << param[i].mDefault.mFloat << llendl;
 
 				LLUICtrl* ctrl = getChild<LLUICtrl>(name);
 				if (LLSliderCtrl* slider = dynamic_cast<LLSliderCtrl*>(ctrl))
@@ -3771,7 +3812,6 @@ void LLModelPreview::loadModelCallback(S32 lod)
 	mLoading = false;
 	if (mFMP)
 	{
-		mFMP->getChild<LLCheckBoxCtrl>("confirm_checkbox")->set(FALSE);
 		if (!mBaseModel.empty())
 		{
 			if (mFMP->getChild<LLUICtrl>("description_form")->getValue().asString().empty())
@@ -4238,7 +4278,7 @@ void LLModelPreview::updateStatusMessages()
 		}
 	}
 
-	mFMP->childSetTextArg("submeshes_info", "[SUBMESHES]", llformat("%d", total_submeshes[LLModel::LOD_HIGH]));
+	//mFMP->childSetTextArg("submeshes_info", "[SUBMESHES]", llformat("%d", total_submeshes[LLModel::LOD_HIGH]));
 
 	std::string mesh_status_na = mFMP->getString("mesh_status_na");
 
@@ -4458,20 +4498,20 @@ void LLModelPreview::updateStatusMessages()
 		//enable/disable "analysis" UI
 		LLPanel* panel = fmp->getChild<LLPanel>("physics analysis");
 		LLView* child = panel->getFirstChild();
-//		while (child)
+		while (child)
 		{
 			child->setEnabled(enable);
-//			child = panel->findNextSibling(child);
+			child = panel->findNextSibling(child);
 		}
 
 		enable = phys_hulls > 0 && fmp->mCurRequest.empty();
 		//enable/disable "simplification" UI
 		panel = fmp->getChild<LLPanel>("physics simplification");
 		child = panel->getFirstChild();
-//		while (child)
+		while (child)
 		{
 			child->setEnabled(enable);
-//			child = panel->findNextSibling(child);
+			child = panel->findNextSibling(child);
 		}
 
 		if (fmp->mCurRequest.empty())
@@ -5690,11 +5730,6 @@ void LLFloaterModelPreview::toggleCalculateButton(bool visible)
 		childSetTextArg("server_weight", "[SIM]", tbd);
 		childSetTextArg("physics_weight", "[PH]", tbd);
 		childSetTextArg("upload_fee", "[FEE]", tbd);
-		childSetTextArg("price_breakdown", "[STREAMING]", tbd);
-		childSetTextArg("price_breakdown", "[PHYSICS]", tbd);
-		childSetTextArg("price_breakdown", "[INSTANCES]", tbd);
-		childSetTextArg("price_breakdown", "[TEXTURES]", tbd);
-		childSetTextArg("price_breakdown", "[MODEL]", tbd);
 	}
 }
 
@@ -5738,13 +5773,7 @@ void LLFloaterModelPreview::handleModelPhysicsFeeReceived()
 	childSetTextArg("server_weight", "[SIM]", llformat("%0.3f", result["simulation_cost"].asReal()));
 	childSetTextArg("physics_weight", "[PH]", llformat("%0.3f", result["physics_cost"].asReal()));
 	childSetTextArg("upload_fee", "[FEE]", llformat("%d", result["upload_price"].asInteger()));
-	childSetTextArg("price_breakdown", "[STREAMING]", llformat("%d", result["upload_price_breakdown"]["mesh_streaming"].asInteger()));
-	childSetTextArg("price_breakdown", "[PHYSICS]", llformat("%d", result["upload_price_breakdown"]["mesh_physics"].asInteger()));
-	childSetTextArg("price_breakdown", "[INSTANCES]", llformat("%d", result["upload_price_breakdown"]["mesh_instance"].asInteger()));
-	childSetTextArg("price_breakdown", "[TEXTURES]", llformat("%d", result["upload_price_breakdown"]["texture"].asInteger()));
-	childSetTextArg("price_breakdown", "[MODEL]", llformat("%d", result["upload_price_breakdown"]["model"].asInteger()));
 	childSetVisible("upload_fee", true);
-	childSetVisible("price_breakdown", true);
 	mUploadBtn->setEnabled(mHasUploadPerm && !mUploadModelUrl.empty());
 }
 

@@ -4263,6 +4263,22 @@
 				<integer>0</integer>
 			</array>
 		</map>
+		<key>FloaterModelPreviewRect</key>
+		<map>
+			<key>Comment</key>
+			<string>Rectangle for the model preview floater</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>Rect</string>
+			<key>Value</key>
+			<array>
+				<integer>0</integer>
+				<integer>940</integer>
+				<integer>480</integer>
+				<integer>0</integer>
+			</array>
+		</map>
 		<key>FloaterMoveRect2</key>
 		<map>
 			<key>Comment</key>
@@ -4520,6 +4536,8 @@
 			<key>Comment</key>
 			<string>[DO NOT MODIFY] Controls layout of floating windows within SL window</string>
 			<key>Persist</key>
+			<integer>1</integer>
+			<key>HideFromEditor</key>
 			<integer>1</integer>
 			<key>Type</key>
 			<string>S32</string>
@@ -5653,6 +5671,8 @@
 			<string>[DO NOT MODIFY] Version number for tracking hardware changes</string>
 			<key>Persist</key>
 			<integer>1</integer>
+			<key>HideFromEditor</key>
+			<integer>1</integer>
 			<key>Type</key>
 			<string>S32</string>
 			<key>Value</key>
@@ -6332,6 +6352,17 @@
 			<string>U32</string>
 			<key>Value</key>
 			<real>16</real>
+		</map>
+		<key>MeshImportUseSLM</key>
+		<map>
+			<key>Comment</key>
+			<string>Use cached copy of last upload for a dae if available instead of loading dae file from scratch.</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>Boolean</string>
+			<key>Value</key>
+			<real>1</real>
 		</map>
 		<key>MeshLoadHighLOD</key>
 		<map>
@@ -13187,6 +13218,8 @@
 			<string>[DO NOT MODIFY] Controls which grid you connect to</string>
 			<key>Persist</key>
 			<integer>1</integer>
+			<key>HideFromEditor</key>
+			<integer>1</integer>
 			<key>Type</key>
 			<string>S32</string>
 			<key>Value</key>
@@ -16438,6 +16471,8 @@
 			<string>[DO NOT MODIFY] Controls resizing of local file cache</string>
 			<key>Persist</key>
 			<integer>1</integer>
+			<key>HideFromEditor</key>
+			<integer>1</integer>
 			<key>Type</key>
 			<string>U32</string>
 			<key>Value</key>
@@ -16448,6 +16483,8 @@
 			<key>Comment</key>
 			<string>[DO NOT MODIFY] Controls local file caching behavior</string>
 			<key>Persist</key>
+			<integer>1</integer>
+			<key>HideFromEditor</key>
 			<integer>1</integer>
 			<key>Type</key>
 			<string>U32</string>

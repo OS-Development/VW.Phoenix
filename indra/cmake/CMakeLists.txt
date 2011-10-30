@@ -42,6 +42,7 @@ set(cmake_SOURCE_FILES
 	GLOD.cmake
     GStreamer010Plugin.cmake
     GooglePerfTools.cmake
+	HACD.cmake
     Growl.cmake
     HUNSPELL.cmake
     JPEG.cmake

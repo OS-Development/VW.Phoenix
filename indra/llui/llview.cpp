@@ -1768,6 +1768,27 @@ LLView* LLView::getRootView()
 	return view;
 }
 
+LLView* LLView::findPrevSibling(LLView* child)
+{
+	child_list_t::iterator prev_it = std::find(mChildList.begin(), mChildList.end(), child);
+	if (prev_it != mChildList.end() && prev_it != mChildList.begin())
+	{
+		return *(--prev_it);
+	}
+	return NULL;
+}
+
+LLView* LLView::findNextSibling(LLView* child)
+{
+	child_list_t::iterator next_it = std::find(mChildList.begin(), mChildList.end(), child);
+	if (next_it != mChildList.end())
+	{
+		next_it++;
+	}
+
+	return (next_it != mChildList.end()) ? *next_it : NULL;
+}
+
 BOOL LLView::deleteViewByHandle(LLHandle<LLView> handle)
 {
 	LLView* viewp = handle.get();

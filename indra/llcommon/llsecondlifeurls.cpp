@@ -33,18 +33,58 @@
 #include "linden_common.h"
 #include "llsecondlifeurls.h"
 
-const std::string CREATE_ACCOUNT_URL ( 
+const std::string CREATE_ACCOUNT_URL( 
 	"http://join.secondlife.com/");
+
+const std::string AUCTION_URL( 
+	"http://secondlife.com/auctions/auction-detail.php?id=");
+
+const std::string EVENTS_URL( 
+	"http://secondlife.com/events/");
+
+const std::string DIRECTX_9_URL( 
+	"http://secondlife.com/support/");
+
+const std::string SUPPORT_URL( 
+    "http://secondlife.com/support/");
+
+const std::string FORGOTTEN_PASSWORD_URL( 
+    "http://secondlife.com/account/request.php");
+
+const std::string BUY_CURRENCY_URL(
+	"http://secondlife.com/app/currency/");
+
+const std::string LSL_DOC_URL(
+	"http://wiki.secondlife.com/wiki/LSL_Portal"); 
+
+const std::string RELEASE_NOTES_BASE_URL(
+	"http://secondlife.com/app/releasenotes/");
+
+const std::string AGNI_LOGIN_URI(
+	"https://login.agni.lindenlab.com/cgi-bin/login.cgi");
+
+const std::string ADITI_LOGIN_URI(
+	"https://login.aditi.lindenlab.com/cgi-bin/login.cgi");
+
+const std::string AGNI_HELPER_URI(
+	"https://secondlife.com/helpers/");
+
+const std::string ADITI_HELPER_URI(
+	"http://aditi-secondlife.webdev.lindenlab.com/helpers/");
+
+const std::string SL_LOGIN_PAGE_URL(
+	"http://secondlife.com/app/login/");
+
+const std::string AGNI_VALIDATE_MESH_UPLOAD_PAGE_URL(
+	"http://secondlife.com/my/account/mesh.php");
+
+const std::string ADITI_VALIDATE_MESH_UPLOAD_PAGE_URL(
+	"http://secondlife.aditi.lindenlab.com/my/account/mesh.php");
+
 /*
 const std::string MANAGE_ACCOUNT ( 
 	"http://secondlife.com/account/");  // *TODO: NOT USED
-*/
-const std::string AUCTION_URL ( 
-	"http://secondlife.com/auctions/auction-detail.php?id=");
 
-const std::string EVENTS_URL ( 
-	"http://secondlife.com/events/");
-/*
 const std::string TIER_UP_URL ( 
 	"http://secondlife.com/app/landtier"); // *TODO: NOT USED
 
@@ -53,19 +93,13 @@ const std::string LAND_URL (
 
 const std::string UPGRADE_TO_PREMIUM_URL (
 	"http://secondlife.com/app/upgrade/"); // *TODO: NOT USED
-*/
-const std::string DIRECTX_9_URL ( 
-	"http://secondlife.com/support/");
-/*
+
 const std::string AMD_AGP_URL ( 
 	"http://secondlife.com/support/"); // *TODO: NOT USED
 
 const std::string VIA_URL ( 
 	"http://secondlife.com/support/"); // *TODO: NOT USED
-*/
-const std::string SUPPORT_URL ( 
-    "http://secondlife.com/support/");
-/*
+
 const std::string INTEL_CHIPSET_URL ( 
 	"http://secondlife.com/support/"); // *TODO: NOT USED
 
@@ -74,15 +108,7 @@ const std::string SIS_CHIPSET_URL (
 
 const std::string BLOGS_URL ( 
 	"http://blog.secondlife.com/"); // *TODO: NOT USED
-*/
-const std::string BUY_CURRENCY_URL (
-	"http://secondlife.com/app/currency/");
-/*
-const std::string LSL_DOC_URL (
-	"http://secondlife.com/app/lsldoc/"); // *TODO: NOT USED
 
 const std::string SL_KB_URL (
 	"http://secondlife.com/knowledgebase/"); // *TODO: NOT USED
 */
-const std::string RELEASE_NOTES_BASE_URL (
-	"http://phoenixviewer.com/app/releasenotes/");

@@ -108,23 +108,23 @@
           <key>darwin</key>
           <map>
             <key>md5sum</key>
-            <string>3a7263246813ecf9aff5a240892f9641</string>
+            <string>22efacc618834397d7f0fc4a34232fd3</string>
             <key>url</key>
-            <uri>http://s3.amazonaws.com/viewer-source-downloads/install_pkgs/glod-1.0pre4-darwin-20101007a.tar.bz2</uri>
+            <uri>http://sldev.free.fr/libraries/glod-1.0pre4-darwin-20111019.tar.bz2</uri>
           </map>
           <key>linux</key>
           <map>
             <key>md5sum</key>
-            <string>ca7368e9a1baf266b82d910fa8f821bd</string>
+            <string>9d4a3107af1845116e21edbe9f27b3e7</string>
             <key>url</key>
-            <uri>http://s3.amazonaws.com/viewer-source-downloads/install_pkgs/glod-1.0pre4-linux-20100920a.tar.bz2</uri>
+            <uri>http://sldev.free.fr/libraries/glod-1.0pre4-linux-20111019.tar.bz2</uri>
           </map>
           <key>windows</key>
           <map>
             <key>md5sum</key>
-            <string>5f993f8092ddf4424ec3133dae9424dd</string>
+            <string>1f55ce0e6fadff74c0b37418abd3afd3</string>
             <key>url</key>
-            <uri>http://s3.amazonaws.com/viewer-source-downloads/install_pkgs/glod-1.0pre4-windows-20100908a.tar.bz2</uri>
+            <uri>http://sldev.free.fr/libraries/glod-1.0pre4-windows-20111019.tar.bz2</uri>
            </map>
          </map>
        </map>
@@ -1069,6 +1069,41 @@
 						<uri>http://s3.amazonaws.com/viewer-source-downloads/install_pkgs/libxml-2.6.24-linux64-20080909.tar.bz2</uri>
 					</map>
 				</map>
+			</map>
+			<key>nd_hacdConvexDecomposition</key>
+			<map>
+				<key>copyright</key>
+				<string>on file</string>
+				<key>description</key>
+				<string>HACD Convex decomposition utility for mesh</string>
+				<key>license</key>
+				<string>gpl</string>
+				<key>packages</key>
+				<map>
+					<key>windows</key>
+					<map>
+					<key>md5sum</key>
+					<string>db32c928dfeaace1307e542795d3732b</string>
+					<key>url</key>
+					<uri>http://sldev.free.fr/libraries/hacd-win32-20111022.tar.bz2</uri>
+					</map>
+<!--
+					<key>darwin</key>
+					<map>
+					<key>md5sum</key>
+					<string>18f3e50246c13a20044dd7b19d53c412</string>
+					<key>url</key>
+					<uri>http://sldev.free.fr/libraries/hacd-darwin-20111018.tar.bz2</uri>
+					</map>
+-->
+					<key>linux</key>
+					<map>
+					<key>md5sum</key>
+					<string>9e7d1ad5b756a3113e1fbeb906807722</string>
+					<key>url</key>
+					<uri>http://sldev.free.fr/libraries/hacd-linux-20111022.tar.bz2</uri>
+				</map>
+			</map>
 			</map>
 			<key>llqtwebkit</key>
 			<map>

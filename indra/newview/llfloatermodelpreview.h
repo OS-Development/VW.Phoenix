@@ -228,6 +228,8 @@ protected:
 
 	static void toggleCalculateButtonCallBack(LLUICtrl* ctrl, void* userdata);
 
+	static void onClickTextLOD(void* userdata);
+
 	static void onClickCalculateBtn(void* userdata);
 
 	static void onLoDSourceCommit(LLUICtrl* ctrl, void* userdata);

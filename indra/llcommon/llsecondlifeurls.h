@@ -35,14 +35,54 @@
 
 // Account registration web page
 LL_COMMON_API extern const std::string CREATE_ACCOUNT_URL;
-/*
-// Manage Account
-LL_COMMON_API extern const std::string MANAGE_ACCOUNT;
-*/
+
 LL_COMMON_API extern const std::string AUCTION_URL;
 
 LL_COMMON_API extern const std::string EVENTS_URL;
+
+// How to get DirectX 9
+LL_COMMON_API extern const std::string DIRECTX_9_URL;
+
+// Support URL
+LL_COMMON_API extern const std::string SUPPORT_URL;
+
+// Forgotten Password URL
+LL_COMMON_API extern const std::string FORGOTTEN_PASSWORD_URL;
+
+// Currency page
+LL_COMMON_API extern const std::string BUY_CURRENCY_URL;
+
+// LSL script wiki
+LL_COMMON_API extern const std::string LSL_DOC_URL;
+
+// Release Notes Redirect URL for Server and Viewer
+LL_COMMON_API extern const std::string RELEASE_NOTES_BASE_URL;
+
+// Agni login URI
+LL_COMMON_API extern const std::string AGNI_LOGIN_URI;
+
+// Aditi login URI
+LL_COMMON_API extern const std::string ADITI_LOGIN_URI;
+
+// Agni helper URI
+LL_COMMON_API extern const std::string AGNI_HELPER_URI;
+
+// Aditi helper URI
+LL_COMMON_API extern const std::string ADITI_HELPER_URI;
+
+// SL login page URL (legacy)
+LL_COMMON_API extern const std::string SL_LOGIN_PAGE_URL;
+
+// Agni Mesh upload validation URL
+LL_COMMON_API extern const std::string AGNI_VALIDATE_MESH_UPLOAD_PAGE_URL;
+
+// Aditi Mesh upload validation URL
+LL_COMMON_API extern const std::string ADITI_VALIDATE_MESH_UPLOAD_PAGE_URL;
+
 /*
+// Manage Account
+LL_COMMON_API extern const std::string MANAGE_ACCOUNT;
+
 // Tier up to a new land level.
 LL_COMMON_API extern const std::string TIER_UP_URL;
 
@@ -51,29 +91,15 @@ LL_COMMON_API extern const std::string LAND_URL;
 
 // Upgrade from basic membership to premium membership
 LL_COMMON_API extern const std::string UPGRADE_TO_PREMIUM_URL;
-*/
-// How to get DirectX 9
-LL_COMMON_API extern const std::string DIRECTX_9_URL;
-/*
+
 // Out of date VIA chipset
 LL_COMMON_API extern const std::string VIA_URL;
-*/
-// Support URL
-LL_COMMON_API extern const std::string SUPPORT_URL;
-/*
+
 // Linden Blogs page
 LL_COMMON_API extern const std::string BLOGS_URL;
-*/
-// Currency page
-LL_COMMON_API extern const std::string BUY_CURRENCY_URL;
-/*
-// LSL script wiki
-LL_COMMON_API extern const std::string LSL_DOC_URL;
 
 // SL KnowledgeBase page
 LL_COMMON_API extern const std::string SL_KB_URL;
 */
-// Release Notes Redirect URL for Server and Viewer
-LL_COMMON_API extern const std::string RELEASE_NOTES_BASE_URL;
 
 #endif

@@ -81,19 +81,26 @@ if [ "$GTK_IM_MODULE" = "scim" ]; then
     export GTK_IM_MODULE=xim
 fi
 
-# Work around for a crash bug when restarting OpenGL after a change in the
-# graphic settings (anti-aliasing, VBO, FSAA, full screen mode, UI scale).
-# When you enable this work around, you can change the settings without
-# crashing, but you will have to restart the viewer after changing them
-# because the display still gets corrupted.
+## Work around for a crash bug when restarting OpenGL after a change in the
+## graphic settings (anti-aliasing, VBO, FSAA, full screen mode, UI scale).
+## When you enable this work around, you can change the settings without
+## crashing, but you will have to restart the viewer after changing them
+## because the display still gets corrupted.
 export LL_OPENGL_RESTART_CRASH_BUG=x
 
 
-## - Automatically work around the ATI mouse cursor crash bug:
-## (this workaround is disabled as most fglrx users do not see the bug)
-#if lsmod | grep fglrx &>/dev/null ; then
-#	export LL_ATI_MOUSE_CURSOR_BUG=x
-#fi
+## - Work around the ATI mouse cursor crash bug with fglrx and Mobility Radeon:
+##   If you don't have lspci, or if you think this can solve problems with a
+##	 non-mobility Radeon card, you may simply uncomment the following line to
+##   force the work around:
+#export LL_ATI_MOUSE_CURSOR_BUG=x
+if [ -x /usr/bin/lspci ] ; then
+	if lspci | grep "Mobility Radeon" &>/dev/null ; then
+		if lsmod | grep fglrx &>/dev/null ; then
+			export LL_ATI_MOUSE_CURSOR_BUG=x
+		fi
+	fi
+fi
 
 
 ## Nothing worth editing below this line.
@@ -108,6 +115,12 @@ cd "${RUN_PATH}"
 # This is now automatically run on startup, due to how small the download and unpack time has become.
 # If you object to using voice, comment this script out. ~Disc
 ./fetch_bins.sh
+
+## If fmod support is missing, activate OpenAL support
+if [ ! -f "./lib/libfmod-3.75.so" ] ; then
+	unset LL_BAD_OPENAL_DRIVER
+	export LL_BAD_FMOD_DRIVER=x
+fi
 
 # Re-register the secondlife:// protocol handler every launch, for now.
 ./register_secondlifeprotocol.sh

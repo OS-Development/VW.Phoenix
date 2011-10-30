@@ -79,6 +79,7 @@ include_directories(
     ${VIEWER_RESOURCE_DIRS}
     ${LIBOTR_INCLUDE_DIRS}
     ${GROWL_INCLUDE_DIRS}
+	${HACD_INCLUDE_DIR}
 )
 
 set(viewer_SOURCE_FILES
@@ -1532,6 +1533,7 @@ target_link_libraries(${VIEWER_BINARY_NAME}
     ${HUNSPELL_LIBRARY}
     ${GROWL_LIBRARY}
     ${TCMALLOC_LIBRARIES}
+	${HACD_LIBRARY}
     )
 
 if (WINDOWS)

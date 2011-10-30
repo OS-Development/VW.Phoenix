@@ -78,7 +78,6 @@
 #include "llvector4a.h"
 
 #include "llweb.h"
-#include "llsecondlifeurls.h"
 
 #include <boost/bind.hpp>
 
