@@ -47,6 +47,7 @@ class LLViewerObject;
 class LLComboBox;
 class LLPanelInventory;
 class LLColorSwatchCtrl;
+class LLInventoryItem;
 
 class LLPanelVolume : public LLPanel
 {
@@ -76,6 +77,7 @@ public:
 
 	static void		onLightCancelTexture(LLUICtrl* ctrl, void* userdata);
 	static void		onLightSelectTexture(LLUICtrl* ctrl, void* userdata);
+	static BOOL		onDragTexture(LLUICtrl* ctrl, LLInventoryItem* item, void* userdata);
 
 	static void		sendPhysicsShapeType(LLUICtrl* ctrl, void* userdata);
 	static void		sendPhysicsGravity(LLUICtrl* ctrl, void* userdata);
