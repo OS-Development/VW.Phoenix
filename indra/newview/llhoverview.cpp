@@ -51,6 +51,7 @@
 #include "llcachename.h"
 #include "llviewercontrol.h"
 #include "lldrawable.h"
+#include "llmeshrepository.h"
 #include "llpermissions.h"
 #include "llresmgr.h"
 #include "llselectmgr.h"
@@ -499,7 +500,32 @@ void LLHoverView::updateText()
 			}
 			line.clear();
 			S32 prim_count = LLSelectMgr::getInstance()->getHoverObjects()->getObjectCount();
-			line.append(llformat("Prims: %d", prim_count));
+
+			// Display the PE weight for an object if mesh is enabled
+			std::string pelabel;
+			if (gMeshRepo.meshRezEnabled())
+			{
+				// Ansariel: What a bummer! PE is only available for
+				//           objects in the same region as you!
+				if (hit_object->getRegion()->getRegionID() == gAgent.getRegion()->getRegionID())
+				{
+					S32 link_cost = LLSelectMgr::getInstance()->getHoverObjects()->getSelectedLinksetCost();
+					if (link_cost > 0)
+					{
+						pelabel = llformat(", Land Impact: %d", link_cost);
+					}
+					else
+					{
+						pelabel = ", loading Land Impact...";
+					}
+				}
+				else
+				{
+					pelabel = ", Land Impact unavailable";
+				}
+			}
+
+			line.append(llformat("Prims: %d", prim_count) + pelabel);
 			mText.push_back(line);
 
 			line.clear();
