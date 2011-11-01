@@ -8018,7 +8018,9 @@ void LLVOAvatar::forceBakeAllTextures(bool slam_for_debug)
 	if(self)
 	{
 		if(!self->isWearingWearableType(WT_HAIR))
-		{				// Ansariel: Debug info to track down hair issue			llinfos << "TAT: Applying ruth hair fix" << llendl;
+		{	
+			// Ansariel: Debug info to track down hair issue
+			llinfos << "TAT: Applying ruth hair fix" << llendl;
 
 			//wear some hair?
 			LLViewerInventoryCategory::createBasicHair();
