@@ -689,7 +689,7 @@ void LLFloaterModelPreview::onUploadSkinCommit(LLUICtrl*,void* userdata)
 // static
 void LLFloaterModelPreview::onClickTextLOD(void* userdata)
 {
-	S32 lod = (S32)userdata;
+	S32 lod = (S32)(intptr_t)userdata;
 	if (sInstance)
 	{
 		sInstance->mModelPreview->setPreviewLOD(lod);
@@ -752,7 +752,7 @@ void LLFloaterModelPreview::onAutoFillCommit(LLUICtrl* ctrl, void* userdata)
 //static
 void LLFloaterModelPreview::onLODParamCommit(LLUICtrl* ctrl, void* userdata)
 {
-	S32 lod = (S32)userdata;
+	S32 lod = (S32)(intptr_t)userdata;
 	if (sInstance)
 	{
 		sInstance->mModelPreview->onLODParamCommit(lod, false);
@@ -762,7 +762,7 @@ void LLFloaterModelPreview::onLODParamCommit(LLUICtrl* ctrl, void* userdata)
 //static
 void LLFloaterModelPreview::onLODParamCommitEnforceTriLimit(LLUICtrl* ctrl, void* userdata)
 {
-	S32 lod = (S32)userdata;
+	S32 lod = (S32)(intptr_t)userdata;
 	if (sInstance)
 	{
 		sInstance->mModelPreview->onLODParamCommit(lod, true);
@@ -5587,7 +5587,7 @@ void LLFloaterModelPreview::onBrowseLOD(void* user_data)
 {
 	assert_main_thread();
 
-	S32 lod = (S32)user_data;
+	S32 lod = (S32)(intptr_t)user_data;
 
 	if (sInstance)
 	{
@@ -5736,7 +5736,7 @@ void LLFloaterModelPreview::toggleCalculateButton(bool visible)
 //static
 void LLFloaterModelPreview::onLoDSourceCommit(LLUICtrl* ctrl, void* userdata)
 {
-	S32 lod = (S32)userdata;
+	S32 lod = (S32)(intptr_t)userdata;
 	if (sInstance)
 	{
 		sInstance->mModelPreview->updateLodControls(lod);
