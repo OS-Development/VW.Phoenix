@@ -33,6 +33,8 @@
 #ifndef LL_LLOCTREE_H
 #define LL_LLOCTREE_H
 
+#include <time.h>
+
 #include "lltreenode.h"
 #include "v3math.h"
 #include "llvector4a.h"
@@ -658,15 +660,24 @@ public:
 	// LLOctreeRoot::insert
 	bool insert(T* data)
 	{
-		if (data == NULL) 
+		static clock_t last_info = 0;
+		if (data == NULL)
 		{
-			OCT_ERRS << "!!! INVALID ELEMENT ADDED TO OCTREE ROOT !!!" << llendl;
+			if (clock() - last_info > 10 * CLOCKS_PER_SEC)	// Don't spam !
+			{
+				OCT_ERRS << "!!! INVALID ELEMENT ADDED TO OCTREE ROOT !!!" << llendl;
+				last_info = clock();
+			}
 			return false;
 		}
 		
 		if (data->getBinRadius() > 4096.0)
 		{
-			OCT_ERRS << "!!! ELEMENT EXCEEDS MAXIMUM SIZE IN OCTREE ROOT !!!" << llendl;
+			if (clock() - last_info > 10 * CLOCKS_PER_SEC)	// Don't spam !
+			{
+				OCT_ERRS << "!!! ELEMENT EXCEEDS MAXIMUM SIZE IN OCTREE ROOT !!!" << llendl;
+				last_info = clock();
+			}
 			return false;
 		}
 		
@@ -682,7 +693,11 @@ public:
 
 		if (lt != 0x7)
 		{
-			OCT_ERRS << "!!! ELEMENT EXCEEDS RANGE OF SPATIAL PARTITION !!!" << llendl;
+			if (clock() - last_info > 10 * CLOCKS_PER_SEC)	// Don't spam !
+			{
+				OCT_ERRS << "!!! ELEMENT EXCEEDS RANGE OF SPATIAL PARTITION !!!" << llendl;
+				last_info = clock();
+			}
 			return false;
 		}
 
