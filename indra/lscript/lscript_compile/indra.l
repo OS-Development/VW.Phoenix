@@ -728,6 +728,19 @@ extern "C" { int yyerror(const char *fmt, ...); }
 "ESTATE_ACCESS_BANNED_AGENT_ADD"     { count(); yylval.ival = LSL_ESTATE_ACCESS_BANNED_AGENT_ADD; return(INTEGER_CONSTANT); }
 "ESTATE_ACCESS_BANNED_AGENT_REMOVE"  { count(); yylval.ival = LSL_ESTATE_ACCESS_BANNED_AGENT_REMOVE; return(INTEGER_CONSTANT); }
 
+"KFM_COMMAND"		{ count(); yylval.ival = LSL_KFM_COMMAND; return(INTEGER_CONSTANT); }
+"KFM_MODE"			{ count(); yylval.ival = LSL_KFM_MODE; return(INTEGER_CONSTANT); }
+"KFM_DATA"			{ count(); yylval.ival = LSL_KFM_DATA; return(INTEGER_CONSTANT); }
+"KFM_FORWARD"		{ count(); yylval.ival = LSL_KFM_FORWARD; return(INTEGER_CONSTANT); }
+"KFM_LOOP"			{ count(); yylval.ival = LSL_KFM_LOOP; return(INTEGER_CONSTANT); }
+"KFM_PING_PONG"		{ count(); yylval.ival = LSL_KFM_PING_PONG; return(INTEGER_CONSTANT); }
+"KFM_REVERSE"		{ count(); yylval.ival = LSL_KFM_REVERSE; return(INTEGER_CONSTANT); }
+"KFM_ROTATION"		{ count(); yylval.ival = LSL_KFM_ROTATION; return(INTEGER_CONSTANT); }
+"KFM_TRANSLATION"	{ count(); yylval.ival = LSL_KFM_TRANSLATION; return(INTEGER_CONSTANT); }
+"KFM_CMD_PLAY"		{ count(); yylval.ival = LSL_KFM_CMD_PLAY; return(INTEGER_CONSTANT); }
+"KFM_CMD_STOP"		{ count(); yylval.ival = LSL_KFM_CMD_STOP; return(INTEGER_CONSTANT); }
+"KFM_CMD_PAUSE"		{ count(); yylval.ival = LSL_KFM_CMD_PAUSE; return(INTEGER_CONSTANT); }
+
 {L}({L}|{N})*		{ count(); yylval.sval = new char[strlen(yytext) + 1]; strcpy(yylval.sval, yytext); return(IDENTIFIER); }
 
 {N}+{E}					{ count(); yylval.fval = (F32)atof(yytext); return(FP_CONSTANT); }

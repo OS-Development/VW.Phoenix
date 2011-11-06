@@ -494,6 +494,9 @@ void LLScriptLibrary::init()
 
 	// Server v11.10.18.243270 new functions:
 	addFunction(10.f, 0.f, dummy_func, "llManageEstateAccess", "i", "ik");
+
+	// Server RC magnum v11.10.31.244254 new function:
+	addFunction(10.f, 0.f, dummy_func, "llSetKeyframedMotion", NULL, "ll");
 }
 
 LLScriptLibraryFunction::LLScriptLibraryFunction(F32 eu, F32 st, void (*exec_func)(LLScriptLibData *, LLScriptLibData *, const LLUUID &), const char *name, const char *ret_type, const char *args, BOOL god_only)
