@@ -183,9 +183,6 @@ public:
 	{
 		return getKey();
 	}
-
-private:
-
 };
 
 // Contains notification form data, such as buttons and text fields along with
@@ -456,7 +453,7 @@ public:
 	// ["responseFunctor"] = name of registered functor that handles responses to notification;
 	LLSD asLLSD();
 
-	void respond(const LLSD& sd);
+	void respond(const LLSD& sd, bool save = true);
 
 	void setIgnored(bool ignore);
 

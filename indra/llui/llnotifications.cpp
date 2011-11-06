@@ -183,6 +183,12 @@ bool handleIgnoredNotification(const LLSD& payload)
 			break;
 		case LLNotificationForm::IGNORE_WITH_LAST_RESPONSE:
 			response = LLUI::sIgnoresGroup->getLLSD("Default" + pNotif->getName());
+			if (response.isUndefined() || !response.isMap() ||
+				response.beginMap() == response.endMap())
+			{
+				// Invalid saved response: let's use something that we can trust
+				response = pNotif->getResponseTemplate(LLNotification::WITH_DEFAULT_BUTTON);
+			}
 			break;
 		case LLNotificationForm::IGNORE_SHOW_AGAIN:
 			break;
@@ -522,7 +528,7 @@ std::string LLNotification::getSelectedOptionName(const LLSD& response)
 }
 
 
-void LLNotification::respond(const LLSD& response)
+void LLNotification::respond(const LLSD& response, bool save)
 {
 	mRespondedTo = true;
 	// look up the functor
@@ -538,7 +544,7 @@ void LLNotification::respond(const LLSD& response)
 		mTemporaryResponder = false;
 	}
 
-	if (mForm->getIgnoreType() != LLNotificationForm::IGNORE_NO)
+	if (save && mForm->getIgnoreType() != LLNotificationForm::IGNORE_NO)
 	{
 		LLUI::sIgnoresGroup->setWarning(getName(), !mIgnored);
 		if (mIgnored && mForm->getIgnoreType() == LLNotificationForm::IGNORE_WITH_LAST_RESPONSE)
@@ -1152,7 +1158,7 @@ void LLNotifications::forceResponse(const LLNotification::Params& params, S32 op
 	}
 	response[selected_item["name"].asString()] = true;
 
-	temp_notify->respond(response);
+	temp_notify->respond(response, false);
 }
 
 LLNotifications::TemplateNames LLNotifications::getTemplateNames() const
