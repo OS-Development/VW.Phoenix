@@ -33,50 +33,50 @@
 
 #include "llviewerprecompiledheaders.h"
 #include "llappviewer.h"
-#include "llprimitive.h"
 
 #include "hippogridmanager.h"
 #include "hippolimits.h"
 
-#include "llversionviewer.h"
-#include "llfeaturemanager.h"
-#include "lluictrlfactory.h"
-#include "lltexteditor.h"
 #include "llalertdialog.h"
+#include "llares.h" 
+#include "llcurl.h"
 #include "llerrorcontrol.h"
-#include "llviewertexturelist.h"
-#include "llgroupmgr.h"
-#include "llagent.h"
-#include "llwindow.h"
-#include "llviewerstats.h"
-#include "llmd5.h"
+#include "llfocusmgr.h"
+#include "llfont.h"
+#include "llprimitive.h"
 #include "llpumpio.h"
+#include "llrender.h"
+#include "llsingleton.h"
+#include "lltexteditor.h"
+#include "lluictrlfactory.h"
+#include "llvector4a.h"
+#include "llversionviewer.h"
+#include "llwindow.h"
+
+#include "llagent.h"
+#include "llfeaturemanager.h"
+#include "llfirstuse.h"
+#include "llfloaterjoystick.h"
+#include "llfloatersnapshot.h"
+#include "llgroupmgr.h"
 #include "llimpanel.h"
 #include "llmimetypes.h"
+#include "llmutelist.h"
 #include "llstartup.h"
-#include "llfocusmgr.h"
-#include "llviewerjoystick.h"
-#include "llfloaterjoystick.h"
-#include "llares.h"
-#include "llcurl.h"
-#include "llfloatersnapshot.h"
 #include "lltexturestats.h"
-#include "llviewerwindow.h"
 #include "llviewerdisplay.h"
+#include "llviewerjoystick.h"
 #include "llviewermedia.h"
-#include "llviewerparcelmedia.h"
 #include "llviewermediafocus.h"
 #include "llviewermessage.h"
 #include "llviewerobjectlist.h"
+#include "llviewerparcelmedia.h"
+#include "llviewerstats.h"
+#include "llviewertexturelist.h"
+#include "llviewerwindow.h"
 #include "llworldmap.h"
-#include "llmutelist.h"
 #include "llurldispatcher.h"
 #include "llurlhistory.h"
-#include "llfirstuse.h"
-#include "llrender.h"
-#include "llfont.h"
-#include "llvector4a.h"
-
 #include "llweb.h"
 
 #include <boost/bind.hpp>
@@ -323,6 +323,41 @@ static std::string gLaunchFileOnQuit;
 
 // Used on Win32 for other apps to identify our window (eg, win_setup)
 const char* const VIEWER_WINDOW_CLASSNAME = "Second Life"; // Don't change this.
+
+//-- LLDeferredTaskList ------------------------------------------------------
+
+/**
+ * A list of deferred tasks.
+ *
+ * We sometimes need to defer execution of some code until the viewer gets idle,
+ * e.g. removing an inventory item from within notifyObservers() may not work out.
+ *
+ * Tasks added to this list will be executed in the next LLAppViewer::idle() iteration.
+ * All tasks are executed only once.
+ */
+class LLDeferredTaskList: public LLSingleton<LLDeferredTaskList>
+{
+	LOG_CLASS(LLDeferredTaskList);
+
+	friend class LLAppViewer;
+	typedef boost::signals2::signal<void()> signal_t;
+
+	void addTask(const signal_t::slot_type& cb)
+	{
+		mSignal.connect(cb);
+	}
+
+	void run()
+	{
+		if (!mSignal.empty())
+		{
+			mSignal();
+			mSignal.disconnect_all_slots();
+		}
+	}
+
+	signal_t mSignal;
+};
 
 //----------------------------------------------------------------------------
 // File scope definitons
@@ -3379,6 +3414,11 @@ void LLAppViewer::purgeCache()
 	gDirUtilp->deleteFilesInDir(gDirUtilp->getExpandedFilename(LL_PATH_CACHE,""),mask);
 }
 
+void LLAppViewer::addOnIdleCallback(const boost::function<void()>& cb)
+{
+	LLDeferredTaskList::instance().addTask(cb);
+}
+
 const std::string& LLAppViewer::getSecondLifeTitle() const
 {
 	return gSecondLife;
@@ -3964,6 +4004,9 @@ void LLAppViewer::idle()
 			gAudiop->idle(max_audio_decode_time);
 		}
 	}
+
+	// Execute deferred tasks.
+	LLDeferredTaskList::instance().run();
 
 	// Handle shutdown process, for example,
 	// wait for floaters to close, send quit message,

@@ -3591,6 +3591,29 @@ void LLInventoryModel::dumpInventory()
 	LL_DEBUGS("Inventory") << "\n**********************\nEnd Inventory Dump" << LL_ENDL;
 }
 
+//----------------------------------------------------------------------------
+
+void LLInventoryModel::removeItem(const LLUUID& item_id)
+{
+	LLViewerInventoryItem* item = getItem(item_id);
+	const LLUUID new_parent = findCategoryUUIDForType(LLFolderType::FT_TRASH);
+	if (item && item->getParentUUID() != new_parent)
+	{
+		LLInventoryModel::update_list_t update;
+		LLInventoryModel::LLCategoryUpdate old_folder(item->getParentUUID(),-1);
+		update.push_back(old_folder);
+		LLInventoryModel::LLCategoryUpdate new_folder(new_parent, 1);
+		update.push_back(new_folder);
+		accountForUpdate(update);
+
+		LLPointer<LLViewerInventoryItem> new_item = new LLViewerInventoryItem(item);
+		new_item->setParent(new_parent);
+		new_item->updateParentOnServer(TRUE);
+		updateItem(new_item);
+		notifyObservers();
+	}
+}
+
 ///----------------------------------------------------------------------------
 /// LLInventoryCollectFunctor implementations
 ///----------------------------------------------------------------------------

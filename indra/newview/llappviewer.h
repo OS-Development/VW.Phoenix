@@ -161,6 +161,8 @@ public:
 	// *NOTE:Mani Fix this for login abstraction!!
 	void handleLoginComplete();
 
+	void addOnIdleCallback(const boost::function<void()>& cb); // add a callback to fire (once) when idle
+
 protected:
 	virtual bool initWindow(); // Initialize the viewer's window.
 	virtual bool initLogging(); // Initialize log files, logging system, return false on failure.
