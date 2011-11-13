@@ -1,6 +1,6 @@
 /** 
  *
- * Copyright (c) 2009-2010, Kitty Barnett
+ * Copyright (c) 2009-2011, Kitty Barnett
  * 
  * The source code in this file is provided to you under the terms of the 
  * GNU General Public License, version 2.0, but WITHOUT ANY WARRANTY;
@@ -76,11 +76,11 @@ const S32 RLV_VERSION_BUILD = 1;
 // Implementation version
 const S32 RLVa_VERSION_MAJOR = 1;
 const S32 RLVa_VERSION_MINOR = 1;
-const S32 RLVa_VERSION_PATCH = 3;
-const S32 RLVa_VERSION_BUILD = 2;
+const S32 RLVa_VERSION_PATCH = 4;
+const S32 RLVa_VERSION_BUILD = 0;
 
- //Uncomment before a final release
-#define RLV_RELEASE
+// Uncomment before a final release
+//#define RLV_RELEASE
 
 // The official viewer version we're patching against
 #define RLV_MAKE_TARGET(x, y, z)	((x << 16) | (y << 8) | z)
@@ -131,15 +131,20 @@ const S32 RLVa_VERSION_BUILD = 2;
 enum ERlvBehaviour {
 	RLV_BHVR_DETACH = 0,			// "detach"
 	RLV_BHVR_ATTACH,				// "attach"
-	RLV_BHVR_ATTACHOVERORREPLACE,	// "attachoverorreplace"
 	RLV_BHVR_ADDATTACH,				// "addattach"
 	RLV_BHVR_REMATTACH,				// "remattach"
 	RLV_BHVR_ADDOUTFIT,				// "addoutfit"
 	RLV_BHVR_REMOUTFIT,				// "remoutfit"
+	RLV_BHVR_SHAREDWEAR,			// "sharedwear"
+	RLV_BHVR_SHAREDUNWEAR,			// "sharedunwear"
+	RLV_BHVR_UNSHAREDWEAR,			// "unsharedwear"
+	RLV_BHVR_UNSHAREDUNWEAR,		// "unsharedunwear"
 	RLV_BHVR_EMOTE,					// "emote"
 	RLV_BHVR_SENDCHAT,				// "sendchat"
 	RLV_BHVR_RECVCHAT,				// "recvchat"
+	RLV_BHVR_RECVCHATFROM,			// "recvchatfrom"
 	RLV_BHVR_RECVEMOTE,				// "recvemote"
+	RLV_BHVR_RECVEMOTEFROM,			// "recvemotefrom"
 	RLV_BHVR_REDIRCHAT,				// "redirchat"
 	RLV_BHVR_REDIREMOTE,			// "rediremote"
 	RLV_BHVR_CHATWHISPER,			// "chatwhisper"
@@ -147,7 +152,9 @@ enum ERlvBehaviour {
 	RLV_BHVR_CHATSHOUT,				// "chatshout"
 	RLV_BHVR_SENDCHANNEL,			// "sendchannel"
 	RLV_BHVR_SENDIM,				// "sendim"
+	RLV_BHVR_SENDIMTO,				// "sendimto"
 	RLV_BHVR_RECVIM,				// "recvim"
+	RLV_BHVR_RECVIMFROM,			// "recvimfrom"
 	RLV_BHVR_PERMISSIVE,			// "permissive"
 	RLV_BHVR_NOTIFY,				// "notify"
 	RLV_BHVR_SHOWINV,				// "showinv"
@@ -169,13 +176,18 @@ enum ERlvBehaviour {
 	RLV_BHVR_ACCEPTTP,				// "accepttp"
 	RLV_BHVR_ALLOWIDLE,				// "allowidle"
 	RLV_BHVR_EDIT,					// "edit"
+	RLV_BHVR_EDITOBJ,				// "editobj"
 	RLV_BHVR_REZ,					// "rez"
 	RLV_BHVR_FARTOUCH,				// "fartouch"
 	RLV_BHVR_INTERACT,				// "interact"
-	RLV_BHVR_TOUCH,					// "touch"
+	RLV_BHVR_TOUCHTHIS,				// "touchthis"
 	RLV_BHVR_TOUCHATTACH,			// "touchattach"
+	RLV_BHVR_TOUCHATTACHSELF,		// "touchattachself"
+	RLV_BHVR_TOUCHATTACHOTHER,		// "touchattachother"
 	RLV_BHVR_TOUCHHUD,				// "touchhud"
 	RLV_BHVR_TOUCHWORLD,			// "touchworld"
+	RLV_BHVR_TOUCHALL,				// "touchall"
+	RLV_BHVR_TOUCHME,				// "touchme"
 	RLV_BHVR_FLY,					// "fly"
 	RLV_BHVR_UNSIT,					// "unsit"
 	RLV_BHVR_SIT,					// "sit"
@@ -187,13 +199,18 @@ enum ERlvBehaviour {
 	RLV_BHVR_ATTACHOVER,			// "attachover"
 	RLV_BHVR_ATTACHTHIS,			// "attachthis"
 	RLV_BHVR_ATTACHTHISOVER,		// "attachthisover"
+	RLV_BHVR_ATTACHTHISEXCEPT,		// "attachthisexcept"
 	RLV_BHVR_DETACHTHIS,			// "detachthis"
+	RLV_BHVR_DETACHTHISEXCEPT,		// "detachthisexcept"
 	RLV_BHVR_ATTACHALL,				// "attachall"
 	RLV_BHVR_ATTACHALLOVER,			// "attachallover"
 	RLV_BHVR_DETACHALL,				// "detachall"
 	RLV_BHVR_ATTACHALLTHIS,			// "attachallthis"
+	RLV_BHVR_ATTACHALLTHISEXCEPT,	// "attachallthisexcept"
 	RLV_BHVR_ATTACHALLTHISOVER,		// "attachallthisover"
 	RLV_BHVR_DETACHALLTHIS,			// "detachallthis"
+	RLV_BHVR_DETACHALLTHISEXCEPT,	// "detachallthisexcept"
+	RLV_BHVR_ADJUSTHEIGHT,			// "adjustheight"
 	RLV_BHVR_TPTO,					// "tpto"
 	RLV_BHVR_VERSION,				// "version"
 	RLV_BHVR_VERSIONNEW,			// "versionnew"

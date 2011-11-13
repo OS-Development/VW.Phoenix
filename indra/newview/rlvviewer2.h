@@ -26,8 +26,10 @@
 
 #include "llcallbacklist.h"
 #include "llinventorymodel.h"
+#include "llmd5.h"
 
 #include "boost/function.hpp"
+#include "boost/signals2.hpp"
 
 // ============================================================================
 // From llinventoryobserver.h
@@ -57,10 +59,51 @@ private:
 };
 
 // ============================================================================
-// From llinventoryfunctions.cpp
+// From llinventoryfunctions.h
+
+class LLFindWearablesEx : public LLInventoryCollectFunctor
+{
+public:
+	LLFindWearablesEx(bool is_worn, bool include_body_parts = true);
+	virtual bool operator()(LLInventoryCategory* cat, LLInventoryItem* item);
+private:
+	bool mIncludeBodyParts;
+	bool mIsWorn;
+};
 
 void change_item_parent(LLInventoryModel* model, LLViewerInventoryItem* item, const LLUUID& new_parent_id, BOOL restamp);
 void change_category_parent(LLInventoryModel* model, LLViewerInventoryCategory* cat, const LLUUID& new_parent_id, BOOL restamp);
+BOOL get_is_item_worn(const LLUUID& id);
+
+// ============================================================================
+// From lloutfitobserver.h
+
+class LLCOFObserver : public LLInventoryObserver, public LLSingleton<LLCOFObserver>
+{
+	friend class LLSingleton<LLCOFObserver>;
+protected:
+	LLCOFObserver();
+public:
+	virtual ~LLCOFObserver();
+
+	virtual void changed(U32 mask);
+
+	typedef boost::signals2::signal<void (void)> signal_t;
+	void addCOFChangedCallback(const signal_t::slot_type& cb) { mCOFChanged.connect(cb); }
+	void addCOFSavedCallback(const signal_t::slot_type& cb) { mCOFSaved.connect(cb); }
+
+protected:
+	bool checkCOF();
+	static S32					getCategoryVersion(const LLUUID& cat_id);
+	static const std::string&	getCategoryName(const LLUUID& cat_id);
+	static LLMD5				hashDirectDescendentNames(const LLUUID& cat_id);
+
+private:
+	signal_t	mCOFChanged;
+	signal_t	mCOFSaved;
+	S32			mCOFLastVersion;
+	LLMD5		mItemNameHash;
+};
 
 // ============================================================================
 

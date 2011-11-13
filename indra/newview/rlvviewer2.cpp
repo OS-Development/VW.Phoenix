@@ -23,7 +23,10 @@
 
 #include "llviewerprecompiledheaders.h"
 #include "llagent.h"
+#include "llgesturemgr.h"
 #include "llviewerinventory.h"
+#include "llvoavatar.h"
+#include "cofmgr.h"
 #include "rlvviewer2.h"
 
 // ============================================================================
@@ -158,6 +161,37 @@ void LLInventoryFetchItemsObserver::startFetch()
 // ============================================================================
 // From llinventoryfunctions.cpp
 
+LLFindWearablesEx::LLFindWearablesEx(bool is_worn, bool include_body_parts)
+:	mIsWorn(is_worn)
+,	mIncludeBodyParts(include_body_parts)
+{}
+
+bool LLFindWearablesEx::operator()(LLInventoryCategory* cat, LLInventoryItem* item)
+{
+	LLViewerInventoryItem *vitem = dynamic_cast<LLViewerInventoryItem*>(item);
+	if (!vitem) return false;
+
+	// Skip non-wearables.
+	if (!vitem->isWearableType() && vitem->getType() != LLAssetType::AT_OBJECT)
+	{
+		return false;
+	}
+
+	// Skip body parts if requested.
+	if (!mIncludeBodyParts && vitem->getType() == LLAssetType::AT_BODYPART)
+	{
+		return false;
+	}
+
+	// Skip broken links.
+	if (vitem->getIsBrokenLink())
+	{
+		return false;
+	}
+
+	return (bool) get_is_item_worn(item->getUUID()) == mIsWorn;
+}
+
 void change_item_parent(LLInventoryModel* model, LLViewerInventoryItem* item, const LLUUID& new_parent_id, BOOL restamp)
 {
 	if (item->getParentUUID() != new_parent_id)
@@ -202,6 +236,141 @@ void change_category_parent(LLInventoryModel* model, LLViewerInventoryCategory* 
 	new_cat->updateParentOnServer(restamp);
 	model->updateCategory(new_cat);
 	model->notifyObservers();
+}
+
+BOOL get_is_item_worn(const LLUUID& id)
+{
+	const LLViewerInventoryItem* item = gInventory.getItem(id);
+	if (!item)
+		return FALSE;
+
+	// Consider the item as worn if it has links in COF.
+// [SL:KB] - The code below causes problems across the board so it really just needs to go
+//	if (LLAppearanceMgr::instance().isLinkInCOF(id))
+//	{
+//		return TRUE;
+//	}
+
+	switch(item->getType())
+	{
+		case LLAssetType::AT_OBJECT:
+		{
+			if (gAgent.getAvatarObject() && gAgent.getAvatarObject()->isWearingAttachment(item->getLinkedUUID()))
+				return TRUE;
+			break;
+		}
+		case LLAssetType::AT_BODYPART:
+		case LLAssetType::AT_CLOTHING:
+			if (gAgent.isWearingItem(item->getLinkedUUID()))
+				return TRUE;
+			break;
+		case LLAssetType::AT_GESTURE:
+			if (gGestureManager.isGestureActive(item->getLinkedUUID()))
+				return TRUE;
+			break;
+		default:
+			break;
+	}
+	return FALSE;
+}
+
+// ============================================================================
+// From lloutfitobserver.cpp
+
+LLCOFObserver::LLCOFObserver() :
+	mCOFLastVersion(LLViewerInventoryCategory::VERSION_UNKNOWN)
+{
+	mItemNameHash.finalize();
+	gInventory.addObserver(this);
+}
+
+LLCOFObserver::~LLCOFObserver()
+{
+	if (gInventory.containsObserver(this))
+	{
+		gInventory.removeObserver(this);
+	}
+}
+
+void LLCOFObserver::changed(U32 mask)
+{
+	if (!gInventory.isInventoryUsable())
+		return;
+
+	checkCOF();
+}
+
+// static
+S32 LLCOFObserver::getCategoryVersion(const LLUUID& cat_id)
+{
+	LLViewerInventoryCategory* cat = gInventory.getCategory(cat_id);
+	if (!cat)
+		return LLViewerInventoryCategory::VERSION_UNKNOWN;
+
+	return cat->getVersion();
+}
+
+// static
+const std::string& LLCOFObserver::getCategoryName(const LLUUID& cat_id)
+{
+	LLViewerInventoryCategory* cat = gInventory.getCategory(cat_id);
+	if (!cat)
+		return LLStringUtil::null;
+
+	return cat->getName();
+}
+
+bool LLCOFObserver::checkCOF()
+{
+	LLUUID cof = LLCOFMgr::getInstance()->getCOF();
+	if (cof.isNull())
+		return false;
+
+	bool cof_changed = false;
+	LLMD5 item_name_hash = hashDirectDescendentNames(cof);
+	if (item_name_hash != mItemNameHash)
+	{
+		cof_changed = true;
+		mItemNameHash = item_name_hash;
+	}
+
+	S32 cof_version = getCategoryVersion(cof);
+	if (cof_version != mCOFLastVersion)
+	{
+		cof_changed = true;
+		mCOFLastVersion = cof_version;
+	}
+
+	if (!cof_changed)
+		return false;
+	
+	mCOFChanged();
+
+	return true;
+}
+
+LLMD5 LLCOFObserver::hashDirectDescendentNames(const LLUUID& cat_id)
+{
+	LLInventoryModel::cat_array_t* cat_array;
+	LLInventoryModel::item_array_t* item_array;
+	gInventory.getDirectDescendentsOf(cat_id,cat_array,item_array);
+	LLMD5 item_name_hash;
+	if (!item_array)
+	{
+		item_name_hash.finalize();
+		return item_name_hash;
+	}
+	for (LLInventoryModel::item_array_t::const_iterator iter = item_array->begin();
+		 iter != item_array->end();
+		 iter++)
+	{
+		const LLViewerInventoryItem *item = (*iter);
+		if (!item)
+			continue;
+		item_name_hash.update(item->getName());
+	}
+	item_name_hash.finalize();
+	return item_name_hash;
 }
 
 // ============================================================================
