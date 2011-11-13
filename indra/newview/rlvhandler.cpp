@@ -232,7 +232,7 @@ ERlvCmdRet RlvHandler::processCommand(const RlvCommand& rlvCmd, bool fFromObj)
 	}
 
 	// Using a stack for executing commands solves a few problems:
-	//   - if we passed RlvObject::m_UUID for idObj somewhere and process a @clear then idObj points to invalid/cleared memory at the end
+	//   - if we passed RlvObject::m_idObj for idObj somewhere and process a @clear then idObj points to invalid/cleared memory at the end
 	//   - if command X triggers command Y along the way then getCurrentCommand()/getCurrentObject() still return Y even when finished
 	m_CurCommandStack.push(&rlvCmd); m_CurObjectStack.push(rlvCmd.getObjectID());
 	const LLUUID& idCurObj = m_CurObjectStack.top();
@@ -435,7 +435,7 @@ void RlvHandler::onAttach(const LLViewerObject* pAttachObj, const LLViewerJointA
 
 				// We need to check this object for an active "@detach=n" and actually lock it down now that it's been attached somewhere
 				if (itObj->second.hasBehaviour(RLV_BHVR_DETACH, false))
-					gRlvAttachmentLocks.addAttachmentLock(pAttachObj->getID(), itObj->second.m_UUID);
+					gRlvAttachmentLocks.addAttachmentLock(pAttachObj->getID(), itObj->second.getObjectID());
 			}
 		}
 	}
@@ -475,7 +475,7 @@ void RlvHandler::onDetach(const LLViewerObject* pAttachObj, const LLViewerJointA
 
 				// If this object has an active "@detach=n" then we need to release the attachment lock since it's no longer attached
 				if (itObj->second.hasBehaviour(RLV_BHVR_DETACH, false))
-					gRlvAttachmentLocks.removeAttachmentLock(pAttachObj->getID(), itObj->second.m_UUID);
+					gRlvAttachmentLocks.removeAttachmentLock(pAttachObj->getID(), itObj->second.getObjectID());
 			}
 		}
 	}
@@ -495,7 +495,7 @@ void RlvHandler::onDetach(const LLViewerObject* pAttachObj, const LLViewerJointA
 			if (itCurObj->second.m_idRoot == pAttachObj->getID())
 			{
 				RLV_INFOS << "Clearing " << itCurObj->first.asString() << ":" << RLV_ENDL;
-				processCommand(itCurObj->second.m_UUID, "clear", true);
+				processCommand(itCurObj->second.getObjectID(), "clear", true);
 				RLV_INFOS << "\t-> done" << RLV_ENDL;
 			}
 		}
@@ -514,7 +514,7 @@ bool RlvHandler::onGC()
 		RLV_ASSERT(itObj);
 #endif // RLV_DEBUG
 
-		const LLViewerObject* pObj = gObjectList.findObject(itCurObj->second.m_UUID);
+		const LLViewerObject* pObj = gObjectList.findObject(itCurObj->second.getObjectID());
 		if (!pObj)
 		{
 			// If the RlvObject once existed in gObjectList and now doesn't then expire it right away
@@ -543,7 +543,7 @@ bool RlvHandler::onGC()
 				//	-> if it does run it likely means that there's a @detach=n in a *child* prim that we couldn't look up in onAttach()
 				//  -> since RLV doesn't currently support @detach=n from child prims it's actually not such a big deal right now but still
 				if ( (pObj->isAttachment()) && (itCurObj->second.hasBehaviour(RLV_BHVR_DETACH, false)) )
-					gRlvAttachmentLocks.addAttachmentLock(pObj->getID(), itCurObj->second.m_UUID);
+					gRlvAttachmentLocks.addAttachmentLock(pObj->getID(), itCurObj->second.getObjectID());
 			}
 		}
 	}
@@ -1641,9 +1641,11 @@ ERlvCmdRet RlvHandler::processForceCommand(const RlvCommand& rlvCmd) const
 			{
 				RlvCommandOptionAdjustHeight rlvCmdOption(rlvCmd);
 				VERIFY_OPTION(rlvCmdOption.isValid());
-				if (isAgentAvatarValid())
+
+				LLVOAvatar* pAvatar = gAgent.getAvatarObject();
+				if (pAvatar)
 				{
-					F32 nValue = (rlvCmdOption.m_nPelvisToFoot - gAgentAvatarp->getPelvisToFoot()) * rlvCmdOption.m_nPelvisToFootDeltaMult;
+					F32 nValue = (rlvCmdOption.m_nPelvisToFoot - pAvatar->getPelvisToFoot()) * rlvCmdOption.m_nPelvisToFootDeltaMult;
 					nValue += rlvCmdOption.m_nPelvisToFootOffset;
 					gSavedSettings.setF32(RLV_SETTING_AVATAROFFSET_Z, llclamp<F32>(nValue, -1.0f, 1.0f));
 				}

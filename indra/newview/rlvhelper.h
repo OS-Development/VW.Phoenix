@@ -123,7 +123,7 @@ struct RlvCommandOptionGeneric : public RlvCommandOption
 	bool isSharedFolder() const			{ return (!isEmpty()) && (typeid(LLViewerInventoryCategory*) == m_varOption.type()); }
 	bool isString() const				{ return (!isEmpty()) && (typeid(std::string) == m_varOption.type()); }
 	bool isUUID() const					{ return (!isEmpty()) && (typeid(LLUUID) == m_varOption.type()); }
-	bool isWearableType() const			{ return (!isEmpty()) && (typeid(LLWearableType::EType) == m_varOption.type()); }
+	bool isWearableType() const			{ return (!isEmpty()) && (typeid(EWearableType) == m_varOption.type()); }
 
 	LLViewerJointAttachment*   getAttachmentPoint() const
 		{ return (isAttachmentPoint()) ? boost::get<LLViewerJointAttachment*>(m_varOption) : NULL; }
@@ -135,8 +135,8 @@ struct RlvCommandOptionGeneric : public RlvCommandOption
 		{ return (isString()) ? boost::get<std::string>(m_varOption) : LLStringUtil::null; }
 	const LLUUID&              getUUID() const
 		{ return (isUUID()) ? boost::get<LLUUID>(m_varOption) : LLUUID::null; }
-	LLWearableType::EType      getWearableType() const
-		{ return (isWearableType()) ? boost::get<LLWearableType::EType>(m_varOption) : LLWearableType::WT_INVALID; }
+	EWearableType              getWearableType() const
+		{ return (isWearableType()) ? boost::get<EWearableType>(m_varOption) : WT_INVALID; }
 
 protected:
 	bool m_fEmpty;
@@ -193,17 +193,18 @@ public:
 	bool        hasBehaviour(ERlvBehaviour eBehaviour, bool fStrictOnly) const;
 	bool        hasBehaviour(ERlvBehaviour eBehaviour, const std::string& strOption, bool fStrictOnly) const;
 
-	const LLUUID&		getRootID() const	{ return m_idRoot; }
-
 	const rlv_command_list_t* getCommandList() const { return &m_Commands; }
+
+	const LLUUID&		getObjectID() const	{ return m_idObj; }
+	const LLUUID&		getRootID() const	{ return m_idRoot; }
 
 	/*
 	 * Member variables
 	 */
 protected:
-	LLUUID             m_UUID;				// The object's UUID
 	S32                m_idxAttachPt;		// The object's attachment point (or 0 if it's not an attachment)
-	LLUUID             m_idRoot;			// The UUID of the object's root (may or may not be different from m_UUID)
+	LLUUID             m_idObj;				// The object's UUID
+	LLUUID             m_idRoot;			// The UUID of the object's root (may or may not be different from m_idObj)
 	bool               m_fLookup;			// TRUE if the object existed in gObjectList at one point in time
 	S16                m_nLookupMisses;		// Count of unsuccessful lookups in gObjectList by the GC
 	rlv_command_list_t m_Commands;			// List of behaviours held by this object (in the order they were received)
