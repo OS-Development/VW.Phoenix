@@ -155,7 +155,7 @@ void RlvCommand::initLookupTable()
 		// NOTE: keep this matched with the enumeration at all times
 		std::string arBehaviours[RLV_BHVR_COUNT] =
 			{
-				"detach", "attach", "attachoverorreplace", "addattach", "remattach", "addoutfit", "remoutfit", "sharedwear", "sharedunwear", "unsharedwear",
+				"detach", "attach", "addattach", "remattach", "addoutfit", "remoutfit", "sharedwear", "sharedunwear", "unsharedwear",
 				"unsharedunwear", "emote", "sendchat", "recvchat", "recvchatfrom", "recvemote", "recvemotefrom", "redirchat", "rediremote",
 				"chatwhisper", "chatnormal", "chatshout", "sendchannel", "sendim", "sendimto", "recvim", "recvimfrom", "permissive",
 				"notify", "showinv", "showminimap", "showworldmap", "showloc", "shownames", "showhovertext", "showhovertexthud", 
