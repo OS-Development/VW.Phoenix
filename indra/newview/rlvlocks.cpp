@@ -936,8 +936,6 @@ protected:
 	ERlvLockMask	m_eLockTypeMask;
 };
 
-RlvFolderLocks gRlvFolderLocks;
-
 // Checked: 2011-03-28 (RLVa-1.3.0g) | Modified: RLVa-1.3.0g
 RlvFolderLocks::RlvFolderLocks()
 	: m_fLookupDirty(false), m_fLockedRoot(false)
