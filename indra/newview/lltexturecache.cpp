@@ -1981,12 +1981,11 @@ void LLTextureCache::removeEntry(S32 idx, Entry& entry, std::string& filename, b
 {
 	if(idx >= 0) //valid entry
 	{
+		mTexturesSizeTotal -= entry.mBodySize;
 		entry.mImageSize = -1;
 		entry.mBodySize = 0;
 		mHeaderIDMap.erase(entry.mID);
 		mTexturesSizeMap.erase(entry.mID);
-
-		mTexturesSizeTotal -= entry.mBodySize;
 		mFreeList.insert(idx);	
 	}
 	
