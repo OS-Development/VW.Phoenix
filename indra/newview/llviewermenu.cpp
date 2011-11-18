@@ -384,11 +384,6 @@ BOOL check_show_xui_names(void *);
 
 void toggle_HTTPGetTextures(void *);
 
-void run_vectorize_perf_test(void *)
-{
-	gSavedSettings.setBOOL("VectorizePerfTest", TRUE);
-}
-
 // Debug UI
 void handle_web_search_demo(void*);
 void handle_web_browser_test(void*);
@@ -1381,8 +1376,6 @@ void init_debug_rendering_menu(LLMenuGL* menu)
 											&LLPipeline::toggleRenderDebugControl,
 											(void*)LLPipeline::RENDER_DEBUG_SCULPTED));
 		
-	sub_menu->append(new LLMenuItemCallGL("Vectorize Perf Test", &run_vectorize_perf_test));
-
 	sub_menu = new LLMenuGL("Render Tests");
 
 	sub_menu->append(new LLMenuItemCheckGL("Camera Offset", 
