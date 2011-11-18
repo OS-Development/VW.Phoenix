@@ -1117,6 +1117,7 @@ void LLFloaterModelPreview::initDecompControls()
 	{
 		stage_count = LLConvexDecomposition::getInstance()->getStages(&stage);
 	}
+	LL_DEBUGS("MeshUpload") << "stage_count = " << stage_count << LL_ENDL;
 
 	static const LLCDParam* param = NULL;
 	static S32 param_count = 0;
@@ -1124,6 +1125,7 @@ void LLFloaterModelPreview::initDecompControls()
 	{
 		param_count = LLConvexDecomposition::getInstance()->getParameters(&param);
 	}
+	LL_DEBUGS("MeshUpload") << "param_count = " << param_count << LL_ENDL;
 
 	for (S32 j = stage_count - 1; j >= 0; --j)
 	{
@@ -1133,8 +1135,10 @@ void LLFloaterModelPreview::initDecompControls()
 		// protected against stub by stage_count being 0 for stub above
 		LLConvexDecomposition::getInstance()->registerCallback(j, LLPhysicsDecomp::llcdCallback);
 
-		llinfos << "Physics decomp stage " << stage[j].mName << " (" << j << ") parameters:" << llendl;
-		llinfos << "------------------------------------" << llendl;
+		LL_DEBUGS("MeshUpload") << "Physics decomp stage " << stage[j].mName
+								<< " (" << j << ") parameters:" << LL_ENDL;
+		LL_DEBUGS("MeshUpload") << "------------------------------------"
+								<< LL_ENDL;
 
 		for (S32 i = 0; i < param_count; ++i)
 		{
@@ -1148,16 +1152,20 @@ void LLFloaterModelPreview::initDecompControls()
 
 			std::string type = "unknown";
 
-			llinfos << name << " - " << description << llendl;
+			LL_DEBUGS("MeshUpload") << name << " - " << description << LL_ENDL;
 
 			if (param[i].mType == LLCDParam::LLCD_FLOAT)
 			{
 				mDecompParams[param[i].mName] = LLSD(param[i].mDefault.mFloat);
-				llinfos << "Type: float, Default: " << param[i].mDefault.mFloat << llendl;
+				LL_DEBUGS("MeshUpload") << "Type: float - Default: "
+										<< param[i].mDefault.mFloat << LL_ENDL;
 
 				LLUICtrl* ctrl = getChild<LLUICtrl>(name);
 				if (LLSliderCtrl* slider = dynamic_cast<LLSliderCtrl*>(ctrl))
 				{
+					LL_DEBUGS("MeshUpload") << name
+											<< " corresponds to a slider."
+											<< LL_ENDL;
 					slider->setMinValue(param[i].mDetails.mRange.mLow.mFloat);
 					slider->setMaxValue(param[i].mDetails.mRange.mHigh.mFloat);
 					slider->setIncrement(param[i].mDetails.mRange.mDelta.mFloat);
@@ -1167,6 +1175,9 @@ void LLFloaterModelPreview::initDecompControls()
 				}
 				else if (LLSpinCtrl* spinner = dynamic_cast<LLSpinCtrl*>(ctrl))
 				{
+					LL_DEBUGS("MeshUpload") << name
+											<< " corresponds to a spinner."
+											<< LL_ENDL;
 					bool is_retain_ctrl = "Retain%" == name;
 					double coefficient = is_retain_ctrl ? RETAIN_COEFFICIENT : 1.f;
 
@@ -1179,6 +1190,9 @@ void LLFloaterModelPreview::initDecompControls()
 				}
 				else if (LLComboBox* combo_box = dynamic_cast<LLComboBox*>(ctrl))
 				{
+					LL_DEBUGS("MeshUpload") << name
+											<< " corresponds to a combo box."
+											<< LL_ENDL;
 					float min = param[i].mDetails.mRange.mLow.mFloat;
 					float max = param[i].mDetails.mRange.mHigh.mFloat;
 					float delta = param[i].mDetails.mRange.mDelta.mFloat;
@@ -1200,11 +1214,19 @@ void LLFloaterModelPreview::initDecompControls()
 					combo_box->setCommitCallback(onPhysicsParamCommit);
 					combo_box->setCallbackUserData((void*) &param[i]);
 				}
+				else
+				{
+					LL_DEBUGS("MeshUpload") << "WARNING: " << name
+											<< " does not correspond to any widget !"
+											<< LL_ENDL;
+				}
 			}
 			else if (param[i].mType == LLCDParam::LLCD_INTEGER)
 			{
 				mDecompParams[param[i].mName] = LLSD(param[i].mDefault.mIntOrEnumValue);
-				//llinfos << "Type: integer, Default: " << param[i].mDefault.mIntOrEnumValue << llendl;
+				LL_DEBUGS("MeshUpload") << "Type: integer - Default: "
+										<< param[i].mDefault.mIntOrEnumValue
+										<< LL_ENDL;
 
 				LLUICtrl* ctrl = getChild<LLUICtrl>(name);
 				if (LLSliderCtrl* slider = dynamic_cast<LLSliderCtrl*>(ctrl))
@@ -1229,46 +1251,73 @@ void LLFloaterModelPreview::initDecompControls()
 					combo_box->setCommitCallback(onPhysicsParamCommit);
 					combo_box->setCallbackUserData((void*) &param[i]);
 				}
+				else
+				{
+					LL_DEBUGS("MeshUpload") << "WARNING: " << name
+											<< " does not correspond to any widget !"
+											<< LL_ENDL;
+				}
 			}
 			else if (param[i].mType == LLCDParam::LLCD_BOOLEAN)
 			{
 				mDecompParams[param[i].mName] = LLSD(param[i].mDefault.mBool);
-				//llinfos << "Type: boolean, Default: " << (param[i].mDefault.mBool ? "True" : "False") << llendl;
+				LL_DEBUGS("MeshUpload") << "Type: boolean - Default: "
+										<< (param[i].mDefault.mBool ? "TRUE" : "FALSE")
+										<< LL_ENDL;
 
-				LLCheckBoxCtrl* check_box = getChild<LLCheckBoxCtrl>(name);
+				LLCheckBoxCtrl* check_box = getChild<LLCheckBoxCtrl>(name, TRUE, FALSE);
 				if (check_box)
 				{
 					check_box->setValue(param[i].mDefault.mBool);
 					check_box->setCommitCallback(onPhysicsParamCommit);
 					check_box->setCallbackUserData((void*) &param[i]);
 				}
+				else
+				{
+					LL_DEBUGS("MeshUpload") << "WARNING: " << name
+											<< " does not correspond to any widget !"
+											<< LL_ENDL;
+				}
 			}
 			else if (param[i].mType == LLCDParam::LLCD_ENUM)
 			{
 				mDecompParams[param[i].mName] = LLSD(param[i].mDefault.mIntOrEnumValue);
-				//llinfos << "Type: enum, Default: " << param[i].mDefault.mIntOrEnumValue << llendl;
+				LL_DEBUGS("MeshUpload") << "Type: enum - Default: "
+										<< param[i].mDefault.mIntOrEnumValue
+										<< LL_ENDL;
 
 				{	//plug into combo box
 
-					//llinfos << "Accepted values: " << llendl;
-					LLComboBox* combo_box = getChild<LLComboBox>(name);
-					for (S32 k = 0; k < param[i].mDetails.mEnumValues.mNumEnums; ++k)
+					LL_DEBUGS("MeshUpload") << "Accepted values: " << LL_ENDL;
+					LLComboBox* combo_box = getChild<LLComboBox>(name, TRUE, FALSE);
+					if (combo_box)
 					{
-						//llinfos << param[i].mDetails.mEnumValues.mEnumsArray[k].mValue
-						//	<< " - " << param[i].mDetails.mEnumValues.mEnumsArray[k].mName << llendl;
+						for (S32 k = 0; k < param[i].mDetails.mEnumValues.mNumEnums; ++k)
+						{
+							LL_DEBUGS("MeshUpload") << param[i].mDetails.mEnumValues.mEnumsArray[k].mValue
+													<< " - "
+													<< param[i].mDetails.mEnumValues.mEnumsArray[k].mName
+													<< LL_ENDL;
 
-						std::string name(param[i].mDetails.mEnumValues.mEnumsArray[k].mName);
-						combo_box->add(name,
-									   LLSD::Integer(param[i].mDetails.mEnumValues.mEnumsArray[k].mValue));
+							std::string name(param[i].mDetails.mEnumValues.mEnumsArray[k].mName);
+							combo_box->add(name,
+										   LLSD::Integer(param[i].mDetails.mEnumValues.mEnumsArray[k].mValue));
+						}
+						combo_box->setValue(param[i].mDefault.mIntOrEnumValue);
+						combo_box->setCommitCallback(onPhysicsParamCommit);
+						combo_box->setCallbackUserData((void*) &param[i]);
 					}
-					combo_box->setValue(param[i].mDefault.mIntOrEnumValue);
-					combo_box->setCommitCallback(onPhysicsParamCommit);
-					combo_box->setCallbackUserData((void*) &param[i]);
+					else
+					{
+						LL_DEBUGS("MeshUpload") << "WARNING: " << name
+												<< " does not correspond to any widget !"
+												<< LL_ENDL;
+					}
 				}
 
-				//llinfos << "----" << llendl;
+				LL_DEBUGS("MeshUpload") << "----" << LL_ENDL;
 			}
-			//llinfos << "-----------------------------" << llendl;
+			LL_DEBUGS("MeshUpload") << "-----------------------------" << LL_ENDL;
 		}
 	}
 
