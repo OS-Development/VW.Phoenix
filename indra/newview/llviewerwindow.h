@@ -347,6 +347,8 @@ public:
 	const LLVector2& getDisplayScale() const { return mDisplayScale; }
 	void			calcDisplayScale();
 
+	void			resetMouselookFadeTimer()		{ mMouselookTipFadeTimer.reset(); }
+
 private:
 	bool                    shouldShowToolTipFor(LLMouseHandler *mh);
 	static bool onAlert(const LLSD& notify);
@@ -401,6 +403,7 @@ protected:
 	std::vector<LLPickInfo> mPicks;
 	LLRect			mPickScreenRegion; // area of frame buffer for rendering pick frames (generally follows mouse to avoid going offscreen)
 	LLTimer         mPickTimer;        // timer for scheduling n picks per second
+	LLTimer         mMouselookTipFadeTimer;	// timer for fading exit mouselook instructions
 
 	std::string		mOverlayTitle;		// Used for special titles such as "Second Life - Special E3 2003 Beta"
 

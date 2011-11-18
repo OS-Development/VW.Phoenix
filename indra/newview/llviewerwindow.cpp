@@ -4578,7 +4578,31 @@ void LLViewerWindow::destroyWindow()
 void LLViewerWindow::drawMouselookInstructions()
 {
 	// Draw instructions for mouselook ("Press ESC to leave Mouselook" in a box at the top of the screen.)
-	const std::string instructions = "Press ESC to leave Mouselook.";
+	// *TODO: translate
+	static const std::string instructions = "Press SHIFT ESC to leave Mouselook.";
+	static LLCachedControl<U32> fade_mouselook_exit_tip(gSavedSettings, "FadeMouselookExitTip");
+	F32 opaque_time = (F32)fade_mouselook_exit_tip;
+	if (opaque_time != 0.0f && opaque_time < 5.0f)
+	{
+		opaque_time = 5.0f;
+	}
+	const F32 INSTRUCTIONS_FADE_TIME = 5;
+
+	F32 timer = mMouselookTipFadeTimer.getElapsedTimeF32();
+
+	if (opaque_time && timer >= opaque_time + INSTRUCTIONS_FADE_TIME)
+	{
+		// Faded out already
+		return;
+	}
+
+	F32 alpha = 1.0f;
+	if (opaque_time && timer >= opaque_time)
+	{
+		// Instructions are fading
+		alpha = 1.0f - (timer - opaque_time) / INSTRUCTIONS_FADE_TIME;
+	}
+
 	const LLFontGL* font = LLResMgr::getInstance()->getRes( LLFONT_SANSSERIF );
 
 	const S32 INSTRUCTIONS_PAD = 5;
@@ -4591,7 +4615,7 @@ void LLViewerWindow::drawMouselookInstructions()
 
 	{
 		gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
-		gGL.color4f( 0.9f, 0.9f, 0.9f, 1.0f );
+		gGL.color4f( 0.9f, 0.9f, 0.9f, alpha );
 		gl_rect_2d( instructions_rect );
 	}
 	
@@ -4599,7 +4623,7 @@ void LLViewerWindow::drawMouselookInstructions()
 		instructions, 0,
 		instructions_rect.mLeft + INSTRUCTIONS_PAD,
 		instructions_rect.mTop - INSTRUCTIONS_PAD,
-		LLColor4( 0.0f, 0.0f, 0.0f, 1.f ),
+		LLColor4( 0.0f, 0.0f, 0.0f, alpha ),
 		LLFontGL::LEFT, LLFontGL::TOP);
 }
 

@@ -3471,6 +3471,17 @@
 			<key>Value</key>
 			<integer>0</integer>
 		</map>
+		<key>FadeMouselookExitTip</key>
+		<map>
+			<key>Comment</key>
+			<string>Time in seconds after which the mouselook mode exit tip starts fading out (0 = never fade, minimum is 5s)</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>U32</string>
+			<key>Value</key>
+			<integer>0</integer>
+		</map>
 		<key>FetchInventoryOnLogin</key>
 		<map>
 			<key>Comment</key>

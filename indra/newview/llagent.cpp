@@ -4225,6 +4225,7 @@ void LLAgent::changeCameraToMouselook(BOOL animate)
 			mCameraAnimating = FALSE;
 			endAnimationUpdateUI();
 		}
+		gViewerWindow->resetMouselookFadeTimer();
 	}
 }
 
