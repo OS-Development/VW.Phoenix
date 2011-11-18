@@ -8,6 +8,7 @@
 	<string name="status_reading_file">Loading...</string>
 	<string name="status_generating_meshes">Generating Meshes...</string>
 	<string name="status_vertex_number_overflow">Error: Vertex number is more than 65534, aborted!</string>
+	<string name="status_waiting_server">Sending weights &amp; fee request to server, please wait...</string>
 	<string name="bad_element">Error: element is invalid</string>
 	<string name="high">High</string>
 	<string name="medium">Medium</string>
@@ -516,13 +517,18 @@
 
 			<!-- NOTE MESSAGE -->
 			<text name="warning_title" font="SansSerif" follows="top|left"
-			 left="5" bottom_delta="-25" height="20" width="40" visible="false">
+			 left="5" bottom_delta="-25" height="20" width="40" visible="true">
 				NOTE:
 			</text>
 			<text name="warning_message" wrap="true" parse_urls="true"
 			 follows="top|left" visible="false"
-			 left_delta="45" bottom_delta="-1" height="20" width="560">
-				You dont have rights to upload mesh models. [[VURL] Find out how] to get certified.
+			 left_delta="45" bottom_delta="-1" height="20" width="240">
+				You dont have rights to upload mesh models.
+			</text>
+			<text name="validate_url" wrap="true" parse_urls="true"
+			 follows="top|left" visible="false" hover="true"
+			 left_delta="245" bottom_delta="0" height="20" width="260">
+				Click here to find out how to get certified.
 			</text>
 
 			<text name="status" follows="top|left"

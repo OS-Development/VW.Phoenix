@@ -107,12 +107,11 @@ class LLFileEnableUploadModel : public view_listener_t
 {
 	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
 	{
-#if LL_LINUX || LL_WINDOWS
-		bool new_value = gSavedSettings.getBOOL("MeshUploadEnable") &&
-						 gMeshRepo.meshUploadEnabled();
-#else
-		bool new_value = false;
+		bool new_value = gMeshRepo.meshUploadEnabled() &&
+#if !LL_LINUX
+						 gSavedSettings.getBOOL("MeshUploadEnable") &&
 #endif
+						 LLFloaterModelPreview::sInstance == NULL;
  		gMenuHolder->findControl(userdata["control"].asString())->setValue(new_value);
  		return true;
  	}
@@ -361,16 +360,11 @@ class LLFileUploadModel : public view_listener_t
 {
 	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
 	{
-#if LL_LINUX || LL_WINDOWS
-		if (gSavedSettings.getBOOL("MeshUploadEnable"))
+		LLFloaterModelPreview* fmp = new LLFloaterModelPreview("Model Preview");
+		if (fmp)
 		{
-			LLFloaterModelPreview* fmp = new LLFloaterModelPreview("Model Preview");
-			if (fmp)
-			{
-				fmp->loadModel(3);
-			}
+			fmp->loadModel(3);
 		}
-#endif
 		return TRUE;
 	}
 };

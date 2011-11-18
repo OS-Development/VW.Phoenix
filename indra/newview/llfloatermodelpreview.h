@@ -170,18 +170,18 @@ public:
 	BOOL handleHover(S32 x, S32 y, MASK mask);
 	BOOL handleScrollWheel(S32 x, S32 y, S32 clicks); 
 
-	/*virtual*/ void onOpen(const LLSD& key);
+	/*virtual*/ void onOpen();
 
 	static void onMouseCaptureLostModelPreview(LLMouseHandler*);
 	static void setUploadAmount(S32 amount) { sUploadAmount = amount; }
 
 	void setDetails(F32 x, F32 y, F32 z, F32 streaming_cost, F32 physics_cost);
 
-	static void onBrowseLOD(void* user_data);
+	static void onBrowseLOD(void* userdata);
 
-	static void onReset(void* data);
+	static void onReset(void* userdata);
 
-	static void onUpload(void* data);
+	static void onUpload(void* userdata);
 
 	void refresh();
 
@@ -243,14 +243,18 @@ protected:
 
 	static void onPhysicsParamCommit(LLUICtrl* ctrl, void* userdata);
 	static void onPhysicsStageExecute(LLUICtrl* ctrl, void* userdata);
-	static void onCancel(LLUICtrl* ctrl, void* userdata);
-	static void onPhysicsStageCancel(LLUICtrl* ctrl, void* userdata);
+	static void onPhysicsStageCancel(void* userdata);
+	static void onCancel(void* userdata);
 
-	static void onPhysicsBrowse(LLUICtrl* ctrl, void* userdata);
+	static void onPhysicsBrowse(void* userdata);
 	static void onPhysicsUseLOD(LLUICtrl* ctrl, void* userdata);
-	static void onPhysicsOptimize(LLUICtrl* ctrl, void* userdata);
-	static void onPhysicsDecomposeBack(LLUICtrl* ctrl, void* userdata);
-	static void onPhysicsSimplifyBack(LLUICtrl* ctrl, void* userdata);
+#if 0	// Not implemented
+	static void onPhysicsOptimize(void* userdata);
+	static void onPhysicsDecomposeBack(void* userdata);
+	static void onPhysicsSimplifyBack(void* userdata);
+#endif
+
+	static void onClickValidateURL(void* userdata);
 
 	void		draw();
 
@@ -295,6 +299,14 @@ private:
 
 	LLButton* mUploadBtn;
 	LLButton* mCalculateBtn;
+
+	std::string mValidateURL;	// account upload permission validation URL
+
+	bool mSentFeeRequest;		// true when waiting for a reply for fee from server
+
+	bool mLibIsHACD;			// true when HACD library is detected.
+
+	S32 mNeedsReset;			// Hack to get things right on first loading of a model
 };
 
 class LLMeshFilePicker : public LLFilePickerThread
