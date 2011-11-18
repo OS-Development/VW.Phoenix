@@ -6351,7 +6351,7 @@
 			<key>Type</key>
 			<string>U32</string>
 			<key>Value</key>
-			<real>16</real>
+			<integer>16</integer>
 		</map>
 		<key>MeshImportUseSLM</key>
 		<map>
@@ -6362,7 +6362,7 @@
 			<key>Type</key>
 			<string>Boolean</string>
 			<key>Value</key>
-			<real>1</real>
+			<integer>1</integer>
 		</map>
 		<key>MeshLoadHighLOD</key>
 		<map>
@@ -6395,7 +6395,7 @@
 			<key>Type</key>
 			<string>U32</string>
 			<key>Value</key>
-			<real>384</real>
+			<integer>384</integer>
 		</map>
 		<key>MeshMinimumByteSize</key>
 		<map>
@@ -6406,7 +6406,7 @@
 			<key>Type</key>
 			<string>U32</string>
 			<key>Value</key>
-			<real>16</real>
+			<integer>16</integer>
 		</map>
 		<key>MeshThreadCount</key>
 		<map>
@@ -6428,7 +6428,7 @@
 			<key>Type</key>
 			<string>U32</string>
 			<key>Value</key>
-			<real>250000</real>
+			<integer>250000</integer>
 		</map>
 		<key>MeshUploadEnable</key>
 		<map>
@@ -11617,7 +11617,7 @@
 			<key>Type</key>
 			<string>U32</string>
 			<key>Value</key>
-			<real>4</real>
+			<integer>4</integer>
 		</map>
 		<key>RenderGIBlurSize</key>
 		<map>
@@ -12398,7 +12398,7 @@
 			<key>Type</key>
 			<string>U32</string>
 			<key>Value</key>
-			<real>128</real>
+			<integer>128</integer>
 		</map>
 		<key>RenderSpecularResY</key>
 		<map>
@@ -12409,7 +12409,7 @@
 			<key>Type</key>
 			<string>U32</string>
 			<key>Value</key>
-			<real>128</real>
+			<integer>128</integer>
 		</map>
 		<key>RenderSpotLightsInNondeferred</key>
 		<map>
