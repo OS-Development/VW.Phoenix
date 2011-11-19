@@ -452,6 +452,8 @@ static void settings_to_globals()
 	LLCOMBOBOX_HEIGHT	= BTN_HEIGHT - 2;
 	LLCOMBOBOX_WIDTH	= 128;
 
+	LLFilePickerThread::setBlocking(gSavedSettings.getBOOL("BlockingFilePicker") != FALSE);
+
 	LLSurface::setTextureSize(gSavedSettings.getU32("RegionTextureSize"));
 
 	LLImageGL::sGlobalUseAnisotropic	= gSavedSettings.getBOOL("RenderAnisotropic");

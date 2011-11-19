@@ -103,6 +103,9 @@ public:
 	static void cleanupClass();
 	static void clearDead();
 
+	static void setBlocking(bool flag)	{ sBlocking = flag; }
+	static bool getBlocking()			{ return sBlocking; }
+
 	std::string mFile; 
 
 	LLFilePicker::ELoadFilter mFilter;
@@ -117,6 +120,9 @@ public:
 	virtual void run();
  
 	virtual void notify(const std::string& filename) = 0;
+
+private:
+	static bool sBlocking;
 };
 
 #endif
