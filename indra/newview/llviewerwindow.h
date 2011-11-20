@@ -405,8 +405,6 @@ protected:
 	LLTimer         mPickTimer;        // timer for scheduling n picks per second
 	LLTimer         mMouselookTipFadeTimer;	// timer for fading exit mouselook instructions
 
-	std::string		mOverlayTitle;		// Used for special titles such as "Second Life - Special E3 2003 Beta"
-
 	BOOL			mIgnoreActivate;
 
 	std::string		mInitAlert;			// Window / GL initialization requires an alert

@@ -108,7 +108,7 @@ class LLFileEnableUploadModel : public view_listener_t
 	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
 	{
 		bool new_value = gMeshRepo.meshUploadEnabled() &&
-#if !LL_LINUX
+#if LL_WINDOWS
 						 gSavedSettings.getBOOL("MeshUploadEnable") &&
 #endif
 						 LLFloaterModelPreview::sInstance == NULL;

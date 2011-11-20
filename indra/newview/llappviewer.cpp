@@ -452,7 +452,11 @@ static void settings_to_globals()
 	LLCOMBOBOX_HEIGHT	= BTN_HEIGHT - 2;
 	LLCOMBOBOX_WIDTH	= 128;
 
-	LLFilePickerThread::setBlocking(gSavedSettings.getBOOL("BlockingFilePicker") != FALSE);
+#if LL_DARWIN
+	LLFilePickerThread::setBlocking(true);	// Apparently, Darwin doesn't like non-blocking file pickers...
+#else
+	LLFilePickerThread::setBlocking(gSavedSettings.getBOOL("BlockingFilePicker") == TRUE);
+#endif
 
 	LLSurface::setTextureSize(gSavedSettings.getU32("RegionTextureSize"));
 

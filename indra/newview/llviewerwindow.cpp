@@ -161,7 +161,6 @@ LLFrameTimer	gAwayTimer;
 LLFrameTimer	gAwayTriggerTimer;
 LLFrameTimer	gAlphaFadeTimer;
 
-BOOL			gShowOverlayTitle = FALSE;
 BOOL			gPickTransparent = TRUE;
 
 LLViewerObject*  gDebugRaycastObject = NULL;
@@ -1697,11 +1696,6 @@ LLViewerWindow::LLViewerWindow(
 	mCurrentMousePoint.mX = getWindowWidth() / 2;
 	mCurrentMousePoint.mY = getWindowHeight() / 2;
 
-	gShowOverlayTitle = gSavedSettings.getBOOL("ShowOverlayTitle");
-	mOverlayTitle = gSavedSettings.getString("OverlayTitle");
-	// Can't have spaces in settings.ini strings, so use underscores instead and convert them.
-	LLStringUtil::replaceChar(mOverlayTitle, '_', ' ');
-
 	// sync the keyboard's setting with the saved setting
 	gSavedSettings.getControl("NumpadControl")->firePropertyChanged();
 
@@ -2496,18 +2490,6 @@ void LLViewerWindow::draw()
 				mToolTip->draw();
 			}
 			LLUI::popMatrix();
-		}
-
-		if( gShowOverlayTitle && !mOverlayTitle.empty() )
-		{
-			// Used for special titles such as "Second Life - Special E3 2003 Beta"
-			const S32 DIST_FROM_TOP = 20;
-			LLFontGL::getFontSansSerifBig()->renderUTF8(
-				mOverlayTitle, 0,
-				llround( getWindowWidth() * 0.5f),
-				getWindowHeight() - DIST_FROM_TOP,
-				LLColor4(1, 1, 1, 0.4f),
-				LLFontGL::HCENTER, LLFontGL::TOP);
 		}
 
 		LLUI::sGLScaleFactor = old_scale_factor;

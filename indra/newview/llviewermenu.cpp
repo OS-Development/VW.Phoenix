@@ -264,7 +264,6 @@ void handle_test_load_url(void*);
 // Evil hackish imported globals
 //
 extern BOOL gRenderAvatar;
-extern BOOL gShowOverlayTitle;
 extern BOOL gOcclusionCull;
 
 //
@@ -387,7 +386,6 @@ void toggle_HTTPGetTextures(void *);
 // Debug UI
 void handle_web_search_demo(void*);
 void handle_web_browser_test(void*);
-void handle_buy_currency_test(void*);
 void handle_save_to_xml(void*);
 void handle_load_from_xml(void*);
 
@@ -411,10 +409,6 @@ void handle_object_owner_permissive(void*);
 void handle_object_lock(void*);
 void handle_object_asset_ids(void*);
 void force_take_copy(void*);
-#ifdef _CORY_TESTING
-void force_export_copy(void*);
-void force_import_geometry(void*);
-#endif
 
 void handle_force_parcel_owner_to_me(void*);
 void handle_force_parcel_to_content(void*);
@@ -435,12 +429,14 @@ void force_error_software_exception(void *);
 void force_error_driver_crash(void *);
 
 void handle_stopall(void*);
-//void handle_hinge(void*);
-//void handle_ptop(void*);
-//void handle_lptop(void*);
-//void handle_wheel(void*);
-//void handle_dehinge(void*);
+#ifdef SEND_HINGES
+void handle_hinge(void*);
+void handle_ptop(void*);
+void handle_lptop(void*);
+void handle_wheel(void*);
+void handle_dehinge(void*);
 BOOL enable_dehinge(void*);
+#endif
 void handle_force_delete(void*);
 void print_object_info(void*);
 void print_agent_nvpairs(void*);
@@ -1109,8 +1105,6 @@ void init_debug_ui_menu(LLMenuGL* menu)
 	menu->append(new LLMenuItemCallGL("Reload L$ balance", &reload_linden_balance, NULL, NULL, 'B', MASK_CONTROL | MASK_ALT));
 	menu->appendSeparator();
 
-	// commented out until work is complete: DEV-32268
-	// menu->append(new LLMenuItemCallGL("Buy Currency Test", &handle_buy_currency_test));
 	menu->append(new LLMenuItemCallGL("Editable UI", &edit_ui));
 	menu->append(new LLMenuItemCallGL( "Dump SelectMgr", &dump_select_mgr));
 	menu->append(new LLMenuItemCallGL( "Dump Inventory", &dump_inventory));
@@ -1659,12 +1653,6 @@ void init_server_menu(LLMenuGL* menu)
 	menu->append(new LLMenuItemCallGL("Save Region State", 
 		&LLPanelRegionTools::onSaveState, &enable_god_customer_service, NULL));
 
-//	menu->append(new LLMenuItemCallGL("Force Join Group", handle_force_join_group));
-//
-//	menu->appendSeparator();
-//
-//	menu->append(new LLMenuItemCallGL( "OverlayTitle",
-//		&handle_show_overlay_title, &enable_god_customer_service, NULL));
 	menu->createJumpKeys();
 }
 
@@ -4251,12 +4239,6 @@ void handle_god_request_avatar_geometry(void *)
 }
 
 
-void handle_show_overlay_title(void*)
-{
-	gShowOverlayTitle = !gShowOverlayTitle;
-	gSavedSettings.setBOOL("ShowOverlayTitle", gShowOverlayTitle);
-}
-
 void derez_objects(EDeRezDestination dest, const LLUUID& dest_id)
 {
 	if(gAgent.cameraMouselook())
@@ -5209,36 +5191,38 @@ class LLToolsEnableReleaseKeys : public view_listener_t
 	}
 };
 
-//void handle_hinge(void*)
-//{
-//	LLSelectMgr::getInstance()->sendHinge(1);
-//}
+#ifdef SEND_HINGES
+void handle_hinge(void*)
+{
+	LLSelectMgr::getInstance()->sendHinge(1);
+}
 
-//void handle_ptop(void*)
-//{
-//	LLSelectMgr::getInstance()->sendHinge(2);
-//}
+void handle_ptop(void*)
+{
+	LLSelectMgr::getInstance()->sendHinge(2);
+}
 
-//void handle_lptop(void*)
-//{
-//	LLSelectMgr::getInstance()->sendHinge(3);
-//}
+void handle_lptop(void*)
+{
+	LLSelectMgr::getInstance()->sendHinge(3);
+}
 
-//void handle_wheel(void*)
-//{
-//	LLSelectMgr::getInstance()->sendHinge(4);
-//}
+void handle_wheel(void*)
+{
+	LLSelectMgr::getInstance()->sendHinge(4);
+}
 
-//void handle_dehinge(void*)
-//{
-//	LLSelectMgr::getInstance()->sendDehinge();
-//}
+void handle_dehinge(void*)
 
-//BOOL enable_dehinge(void*)
-//{
-//	LLViewerObject* obj = LLSelectMgr::getInstance()->getSelection()->getFirstEditableObject();
-//	return obj && !obj->isAttachment();
-//}
+	LLSelectMgr::getInstance()->sendDehinge();
+}
+
+BOOL enable_dehinge(void*)
+{
+	LLViewerObject* obj = LLSelectMgr::getInstance()->getSelection()->getFirstEditableObject();
+	return obj && !obj->isAttachment();
+}
+#endif
 
 
 class LLEditEnableCut : public view_listener_t
@@ -8707,43 +8691,6 @@ void handle_web_browser_test(void*)
 	LLFloaterMediaBrowser::showInstance("http://secondlife.com/app/search/slurls.html");
 }
 
-void handle_buy_currency_test(void*)
-{
-	std::string url =
-		"http://sarahd-sl-13041.webdev.lindenlab.com/app/lindex/index.php?agent_id=[AGENT_ID]&secure_session_id=[SESSION_ID]&lang=[LANGUAGE]";
-
-	LLStringUtil::format_map_t replace;
-	replace["[AGENT_ID]"] = gAgent.getID().asString();
-	replace["[SESSION_ID]"] = gAgent.getSecureSessionID().asString();
-
-	// *TODO: Replace with call to LLUI::getLanguage() after windows-setup
-	// branch merges in. JC
-	std::string language = "en-us";
-	language = gSavedSettings.getString("Language");
-	if (language.empty() || language == "default")
-	{
-		language = gSavedSettings.getString("InstallLanguage");
-	}
-	if (language.empty() || language == "default")
-	{
-		language = gSavedSettings.getString("SystemLanguage");
-	}
-	if (language.empty() || language == "default")
-	{
-		language = "en-us";
-	}
-
-	replace["[LANGUAGE]"] = language;
-	LLStringUtil::format(url, replace);
-
-	llinfos << "buy currency url " << url << llendl;
-
-	LLFloaterHtmlCurrency* floater = LLFloaterHtmlCurrency::showInstance(url);
-	// Needed so we can use secondlife:///app/floater/self/close SLURLs
-	floater->setTrusted(true);
-	floater->center();
-}
-
 void handle_rebake_textures(void*)
 {
 	LLVOAvatar* avatar = gAgent.getAvatarObject();
@@ -8757,13 +8704,16 @@ void handle_rebake_textures(void*)
 void toggle_visibility(void* user_data)
 {
 	LLView* viewp = (LLView*)user_data;
-	viewp->setVisible(!viewp->getVisible());
+	if (viewp)
+	{
+		viewp->setVisible(!viewp->getVisible());
+	}
 }
 
 BOOL get_visibility(void* user_data)
 {
 	LLView* viewp = (LLView*)user_data;
-	return viewp->getVisible();
+	return viewp ? viewp->getVisible() : FALSE;
 }
 
 // TomY TODO: Get rid of these?

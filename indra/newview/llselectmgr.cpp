@@ -3839,11 +3839,11 @@ void LLSelectMgr::sendDelink()
 }
 
 
+#ifdef SEND_HINGES
 //----------------------------------------------------------------------
 // Hinges
 //----------------------------------------------------------------------
 
-/*
 void LLSelectMgr::sendHinge(U8 type)
 {
 	if (!mSelectedObjects->getNumNodes())
@@ -3873,7 +3873,20 @@ void LLSelectMgr::sendDehinge()
 		packObjectLocalID,
 		NULL,
 		SEND_ONLY_ROOTS);
-}*/
+}
+
+// static
+void LLSelectMgr::packHingeHead(void *user_data)
+{
+	U8	*type = (U8 *)user_data;
+
+	gMessageSystem->nextBlockFast(_PREHASH_AgentData);
+	gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+	gMessageSystem->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
+	gMessageSystem->nextBlockFast(_PREHASH_JointType);
+	gMessageSystem->addU8Fast(_PREHASH_Type, *type);
+}
+#endif
 
 void LLSelectMgr::sendSelect()
 {
@@ -3888,18 +3901,6 @@ void LLSelectMgr::sendSelect()
 		packObjectLocalID,
 		NULL,
 		SEND_INDIVIDUALS);
-}
-
-// static
-void LLSelectMgr::packHingeHead(void *user_data)
-{
-	U8	*type = (U8 *)user_data;
-
-	gMessageSystem->nextBlockFast(_PREHASH_AgentData);
-	gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID() );
-	gMessageSystem->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID() );
-	gMessageSystem->nextBlockFast(_PREHASH_JointType);
-	gMessageSystem->addU8Fast(_PREHASH_Type, *type );
 }
 
 
