@@ -1321,7 +1321,7 @@ void init_debug_rendering_menu(LLMenuGL* menu)
 										   &LLPipeline::toggleRenderDebug, NULL,
 											&LLPipeline::toggleRenderDebugControl,
 											(void*)LLPipeline::RENDER_DEBUG_TEXTURE_PRIORITY));
-	sub_menu->append(new LLMenuItemCheckGL("Avatar Rendering Cost",
+	sub_menu->append(new LLMenuItemCheckGL("Avatar Render Weight (Replacement for ARC)",
 										   &LLPipeline::toggleRenderDebug, NULL,
 											&LLPipeline::toggleRenderDebugControl,
 											(void*)LLPipeline::RENDER_DEBUG_SHAME));
