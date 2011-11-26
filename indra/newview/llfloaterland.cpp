@@ -37,43 +37,40 @@
 
 #include "llfloaterland.h"
 
+#include "llbutton.h"
 #include "llcachename.h"
+#include "llcheckboxctrl.h"
+#include "llcombobox.h"
 #include "llfocusmgr.h"
+#include "lllineeditor.h"
 #include "llparcel.h"
+#include "lltabcontainer.h"
+#include "lltextbox.h"
+#include "lluiconstants.h"
+#include "lluictrlfactory.h"
 #include "message.h"
-#include "lluserauth.h"
+#include "roles_constants.h"
 
 #include "llagent.h"
-#include "llfloateravatarpicker.h"
-#include "llbutton.h"
-#include "llcheckboxctrl.h"
-#include "llradiogroup.h"
-#include "llcombobox.h"
 #include "llfloaterauction.h"
 #include "llfloateravatarinfo.h"
+#include "llfloateravatarpicker.h"
 #include "llfloatergroups.h"
 #include "llfloatergroupinfo.h"
-#include "lllineeditor.h"
 #include "llnamelistctrl.h"
 #include "llpanellandaudio.h"
 #include "llpanellandmedia.h"
-#include "llradiogroup.h"
-#include "llscrolllistctrl.h"
 #include "llselectmgr.h"
-#include "llspinctrl.h"
-#include "lltabcontainer.h"
-#include "lltextbox.h"
 #include "lltexturectrl.h"
-#include "lluiconstants.h"
-#include "lluictrlfactory.h"
+#include "lltrans.h"
+#include "lluserauth.h"
+#include "llviewercontrol.h"
 #include "llviewermessage.h"
 #include "llviewerparcelmgr.h"
 #include "llviewerregion.h"
 #include "llviewerstats.h"
 #include "llviewertexteditor.h"
 #include "llviewerwindow.h"
-#include "llviewercontrol.h"
-#include "roles_constants.h"
 #include "llworld.h"
 
 // [RLVa:KB]
@@ -612,7 +609,7 @@ void LLPanelLandGeneral::refresh()
 		S32 area;
 		S32 claim_price;
 		S32 rent_price;
-		F32 dwell;
+		F32 dwell = DWELL_NAN;
 		LLViewerParcelMgr::getInstance()->getDisplayInfo(&area, &claim_price,
 														 &rent_price, &for_sale,
 														 &dwell);
@@ -623,7 +620,14 @@ void LLPanelLandGeneral::refresh()
 		mTextPriceLabel->setText(getString("area_text"));
 		mTextPrice->setText(price.getString());
 
-		mTextDwell->setText(llformat("%.0f", dwell));
+		if (dwell == DWELL_NAN)
+		{
+			mTextDwell->setText(LLTrans::getString("LoadingData"));
+		}
+		else
+		{
+			mTextDwell->setText(llformat("%.0f", dwell));
+		}
 
 		if (for_sale)
 		{
