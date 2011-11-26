@@ -50,7 +50,9 @@
 #undef require
 
 #include <vector>
+
 #include "llstring.h"
+#include "llthread.h"
 
 #endif
 
@@ -90,9 +92,6 @@ public:
 		FFLOAD_WAV = 2,
 		FFLOAD_IMAGE = 3,
 		FFLOAD_ANIM = 4,
-#ifdef _CORY_TESTING
-		FFLOAD_GEOMETRY = 5,
-#endif
 		FFLOAD_XML = 6,
 		FFLOAD_SLOBJECT = 7,
 		FFLOAD_RAW = 8,
@@ -100,7 +99,9 @@ public:
 		FFLOAD_BLACKLIST = 10,
 		FFLOAD_MEDIA = 11,
 		FFLOAD_MODEL = 12,
-		FFLOAD_COLLADA = 13
+		FFLOAD_COLLADA = 13,
+		FFLOAD_SCRIPT = 14,
+		FFLOAD_TEXT = 15,
 	};
 
 	enum ESaveFilter
@@ -111,9 +112,6 @@ public:
 		FFSAVE_BMP = 5,
 		FFSAVE_AVI = 6,
 		FFSAVE_ANIM = 7,
-#ifdef _CORY_TESTING
-		FFSAVE_GEOMETRY = 8,
-#endif
 		FFSAVE_XML = 9,
 		FFSAVE_COLLADA = 10,
 		FFSAVE_RAW = 11,
@@ -121,13 +119,18 @@ public:
 		FFSAVE_PNG = 13,
 		FFSAVE_JPEG = 14,
 		FFSAVE_BEAM = 15,
-		FFSAVE_BLACKLIST = 16
+		FFSAVE_BLACKLIST = 16,
+		FFSAVE_SCRIPT = 17,
+		FFSAVE_TEXT = 18,
 	};
 
 	// open the dialog. This is a modal operation
-	BOOL getSaveFile(ESaveFilter filter = FFSAVE_ALL, const std::string& filename = LLStringUtil::null);
+	BOOL getSaveFile(ESaveFilter filter = FFSAVE_ALL,
+					 const std::string& filename = LLStringUtil::null,
+					 bool blocking = true);
 	BOOL getOpenFile(ELoadFilter filter = FFLOAD_ALL, bool blocking = true);
-	BOOL getMultipleOpenFiles(ELoadFilter filter = FFLOAD_ALL);
+	BOOL getMultipleOpenFiles(ELoadFilter filter = FFLOAD_ALL,
+							  bool blocking = true);
 
 	// Get the filename(s) found. getFirstFile() sets the pointer to
 	// the start of the structure and allows the start of iteration.
@@ -185,7 +188,7 @@ private:
 	static void add_to_selectedfiles(gpointer data, gpointer user_data);
 	static void chooser_responder(GtkWidget *widget, gint response, gpointer user_data);
 	// we remember the last path that was accessed for a particular usage
-	std::map <std::string, std::string> mContextToPathMap;
+	static std::map <std::string, std::string> sContextToPathMap;
 	std::string mCurContextName;
 #endif
 
@@ -207,6 +210,123 @@ public:
 	~LLFilePicker();
 };
 
-const std::string upload_pick(void* data);
+// Multi-threaded file picker (runs system specific file picker in background
+// and calls "notify" from main thread)
+
+class LLFilePickerThread : public LLThread
+{
+public:
+	LLFilePickerThread(LLFilePicker::ELoadFilter filter)
+	:	LLThread("load file picker"),
+		mFilter(filter),
+		mMultiple(false),
+		mSavePicker(false)
+	{
+	}
+
+	LLFilePickerThread(LLFilePicker::ESaveFilter filter)
+	:	LLThread("save file picker"),
+		mSaveFilter(filter),
+		mMultiple(false),
+		mSavePicker(true)
+	{
+	}
+
+	void getFile(bool multiple = false);
+	void getSaveFile(const std::string& filename = LLStringUtil::null);
+
+	virtual void run();
+
+	virtual void notify(const std::string& filename) = 0;
+
+	static void initClass();
+	static void cleanupClass();
+	static void clearDead();
+
+	static void setBlocking(bool flag)	{ sBlocking = flag; }
+	static bool getBlocking()			{ return sBlocking; }
+	static bool isInUse()				{ return sIsInUse; }
+
+public:
+	static std::queue<LLFilePickerThread*> sDeadQ;
+	static LLMutex* sMutex;
+
+	std::string mFile; 
+	std::string mSuggestFile; 
+	std::deque<std::string> mFiles;
+	LLFilePicker::ELoadFilter mFilter;
+	LLFilePicker::ESaveFilter mSaveFilter;
+	bool mSavePicker;
+	bool mMultiple;
+
+private:
+	static bool sBlocking;
+	static bool sIsInUse;
+};
+
+class LLLoadFilePicker : public LLFilePickerThread
+{
+public:
+	typedef void (*LLLoadFilePickerCallback)(LLFilePicker::ELoadFilter type,
+											 std::string& filename,
+											 std::deque<std::string>& files,
+											 void* user_data);
+
+	LLLoadFilePicker(LLFilePicker::ELoadFilter type,
+					 LLLoadFilePickerCallback callback,
+					 void *user_data = NULL)
+	:	LLFilePickerThread(type),
+		mNotifyCallback(callback),
+		mCallbackUserData(user_data)
+
+	{
+	}
+
+	virtual void notify(const std::string& filename)
+	{
+		if (mNotifyCallback)
+		{
+			mNotifyCallback(mFilter, mFile, mFiles, mCallbackUserData);
+		}
+	}
+
+private:
+	void (*mNotifyCallback)(LLFilePicker::ELoadFilter type,
+							std::string& filename,
+							std::deque<std::string>& files,
+							void* user_data);
+	void* mCallbackUserData;
+};
+
+class LLSaveFilePicker : public LLFilePickerThread
+{
+public:
+	typedef void (*LLSaveFilePickerCallback)(LLFilePicker::ESaveFilter type,
+											 std::string& filename,
+											 void* user_data);
+
+	LLSaveFilePicker(LLFilePicker::ESaveFilter type,
+					 LLSaveFilePickerCallback callback,
+					 void *user_data = NULL)
+	:	LLFilePickerThread(type),
+		mNotifyCallback(callback),
+		mCallbackUserData(user_data)
+	{
+	}
+
+	virtual void notify(const std::string& filename)
+	{
+		if (mNotifyCallback)
+		{
+			mNotifyCallback(mSaveFilter, mFile, mCallbackUserData);
+		}
+	}
+
+private:
+	void (*mNotifyCallback)(LLFilePicker::ESaveFilter type,
+							std::string& filename,
+							void* user_data);
+	void* mCallbackUserData;
+};
 
 #endif

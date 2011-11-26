@@ -39,6 +39,7 @@
 #include "llframetimer.h"
 #include "lliconctrl.h"
 #include "llinventory.h"
+#include "llfilepicker.h"
 #include "llpreview.h"
 #include "lltabcontainer.h"
 
@@ -101,11 +102,13 @@ public:
 	static void		onClickForward(void* userdata);
 	static void		onBtnInsertSample(void*);
 	static void		onBtnInsertFunction(LLUICtrl*, void*);
-	static void		doSave( void* userdata, BOOL close_after_save );
+	static void		doSave(void* userdata, BOOL close_after_save);
 	static void		doSaveComplete( void* userdata, BOOL close_after_save );
-	static void		onBtnSave(void*);
 	static void		onBtnXEd(void*);
-	static void		onBtnUndoChanges(void*);
+	static void		onBtnLoadFromFile(void* userdata);
+	static void		onBtnSaveToFile(void* userdata);
+	static void		onBtnSave(void* userdata);
+	static void		onBtnUndoChanges(void* userdata);
 	static void		onSearchMenu(void* userdata);
 	
 	static void		onUndoMenu(void* userdata);
@@ -123,6 +126,7 @@ public:
 	static BOOL		enablePasteMenu(void* userdata);
 	static BOOL		enableSelectAllMenu(void* userdata);
 	static BOOL		enableDeselectMenu(void* userdata);
+	static BOOL		enableSaveLoadFile(void* userdata);
 
 	static BOOL		hasChanged(void* userdata);
 
@@ -139,6 +143,8 @@ public:
 	
 	void enableSave(BOOL b) {mEnableSave = b;}
 
+	void setScriptName(std::string name);
+
 protected:
 	void deleteBridges();
 	void setHelpPage(const std::string& help_string);
@@ -148,7 +154,17 @@ protected:
 
  	virtual const char *getTitleName() const { return "Script"; }
 
+	static void loadFromFileCallback(LLFilePicker::ELoadFilter type,
+									 std::string& filename,
+									 std::deque<std::string>& files,
+									 void* userdata);
+
+	static void saveToFileCallback(LLFilePicker::ESaveFilter type,
+								   std::string& filename,
+								   void* userdata);
+
 private:
+	std::string		mScriptName;
 	std::string		mSampleText;
 	std::string		mAutosaveFilename;
 	std::string     mXfname;
@@ -177,7 +193,8 @@ private:
 	BOOL			mEnableXEd;
 	BOOL			mHasScriptData;
 	JCLSLPreprocessor* mLSLProc;
-	
+
+	static std::set<LLScriptEdCore*> sList;	
 };
 
 

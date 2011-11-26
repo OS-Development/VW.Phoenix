@@ -207,6 +207,8 @@
 	<string name="xaf_animation_file">XAF Anim File</string>
 	<string name="xml_file">XML File</string>
 	<string name="raw_file">RAW File</string>
+	<string name="lsl_file">LSL Script File</string>
+	<string name="txt_file">Text File</string>
 	<string name="compressed_image_files">Compressed Images</string>
 	<string name="load_files">Load Files</string>
 	<string name="choose_the_directory">Choose Directory</string>

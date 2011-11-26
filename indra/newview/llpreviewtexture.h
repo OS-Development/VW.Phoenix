@@ -33,9 +33,11 @@
 #ifndef LL_LLPREVIEWTEXTURE_H
 #define LL_LLPREVIEWTEXTURE_H
 
-#include "llpreview.h"
 #include "llbutton.h"
 #include "llframetimer.h"
+
+#include "llfilepicker.h"
+#include "llpreview.h"
 #include "llviewertexture.h"
 
 class LLComboBox;
@@ -68,7 +70,9 @@ public:
 	virtual void			loadAsset();
 	virtual EAssetStatus	getAssetStatus();
 
-	static void				saveToFile(void* userdata);
+	static void				saveAsCallback(LLFilePicker::ESaveFilter type,
+							   std::string& filename,
+							   void* user_data);
 	static void				onFileLoadedForSaveTGA( 
 								BOOL success,
 								LLViewerFetchedTexture *src_vi,
@@ -115,7 +119,7 @@ private:
 	
 	// Ansariel: Changed to boost::bind callback
 	//static void callbackLoadAvatarName(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* data);
-	static void callbackLoadAvatarName(const LLUUID& id, const std::string& fullname, bool is_group);
+	static void callbackLoadAvatarName(const LLUUID& id, const std::string& fullname, bool is_group, void* userdata);
 
 	// This is stored off in a member variable, because the save-as
 	// button and drag and drop functionality need to know.
@@ -126,6 +130,8 @@ private:
 	F32 mAspectRatio;	// 0 = Unconstrained
 
 	LLLoadedCallbackEntry::source_callback_list_t mCallbackTextureList; 
+
+	static std::set<LLPreviewTexture*> sList;
 };
 
 

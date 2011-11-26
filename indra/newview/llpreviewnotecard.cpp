@@ -79,6 +79,8 @@ const S32 PREVIEW_MIN_HEIGHT =
 /// Class LLPreviewNotecard
 ///----------------------------------------------------------------------------
 
+std::set<LLPreviewNotecard*> LLPreviewNotecard::sList;
+
 // Default constructor
 LLPreviewNotecard::LLPreviewNotecard(const std::string& name,
 									 const LLRect& rect,
@@ -96,6 +98,8 @@ LLPreviewNotecard::LLPreviewNotecard(const std::string& name,
 	mNotecardItemID(item_id),
 	mObjectID(object_id)
 {
+	sList.insert(this);
+
 	LLRect curRect = rect;
 
 	if (show_keep_discard)
@@ -136,7 +140,8 @@ LLPreviewNotecard::LLPreviewNotecard(const std::string& name,
 	childSetPrevalidate("desc", &LLLineEditor::prevalidatePrintableNotPipe);
 
 	setTitle(title);
-	
+	setNoteName(title);
+
 	LLViewerTextEditor* editor = getChild<LLViewerTextEditor>("Notecard Editor");
 
 	if (editor)
@@ -151,6 +156,7 @@ LLPreviewNotecard::LLPreviewNotecard(const std::string& name,
 
 LLPreviewNotecard::~LLPreviewNotecard()
 {
+	sList.erase(this);
 }
 
 BOOL LLPreviewNotecard::postBuild()
@@ -163,6 +169,20 @@ BOOL LLPreviewNotecard::postBuild()
 	}
 	return TRUE;
 }
+
+void LLPreviewNotecard::setNoteName(std::string name)
+{
+	if (name.find("Note: ") == 0)
+	{
+		name = name.substr(6);
+	}
+	if (name.empty())
+	{
+		name = "untitled";
+	}
+	mNoteName = name;
+}
+
 
 bool LLPreviewNotecard::saveItem(LLPointer<LLInventoryItem>* itemptr)
 {

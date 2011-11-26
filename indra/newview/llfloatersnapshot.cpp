@@ -147,15 +147,19 @@ public:
 	void updateSnapshot(BOOL new_snapshot, BOOL new_thumbnail = FALSE, F32 delay = 0.f);
 	LLFloaterPostcard* savePostcard();
 	void saveTexture();
-	BOOL saveLocal();
+	void saveLocal();
 
 	BOOL setThumbnailImageSize();
 	void generateThumbnailImage(BOOL force_update = FALSE);
 	void resetThumbnailImage() { mThumbnailImage = NULL; }
 	void drawPreviewRect(S32 offset_x, S32 offset_y);
 
+	static void doSaveLocal(LLFilePicker::ESaveFilter type,
+							std::string& filename,
+							void* user_data);
+
 	// Returns TRUE when snapshot generated, FALSE otherwise.
-	static BOOL onIdle( void* snapshot_preview );
+	static BOOL onIdle(void* snapshot_preview);
 
 private:
 	LLColor4					mColor;
@@ -994,20 +998,81 @@ void LLSnapshotLivePreview::saveTexture()
 	mDataSize = 0;
 }
 
-BOOL LLSnapshotLivePreview::saveLocal()
+//static
+void LLSnapshotLivePreview::doSaveLocal(LLFilePicker::ESaveFilter type,
+										std::string& filename,
+										void* user_data)
 {
-	BOOL success = gViewerWindow->saveImageNumbered(mFormattedImage);
+	LLSnapshotLivePreview* self = (LLSnapshotLivePreview*)user_data;
+	if (!self || !sList.count(self))
+	{
+		LLNotifications::instance().add("SnapshotAborted");
+		return;
+	}
+
+	if (!filename.empty())
+	{
+		if (!gViewerWindow->isSnapshotLocSet())
+		{
+			gViewerWindow->setSnapshotLoc(filename);
+		}
+		gViewerWindow->saveImageNumbered(self->mFormattedImage);
+	}
 
 	// Relinquish image memory. Save button will be disabled as a side-effect.
-	mFormattedImage = NULL;
-	mDataSize = 0;
-	updateSnapshot(FALSE, FALSE);
+	self->mFormattedImage = NULL;
+	self->mDataSize = 0;
+	self->updateSnapshot(FALSE, FALSE);
 
-	if(success)
+	if (gSavedSettings.getBOOL("CloseSnapshotOnKeep"))
 	{
-		gViewerWindow->playSnapshotAnimAndSound();
+		if (LLFloaterSnapshot::getInstance())
+		{
+			LLFloaterSnapshot::getInstance()->close();
+		}
 	}
-	return success;
+	else
+	{
+		BOOL autosnap = gSavedSettings.getBOOL("AutoSnapshot");
+		self->updateSnapshot(autosnap, FALSE, autosnap ? AUTO_SNAPSHOT_TIME_DELAY : 0.f);
+		if (LLFloaterSnapshot::getInstance())
+		{
+			LLFloaterSnapshot::getInstance()->updateImplControls();
+		}
+	}
+}
+
+void LLSnapshotLivePreview::saveLocal()
+{
+	LLFilePicker::ESaveFilter type;
+	switch (LLFloaterSnapshot::ESnapshotFormat(gSavedSettings.getS32("SnapshotFormat")))
+	{
+		case LLFloaterSnapshot::SNAPSHOT_FORMAT_JPEG:
+			type = LLFilePicker::FFSAVE_JPEG;
+			break;
+		case LLFloaterSnapshot::SNAPSHOT_FORMAT_PNG:
+			type = LLFilePicker::FFSAVE_PNG;
+			break;
+		case LLFloaterSnapshot::SNAPSHOT_FORMAT_BMP: 
+			type = LLFilePicker::FFSAVE_BMP;
+			break;
+		default: 
+			llwarns << "Unknown Local Snapshot format" << llendl;
+			mFormattedImage = NULL;
+			mDataSize = 0;
+			updateSnapshot(FALSE, FALSE);
+			return;
+	}
+	std::string suggestion = gViewerWindow->getSnapshotBaseName();
+	if (gViewerWindow->isSnapshotLocSet())
+	{
+		doSaveLocal(type, suggestion, this);
+	}
+	else
+	{
+		(new LLSaveFilePicker(type, LLSnapshotLivePreview::doSaveLocal,
+							  this))->getSaveFile(suggestion);
+	}
 }
 
 ///----------------------------------------------------------------------------
@@ -1416,6 +1481,7 @@ void LLFloaterSnapshot::Impl::onClickKeep(void* data)
 		else
 		{
 			previewp->saveLocal();
+			return;
 		}
 
 		if (gSavedSettings.getBOOL("CloseSnapshotOnKeep"))
@@ -2134,12 +2200,17 @@ void LLFloaterSnapshot::update()
 	{
 		changed |= LLSnapshotLivePreview::onIdle(*iter);
 	}
-	if(changed)
+	if (changed)
 	{
 		sInstance->impl.updateControls(sInstance);
 	}
 }
 
+//static 
+void LLFloaterSnapshot::updateImplControls()
+{
+	sInstance->impl.updateControls(sInstance);
+}
 
 ///----------------------------------------------------------------------------
 /// Class LLSnapshotFloaterView

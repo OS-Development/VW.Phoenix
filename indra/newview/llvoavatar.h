@@ -40,15 +40,17 @@
 #include <vector>
 #include "imageids.h"			// IMG_INVISIBLE
 #include "llchat.h"
-#include "lldrawpoolalpha.h"
-#include "llviewerobject.h"
 #include "llcharacter.h"
-#include "llviewerjointmesh.h"
-#include "llviewerjointattachment.h"
 #include "llrendertarget.h"
-#include "llwearable.h"
+
+#include "lldrawpoolalpha.h"
+#include "llfilepicker.h"
+#include "llviewerjointattachment.h"
+#include "llviewerjointmesh.h"
+#include "llviewerobject.h"
 #include "llvoavatardefines.h"
 #include "llavatarname.h"
+#include "llwearable.h"
 
 #ifdef OLD_BREAST_PHYSICS
 #include "phoenixboobutils.h"
@@ -372,6 +374,9 @@ public:
 	bool			hasPendingBakedUploads();
 	static void		onLocalTextureLoaded(BOOL succcess, LLViewerFetchedTexture *src_vi, LLImageRaw* src, LLImageRaw* aux_src, S32 discard_level, BOOL final, void* userdata);
 	static void		dumpArchetypeXML(void*);
+	static void		dumpXMLCallback(LLFilePicker::ESaveFilter type,
+									std::string& filename,
+									void* user_data);
 	static void		dumpScratchTextureByteCount();
 	static void		dumpBakedStatus();
 	static void		deleteCachedImages(bool clearAll=true);

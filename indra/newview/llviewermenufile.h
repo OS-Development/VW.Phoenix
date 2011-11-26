@@ -42,6 +42,8 @@
 class LLTransactionID;
 
 
+extern std::deque<std::string> gUploadQueue;
+
 void init_menu_file();
 
 void upload_new_resource(const std::string& src_filename, 
@@ -92,37 +94,6 @@ LLSD generate_new_resource_upload_capability_body(LLAssetType::EType asset_type,
 												  U32 group_perms,
 												  U32 everyone_perms);
 
-class LLFilePickerThread : public LLThread
-{	//multi-threaded file picker (runs system specific file picker in background and calls "notify" from main thread)
-public:
-
-	static std::queue<LLFilePickerThread*> sDeadQ;
-	static LLMutex* sMutex;
-
-	static void initClass();
-	static void cleanupClass();
-	static void clearDead();
-
-	static void setBlocking(bool flag)	{ sBlocking = flag; }
-	static bool getBlocking()			{ return sBlocking; }
-
-	std::string mFile; 
-
-	LLFilePicker::ELoadFilter mFilter;
-
-	LLFilePickerThread(LLFilePicker::ELoadFilter filter)
-	:	LLThread("file picker"), mFilter(filter)
-	{
-	}
-
-	void getFile();
-
-	virtual void run();
- 
-	virtual void notify(const std::string& filename) = 0;
-
-private:
-	static bool sBlocking;
-};
+void handle_compress_image(void*);	// Used in the debug menu (see llviewermenu.cpp)
 
 #endif

@@ -360,12 +360,11 @@ void LLNewAgentInventoryResponder::uploadComplete(const LLSD& content)
 
 	// continue uploading for bulk uploads
 	
-	// *FIX: This is a pretty big hack. What this does is check the
-	// file picker if there are any more pending uploads. If so,
-	// upload that file.
-	std::string next_file = LLFilePicker::instance().getNextFile();
-	if (!next_file.empty())
+	if (!gUploadQueue.empty())
 	{
+		std::string next_file = gUploadQueue.front();
+		gUploadQueue.pop_front();
+		if (next_file.empty()) return;
 		std::string name = gDirUtilp->getBaseFileName(next_file, true);
 
 		std::string asset_name = name;
@@ -374,11 +373,10 @@ void LLNewAgentInventoryResponder::uploadComplete(const LLSD& content)
 		LLStringUtil::stripNonprintable(asset_name);
 		LLStringUtil::trim(asset_name);
 
-		// Continuing the horrible hack above, we need to extract the originally
-		// requested permissions data, if any, and use them for each next file
-		// to be uploaded. Note the requested perms are not the same as the
-		// granted ones found in the given "content" structure but can still be
-		// found in mPostData. -MG
+		// We need to extract the originally requested permissions data, if any,
+		// and use them for each next file to be uploaded. Note the requested
+		// perms are not the same as the granted ones found in the given
+		// "content" structure but can still be found in mPostData. -MG
 		U32 everyone_perms = mPostData.has("everyone_mask") ?
 								mPostData.get("everyone_mask").asInteger() :
 								PERM_NONE;

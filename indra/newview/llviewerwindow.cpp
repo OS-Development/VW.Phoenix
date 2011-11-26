@@ -81,7 +81,6 @@
 #include "lldrawpoolwater.h"
 #include "llface.h"
 #include "llfeaturemanager.h"
-#include "llfilepicker.h"
 #include "llfloaterchat.h"
 #include "llfloaterchatterbox.h"
 #include "llfloatercustomize.h"
@@ -3996,54 +3995,22 @@ BOOL LLViewerWindow::mousePointOnLandGlobal(const S32 x, const S32 y, LLVector3d
 	return FALSE;
 }
 
+void LLViewerWindow::setSnapshotLoc(std::string filepath)
+{
+	LLViewerWindow::sSnapshotBaseName = gDirUtilp->getBaseFileName(filepath, true);
+	LLViewerWindow::sSnapshotDir = gDirUtilp->getDirName(filepath);
+}
+
 // Saves an image to the harddrive as "SnapshotX" where X >= 1.
 BOOL LLViewerWindow::saveImageNumbered(LLImageFormatted *image)
 {
-	if (!image)
+	if (!image || !isSnapshotLocSet())
 	{
 		return FALSE;
 	}
 
-	LLFilePicker::ESaveFilter pick_type;
-	std::string extension("." + image->getExtension());
-	if (extension == ".j2c")
-		pick_type = LLFilePicker::FFSAVE_J2C;
-	else if (extension == ".bmp")
-		pick_type = LLFilePicker::FFSAVE_BMP;
-	else if (extension == ".jpg")
-		pick_type = LLFilePicker::FFSAVE_JPEG;
-	else if (extension == ".png")
-		pick_type = LLFilePicker::FFSAVE_PNG;
-	else if (extension == ".tga")
-		pick_type = LLFilePicker::FFSAVE_TGA;
-	else
-		pick_type = LLFilePicker::FFSAVE_ALL; // ???
-	
-	// Get a base file location if needed.
-	if ( ! isSnapshotLocSet())		
-	{
-		std::string proposed_name( sSnapshotBaseName );
-
-		// getSaveFile will append an appropriate extension to the proposed name, based on the ESaveFilter constant passed in.
-
-		// pick a directory in which to save
-		LLFilePicker& picker = LLFilePicker::instance();
-		if (!picker.getSaveFile(pick_type, proposed_name))
-		{
-			// Clicked cancel
-			return FALSE;
-		}
-
-		// Copy the directory + file name
-		std::string filepath = picker.getFirstFile();
-
-		LLViewerWindow::sSnapshotBaseName = gDirUtilp->getBaseFileName(filepath, true);
-		LLViewerWindow::sSnapshotDir = gDirUtilp->getDirName(filepath);
-		if (gSavedPerAccountSettings.getBOOL("PhoenixShapshotReuseLastDir"))
-			gSavedPerAccountSettings.setString("PhoenixShapshotLastDir", LLViewerWindow::sSnapshotDir);
-	}
-
 	// Look for an unused file name
+	std::string extension("." + image->getExtension());
 	std::string filepath;
 	S32 i = 1;
 	S32 err = 0;
@@ -4062,7 +4029,12 @@ BOOL LLViewerWindow::saveImageNumbered(LLImageFormatted *image)
 	}
 	while( -1 != err );  // search until the file is not found (i.e., stat() gives an error).
 
-	return image->save(filepath);
+	BOOL result = image->save(filepath);
+	if (result)
+	{
+		playSnapshotAnimAndSound();
+	}
+	return result;
 }
 
 BOOL LLViewerWindow::isSnapshotLocSet()

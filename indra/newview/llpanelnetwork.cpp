@@ -40,6 +40,7 @@
 #include "llcheckboxctrl.h"
 #include "llradiogroup.h"
 #include "lldirpicker.h"
+#include "llfilepicker.h"
 #include "lluictrlfactory.h"
 #include "llviewercontrol.h"
 #include "llviewerwindow.h"
@@ -49,11 +50,21 @@
 
 bool LLPanelNetwork::sSocksSettingsChanged;
 
+LLPanelNetwork* LLPanelNetwork::sInstance = NULL;
+
 LLPanelNetwork::LLPanelNetwork()
 {
 	LLUICtrlFactory::getInstance()->buildPanel(this, "panel_preferences_network.xml");
+	sInstance = this;
 }
 
+//virtual
+LLPanelNetwork::~LLPanelNetwork()
+{
+	sInstance = NULL;
+}
+
+//virtual
 BOOL LLPanelNetwork::postBuild()
 {
 	std::string cache_location = gDirUtilp->getExpandedFilename(LL_PATH_CACHE, "");
@@ -120,9 +131,14 @@ BOOL LLPanelNetwork::postBuild()
 	return TRUE;
 }
 
-LLPanelNetwork::~LLPanelNetwork()
+//virtual
+void LLPanelNetwork::draw()
 {
-	// Children all cleaned up by default view destructor.
+	bool filePickerControlsEnabled = (!LLFilePickerThread::isInUse() && !LLDirPickerThread::isInUse());
+	childSetEnabled("set_cache", filePickerControlsEnabled);
+	childSetEnabled("set_sound_cache", filePickerControlsEnabled);
+	childSetEnabled("set_chat_logs", filePickerControlsEnabled);
+	LLPanel::draw();
 }
 
 void LLPanelNetwork::apply()
@@ -166,6 +182,7 @@ void LLPanelNetwork::onClickClearCache(void*)
 	gSavedSettings.setBOOL("PurgeCacheOnNextStartup", TRUE);
 	LLNotifications::instance().add("CacheWillClear");
 }
+
 void LLPanelNetwork::onClickClearInvCache(void*)
 {
 	gSavedSettings.setString("PhoenixPurgeInvCache",gAgent.getID().asString());
@@ -173,37 +190,37 @@ void LLPanelNetwork::onClickClearInvCache(void*)
 }
 
 // static
-void LLPanelNetwork::onClickSetCache(void* user_data)
+void LLPanelNetwork::setCacheCallback(std::string& dir_name, void* data)
 {
-	LLPanelNetwork* self = (LLPanelNetwork*)user_data;
-
-	std::string cur_name(gSavedSettings.getString("CacheLocation"));
-	std::string proposed_name(cur_name);
-	
-	LLDirPicker& picker = LLDirPicker::instance();
-	if (! picker.getDir(&proposed_name ) )
+	LLPanelNetwork* self = (LLPanelNetwork*)data;
+	if (!self || self != sInstance)
 	{
-		return; //Canceled!
+		LLNotifications::instance().add("PreferencesClosed");
+		return;
 	}
 
-	std::string dir_name = picker.getDirName();
+	std::string cur_name = gSavedSettings.getString("CacheLocation");
 	if (!dir_name.empty() && dir_name != cur_name)
 	{
 		self->childSetText("cache_location", dir_name);
 		LLNotifications::instance().add("CacheWillBeMoved");
 		gSavedSettings.setString("NewCacheLocation", dir_name);
 	}
-	else
-	{
-		std::string folder_location = gDirUtilp->getCacheDir();
-		self->childSetText("cache_location", folder_location);
-	}
 }
 
 // static
-void LLPanelNetwork::onClickResetCache(void* user_data)
+void LLPanelNetwork::onClickSetCache(void* data)
 {
- 	LLPanelNetwork* self = (LLPanelNetwork*)user_data;
+	std::string suggestion = gSavedSettings.getString("CacheLocation");
+
+	(new LLCallDirPicker(LLPanelNetwork::setCacheCallback,
+						 data))->getDir(&suggestion);
+}
+
+// static
+void LLPanelNetwork::onClickResetCache(void* data)
+{
+ 	LLPanelNetwork* self = (LLPanelNetwork*)data;
 	if (!gSavedSettings.getString("CacheLocation").empty())
 	{
 		gSavedSettings.setString("NewCacheLocation", "");
@@ -213,30 +230,30 @@ void LLPanelNetwork::onClickResetCache(void* user_data)
 	self->childSetText("cache_location", cache_location);
 }
 
-// static
-void LLPanelNetwork::onClickSetSoundCache(void* user_data)
+void LLPanelNetwork::setSoundCacheCallback(std::string& dir_name, void* data)
 {
-	LLPanelNetwork* self = (LLPanelNetwork*)user_data;
-
-	std::string cur_name(gSavedSettings.getString("Phoenixmm_sndcacheloc"));
-	std::string proposed_name(cur_name);
-	
-	LLDirPicker& picker = LLDirPicker::instance();
-	if (! picker.getDir(&proposed_name ) )
+	LLPanelNetwork* self = (LLPanelNetwork*)data;
+	if (!self || self != sInstance)
 	{
-		return; //Canceled!
+		LLNotifications::instance().add("PreferencesClosed");
+		return;
 	}
 
-	std::string dir_name = picker.getDirName();
+	std::string cur_name = gSavedSettings.getString("Phoenixmm_sndcacheloc");
 	if (!dir_name.empty() && dir_name != cur_name)
 	{
 		self->childSetText("sound_cache_location", dir_name);
 		gSavedSettings.setString("Phoenixmm_sndcacheloc", dir_name);
 	}
-	else
-	{
-		self->childSetText("sound_cache_location",cur_name);
-	}
+}
+
+// static
+void LLPanelNetwork::onClickSetSoundCache(void* user_data)
+{
+	std::string suggestion = gSavedSettings.getString("Phoenixmm_sndcacheloc");
+
+	(new LLCallDirPicker(LLPanelNetwork::setSoundCacheCallback,
+						 user_data))->getDir(&suggestion);
 }
 
 // static
@@ -247,27 +264,31 @@ void LLPanelNetwork::onClickResetSoundCache(void* user_data)
 	self->childSetText("sound_cache_location",std::string("None"));
 }
 
-// static
-void LLPanelNetwork::onClickSetChatLogs(void* user_data)
+void LLPanelNetwork::setChatLogsCallback(std::string& dir_name, void* data)
 {
-	LLPanelNetwork* self = (LLPanelNetwork*)user_data;
-
-	std::string cur_name(gSavedSettings.getString("InstantMessageLogPath"));
-	std::string proposed_name(cur_name);
-	
-	LLDirPicker& picker = LLDirPicker::instance();
-	if (! picker.getDir(&proposed_name ) )
+	LLPanelNetwork* self = (LLPanelNetwork*)data;
+	if (!self || self != sInstance)
 	{
-		return; //Canceled!
+		LLNotifications::instance().add("PreferencesClosed");
+		return;
 	}
 
-	std::string dir_name = picker.getDirName();
+	std::string cur_name = gSavedSettings.getString("InstantMessageLogPath");
 	if (!dir_name.empty() && dir_name != cur_name)
 	{
 		gSavedPerAccountSettings.setString("InstantMessageLogPath",dir_name);
 		LLNotifications::instance().add("Restart4SettingsChange");
 		self->childSetText("chat_logs_location", dir_name);
 	}
+}
+
+// static
+void LLPanelNetwork::onClickSetChatLogs(void* user_data)
+{
+	std::string suggestion = gSavedSettings.getString("InstantMessageLogPath");
+
+	(new LLCallDirPicker(LLPanelNetwork::setChatLogsCallback,
+						 user_data))->getDir(&suggestion);
 }
 
 // static

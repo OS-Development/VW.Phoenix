@@ -45,10 +45,12 @@
 #include "llagent.h"
 #include "llavatarnamecache.h"
 #include "llconsole.h"
+#include "lldirpicker.h"
 #include "lldrawpoolbump.h"
 #include "lldrawpoolterrain.h"
 #include "llflexibleobject.h"
 #include "llfeaturemanager.h"
+#include "llfilepicker.h"
 #include "llviewershadermgr.h"
 #include "llpanelgeneral.h"
 #include "llpanelinput.h"
@@ -70,6 +72,7 @@
 #include "llvosurfacepatch.h"
 #include "llvowlsky.h"
 #include "llfloaterchat.h"
+#include "llviewermenufile.h"
 #include "llviewerparcelmedia.h"
 #include "llviewertexturelist.h"
 #include "llmeshrepository.h"
@@ -498,6 +501,17 @@ static bool handleCheesyBeaconChanged(const LLSD& newvalue)
 	return true;
 }
 
+static bool handleNonBlockingFilePickerChanged(const LLSD& newvalue)
+{
+	LLTracker::sCheesyBeacon = newvalue.asBoolean();
+#if !LL_DARWIN
+	bool blocking = (newvalue.asBoolean() == FALSE);
+	LLFilePickerThread::setBlocking(blocking);
+	LLDirPickerThread::setBlocking(blocking);
+#endif
+	return true;
+}
+
 ////////////////////////////////////////////////////////////////////////////
 
 void settings_setup_listeners()
@@ -643,6 +657,7 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("TranslateChat")->getSignal()->connect(boost::bind(&handleTranslateChatPrefsChanged, _2));	
 	gSavedSettings.getControl("PhoenixBlockSpam")->getSignal()->connect(boost::bind(&handlePhoenixBlockSpam, _2));
 	gSavedSettings.getControl("CheesyBeacon")->getSignal()->connect(boost::bind(&handleCheesyBeaconChanged, _2));	
+	gSavedSettings.getControl("NonBlockingFilePicker")->getSignal()->connect(boost::bind(&handleNonBlockingFilePickerChanged, _2));	
 
     // [Ansariel/Henri: Display name support]
 	gSavedSettings.getControl("PhoenixNameSystem")->getSignal()->connect(boost::bind(&handlePhoenixNameSystemChanged, _2));

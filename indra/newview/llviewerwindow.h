@@ -284,10 +284,10 @@ public:
 	BOOL			thumbnailSnapshot(LLImageRaw *raw, S32 preview_width, S32 preview_height, BOOL show_ui, BOOL do_rebuild, ESnapshotType type) ;
 	BOOL		    saveImageNumbered(LLImageFormatted *image);
 
-	// Reset the directory where snapshots are saved.
-	// Client will open directory picker on next snapshot save.
-	BOOL isSnapshotLocSet();
-	void resetSnapshotLoc();
+	BOOL			isSnapshotLocSet();
+	std::string		getSnapshotBaseName()		{ return sSnapshotBaseName; }
+	void			setSnapshotLoc(std::string filepath);
+	void			resetSnapshotLoc();
 
 	void			playSnapshotAnimAndSound();
 	

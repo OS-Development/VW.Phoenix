@@ -92,6 +92,8 @@ protected:
 	virtual void loadAsset();
 	bool saveIfNeeded(LLInventoryItem* copyitem = NULL);
 
+	void setNoteName(std::string name);
+
 	static LLPreviewNotecard* getInstance(const LLUUID& uuid);
 
 	static void onLoadComplete(LLVFS *vfs,
@@ -117,6 +119,10 @@ protected:
 
 	LLUUID mNotecardItemID;
 	LLUUID mObjectID;
+
+	std::string mNoteName;
+
+	static std::set<LLPreviewNotecard*> sList;
 };
 
 

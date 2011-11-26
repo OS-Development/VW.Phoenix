@@ -54,7 +54,9 @@
 #include "llwindow.h"
 
 #include "llagent.h"
+#include "lldirpicker.h"
 #include "llfeaturemanager.h"
+#include "llfilepicker.h"
 #include "llfirstuse.h"
 #include "llfloaterjoystick.h"
 #include "llfloatersnapshot.h"
@@ -114,7 +116,6 @@
 #include "lltrans.h"
 #include "lluitrans.h"
 #include "lltracker.h"
-#include "llviewermenufile.h"
 #include "llviewerparcelmgr.h"
 #include "llworldmapview.h"
 #include "llpostprocess.h"
@@ -453,9 +454,13 @@ static void settings_to_globals()
 	LLCOMBOBOX_WIDTH	= 128;
 
 #if LL_DARWIN
-	LLFilePickerThread::setBlocking(true);	// Apparently, Darwin doesn't like non-blocking file pickers...
+	// Apparently, Darwin doesn't like non-blocking file pickers...
+	LLFilePickerThread::setBlocking(true);
+	LLDirPickerThread::setBlocking(true);
 #else
-	LLFilePickerThread::setBlocking(gSavedSettings.getBOOL("BlockingFilePicker") == TRUE);
+	bool blocking = (gSavedSettings.getBOOL("NonBlockingFilePicker") == FALSE);
+	LLFilePickerThread::setBlocking(blocking);
+	LLDirPickerThread::setBlocking(blocking);
 #endif
 
 	LLSurface::setTextureSize(gSavedSettings.getU32("RegionTextureSize"));
@@ -1650,6 +1655,7 @@ bool LLAppViewer::cleanup()
 	sTextureFetch->shutDownImageDecodeThread() ;
 	
 	LLFilePickerThread::cleanupClass();
+	LLDirPickerThread::cleanupClass();
 
 	delete sTextureCache;
     sTextureCache = NULL;
@@ -1775,6 +1781,7 @@ bool LLAppViewer::initThreads()
 	gMeshRepo.init();
 
 	LLFilePickerThread::initClass();
+	LLDirPickerThread::initClass();
 
 	// *FIX: no error handling here!
 	return true;
@@ -3610,7 +3617,8 @@ void LLAppViewer::idle()
 	LLEventTimer::updateClass();
 	LLCriticalDamp::updateInterpolants();
 	LLMortician::updateClass();
-	LLFilePickerThread::clearDead();  //calls LLFilePickerThread::notify()
+	LLFilePickerThread::clearDead();	// calls LLFilePickerThread::notify()
+	LLDirPickerThread::clearDead();		// calls LLDirPickerThread::notify()
 
 	F32 dt_raw = idle_timer.getElapsedTimeAndResetF32();
 
