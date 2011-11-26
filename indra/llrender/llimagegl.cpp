@@ -1570,7 +1570,7 @@ void LLImageGL::analyzeAlpha(const void* data_in, U32 w, U32 h)
 	U32 alphatotal = 0;
 	
 	U32 sample[16];
-	memset(sample, 0, sizeof(U32)*16);
+	memset(sample, 0, sizeof(U32) * 16);
 
 	// generate histogram of quantized alpha.
 	// also add-in the histogram of a 2x2 box-sampled version.  The idea is
@@ -1579,13 +1579,13 @@ void LLImageGL::analyzeAlpha(const void* data_in, U32 w, U32 h)
 	// suffer the worst from aliasing when used as alpha masks.
 	if (w >= 2 && h >= 2)
 	{
-		llassert(w%2 == 0);
-		llassert(h%2 == 0);
+		llassert(w % 2 == 0);
+		llassert(h % 2 == 0);
 		const GLubyte* rowstart = ((const GLubyte*) data_in) + mAlphaOffset;
-		for (U32 y = 0; y < h; y+=2)
+		for (U32 y = 0; y < h; y += 2)
 		{
 			const GLubyte* current = rowstart;
-			for (U32 x = 0; x < w; x+=2)
+			for (U32 x = 0; x < w; x += 2)
 			{
 				const U32 s1 = current[0];
 				alphatotal += s1;
@@ -1598,14 +1598,14 @@ void LLImageGL::analyzeAlpha(const void* data_in, U32 w, U32 h)
 				alphatotal += s4;
 				current += mAlphaStride;
 
-				++sample[s1/16];
-				++sample[s2/16];
-				++sample[s3/16];
-				++sample[s4/16];
+				++sample[s1 / 16];
+				++sample[s2 / 16];
+				++sample[s3 / 16];
+				++sample[s4 / 16];
 
 				const U32 asum = (s1+s2+s3+s4);
 				alphatotal += asum;
-				sample[asum/(16*4)] += 4;
+				sample[asum / 64] += 4;
 			}
 			
 			
@@ -1620,7 +1620,7 @@ void LLImageGL::analyzeAlpha(const void* data_in, U32 w, U32 h)
 		{
 			const U32 s1 = *current;
 			alphatotal += s1;
-			++sample[s1/16];
+			++sample[s1 / 16];
 			current += mAlphaStride;
 		}
 	}
@@ -1633,7 +1633,7 @@ void LLImageGL::analyzeAlpha(const void* data_in, U32 w, U32 h)
 	// this to be an intentional effect and don't treat as a mask.
 
 	U32 midrangetotal = 0;
-	for (U32 i = 4; i < 11; i++)
+	for (U32 i = 2; i < 13; i++)
 	{
 		midrangetotal += sample[i];
 	}
@@ -1648,9 +1648,9 @@ void LLImageGL::analyzeAlpha(const void* data_in, U32 w, U32 h)
 		upperhalftotal += sample[i];
 	}
 
-	if (midrangetotal > length/16 || // lots of midrange, or
+	if (midrangetotal > length / 48 || // lots of midrange, or
 	    (lowerhalftotal == length && alphatotal != 0) || // all close to transparent but not all totally transparent, or
-	    (upperhalftotal == length && alphatotal != 255*length)) // all close to opaque but not all totally opaque
+	    (upperhalftotal == length && alphatotal != 255 * length)) // all close to opaque but not all totally opaque
 	{
 		mIsMask = FALSE; // not suitable for masking
 	}
@@ -1672,15 +1672,14 @@ void LLImageGL::updatePickMask(S32 width, S32 height, const U8* data_in)
 	mPickMask = NULL;
 	mPickMaskWidth = mPickMaskHeight = 0;
 
-	if (mFormatType != GL_UNSIGNED_BYTE ||
-		mFormatPrimary != GL_RGBA)
+	if (mFormatType != GL_UNSIGNED_BYTE || mFormatPrimary != GL_RGBA)
 	{
 		//cannot generate a pick mask for this texture
 		return;
 	}
 
-	U32 pick_width = width/2 + 1;
-	U32 pick_height = height/2 + 1;
+	U32 pick_width = width / 2 + 1;
+	U32 pick_height = height / 2 + 1;
 
 	U32 size = pick_width * pick_height;
 	size = (size + 7) / 8; // pixelcount-to-bits

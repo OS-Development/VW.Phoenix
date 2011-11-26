@@ -32,9 +32,11 @@
 
 #include "linden_common.h"
 
-#include "message.h"
-#include "llvolumemessage.h"
+#include <time.h>
+
 #include "lldatapacker.h"
+#include "llvolumemessage.h"
+#include "message.h"
 
 //============================================================================
 
@@ -461,6 +463,9 @@ bool LLVolumeMessage::unpackPathParams(LLPathParams* params, LLDataPacker &dp)
 // static
 bool LLVolumeMessage::constrainVolumeParams(LLVolumeParams& params)
 {
+	static clock_t last_info = 0;
+	static U32 last_bad = 0;
+
 	U32 bad = 0;
 
 	// This is called immediately after an unpack. feed the raw data
@@ -484,8 +489,10 @@ bool LLVolumeMessage::constrainVolumeParams(LLVolumeParams& params)
 	bad |= params.setRevolutions(params.getPathParams().getRevolutions()) ? 0 : 0x200;
 	bad |= params.setRadiusOffset(params.getPathParams().getRadiusOffset()) ? 0 : 0x400;
 	bad |= params.setSkew(params.getPathParams().getSkew()) ? 0 : 0x800;
-	if(bad)
+	if (bad && bad != last_bad && clock() - last_info > CLOCKS_PER_SEC)
 	{
+		last_bad = bad;
+		last_info = clock();
 		llwarns << "LLVolumeMessage::constrainVolumeParams() - "
 				<< "forced to constrain incoming volume params: "
 				<< llformat("0x%04x",bad) << llendl;

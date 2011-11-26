@@ -22,6 +22,7 @@
 			</menu_item_call>
 			<menu_item_call label="Bulk (L$[COST] per file)..." name="Bulk Upload" mouse_opaque="true" enabled="true" >
 				<on_click function="File.UploadBulk" userdata="" />
+				<on_enable function="File.EnableUpload" />
 			</menu_item_call>
 			<menu_item_separator enabled="true" label="-----------" mouse_opaque="true" name="separator" />
 			<menu_item_call enabled="true" label="Set Default Permissions..." mouse_opaque="true" name="perm prefs" >

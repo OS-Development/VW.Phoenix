@@ -539,9 +539,10 @@ void LLViewerTextureList::removeImageFromList(LLViewerFetchedTexture *image)
 		}
 		llerrs << "LLViewerTextureList::removeImageFromList - Image not in list" << llendl;
 	}
-	if (mImageList.erase(image) != 1) 
+	S32 count = mImageList.erase(image);
+	if (count != 1) 
 	{
-		llerrs << "Error happens when remove image from mImageList!" << llendl;
+		llerrs << "Error happened when removing image from mImageList: " << count << llendl;
 	}
 
 	image->setInImageList(FALSE);

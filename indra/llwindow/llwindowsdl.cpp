@@ -125,7 +125,11 @@ bool LLWindowSDL::ll_try_gtk_init(void)
 	if (!tried_gtk_init)
 	{
 		tried_gtk_init = TRUE;
-		if (!g_thread_supported ()) g_thread_init (NULL);
+		if (!g_thread_supported())
+		{
+			g_thread_init(NULL);
+			gdk_threads_init();
+		}
 		maybe_lock_display();
 		gtk_is_good = gtk_init_check(NULL, NULL);
 		maybe_unlock_display();
@@ -1549,25 +1553,29 @@ void LLWindowSDL::processMiscNativeEvents()
 	// * Anything else which quietly hooks into the default glib/GTK loop
     if (ll_try_gtk_init())
     {
+#if 0	// Not using Mozilla any more...
 	    // Yuck, Mozilla's GTK callbacks play with the locale - push/pop
 	    // the locale to protect it, as exotic/non-C locales
 	    // causes our code lots of general critical weirdness
 	    // and crashness. (SL-35450)
 	    static std::string saved_locale;
 	    saved_locale = ll_safe_string(setlocale(LC_ALL, NULL));
+#endif
 
 	    // Pump until we've nothing left to do or passed 1/15th of a
 	    // second pumping for this frame.
 	    static LLTimer pump_timer;
 	    pump_timer.reset();
-	    pump_timer.setTimerExpirySec(1.0f / 15.0f);
+	    pump_timer.setTimerExpirySec(0.01f);
 	    do {
 		     // Always do at least one non-blocking pump
 		    gtk_main_iteration_do(FALSE);
 	    } while (gtk_events_pending() &&
 		     !pump_timer.hasExpired());
 
+#if 0
 	    setlocale(LC_ALL, saved_locale.c_str() );
+#endif
     }
 #endif // LL_GTK
 }
@@ -1972,14 +1980,14 @@ void LLWindowSDL::captureMouse()
 	// window, and in a less obnoxious way than SDL_WM_GrabInput
 	// which would confine the cursor to the window too.
 
-	//llinfos << "LLWindowSDL::captureMouse" << llendl;
+	LL_DEBUGS("WindowSDL") << "LLWindowSDL::captureMouse" << LL_ENDL;
 }
 
 void LLWindowSDL::releaseMouse()
 {
 	// see LWindowSDL::captureMouse()
 	
-	//llinfos << "LLWindowSDL::releaseMouse" << llendl;
+	LL_DEBUGS("WindowSDL") << "LLWindowSDL::releaseMouse" << LL_ENDL;
 }
 
 void LLWindowSDL::hideCursor()
@@ -2309,8 +2317,8 @@ void LLWindowSDL::spawnWebBrowser(const std::string& escaped_url, bool async)
 # endif // LL_X11
 
 	std::string cmd, arg;
-	cmd  = gDirUtilp->getAppRODataDir().c_str();
-	cmd += gDirUtilp->getDirDelimiter().c_str();
+	cmd  = gDirUtilp->getAppRODataDir();
+	cmd += gDirUtilp->getDirDelimiter();
 	cmd += "launch_url.sh";
 	arg = escaped_url;
 	exec_cmd(cmd, arg);
@@ -2372,7 +2380,12 @@ std::vector<std::string> LLWindowSDL::getDynamicFallbackFontList()
 {
 	// Use libfontconfig to find us a nice ordered list of fallback fonts
 	// specific to this system.
-	std::string final_fallback("/usr/share/fonts/truetype/kochi/kochi-gothic.ttf");
+	std::string final_fallback("/usr/share/fonts/TTF/dejavu/DejaVuSans.ttf");
+
+	// Fonts are expensive in the current system, don't enumerate an arbitrary
+	// number of them
+	const int max_font_count_cutoff = 40;
+
 	// Our 'ideal' font properties which define the sorting results.
 	// slant=0 means Roman, index=0 means the first face in a font file
 	// (the one we actually use), weight=80 means medium weight,
@@ -2388,7 +2401,6 @@ std::vector<std::string> LLWindowSDL::getDynamicFallbackFontList()
 	std::vector<std::string> rtns;
 	FcFontSet *fs = NULL;
 	FcPattern *sortpat = NULL;
-	int font_count = 0;
 
 	llinfos << "Getting system font list from FontConfig..." << llendl;
 
@@ -2432,34 +2444,36 @@ std::vector<std::string> LLWindowSDL::getDynamicFallbackFontList()
 		FcPatternDestroy(sortpat);
 	}
 
+	int found_font_count = 0;
 	if (fs)
 	{
 		// Get the full pathnames to the fonts, where available,
 		// which is what we really want.
-		int i;
-		for (i=0; i<fs->nfont; ++i)
+		found_font_count = fs->nfont;
+		for (int i = 0; i < fs->nfont; ++i)
 		{
 			FcChar8 *filename;
-			if (FcResultMatch == FcPatternGetString(fs->fonts[i],
-								FC_FILE, 0,
-								&filename)
-			    && filename)
+			if (FcResultMatch == FcPatternGetString(fs->fonts[i], FC_FILE, 0,
+													&filename)
+				&& filename)
 			{
 				rtns.push_back(std::string((const char*)filename));
-				++font_count;
+				if (rtns.size() >= max_font_count_cutoff)
+					break; // hit limit
 			}
 		}
 		FcFontSetDestroy (fs);
 	}
 
-	lldebugs << "Using font list: " << llendl;
+	LL_DEBUGS("WindowSDL") << "Using font list: " << LL_ENDL;
 	for (std::vector<std::string>::iterator it = rtns.begin();
 		 it != rtns.end();
 		 ++it)
 	{
-		lldebugs << "  file: " << *it << llendl;
+		LL_DEBUGS("WindowSDL") << "  file: " << *it << LL_ENDL;
 	}
-	llinfos << "Using " << font_count << " system font(s)." << llendl;
+	llinfos << "Using " << rtns.size() << "/" << found_font_count
+			<< " system fonts." << llendl;
 
 	rtns.push_back(final_fallback);
 	return rtns;

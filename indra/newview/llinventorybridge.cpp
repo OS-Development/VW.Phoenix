@@ -775,96 +775,101 @@ LLInvFVBridge* LLInvFVBridge::createBridge(LLAssetType::EType asset_type,
 										   const LLUUID& uuid,
 										   U32 flags)
 {
+	static LLUUID last_uuid;
+	bool warn = false;
 	LLInvFVBridge* new_listener = NULL;
-	switch(asset_type)
+	switch (asset_type)
 	{
 	case LLAssetType::AT_TEXTURE:
-		if(!(inv_type == LLInventoryType::IT_TEXTURE || inv_type == LLInventoryType::IT_SNAPSHOT))
+		if (inv_type != LLInventoryType::IT_TEXTURE &&
+			inv_type != LLInventoryType::IT_SNAPSHOT)
 		{
-			llwarns << LLAssetType::lookup(asset_type) << " asset has inventory type " << safe_inv_type_lookup(inv_type) << " on uuid " << uuid << llendl;
+			warn = true;
 		}
 		new_listener = new LLTextureBridge(inventory, uuid, inv_type);
 		break;
 
 	case LLAssetType::AT_SOUND:
-		if(!(inv_type == LLInventoryType::IT_SOUND))
+		if (inv_type != LLInventoryType::IT_SOUND)
 		{
-			llwarns << LLAssetType::lookup(asset_type) << " asset has inventory type " << safe_inv_type_lookup(inv_type) << " on uuid " << uuid << llendl;
+			warn = true;
 		}
 		new_listener = new LLSoundBridge(inventory, uuid);
 		break;
 
 	case LLAssetType::AT_LANDMARK:
-		if(!(inv_type == LLInventoryType::IT_LANDMARK))
+		if (inv_type != LLInventoryType::IT_LANDMARK)
 		{
-			llwarns << LLAssetType::lookup(asset_type) << " asset has inventory type " << safe_inv_type_lookup(inv_type) << " on uuid " << uuid << llendl;
+			warn = true;
 		}
 		new_listener = new LLLandmarkBridge(inventory, uuid, flags);
 		break;
 		
 	case LLAssetType::AT_CALLINGCARD:
-		if(!(inv_type == LLInventoryType::IT_CALLINGCARD))
+		if (inv_type != LLInventoryType::IT_CALLINGCARD)
 		{
-			llwarns << LLAssetType::lookup(asset_type) << " asset has inventory type " << safe_inv_type_lookup(inv_type) << " on uuid " << uuid << llendl;
+			warn = true;
 		}
 		new_listener = new LLCallingCardBridge(inventory, uuid);
 		break;
 
 	case LLAssetType::AT_SCRIPT:
-		if(!(inv_type == LLInventoryType::IT_LSL))
+		if (inv_type != LLInventoryType::IT_LSL)
 		{
-			llwarns << LLAssetType::lookup(asset_type) << " asset has inventory type " << safe_inv_type_lookup(inv_type) << " on uuid " << uuid << llendl;
+			warn = true;
 		}
 		new_listener = new LLScriptBridge(inventory, uuid);
 		break;
 
 	case LLAssetType::AT_OBJECT:
-		if(!(inv_type == LLInventoryType::IT_OBJECT || inv_type == LLInventoryType::IT_ATTACHMENT))
+		if (inv_type != LLInventoryType::IT_OBJECT &&
+			inv_type != LLInventoryType::IT_ATTACHMENT)
 		{
-			llwarns << LLAssetType::lookup(asset_type) << " asset has inventory type " << safe_inv_type_lookup(inv_type) << " on uuid " << uuid << llendl;
+			warn = true;
 		}
 		new_listener = new LLObjectBridge(inventory, uuid, inv_type, flags);
 		break;
 
 	case LLAssetType::AT_NOTECARD:
-		if(!(inv_type == LLInventoryType::IT_NOTECARD))
+		if (inv_type != LLInventoryType::IT_NOTECARD)
 		{
-			llwarns << LLAssetType::lookup(asset_type) << " asset has inventory type " << safe_inv_type_lookup(inv_type) << " on uuid " << uuid << llendl;
+			warn = true;
 		}
 		new_listener = new LLNotecardBridge(inventory, uuid);
 		break;
 
 	case LLAssetType::AT_ANIMATION:
-		if(!(inv_type == LLInventoryType::IT_ANIMATION))
+		if (inv_type != LLInventoryType::IT_ANIMATION)
 		{
-			llwarns << LLAssetType::lookup(asset_type) << " asset has inventory type " << safe_inv_type_lookup(inv_type) << " on uuid " << uuid << llendl;
+			warn = true;
 		}
 		new_listener = new LLAnimationBridge(inventory, uuid);
 		break;
 
 	case LLAssetType::AT_GESTURE:
-		if(!(inv_type == LLInventoryType::IT_GESTURE))
+		if (inv_type != LLInventoryType::IT_GESTURE)
 		{
-			llwarns << LLAssetType::lookup(asset_type) << " asset has inventory type " << safe_inv_type_lookup(inv_type) << " on uuid " << uuid << llendl;
+			warn = true;
 		}
 		new_listener = new LLGestureBridge(inventory, uuid);
 		break;
 
 	case LLAssetType::AT_LSL_TEXT:
-		if(!(inv_type == LLInventoryType::IT_LSL))
+		if (inv_type != LLInventoryType::IT_LSL)
 		{
-			llwarns << LLAssetType::lookup(asset_type) << " asset has inventory type " << safe_inv_type_lookup(inv_type) << " on uuid " << uuid << llendl;
+			warn = true;
 		}
 		new_listener = new LLLSLTextBridge(inventory, uuid);
 		break;
 
 	case LLAssetType::AT_CLOTHING:
 	case LLAssetType::AT_BODYPART:
-		if(!(inv_type == LLInventoryType::IT_WEARABLE))
+		if (inv_type != LLInventoryType::IT_WEARABLE)
 		{
-			llwarns << LLAssetType::lookup(asset_type) << " asset has inventory type " << safe_inv_type_lookup(inv_type) << " on uuid " << uuid << llendl;
+			warn = true;
 		}
-		new_listener = new LLWearableBridge(inventory, uuid, asset_type, inv_type, (EWearableType)flags);
+		new_listener = new LLWearableBridge(inventory, uuid, asset_type,
+											inv_type, (EWearableType)flags);
 		break;
 
 	case LLAssetType::AT_CATEGORY:
@@ -883,9 +888,9 @@ LLInvFVBridge* LLInvFVBridge::createBridge(LLAssetType::EType asset_type,
 		new_listener = new LLLinkItemBridge(inventory, uuid);
 		break;
 	case LLAssetType::AT_MESH:
-		if (!(inv_type == LLInventoryType::IT_MESH))
+		if (inv_type != LLInventoryType::IT_MESH)
 		{
-			llwarns << LLAssetType::lookup(asset_type) << " asset has inventory type " << safe_inv_type_lookup(inv_type) << " on uuid " << uuid << llendl;
+			warn = true;
 		}
 		new_listener = new LLMeshBridge(inventory, uuid);
 		break;
@@ -894,6 +899,15 @@ LLInvFVBridge* LLInvFVBridge::createBridge(LLAssetType::EType asset_type,
 		llinfos << "Unhandled asset type (llassetstorage.h): "
 				<< (S32)asset_type << llendl;
 		break;
+	}
+
+	if (warn && uuid != last_uuid)
+	{
+		last_uuid = uuid;
+		llwarns << LLAssetType::lookup(asset_type)
+				<< " asset has inventory type "
+				<< safe_inv_type_lookup(inv_type)
+				<< " on uuid " << uuid << llendl;
 	}
 
 	if (new_listener)
