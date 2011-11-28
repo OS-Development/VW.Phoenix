@@ -1203,6 +1203,7 @@ void RlvFolderLocks::refreshLockedLookups() const
 				case LLAssetType::AT_OBJECT:
 					m_LockedAttachmentRem.push_back(pItem->getLinkedUUID());
 					break;
+				default: ; // do nothing
 			}
 		}
 	}

@@ -38,7 +38,6 @@
 #include "llappviewer.h"
 #include "llbutton.h"
 #include "llcombobox.h"
-#include "llfilepicker.h"
 #include "llimagetga.h"
 #include "llinventoryview.h"
 #include "llinventory.h"
@@ -64,7 +63,7 @@ const S32 CLIENT_RECT_VPAD = 4;
 
 const F32 SECONDS_TO_SHOW_FILE_SAVED_MSG = 8.f;
 
-LLPreviewTexture * LLPreviewTexture::sInstance;
+std::set<LLPreviewTexture*> LLPreviewTexture::sList;
 
 LLPreviewTexture::LLPreviewTexture(const std::string& name,
 								   const LLRect& rect,
@@ -83,6 +82,7 @@ LLPreviewTexture::LLPreviewTexture(const std::string& name,
 	mImage(NULL),
 	mImageOldBoostLevel(LLViewerTexture::BOOST_NONE)
 {
+	sList.insert(this);
 	const LLInventoryItem *item = getItem();
 	if (item)
 	{
@@ -138,7 +138,7 @@ LLPreviewTexture::LLPreviewTexture(const std::string& name,
 	mImage(NULL),
 	mImageOldBoostLevel(LLViewerTexture::BOOST_NONE)
 {
-
+	sList.insert(this);
 	init();
 
 	setTitle(title);
@@ -159,14 +159,13 @@ LLPreviewTexture::~LLPreviewTexture()
 
 	mImage->setBoostLevel(mImageOldBoostLevel);
 	mImage = NULL;
-	sInstance = NULL;
+	sList.erase(this);
 }
 
 
 void LLPreviewTexture::init()
 {
-	sInstance = this;
-	LLUICtrlFactory::getInstance()->buildFloater(sInstance,"floater_preview_texture.xml");
+	LLUICtrlFactory::getInstance()->buildFloater(this,"floater_preview_texture.xml");
 
 	childSetVisible("desc", !mCopyToInv);	// Hide description field for embedded textures
 	childSetVisible("desc txt", !mCopyToInv);
@@ -240,10 +239,11 @@ void LLPreviewTexture::callbackLoadAvatarName(const LLUUID& id, const std::strin
 	sInstance->childSetText("uploader", fullname.str());
 }
 */
-void LLPreviewTexture::callbackLoadAvatarName(const LLUUID& id, const std::string& fullname, bool is_group)
+void LLPreviewTexture::callbackLoadAvatarName(const LLUUID& id, const std::string& fullname, bool is_group, void* userdata)
 {
-	if (!sInstance) return;
-	sInstance->childSetText("uploader", fullname);
+	LLPreviewTexture* self = (LLPreviewTexture*)userdata;
+	if (!self || !sList.count(self)) return;
+	self->childSetText("uploader", fullname);
 }
 
 
@@ -296,7 +296,7 @@ void LLPreviewTexture::draw()
 
 				// Ansariel: Changed to boost::bind callback
 				//gCacheName->get(uploaderkey, FALSE, callbackLoadAvatarName);
-				gCacheName->get(uploaderkey, false, boost::bind(&callbackLoadAvatarName, _1, _2, _3));
+				gCacheName->get(uploaderkey, false, boost::bind(&callbackLoadAvatarName, _1, _2, _3, this));
 			}
 			if (color.empty()&&(mImage->mDecodedComment.find("c")!=mImage->mDecodedComment.end()))
 			{
@@ -395,35 +395,54 @@ void LLPreviewTexture::saveAs()
 // virtual
 void LLPreviewTexture::saveAs(bool is_png)
 {
-	if( mLoadingFullImage ) return;
+	if (mLoadingFullImage) return;
 
-	LLFilePicker& file_picker = LLFilePicker::instance();
-	const LLViewerInventoryItem* item = getItem() ;
-	loaded_callback_func callback = LLPreviewTexture::onFileLoadedForSaveTGA;
+	std::string suggestion;
+	const LLViewerInventoryItem* item = getItem();
+	if (item)
+	{
+		suggestion = LLDir::getScrubbedFileName(item->getName());
+	}
+
 	if (is_png)
 	{
-		callback = LLPreviewTexture::onFileLoadedForSavePNG;
-		if (!file_picker.getSaveFile( LLFilePicker::FFSAVE_PNG, item ? LLDir::getScrubbedFileName(item->getName()) : LLStringUtil::null))
-		{
-			// User canceled or we failed to acquire save file.
-			return;
-		}
+		(new LLSaveFilePicker(LLFilePicker::FFSAVE_PNG,
+							  LLPreviewTexture::saveAsCallback,
+							  this))->getSaveFile(suggestion);
 	}
 	else
 	{
-		callback = LLPreviewTexture::onFileLoadedForSaveTGA;
-		if (!file_picker.getSaveFile( LLFilePicker::FFSAVE_TGA, item ? LLDir::getScrubbedFileName(item->getName()) : LLStringUtil::null))
-		{
-			// User canceled or we failed to acquire save file.
-			return;
-		}
+		(new LLSaveFilePicker(LLFilePicker::FFSAVE_TGA,
+							  LLPreviewTexture::saveAsCallback,
+							  this))->getSaveFile(suggestion);
 	}
+}
+
+// static
+void LLPreviewTexture::saveAsCallback(LLFilePicker::ESaveFilter type,
+									  std::string& filename, void* user_data)
+{
+	LLPreviewTexture* self = (LLPreviewTexture*)user_data;
+	if (!self || !sList.count(self))
+	{
+		LLNotifications::instance().add("TextureSavingAborted");
+	}
+
+	if (filename.empty()) return;
+
 	// remember the user-approved/edited file name.
-	mSaveFileName = file_picker.getFirstFile();
-	mLoadingFullImage = TRUE;
-	getWindow()->incBusyCount();
-	mImage->forceToSaveRawImage(0) ;//re-fetch the raw image if the old one is removed.
-	mImage->setLoadedCallback(callback, 0, TRUE, FALSE, new LLUUID(mItemUUID), &mCallbackTextureList);
+	self->mSaveFileName = filename;
+	self->mLoadingFullImage = TRUE;
+	self->getWindow()->incBusyCount();
+	self->mImage->forceToSaveRawImage(0) ;//re-fetch the raw image if the old one is removed.
+	if (type == LLFilePicker::FFSAVE_PNG)
+	{
+		self->mImage->setLoadedCallback(LLPreviewTexture::onFileLoadedForSavePNG, 0, TRUE, FALSE, new LLUUID(self->mItemUUID), &self->mCallbackTextureList);
+	}
+	else
+	{
+		self->mImage->setLoadedCallback(LLPreviewTexture::onFileLoadedForSaveTGA, 0, TRUE, FALSE, new LLUUID(self->mItemUUID), &self->mCallbackTextureList);
+	}
 }
 
 // static

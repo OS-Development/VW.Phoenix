@@ -45,10 +45,12 @@
 #include "llagent.h"
 #include "llavatarnamecache.h"
 #include "llconsole.h"
+#include "lldirpicker.h"
 #include "lldrawpoolbump.h"
 #include "lldrawpoolterrain.h"
 #include "llflexibleobject.h"
 #include "llfeaturemanager.h"
+#include "llfilepicker.h"
 #include "llviewershadermgr.h"
 #include "llpanelgeneral.h"
 #include "llpanelinput.h"
@@ -70,6 +72,7 @@
 #include "llvosurfacepatch.h"
 #include "llvowlsky.h"
 #include "llfloaterchat.h"
+#include "llviewermenufile.h"
 #include "llviewerparcelmedia.h"
 #include "llviewertexturelist.h"
 #include "llmeshrepository.h"
@@ -448,12 +451,6 @@ bool handleEffectColorChanged(const LLSD& newvalue)
 	return true;
 }
 
-bool handleVectorizeChanged(const LLSD& newvalue)
-{
-	LLViewerJointMesh::updateVectorize();
-	return true;
-}
-
 bool handleVoiceClientPrefsChanged(const LLSD& newvalue)
 {
 	if(LLVoiceClient::instanceExists())
@@ -501,6 +498,17 @@ static bool handleAvatarPhysicsLODChanged(const LLSD& newvalue)
 static bool handleCheesyBeaconChanged(const LLSD& newvalue)
 {
 	LLTracker::sCheesyBeacon = newvalue.asBoolean();
+	return true;
+}
+
+static bool handleNonBlockingFilePickerChanged(const LLSD& newvalue)
+{
+	LLTracker::sCheesyBeacon = newvalue.asBoolean();
+#if !LL_DARWIN
+	bool blocking = (newvalue.asBoolean() == FALSE);
+	LLFilePickerThread::setBlocking(blocking);
+	LLDirPickerThread::setBlocking(blocking);
+#endif
 	return true;
 }
 
@@ -637,10 +645,6 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("UserLogFile")->getSignal()->connect(boost::bind(&handleLogFileChanged, _2));
 	gSavedSettings.getControl("RenderHideGroupTitle")->getSignal()->connect(boost::bind(handleHideGroupTitleChanged, _2));
 	gSavedSettings.getControl("EffectColor")->getSignal()->connect(boost::bind(handleEffectColorChanged, _2));
-	gSavedSettings.getControl("VectorizePerfTest")->getSignal()->connect(boost::bind(&handleVectorizeChanged, _2));
-	gSavedSettings.getControl("VectorizeEnable")->getSignal()->connect(boost::bind(&handleVectorizeChanged, _2));
-	gSavedSettings.getControl("VectorizeProcessor")->getSignal()->connect(boost::bind(&handleVectorizeChanged, _2));
-	gSavedSettings.getControl("VectorizeSkin")->getSignal()->connect(boost::bind(&handleVectorizeChanged, _2));
 	gSavedSettings.getControl("EnableVoiceChat")->getSignal()->connect(boost::bind(&handleVoiceClientPrefsChanged, _2));
 	gSavedSettings.getControl("PTTCurrentlyEnabled")->getSignal()->connect(boost::bind(&handleVoiceClientPrefsChanged, _2));
 	gSavedSettings.getControl("PushToTalkButton")->getSignal()->connect(boost::bind(&handleVoiceClientPrefsChanged, _2));
@@ -653,6 +657,7 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("TranslateChat")->getSignal()->connect(boost::bind(&handleTranslateChatPrefsChanged, _2));	
 	gSavedSettings.getControl("PhoenixBlockSpam")->getSignal()->connect(boost::bind(&handlePhoenixBlockSpam, _2));
 	gSavedSettings.getControl("CheesyBeacon")->getSignal()->connect(boost::bind(&handleCheesyBeaconChanged, _2));	
+	gSavedSettings.getControl("NonBlockingFilePicker")->getSignal()->connect(boost::bind(&handleNonBlockingFilePickerChanged, _2));	
 
     // [Ansariel/Henri: Display name support]
 	gSavedSettings.getControl("PhoenixNameSystem")->getSignal()->connect(boost::bind(&handlePhoenixNameSystemChanged, _2));

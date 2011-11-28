@@ -1511,14 +1511,7 @@ void LLFloaterIMPanel::checkPFVS()
 // AO: PVFS custom viewer prefix support
 {
 	mPFVS = FALSE;
-	if ((mSessionUUID == LLUUID("3a1be8d4-01f3-bc1a-2703-442f0cc8f2dd")) ||  // PVFS Main
-	    (mSessionUUID == LLUUID("57dff5fb-83cd-6a87-cf76-262e7a043b7d")) ||  // PVFS Dutch
-	    (mSessionUUID == LLUUID("e2ba45d0-63e6-f1d4-565a-e0d9aab18cab")) ||  // PVFS French
-	    (mSessionUUID == LLUUID("32bda2a4-099e-7331-3bf8-ce4687ff2559")) ||  // PVFS German
-	    (mSessionUUID == LLUUID("5696328d-f7e4-1066-afc1-8dc85a5598a0")) ||  // PVFS Hungarian
-	    (mSessionUUID == LLUUID("d3b4c8a3-cfd7-3218-65fb-d7e499d1efab")) ||  // PVFS Italian
-	    (mSessionUUID == LLUUID("e689fa7b-33a5-d2a4-860f-77729a04b143")) ||  // PVFS Portugese
-	    (mSessionUUID == LLUUID("bb1d5028-6b2a-56a3-da2c-313d5ddeb41b")) )   // PVFS Spanish
+	if (PhoenixViewerLink::isSupportGroup(mSessionUUID))
 	{
 		mPFVS = TRUE;
 		LLCheckBoxCtrl* prefixViewer = getChild<LLCheckBoxCtrl>("prefixViewerToggle");
@@ -3092,10 +3085,25 @@ void LLFloaterIMPanel::sendMsg()
 				}
 			}
 			
-			// AO: PVFS Viewer Prefix Hack
-			if (mPFVS && gSavedSettings.getBOOL("PhoenixSupportGroupchatPrefix"))
+			// AO: PVFS Viewer Prefix
+			static LLCachedControl<bool> chat_prefix(gSavedSettings, "PhoenixSupportGroupchatPrefix");
+			if (mPFVS && chat_prefix)
 			{
-				utf8_text.insert(0,"(PH) ");
+				std::string version("");
+				std::ostringstream stream;
+				stream << LL_VERSION_MAJOR << "."
+				      << LL_VERSION_MINOR << "."
+				      << LL_VERSION_PATCH;
+				version = stream.str();
+
+				if (utf8_text.find("/me ") == 0)
+				{
+					utf8_text.insert(4,("(PH " + version + ") "));
+				}
+				else
+				{
+					utf8_text.insert(0,("(PH " + version + ") "));
+				}
 			}
 
 // [RLVa:KB] - Checked: 2011-09-17 (RLVa-1.1.4b) | Modified: RLVa-1.1.4b

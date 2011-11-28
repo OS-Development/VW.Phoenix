@@ -39,9 +39,10 @@ class LLPanelNetwork : public LLPanel
 {
 public:
 	LLPanelNetwork();
-	~LLPanelNetwork();
+	/*virtual*/ ~LLPanelNetwork();
 
-	BOOL postBuild();
+	/*virtual*/ BOOL postBuild();
+	/*virtual*/ void draw();
 
 	void apply();
 	void cancel();
@@ -67,7 +68,13 @@ private:
 	static void onSocksAuthChanged(LLUICtrl* ctrl, void* data);
 	static void updateProxyEnabled(LLPanelNetwork * self, bool enabled, std::string authtype);
 	
+	static void setCacheCallback(std::string& dir_name, void* data);
+	static void setSoundCacheCallback(std::string& dir_name, void* data);
+	static void setChatLogsCallback(std::string& dir_name, void* data);
+
 	static bool sSocksSettingsChanged;
+
+	static LLPanelNetwork* sInstance;
 
 };
 

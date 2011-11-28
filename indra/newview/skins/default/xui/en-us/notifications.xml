@@ -709,6 +709,34 @@ There was a problem uploading a report screenshot due to the following reason: [
   </notification>
 
   <notification
+   icon="notifytip.tga"
+   name="SnapshotAborted"
+   type="notifytip">
+The snapshot floater was closed before the saving could occur. Snapshot aborted.
+  </notification>
+
+  <notification
+   icon="notifytip.tga"
+   name="LoadScriptAborted"
+   type="notifytip">
+The script editor was closed before the loading could occur. Script loading aborted.
+  </notification>
+
+  <notification
+   icon="notifytip.tga"
+   name="SaveScriptAborted"
+   type="notifytip">
+The script editor was closed before the saving could occur. Script saving aborted.
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="PreferencesClosed"
+   type="alertmodal">
+The preferences floater has already been closed. Directory change aborted.
+  </notification>
+
+  <notification
    icon="alertmodal.tga"
    name="MustAgreeToLogIn"
    type="alertmodal">
@@ -1420,6 +1448,13 @@ Unknown Vorbis encode failure on: [FILE]
   </notification>
 
   <notification
+   icon="notifytip.tga"
+   name="TextureSavingAborted"
+   type="notifytip">
+The texture preview was closed before the saving could occur. Texture saving aborted.
+  </notification>
+
+  <notification
    icon="alertmodal.tga"
    name="CannotEncodeFile"
    type="alertmodal">
@@ -1537,7 +1572,8 @@ Select objects with scripts.
    icon="alertmodal.tga"
    name="NoFrontmostFloater"
    type="alertmodal">
-No frontmost floater to save.
+No frontmost floater to save or changed frontmost floater.
+Saving aborted. Please retry.
   </notification>
 
   <notification

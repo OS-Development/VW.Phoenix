@@ -1314,10 +1314,18 @@ void process_enable_simulator(LLMessageSystem *msg, void **user_data)
 	LLWorld::getInstance()->addRegion(handle, sim);
 
 	// give the simulator a message it can use to get ip and port
-	llinfos << "simulator_enable() Enabling " << sim << " with code " << msg->getOurCircuitCode() << llendl;
+	U32 circuit_code = msg->getOurCircuitCode();
+	static U32 last_ip_u32 = 0;
+	static U32 last_circuit_code = 0;
+	if (ip_u32 != last_ip_u32 || circuit_code != circuit_code)
+	{
+		last_ip_u32 = ip_u32;
+		last_circuit_code = circuit_code;
+		llinfos << "simulator_enable() Enabling " << sim << " with code " << circuit_code << llendl;
+	}
 	msg->newMessageFast(_PREHASH_UseCircuitCode);
 	msg->nextBlockFast(_PREHASH_CircuitCode);
-	msg->addU32Fast(_PREHASH_Code, msg->getOurCircuitCode());
+	msg->addU32Fast(_PREHASH_Code, circuit_code);
 	msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
 	msg->addUUIDFast(_PREHASH_ID, gAgent.getID());
 	msg->sendReliable(sim);

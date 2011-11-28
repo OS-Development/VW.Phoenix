@@ -81,7 +81,6 @@
 #include "lldrawpoolwater.h"
 #include "llface.h"
 #include "llfeaturemanager.h"
-#include "llfilepicker.h"
 #include "llfloaterchat.h"
 #include "llfloaterchatterbox.h"
 #include "llfloatercustomize.h"
@@ -161,7 +160,6 @@ LLFrameTimer	gAwayTimer;
 LLFrameTimer	gAwayTriggerTimer;
 LLFrameTimer	gAlphaFadeTimer;
 
-BOOL			gShowOverlayTitle = FALSE;
 BOOL			gPickTransparent = TRUE;
 
 LLViewerObject*  gDebugRaycastObject = NULL;
@@ -1697,11 +1695,6 @@ LLViewerWindow::LLViewerWindow(
 	mCurrentMousePoint.mX = getWindowWidth() / 2;
 	mCurrentMousePoint.mY = getWindowHeight() / 2;
 
-	gShowOverlayTitle = gSavedSettings.getBOOL("ShowOverlayTitle");
-	mOverlayTitle = gSavedSettings.getString("OverlayTitle");
-	// Can't have spaces in settings.ini strings, so use underscores instead and convert them.
-	LLStringUtil::replaceChar(mOverlayTitle, '_', ' ');
-
 	// sync the keyboard's setting with the saved setting
 	gSavedSettings.getControl("NumpadControl")->firePropertyChanged();
 
@@ -2496,18 +2489,6 @@ void LLViewerWindow::draw()
 				mToolTip->draw();
 			}
 			LLUI::popMatrix();
-		}
-
-		if( gShowOverlayTitle && !mOverlayTitle.empty() )
-		{
-			// Used for special titles such as "Second Life - Special E3 2003 Beta"
-			const S32 DIST_FROM_TOP = 20;
-			LLFontGL::getFontSansSerifBig()->renderUTF8(
-				mOverlayTitle, 0,
-				llround( getWindowWidth() * 0.5f),
-				getWindowHeight() - DIST_FROM_TOP,
-				LLColor4(1, 1, 1, 0.4f),
-				LLFontGL::HCENTER, LLFontGL::TOP);
 		}
 
 		LLUI::sGLScaleFactor = old_scale_factor;
@@ -4014,54 +3995,22 @@ BOOL LLViewerWindow::mousePointOnLandGlobal(const S32 x, const S32 y, LLVector3d
 	return FALSE;
 }
 
+void LLViewerWindow::setSnapshotLoc(std::string filepath)
+{
+	LLViewerWindow::sSnapshotBaseName = gDirUtilp->getBaseFileName(filepath, true);
+	LLViewerWindow::sSnapshotDir = gDirUtilp->getDirName(filepath);
+}
+
 // Saves an image to the harddrive as "SnapshotX" where X >= 1.
 BOOL LLViewerWindow::saveImageNumbered(LLImageFormatted *image)
 {
-	if (!image)
+	if (!image || !isSnapshotLocSet())
 	{
 		return FALSE;
 	}
 
-	LLFilePicker::ESaveFilter pick_type;
-	std::string extension("." + image->getExtension());
-	if (extension == ".j2c")
-		pick_type = LLFilePicker::FFSAVE_J2C;
-	else if (extension == ".bmp")
-		pick_type = LLFilePicker::FFSAVE_BMP;
-	else if (extension == ".jpg")
-		pick_type = LLFilePicker::FFSAVE_JPEG;
-	else if (extension == ".png")
-		pick_type = LLFilePicker::FFSAVE_PNG;
-	else if (extension == ".tga")
-		pick_type = LLFilePicker::FFSAVE_TGA;
-	else
-		pick_type = LLFilePicker::FFSAVE_ALL; // ???
-	
-	// Get a base file location if needed.
-	if ( ! isSnapshotLocSet())		
-	{
-		std::string proposed_name( sSnapshotBaseName );
-
-		// getSaveFile will append an appropriate extension to the proposed name, based on the ESaveFilter constant passed in.
-
-		// pick a directory in which to save
-		LLFilePicker& picker = LLFilePicker::instance();
-		if (!picker.getSaveFile(pick_type, proposed_name))
-		{
-			// Clicked cancel
-			return FALSE;
-		}
-
-		// Copy the directory + file name
-		std::string filepath = picker.getFirstFile();
-
-		LLViewerWindow::sSnapshotBaseName = gDirUtilp->getBaseFileName(filepath, true);
-		LLViewerWindow::sSnapshotDir = gDirUtilp->getDirName(filepath);
-		if (gSavedPerAccountSettings.getBOOL("PhoenixShapshotReuseLastDir"))
-			gSavedPerAccountSettings.setString("PhoenixShapshotLastDir", LLViewerWindow::sSnapshotDir);
-	}
-
 	// Look for an unused file name
+	std::string extension("." + image->getExtension());
 	std::string filepath;
 	S32 i = 1;
 	S32 err = 0;
@@ -4080,7 +4029,12 @@ BOOL LLViewerWindow::saveImageNumbered(LLImageFormatted *image)
 	}
 	while( -1 != err );  // search until the file is not found (i.e., stat() gives an error).
 
-	return image->save(filepath);
+	BOOL result = image->save(filepath);
+	if (result)
+	{
+		playSnapshotAnimAndSound();
+	}
+	return result;
 }
 
 BOOL LLViewerWindow::isSnapshotLocSet()
@@ -4578,7 +4532,31 @@ void LLViewerWindow::destroyWindow()
 void LLViewerWindow::drawMouselookInstructions()
 {
 	// Draw instructions for mouselook ("Press ESC to leave Mouselook" in a box at the top of the screen.)
-	const std::string instructions = "Press ESC to leave Mouselook.";
+	// *TODO: translate
+	static const std::string instructions = "Press SHIFT ESC to leave Mouselook.";
+	static LLCachedControl<U32> fade_mouselook_exit_tip(gSavedSettings, "FadeMouselookExitTip");
+	F32 opaque_time = (F32)fade_mouselook_exit_tip;
+	if (opaque_time != 0.0f && opaque_time < 5.0f)
+	{
+		opaque_time = 5.0f;
+	}
+	const F32 INSTRUCTIONS_FADE_TIME = 5;
+
+	F32 timer = mMouselookTipFadeTimer.getElapsedTimeF32();
+
+	if (opaque_time && timer >= opaque_time + INSTRUCTIONS_FADE_TIME)
+	{
+		// Faded out already
+		return;
+	}
+
+	F32 alpha = 1.0f;
+	if (opaque_time && timer >= opaque_time)
+	{
+		// Instructions are fading
+		alpha = 1.0f - (timer - opaque_time) / INSTRUCTIONS_FADE_TIME;
+	}
+
 	const LLFontGL* font = LLResMgr::getInstance()->getRes( LLFONT_SANSSERIF );
 
 	const S32 INSTRUCTIONS_PAD = 5;
@@ -4591,7 +4569,7 @@ void LLViewerWindow::drawMouselookInstructions()
 
 	{
 		gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
-		gGL.color4f( 0.9f, 0.9f, 0.9f, 1.0f );
+		gGL.color4f( 0.9f, 0.9f, 0.9f, alpha );
 		gl_rect_2d( instructions_rect );
 	}
 	
@@ -4599,7 +4577,7 @@ void LLViewerWindow::drawMouselookInstructions()
 		instructions, 0,
 		instructions_rect.mLeft + INSTRUCTIONS_PAD,
 		instructions_rect.mTop - INSTRUCTIONS_PAD,
-		LLColor4( 0.0f, 0.0f, 0.0f, 1.f ),
+		LLColor4( 0.0f, 0.0f, 0.0f, alpha ),
 		LLFontGL::LEFT, LLFontGL::TOP);
 }
 

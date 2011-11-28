@@ -54,7 +54,9 @@
 #include "llwindow.h"
 
 #include "llagent.h"
+#include "lldirpicker.h"
 #include "llfeaturemanager.h"
+#include "llfilepicker.h"
 #include "llfirstuse.h"
 #include "llfloaterjoystick.h"
 #include "llfloatersnapshot.h"
@@ -114,7 +116,6 @@
 #include "lltrans.h"
 #include "lluitrans.h"
 #include "lltracker.h"
-#include "llviewermenufile.h"
 #include "llviewerparcelmgr.h"
 #include "llworldmapview.h"
 #include "llpostprocess.h"
@@ -452,6 +453,16 @@ static void settings_to_globals()
 	LLCOMBOBOX_HEIGHT	= BTN_HEIGHT - 2;
 	LLCOMBOBOX_WIDTH	= 128;
 
+#if LL_DARWIN
+	// Apparently, Darwin doesn't like non-blocking file pickers...
+	LLFilePickerThread::setBlocking(true);
+	LLDirPickerThread::setBlocking(true);
+#else
+	bool blocking = (gSavedSettings.getBOOL("NonBlockingFilePicker") == FALSE);
+	LLFilePickerThread::setBlocking(blocking);
+	LLDirPickerThread::setBlocking(blocking);
+#endif
+
 	LLSurface::setTextureSize(gSavedSettings.getU32("RegionTextureSize"));
 
 	LLImageGL::sGlobalUseAnisotropic	= gSavedSettings.getBOOL("RenderAnisotropic");
@@ -495,39 +506,6 @@ static void settings_modify()
 	gDebugGL = gSavedSettings.getBOOL("RenderDebugGL");
 	gDebugPipeline = gSavedSettings.getBOOL("RenderDebugPipeline");
 	gAuditTexture = gSavedSettings.getBOOL("AuditTexture");
-#if LL_VECTORIZE
-	if (gSysCPU.hasAltivec())
-	{
-		gSavedSettings.setBOOL("VectorizeEnable", TRUE );
-		gSavedSettings.setU32("VectorizeProcessor", 0 );
-	}
-	else
-	if (gSysCPU.hasSSE2())
-	{
-		gSavedSettings.setBOOL("VectorizeEnable", TRUE );
-		gSavedSettings.setU32("VectorizeProcessor", 2 );
-	}
-	else
-	if (gSysCPU.hasSSE())
-	{
-		gSavedSettings.setBOOL("VectorizeEnable", TRUE );
-		gSavedSettings.setU32("VectorizeProcessor", 1 );
-	}
-	else
-	{
-		// Don't bother testing or running if CPU doesn't support it. JC
-		gSavedSettings.setBOOL("VectorizePerfTest", FALSE );
-		gSavedSettings.setBOOL("VectorizeEnable", FALSE );
-		gSavedSettings.setU32("VectorizeProcessor", 0 );
-		gSavedSettings.setBOOL("VectorizeSkin", FALSE);
-	}
-#else
-	// This build target doesn't support SSE, don't test/run.
-	gSavedSettings.setBOOL("VectorizePerfTest", FALSE );
-	gSavedSettings.setBOOL("VectorizeEnable", FALSE );
-	gSavedSettings.setU32("VectorizeProcessor", 0 );
-	gSavedSettings.setBOOL("VectorizeSkin", FALSE);
-#endif
 }
 
 //virtual
@@ -827,8 +805,6 @@ bool LLAppViewer::init()
 	LLGroupMgr::parseRoleActions("role_actions.xml");
 
 	LLAgent::parseTeleportMessages("teleport_strings.xml");
-
-	LLViewerJointMesh::updateVectorize();
 
         // load MIME type -> media impl mappings
         std::string mime_types_name;
@@ -1679,6 +1655,7 @@ bool LLAppViewer::cleanup()
 	sTextureFetch->shutDownImageDecodeThread() ;
 	
 	LLFilePickerThread::cleanupClass();
+	LLDirPickerThread::cleanupClass();
 
 	delete sTextureCache;
     sTextureCache = NULL;
@@ -1804,6 +1781,7 @@ bool LLAppViewer::initThreads()
 	gMeshRepo.init();
 
 	LLFilePickerThread::initClass();
+	LLDirPickerThread::initClass();
 
 	// *FIX: no error handling here!
 	return true;
@@ -3639,7 +3617,8 @@ void LLAppViewer::idle()
 	LLEventTimer::updateClass();
 	LLCriticalDamp::updateInterpolants();
 	LLMortician::updateClass();
-	LLFilePickerThread::clearDead();  //calls LLFilePickerThread::notify()
+	LLFilePickerThread::clearDead();	// calls LLFilePickerThread::notify()
+	LLDirPickerThread::clearDead();		// calls LLDirPickerThread::notify()
 
 	F32 dt_raw = idle_timer.getElapsedTimeAndResetF32();
 

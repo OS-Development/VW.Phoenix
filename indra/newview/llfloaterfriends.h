@@ -40,6 +40,7 @@
 #include "llstring.h"
 #include "lluuid.h"
 #include "llcallingcard.h"
+#include "llfilepicker.h"
 
 class LLFriendObserver;
 class LLRelationship;
@@ -134,6 +135,10 @@ private:
 	static void onClickRemove(void* user_data);
 	static void onClickExport(void* user_data);
 	static void onClickImport(void* user_data);
+	static void onClickImportCallback(LLFilePicker::ELoadFilter type,
+						  std::string& filename,
+						  std::deque<std::string>& files,
+						  void*);
 public:
 	static void FriendImportState(LLUUID id, bool accepted);
 private:

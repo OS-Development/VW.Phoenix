@@ -89,6 +89,7 @@
 #include "llcompilequeue.h"
 #include "llconsole.h"
 #include "lldebugview.h"
+#include "lldirpicker.h"
 #include "lldrawable.h"
 #include "lldrawpoolalpha.h"
 #include "lldrawpooltree.h"
@@ -264,7 +265,6 @@ void handle_test_load_url(void*);
 // Evil hackish imported globals
 //
 extern BOOL gRenderAvatar;
-extern BOOL gShowOverlayTitle;
 extern BOOL gOcclusionCull;
 
 //
@@ -310,10 +310,6 @@ typedef LLMemberListener<LLView> view_listener_t;
 // Local prototypes
 //
 void handle_leave_group(void *);
-
-// File Menu
-void handle_compress_image(void*);
-BOOL enable_save_as(void *);
 
 // Edit menu
 void handle_dump_group_info(void *);
@@ -384,15 +380,11 @@ BOOL check_show_xui_names(void *);
 
 void toggle_HTTPGetTextures(void *);
 
-void run_vectorize_perf_test(void *)
-{
-	gSavedSettings.setBOOL("VectorizePerfTest", TRUE);
-}
+BOOL enable_picker_actions(void*);
 
 // Debug UI
 void handle_web_search_demo(void*);
 void handle_web_browser_test(void*);
-void handle_buy_currency_test(void*);
 void handle_save_to_xml(void*);
 void handle_load_from_xml(void*);
 
@@ -416,10 +408,6 @@ void handle_object_owner_permissive(void*);
 void handle_object_lock(void*);
 void handle_object_asset_ids(void*);
 void force_take_copy(void*);
-#ifdef _CORY_TESTING
-void force_export_copy(void*);
-void force_import_geometry(void*);
-#endif
 
 void handle_force_parcel_owner_to_me(void*);
 void handle_force_parcel_to_content(void*);
@@ -440,12 +428,14 @@ void force_error_software_exception(void *);
 void force_error_driver_crash(void *);
 
 void handle_stopall(void*);
-//void handle_hinge(void*);
-//void handle_ptop(void*);
-//void handle_lptop(void*);
-//void handle_wheel(void*);
-//void handle_dehinge(void*);
+#ifdef SEND_HINGES
+void handle_hinge(void*);
+void handle_ptop(void*);
+void handle_lptop(void*);
+void handle_wheel(void*);
+void handle_dehinge(void*);
 BOOL enable_dehinge(void*);
+#endif
 void handle_force_delete(void*);
 void print_object_info(void*);
 void print_agent_nvpairs(void*);
@@ -589,6 +579,11 @@ void initialize_menus();
 //
 // Break up groups of more than 6 items with separators
 //-----------------------------------------------------------------------------
+
+BOOL enable_picker_actions(void*)
+{
+	return !LLFilePickerThread::isInUse() && !LLDirPickerThread::isInUse() ? TRUE : FALSE;
+}
 
 void set_underclothes_menu_options()
 {
@@ -1085,21 +1080,24 @@ void init_debug_world_menu(LLMenuGL* menu)
 }
 
 
+void export_menus_to_xml_callback(LLFilePicker::ESaveFilter type,
+								  std::string& filename,
+								  void* user_data)
+{
+	if (!filename.empty())
+	{
+		llofstream out(filename);
+		LLXMLNodePtr node = gMenuBarView->getXML();
+		node->writeToOstream(out);
+		out.close();
+	}
+}
+
 void handle_export_menus_to_xml(void*)
 {
-
-	LLFilePicker& picker = LLFilePicker::instance();
-	if(!picker.getSaveFile(LLFilePicker::FFSAVE_XML))
-	{
-		llwarns << "No file" << llendl;
-		return;
-	}
-	std::string filename = picker.getFirstFile();
-
-	llofstream out(filename);
-	LLXMLNodePtr node = gMenuBarView->getXML();
-	node->writeToOstream(out);
-	out.close();
+	// Open the file save dialog
+	(new LLSaveFilePicker(LLFilePicker::FFSAVE_XML,
+						  export_menus_to_xml_callback))->getSaveFile("menu_bar.xml");
 }
 
 extern BOOL gDebugClicks;
@@ -1108,14 +1106,15 @@ extern BOOL gDebugTextEditorTips;
 
 void init_debug_ui_menu(LLMenuGL* menu)
 {
+#if !LL_DARWIN
+	menu->append(new LLMenuItemCheckGL("Use a non-blocking file picker", menu_toggle_control, NULL, menu_check_control, (void*)"NonBlockingFilePicker"));
+#endif
 	menu->append(new LLMenuItemCheckGL("Rotate Mini-Map", menu_toggle_control, NULL, menu_check_control, (void*)"MiniMapRotate"));
 	menu->append(new LLMenuItemCheckGL("Use default system color picker", menu_toggle_control, NULL, menu_check_control, (void*)"UseDefaultColorPicker"));
 	menu->append(new LLMenuItemCheckGL("Show search panel in overlay bar", menu_toggle_control, NULL, menu_check_control, (void*)"ShowSearchBar"));
 	menu->append(new LLMenuItemCallGL("Reload L$ balance", &reload_linden_balance, NULL, NULL, 'B', MASK_CONTROL | MASK_ALT));
 	menu->appendSeparator();
 
-	// commented out until work is complete: DEV-32268
-	// menu->append(new LLMenuItemCallGL("Buy Currency Test", &handle_buy_currency_test));
 	menu->append(new LLMenuItemCallGL("Editable UI", &edit_ui));
 	menu->append(new LLMenuItemCallGL( "Dump SelectMgr", &dump_select_mgr));
 	menu->append(new LLMenuItemCallGL( "Dump Inventory", &dump_inventory));
@@ -1155,10 +1154,10 @@ void init_debug_xui_menu(LLMenuGL* menu)
 {
 	menu->append(new LLMenuItemCallGL("Floater Test...", LLFloaterTest::show));
 	menu->append(new LLMenuItemCallGL("Font Test...", LLFloaterFontTest::show));
-	menu->append(new LLMenuItemCallGL("Export Menus to XML...", handle_export_menus_to_xml));
+	menu->append(new LLMenuItemCallGL("Export Menus to XML...", handle_export_menus_to_xml, &enable_picker_actions, NULL));
 	menu->append(new LLMenuItemCallGL("Edit UI...", LLFloaterEditUI::show));	
-	menu->append(new LLMenuItemCallGL("Load from XML...", handle_load_from_xml));
-	menu->append(new LLMenuItemCallGL("Save to XML...", handle_save_to_xml));
+	menu->append(new LLMenuItemCallGL("Load from XML...", handle_load_from_xml, &enable_picker_actions, NULL));
+	menu->append(new LLMenuItemCallGL("Save to XML...", handle_save_to_xml, &enable_picker_actions, NULL));
 	menu->append(new LLMenuItemCheckGL("Show XUI Names", toggle_show_xui_names, NULL, check_show_xui_names, NULL));
 
 	//menu->append(new LLMenuItemCallGL("Buy Currency...", handle_buy_currency));
@@ -1332,7 +1331,7 @@ void init_debug_rendering_menu(LLMenuGL* menu)
 										   &LLPipeline::toggleRenderDebug, NULL,
 											&LLPipeline::toggleRenderDebugControl,
 											(void*)LLPipeline::RENDER_DEBUG_TEXTURE_PRIORITY));
-	sub_menu->append(new LLMenuItemCheckGL("Avatar Rendering Cost",
+	sub_menu->append(new LLMenuItemCheckGL("Avatar Render Weight (Replacement for ARC)",
 										   &LLPipeline::toggleRenderDebug, NULL,
 											&LLPipeline::toggleRenderDebugControl,
 											(void*)LLPipeline::RENDER_DEBUG_SHAME));
@@ -1381,8 +1380,6 @@ void init_debug_rendering_menu(LLMenuGL* menu)
 											&LLPipeline::toggleRenderDebugControl,
 											(void*)LLPipeline::RENDER_DEBUG_SCULPTED));
 		
-	sub_menu->append(new LLMenuItemCallGL("Vectorize Perf Test", &run_vectorize_perf_test));
-
 	sub_menu = new LLMenuGL("Render Tests");
 
 	sub_menu->append(new LLMenuItemCheckGL("Camera Offset", 
@@ -1484,8 +1481,9 @@ void init_debug_avatar_menu(LLMenuGL* menu)
 	sub_menu->append(new LLMenuItemToggleGL("Go Away/AFK When Idle",
 		&gAllowIdleAFK));
 
-	sub_menu->append(new LLMenuItemCallGL("Appearance To XML", 
-		&LLVOAvatar::dumpArchetypeXML));
+	sub_menu->append(new LLMenuItemCallGL("Appearance To XML...",
+					 &LLVOAvatar::dumpArchetypeXML,
+					 &enable_picker_actions, NULL));
 
 	// HACK for easy testing of avatar geometry
 	sub_menu->append(new LLMenuItemCallGL( "Toggle Character Geometry", 
@@ -1666,12 +1664,6 @@ void init_server_menu(LLMenuGL* menu)
 	menu->append(new LLMenuItemCallGL("Save Region State", 
 		&LLPanelRegionTools::onSaveState, &enable_god_customer_service, NULL));
 
-//	menu->append(new LLMenuItemCallGL("Force Join Group", handle_force_join_group));
-//
-//	menu->appendSeparator();
-//
-//	menu->append(new LLMenuItemCallGL( "OverlayTitle",
-//		&handle_show_overlay_title, &enable_god_customer_service, NULL));
 	menu->createJumpKeys();
 }
 
@@ -2451,7 +2443,8 @@ class LLObjectEnableMute : public view_listener_t
 	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
 	{
 		LLViewerObject* object = LLSelectMgr::getInstance()->getSelection()->getPrimaryObject();
-		bool new_value = (object != NULL);
+		bool new_value = object != NULL && !LLFilePickerThread::isInUse() &&
+						 !LLDirPickerThread::isInUse();
 		if (new_value)
 		{
 			LLVOAvatar* avatar = find_avatar_from_object(object); 
@@ -4258,12 +4251,6 @@ void handle_god_request_avatar_geometry(void *)
 }
 
 
-void handle_show_overlay_title(void*)
-{
-	gShowOverlayTitle = !gShowOverlayTitle;
-	gSavedSettings.setBOOL("ShowOverlayTitle", gShowOverlayTitle);
-}
-
 void derez_objects(EDeRezDestination dest, const LLUUID& dest_id)
 {
 	if(gAgent.cameraMouselook())
@@ -5216,36 +5203,38 @@ class LLToolsEnableReleaseKeys : public view_listener_t
 	}
 };
 
-//void handle_hinge(void*)
-//{
-//	LLSelectMgr::getInstance()->sendHinge(1);
-//}
+#ifdef SEND_HINGES
+void handle_hinge(void*)
+{
+	LLSelectMgr::getInstance()->sendHinge(1);
+}
 
-//void handle_ptop(void*)
-//{
-//	LLSelectMgr::getInstance()->sendHinge(2);
-//}
+void handle_ptop(void*)
+{
+	LLSelectMgr::getInstance()->sendHinge(2);
+}
 
-//void handle_lptop(void*)
-//{
-//	LLSelectMgr::getInstance()->sendHinge(3);
-//}
+void handle_lptop(void*)
+{
+	LLSelectMgr::getInstance()->sendHinge(3);
+}
 
-//void handle_wheel(void*)
-//{
-//	LLSelectMgr::getInstance()->sendHinge(4);
-//}
+void handle_wheel(void*)
+{
+	LLSelectMgr::getInstance()->sendHinge(4);
+}
 
-//void handle_dehinge(void*)
-//{
-//	LLSelectMgr::getInstance()->sendDehinge();
-//}
+void handle_dehinge(void*)
 
-//BOOL enable_dehinge(void*)
-//{
-//	LLViewerObject* obj = LLSelectMgr::getInstance()->getSelection()->getFirstEditableObject();
-//	return obj && !obj->isAttachment();
-//}
+	LLSelectMgr::getInstance()->sendDehinge();
+}
+
+BOOL enable_dehinge(void*)
+{
+	LLViewerObject* obj = LLSelectMgr::getInstance()->getSelection()->getFirstEditableObject();
+	return obj && !obj->isAttachment();
+}
+#endif
 
 
 class LLEditEnableCut : public view_listener_t
@@ -8671,6 +8660,24 @@ const LLRect LLViewerMenuHolderGL::getMenuRect() const
 	return LLRect(0, getRect().getHeight() - MENU_BAR_HEIGHT, getRect().getWidth(), STATUS_BAR_HEIGHT);
 }
 
+void save_to_xml_callback(LLFilePicker::ESaveFilter type,
+						  std::string& filename,
+						  void* user_data)
+{
+	LLFloater* frontmost = (LLFloater*)user_data;
+	if (!filename.empty())
+	{
+		if (frontmost == gFloaterView->getFrontmost())
+		{
+			LLUICtrlFactory::getInstance()->saveToXML(frontmost, filename);
+		}
+		else
+		{
+        	LLNotifications::instance().add("NoFrontmostFloater");
+		}
+	}
+}
+
 void handle_save_to_xml(void*)
 {
 	LLFloater* frontmost = gFloaterView->getFrontmost();
@@ -8690,65 +8697,33 @@ void handle_save_to_xml(void*)
 	LLStringUtil::replaceChar(default_name, ':', '_');
 	LLStringUtil::replaceChar(default_name, '"', '_');
 
-	LLFilePicker& picker = LLFilePicker::instance();
-	if (picker.getSaveFile(LLFilePicker::FFSAVE_XML, default_name))
+	// Open the file save dialog
+	(new LLSaveFilePicker(LLFilePicker::FFSAVE_XML,
+						  save_to_xml_callback,
+						  frontmost))->getSaveFile(default_name);
+}
+
+void load_from_xml_callback(LLFilePicker::ELoadFilter type,
+							std::string& filename,
+							std::deque<std::string>& files,
+							void* user_data)
+{
+	if (!filename.empty())
 	{
-		std::string filename = picker.getFirstFile();
-		LLUICtrlFactory::getInstance()->saveToXML(frontmost, filename);
+		LLFloater* floater = new LLFloater("sample_floater");
+		LLUICtrlFactory::getInstance()->buildFloater(floater, filename);
+		floater->setCanClose(TRUE);	// Make sure the floater can be closed !
 	}
 }
 
 void handle_load_from_xml(void*)
 {
-	LLFilePicker& picker = LLFilePicker::instance();
-	if (picker.getOpenFile(LLFilePicker::FFLOAD_XML))
-	{
-		std::string filename = picker.getFirstFile();
-		LLFloater* floater = new LLFloater("sample_floater");
-		LLUICtrlFactory::getInstance()->buildFloater(floater, filename);
-	}
+	(new LLLoadFilePicker(LLFilePicker::FFLOAD_XML, load_from_xml_callback))->getFile();
 }
 
 void handle_web_browser_test(void*)
 {
 	LLFloaterMediaBrowser::showInstance("http://secondlife.com/app/search/slurls.html");
-}
-
-void handle_buy_currency_test(void*)
-{
-	std::string url =
-		"http://sarahd-sl-13041.webdev.lindenlab.com/app/lindex/index.php?agent_id=[AGENT_ID]&secure_session_id=[SESSION_ID]&lang=[LANGUAGE]";
-
-	LLStringUtil::format_map_t replace;
-	replace["[AGENT_ID]"] = gAgent.getID().asString();
-	replace["[SESSION_ID]"] = gAgent.getSecureSessionID().asString();
-
-	// *TODO: Replace with call to LLUI::getLanguage() after windows-setup
-	// branch merges in. JC
-	std::string language = "en-us";
-	language = gSavedSettings.getString("Language");
-	if (language.empty() || language == "default")
-	{
-		language = gSavedSettings.getString("InstallLanguage");
-	}
-	if (language.empty() || language == "default")
-	{
-		language = gSavedSettings.getString("SystemLanguage");
-	}
-	if (language.empty() || language == "default")
-	{
-		language = "en-us";
-	}
-
-	replace["[LANGUAGE]"] = language;
-	LLStringUtil::format(url, replace);
-
-	llinfos << "buy currency url " << url << llendl;
-
-	LLFloaterHtmlCurrency* floater = LLFloaterHtmlCurrency::showInstance(url);
-	// Needed so we can use secondlife:///app/floater/self/close SLURLs
-	floater->setTrusted(true);
-	floater->center();
 }
 
 void handle_rebake_textures(void*)
@@ -8764,13 +8739,16 @@ void handle_rebake_textures(void*)
 void toggle_visibility(void* user_data)
 {
 	LLView* viewp = (LLView*)user_data;
-	viewp->setVisible(!viewp->getVisible());
+	if (viewp)
+	{
+		viewp->setVisible(!viewp->getVisible());
+	}
 }
 
 BOOL get_visibility(void* user_data)
 {
 	LLView* viewp = (LLView*)user_data;
-	return viewp->getVisible();
+	return viewp ? viewp->getVisible() : FALSE;
 }
 
 // TomY TODO: Get rid of these?

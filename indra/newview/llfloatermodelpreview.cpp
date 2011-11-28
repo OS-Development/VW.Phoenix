@@ -86,17 +86,18 @@
 #include "lldrawable.h"
 #include "lldrawpoolavatar.h"
 #include "llface.h"
-#include "llfilepicker.h"
 #include "lltoolmgr.h"
 #include "llviewercamera.h"
 #include "llviewercontrol.h"
 #include "llviewermenu.h"
+#include "llviewermenufile.h"
 #include "llviewernetwork.h"
 #include "llviewerobjectlist.h"
 #include "llviewerregion.h"
 #include "llviewertexturelist.h"
 #include "llviewerwindow.h"
 #include "llvoavatar.h"
+#include "llweb.h"
 #include "pipeline.h"
 
 #include "hippogridmanager.h"
@@ -370,7 +371,10 @@ void LLMeshFilePicker::notify(const std::string& filename)
 LLFloaterModelPreview::LLFloaterModelPreview(const std::string& name)
 :	LLFloaterModelUploadBase(name),
 	mUploadBtn(NULL),
-	mCalculateBtn(NULL)
+	mCalculateBtn(NULL),
+	mNeedsReset(0),
+	mLibIsHACD(false),
+	mSentFeeRequest(false)
 {
 	sInstance = this;
 	mLastMouseX = 0;
@@ -385,7 +389,29 @@ LLFloaterModelPreview::LLFloaterModelPreview(const std::string& name)
 		mLODMode[i] = 1;
 	}
 
-	LLUICtrlFactory::getInstance()->buildFloater(this, "floater_model_preview.xml");
+	std::string validate_url;
+	LLViewerLogin* vl = LLViewerLogin::getInstance();
+	if (gHippoGridManager->getCurrentGrid()->isSecondLife())
+	{
+		if (vl->isInProductionGrid())
+		{
+			validate_url = AGNI_VALIDATE_MESH_UPLOAD_PAGE_URL;
+		}
+		else
+		{
+			validate_url = ADITI_VALIDATE_MESH_UPLOAD_PAGE_URL;
+		}
+	}
+	else
+	{
+		// Let's point to a known valid website page for OpenSim grids...
+		validate_url = gHippoGridManager->getCurrentGrid()->getLoginUri();
+	}
+
+	LLUICtrlFactory::getInstance()->buildFloater(this,
+												 "floater_model_preview.xml",
+												 NULL,
+												 FALSE); // don't open now
 }
 
 //-----------------------------------------------------------------------------
@@ -398,7 +424,6 @@ BOOL LLFloaterModelPreview::postBuild()
 		return FALSE;
 	}
 
-	childSetCommitCallback("cancel_btn", onCancel, this);
 	childSetCommitCallback("crease_angle", onGenerateNormalsCommit, this);
 	childSetCommitCallback("gen_normals", toggleGenerateNormals, this);
 
@@ -425,8 +450,8 @@ BOOL LLFloaterModelPreview::postBuild()
 
 	childSetAction("ok_btn", onUpload, this);
 	childDisable("ok_btn");
-
 	childSetAction("reset_btn", onReset, this);
+	childSetAction("cancel_btn", onCancel, this);
 
 	childSetCommitCallback("preview_lod_combo", onPreviewLODCommit, this);
 
@@ -445,7 +470,7 @@ BOOL LLFloaterModelPreview::postBuild()
 	childDisable("upload_skin");
 	childDisable("upload_joints");
 
-	initDecompControls();
+	//initDecompControls();
 
 	LLView* preview_panel = getChild<LLView>("preview_panel");
 
@@ -481,25 +506,8 @@ BOOL LLFloaterModelPreview::postBuild()
 		}
 	}
 
-	std::string validate_url;
-	LLViewerLogin* vl = LLViewerLogin::getInstance();
-	if (gHippoGridManager->getCurrentGrid()->isSecondLife())
-	{
-		if (vl->isInProductionGrid())
-		{
-			validate_url = AGNI_VALIDATE_MESH_UPLOAD_PAGE_URL;
-		}
-		else
-		{
-			validate_url = ADITI_VALIDATE_MESH_UPLOAD_PAGE_URL;
-		}
-	}
-	else
-	{
-		// Let's point to a known valid website page for OpenSim grids...
-		validate_url = gHippoGridManager->getCurrentGrid()->getLoginUri();
-	}
-	getChild<LLTextBox>("warning_message")->setTextArg("[VURL]", validate_url);
+	LLTextBox* warning = getChild<LLTextBox>("validate_url");
+	warning->setClickedCallback(onClickValidateURL, this);
 
 	mUploadBtn = getChild<LLButton>("ok_btn");
 	mCalculateBtn = getChild<LLButton>("calculate_btn");
@@ -623,6 +631,7 @@ void LLFloaterModelPreview::onClickCalculateBtn(void* userdata)
 
 	self->toggleCalculateButton(false);
 	self->mUploadBtn->setEnabled(false);
+	self->mSentFeeRequest = true;
 }
 
 //static
@@ -775,13 +784,25 @@ void LLFloaterModelPreview::onLODParamCommitEnforceTriLimit(LLUICtrl* ctrl, void
 void LLFloaterModelPreview::draw()
 {
 	LLFloater::draw();
-	LLRect r = getRect();
+
+	// Hack to get things right on first loading of a model
+	if (mNeedsReset == 1)
+	{
+		mNeedsReset = -1;
+		onReset(this);
+		return;
+	}
 
 	mModelPreview->update();
 
 	if (!mModelPreview->mLoading)
 	{
-		if (mModelPreview->getLoadState() > LLModelLoader::ERROR_PARSING)
+		if (mModelPreview->getLoadState() == LLModelLoader::ERROR_MATERIALS)
+		{
+			childSetTextArg("status", "[STATUS]",
+							getString("status_material_mismatch"));
+		}
+		else if (mModelPreview->getLoadState() > LLModelLoader::ERROR_PARSING)
 		{
 			childSetTextArg("status", "[STATUS]",
 							getString(LLModel::getStatusString(mModelPreview->getLoadState() - LLModelLoader::ERROR_PARSING)));
@@ -793,17 +814,17 @@ void LLFloaterModelPreview::draw()
 							getString("status_parse_error"));
 			toggleCalculateButton(false);
 		}
+		else if (mSentFeeRequest)
+		{
+			childSetTextArg("status", "[STATUS]",
+							getString("status_waiting_server"));
+		}
 		else
 		{
 			childSetTextArg("status", "[STATUS]",
 							getString("status_idle"));
 		}
 	}
-
-	//childSetTextArg("prim_cost", "[PRIM_COST]",
-	//				llformat("%d", mModelPreview->mResourceCost));
-	//childSetTextArg("description_label", "[TEXTURES]",
-	//				llformat("%d", mModelPreview->mTextureSet.size()));
 
 	if (mModelPreview)
 	{
@@ -937,13 +958,19 @@ BOOL LLFloaterModelPreview::handleScrollWheel(S32 x, S32 y, S32 clicks)
 }
 
 /*virtual*/
-void LLFloaterModelPreview::onOpen(const LLSD& key)
+void LLFloaterModelPreview::onOpen()
 {
+	initDecompControls();
+	if (mNeedsReset == 0)
+	{
+		// Hack to get things right on first loading of a model
+		mNeedsReset = 1;
+	}
 	requestAgentUploadPermissions();
 }
 
 //static
-void LLFloaterModelPreview::onPhysicsParamCommit(LLUICtrl* ctrl, void* data)
+void LLFloaterModelPreview::onPhysicsParamCommit(LLUICtrl* ctrl, void* userdata)
 {
 	if (LLConvexDecomposition::getInstance() == NULL)
 	{
@@ -953,7 +980,7 @@ void LLFloaterModelPreview::onPhysicsParamCommit(LLUICtrl* ctrl, void* data)
 
 	if (sInstance)
 	{
-		LLCDParam* param = (LLCDParam*) data;
+		LLCDParam* param = (LLCDParam*) userdata;
 		std::string name(param->mName);
 
 		LLSD value = ctrl->getValue();
@@ -986,9 +1013,9 @@ void LLFloaterModelPreview::onPhysicsParamCommit(LLUICtrl* ctrl, void* data)
 }
 
 //static
-void LLFloaterModelPreview::onPhysicsStageExecute(LLUICtrl* ctrl, void* data)
+void LLFloaterModelPreview::onPhysicsStageExecute(LLUICtrl* ctrl, void* userdata)
 {
-	LLCDStageData* stage_data = (LLCDStageData*) data;
+	LLCDStageData* stage_data = (LLCDStageData*) userdata;
 	std::string stage = stage_data->mName;
 
 	if (sInstance)
@@ -1028,19 +1055,24 @@ void LLFloaterModelPreview::onPhysicsStageExecute(LLUICtrl* ctrl, void* data)
 }
 
 //static
-void LLFloaterModelPreview::onPhysicsBrowse(LLUICtrl* ctrl, void* userdata)
+void LLFloaterModelPreview::onPhysicsBrowse(void* userdata)
 {
-	sInstance->loadModel(LLModel::LOD_PHYSICS);
+	LLFloaterModelPreview* self = (LLFloaterModelPreview*)userdata;
+	if (!self) return;
+	self->loadModel(LLModel::LOD_PHYSICS);
 }
 
 //static
 void LLFloaterModelPreview::onPhysicsUseLOD(LLUICtrl* ctrl, void* userdata)
 {
+	LLFloaterModelPreview* self = (LLFloaterModelPreview*)userdata;
+	if (!self) return;
+
 	S32 num_modes = 4;
 	S32 which_mode = 3;
 	static S32 previous_mode = which_mode;
 
-	LLCtrlSelectionInterface* iface = sInstance->childGetSelectionInterface("physics_lod_combo");
+	LLCtrlSelectionInterface* iface = self->childGetSelectionInterface("physics_lod_combo");
 	if (iface)
 	{
 		which_mode = iface->getFirstSelectedIndex();
@@ -1054,12 +1086,12 @@ void LLFloaterModelPreview::onPhysicsUseLOD(LLUICtrl* ctrl, void* userdata)
 	if (!lod_to_file)
 	{
 		which_mode = num_modes - which_mode;
-		sInstance->mModelPreview->setPhysicsFromLOD(which_mode);
+		self->mModelPreview->setPhysicsFromLOD(which_mode);
 	}
 
 	if (lod_to_file || file_to_lod)
 	{
-		LLModelPreview *model_preview = sInstance->mModelPreview;
+		LLModelPreview *model_preview = self->mModelPreview;
 		if (model_preview)
 		{
 			model_preview->refresh();
@@ -1071,18 +1103,21 @@ void LLFloaterModelPreview::onPhysicsUseLOD(LLUICtrl* ctrl, void* userdata)
 }
 
 //static 
-void LLFloaterModelPreview::onCancel(LLUICtrl* ctrl, void* data)
+void LLFloaterModelPreview::onCancel(void* userdata)
 {
-	if (sInstance)
+	LLFloaterModelPreview* self = (LLFloaterModelPreview*)userdata;
+	if (self)
 	{
-		sInstance->close();
+		onPhysicsStageCancel(self);
+		self->close();
 	}
 }
 
 //static
-void LLFloaterModelPreview::onPhysicsStageCancel(LLUICtrl* ctrl, void*data)
+void LLFloaterModelPreview::onPhysicsStageCancel(void* userdata)
 {
-	if (sInstance)
+	LLFloaterModelPreview* self = (LLFloaterModelPreview*)userdata;
+	if (self)
 	{
 		for (std::set<LLPointer<DecompRequest> >::iterator iter = sInstance->mCurRequest.begin();
 			iter != sInstance->mCurRequest.end(); ++iter)
@@ -1091,11 +1126,11 @@ void LLFloaterModelPreview::onPhysicsStageCancel(LLUICtrl* ctrl, void*data)
 		    req->mContinue = 0;
 		}
 
-		sInstance->mCurRequest.clear();
+		self->mCurRequest.clear();
 
-		if (sInstance->mModelPreview)
+		if (self->mModelPreview)
 		{
-			sInstance->mModelPreview->updateStatusMessages();
+			self->mModelPreview->updateStatusMessages();
 		}
 	}
 }
@@ -1104,19 +1139,20 @@ void LLFloaterModelPreview::initDecompControls()
 {
 	LLSD key;
 
-	childSetCommitCallback("simplify_cancel", onPhysicsStageCancel, NULL);
-	childSetCommitCallback("decompose_cancel", onPhysicsStageCancel, NULL);
+	childSetAction("simplify_cancel", onPhysicsStageCancel, this);
+	childSetAction("decompose_cancel", onPhysicsStageCancel, this);
 
-	childSetCommitCallback("physics_lod_combo", onPhysicsUseLOD, NULL);
-	childSetCommitCallback("physics_browse", onPhysicsBrowse, NULL);
+	childSetCommitCallback("physics_lod_combo", onPhysicsUseLOD, this);
+	childSetAction("physics_browse", onPhysicsBrowse, this);
 
 	static const LLCDStageData* stage = NULL;
 	static S32 stage_count = 0;
 
-	if (!stage && LLConvexDecomposition::getInstance() != NULL)
+	if (LLConvexDecomposition::getInstance() != NULL)
 	{
 		stage_count = LLConvexDecomposition::getInstance()->getStages(&stage);
 	}
+	LL_DEBUGS("MeshUpload") << "stage_count = " << stage_count << LL_ENDL;
 
 	static const LLCDParam* param = NULL;
 	static S32 param_count = 0;
@@ -1124,6 +1160,7 @@ void LLFloaterModelPreview::initDecompControls()
 	{
 		param_count = LLConvexDecomposition::getInstance()->getParameters(&param);
 	}
+	LL_DEBUGS("MeshUpload") << "param_count = " << param_count << LL_ENDL;
 
 	for (S32 j = stage_count - 1; j >= 0; --j)
 	{
@@ -1133,8 +1170,10 @@ void LLFloaterModelPreview::initDecompControls()
 		// protected against stub by stage_count being 0 for stub above
 		LLConvexDecomposition::getInstance()->registerCallback(j, LLPhysicsDecomp::llcdCallback);
 
-		llinfos << "Physics decomp stage " << stage[j].mName << " (" << j << ") parameters:" << llendl;
-		llinfos << "------------------------------------" << llendl;
+		LL_DEBUGS("MeshUpload") << "Physics decomp stage " << stage[j].mName
+								<< " (" << j << ") parameters:" << LL_ENDL;
+		LL_DEBUGS("MeshUpload") << "------------------------------------"
+								<< LL_ENDL;
 
 		for (S32 i = 0; i < param_count; ++i)
 		{
@@ -1148,16 +1187,20 @@ void LLFloaterModelPreview::initDecompControls()
 
 			std::string type = "unknown";
 
-			llinfos << name << " - " << description << llendl;
+			LL_DEBUGS("MeshUpload") << name << " - " << description << LL_ENDL;
 
 			if (param[i].mType == LLCDParam::LLCD_FLOAT)
 			{
 				mDecompParams[param[i].mName] = LLSD(param[i].mDefault.mFloat);
-				llinfos << "Type: float, Default: " << param[i].mDefault.mFloat << llendl;
+				LL_DEBUGS("MeshUpload") << "Type: float - Default: "
+										<< param[i].mDefault.mFloat << LL_ENDL;
 
 				LLUICtrl* ctrl = getChild<LLUICtrl>(name);
 				if (LLSliderCtrl* slider = dynamic_cast<LLSliderCtrl*>(ctrl))
 				{
+					LL_DEBUGS("MeshUpload") << name
+											<< " corresponds to a slider."
+											<< LL_ENDL;
 					slider->setMinValue(param[i].mDetails.mRange.mLow.mFloat);
 					slider->setMaxValue(param[i].mDetails.mRange.mHigh.mFloat);
 					slider->setIncrement(param[i].mDetails.mRange.mDelta.mFloat);
@@ -1167,6 +1210,9 @@ void LLFloaterModelPreview::initDecompControls()
 				}
 				else if (LLSpinCtrl* spinner = dynamic_cast<LLSpinCtrl*>(ctrl))
 				{
+					LL_DEBUGS("MeshUpload") << name
+											<< " corresponds to a spinner."
+											<< LL_ENDL;
 					bool is_retain_ctrl = "Retain%" == name;
 					double coefficient = is_retain_ctrl ? RETAIN_COEFFICIENT : 1.f;
 
@@ -1179,6 +1225,9 @@ void LLFloaterModelPreview::initDecompControls()
 				}
 				else if (LLComboBox* combo_box = dynamic_cast<LLComboBox*>(ctrl))
 				{
+					LL_DEBUGS("MeshUpload") << name
+											<< " corresponds to a combo box."
+											<< LL_ENDL;
 					float min = param[i].mDetails.mRange.mLow.mFloat;
 					float max = param[i].mDetails.mRange.mHigh.mFloat;
 					float delta = param[i].mDetails.mRange.mDelta.mFloat;
@@ -1200,11 +1249,19 @@ void LLFloaterModelPreview::initDecompControls()
 					combo_box->setCommitCallback(onPhysicsParamCommit);
 					combo_box->setCallbackUserData((void*) &param[i]);
 				}
+				else
+				{
+					LL_DEBUGS("MeshUpload") << "WARNING: " << name
+											<< " does not correspond to any widget !"
+											<< LL_ENDL;
+				}
 			}
 			else if (param[i].mType == LLCDParam::LLCD_INTEGER)
 			{
 				mDecompParams[param[i].mName] = LLSD(param[i].mDefault.mIntOrEnumValue);
-				//llinfos << "Type: integer, Default: " << param[i].mDefault.mIntOrEnumValue << llendl;
+				LL_DEBUGS("MeshUpload") << "Type: integer - Default: "
+										<< param[i].mDefault.mIntOrEnumValue
+										<< LL_ENDL;
 
 				LLUICtrl* ctrl = getChild<LLUICtrl>(name);
 				if (LLSliderCtrl* slider = dynamic_cast<LLSliderCtrl*>(ctrl))
@@ -1229,46 +1286,85 @@ void LLFloaterModelPreview::initDecompControls()
 					combo_box->setCommitCallback(onPhysicsParamCommit);
 					combo_box->setCallbackUserData((void*) &param[i]);
 				}
+				else
+				{
+					LL_DEBUGS("MeshUpload") << "WARNING: " << name
+											<< " does not correspond to any widget !"
+											<< LL_ENDL;
+				}
 			}
 			else if (param[i].mType == LLCDParam::LLCD_BOOLEAN)
 			{
 				mDecompParams[param[i].mName] = LLSD(param[i].mDefault.mBool);
-				//llinfos << "Type: boolean, Default: " << (param[i].mDefault.mBool ? "True" : "False") << llendl;
+				LL_DEBUGS("MeshUpload") << "Type: boolean - Default: "
+										<< (param[i].mDefault.mBool ? "TRUE" : "FALSE")
+										<< LL_ENDL;
 
-				LLCheckBoxCtrl* check_box = getChild<LLCheckBoxCtrl>(name);
+				LLCheckBoxCtrl* check_box = getChild<LLCheckBoxCtrl>(name, TRUE, FALSE);
 				if (check_box)
 				{
 					check_box->setValue(param[i].mDefault.mBool);
 					check_box->setCommitCallback(onPhysicsParamCommit);
 					check_box->setCallbackUserData((void*) &param[i]);
 				}
+				else
+				{
+					if (name == "nd_AlwaysNeedTriangles")
+					{
+						if (!mLibIsHACD)
+						{
+							llinfos << "HACD convex decomposition library detected. Some features will not be available."
+									<< llendl;
+							mLibIsHACD =  true;
+						}
+					}
+					else
+					{
+						LL_DEBUGS("MeshUpload") << "WARNING: " << name
+												<< " does not correspond to any widget !"
+												<< LL_ENDL;
+					}
+				}
 			}
 			else if (param[i].mType == LLCDParam::LLCD_ENUM)
 			{
 				mDecompParams[param[i].mName] = LLSD(param[i].mDefault.mIntOrEnumValue);
-				//llinfos << "Type: enum, Default: " << param[i].mDefault.mIntOrEnumValue << llendl;
+				LL_DEBUGS("MeshUpload") << "Type: enum - Default: "
+										<< param[i].mDefault.mIntOrEnumValue
+										<< LL_ENDL;
 
 				{	//plug into combo box
 
-					//llinfos << "Accepted values: " << llendl;
-					LLComboBox* combo_box = getChild<LLComboBox>(name);
-					for (S32 k = 0; k < param[i].mDetails.mEnumValues.mNumEnums; ++k)
+					LL_DEBUGS("MeshUpload") << "Accepted values: " << LL_ENDL;
+					LLComboBox* combo_box = getChild<LLComboBox>(name, TRUE, FALSE);
+					if (combo_box)
 					{
-						//llinfos << param[i].mDetails.mEnumValues.mEnumsArray[k].mValue
-						//	<< " - " << param[i].mDetails.mEnumValues.mEnumsArray[k].mName << llendl;
+						for (S32 k = 0; k < param[i].mDetails.mEnumValues.mNumEnums; ++k)
+						{
+							LL_DEBUGS("MeshUpload") << param[i].mDetails.mEnumValues.mEnumsArray[k].mValue
+													<< " - "
+													<< param[i].mDetails.mEnumValues.mEnumsArray[k].mName
+													<< LL_ENDL;
 
-						std::string name(param[i].mDetails.mEnumValues.mEnumsArray[k].mName);
-						combo_box->add(name,
-									   LLSD::Integer(param[i].mDetails.mEnumValues.mEnumsArray[k].mValue));
+							std::string name(param[i].mDetails.mEnumValues.mEnumsArray[k].mName);
+							combo_box->add(name,
+										   LLSD::Integer(param[i].mDetails.mEnumValues.mEnumsArray[k].mValue));
+						}
+						combo_box->setValue(param[i].mDefault.mIntOrEnumValue);
+						combo_box->setCommitCallback(onPhysicsParamCommit);
+						combo_box->setCallbackUserData((void*) &param[i]);
 					}
-					combo_box->setValue(param[i].mDefault.mIntOrEnumValue);
-					combo_box->setCommitCallback(onPhysicsParamCommit);
-					combo_box->setCallbackUserData((void*) &param[i]);
+					else
+					{
+						LL_DEBUGS("MeshUpload") << "WARNING: " << name
+												<< " does not correspond to any widget !"
+												<< LL_ENDL;
+					}
 				}
 
-				//llinfos << "----" << llendl;
+				LL_DEBUGS("MeshUpload") << "----" << LL_ENDL;
 			}
-			//llinfos << "-----------------------------" << llendl;
+			LL_DEBUGS("MeshUpload") << "-----------------------------" << LL_ENDL;
 		}
 	}
 
@@ -1560,7 +1656,7 @@ bool LLModelLoader::doLoadModel()
 	//1. Basic validity check on controller 
 	U32 controllerCount = (int) db->getElementCount(NULL, "controller");
 	bool result = false;
-	for (int i = 0; i < controllerCount; ++i)
+	for (S32 i = 0; i < controllerCount; ++i)
 	{
 		domController* pController = NULL;
 		db->getElement((daeElement**) &pController, i , NULL, "controller");
@@ -1674,9 +1770,9 @@ bool LLModelLoader::doLoadModel()
 
 							LLMeshSkinInfo& skin_info = model->mSkinInfo;
 
-							for (int i = 0; i < 4; i++)
+							for (S32 i = 0; i < 4; i++)
 							{
-								for (int j = 0; j < 4; j++)
+								for (S32 j = 0; j < 4; j++)
 								{
 									skin_info.mBindShapeMatrix.mMatrix[i][j] = dom_value[i + j*4];
 								}
@@ -1752,7 +1848,7 @@ bool LLModelLoader::doLoadModel()
 								std::map<std::string, std::string> :: const_iterator jointIt = mJointMap.begin();
 
 								//Loop over all the possible joints within the .dae - using the allowed joint list in the ctor.
-								for (int i = 0; i < jointCnt; ++i, ++jointIt)
+								for (S32 i = 0; i < jointCnt; ++i, ++jointIt)
 								{
 									//Build a joint for the resolver to work with
 									char str[64]={0};
@@ -1888,9 +1984,9 @@ bool LLModelLoader::doLoadModel()
 										{
 											LLMatrix4 mat;
 
-											for (int i = 0; i < 4; i++)
+											for (S32 i = 0; i < 4; i++)
 											{
-												for (int j = 0; j < 4; j++)
+												for (S32 j = 0; j < 4; j++)
 												{
 													mat.mMatrix[i][j] = transform[k*16 + i + j*4];
 												}
@@ -1948,7 +2044,7 @@ bool LLModelLoader::doLoadModel()
 						//This remaps the skeletal joints to be in the same order as the joints stored in the model.
 						std::vector<std::string> :: const_iterator jointIt  = model->mSkinInfo.mJointNames.begin();
 						const int jointCnt = model->mSkinInfo.mJointNames.size();
-						for (int i = 0; i < jointCnt; ++i, ++jointIt)
+						for (S32 i = 0; i < jointCnt; ++i, ++jointIt)
 						{
 							std::string lookingForJoint = (*jointIt).c_str();
 							//Look for the joint xform that we extracted from the skeleton, using the jointIt as the key
@@ -2696,9 +2792,9 @@ void LLModelLoader::extractTranslationViaSID(daeElement* pElement, LLMatrix4& tr
 		if (pMatrix)
 		{
 			domFloat4x4 domArray = pMatrix->getValue();
-			for (int i = 0; i < 4; i++)
+			for (S32 i = 0; i < 4; i++)
 			{
-				for (int j = 0; j < 4; j++)
+				for (S32 j = 0; j < 4; j++)
 				{
 					workingTransform.mMatrix[i][j] = domArray[i + j*4];
 				}
@@ -2759,9 +2855,9 @@ void LLModelLoader::processJointNode(domNode* pNode, JointTransformMap& jointTra
 			{
 				//llinfos<<"A matrix SID was however found!"<<llendl;
 				domFloat4x4 domArray = pMatrix->getValue();
-				for (int i = 0; i < 4; i++)
+				for (S32 i = 0; i < 4; i++)
 				{
-					for (int j = 0; j < 4; j++)
+					for (S32 j = 0; j < 4; j++)
 					{
 						workingTransform.mMatrix[i][j] = domArray[i + j*4];
 					}
@@ -2860,9 +2956,9 @@ void LLModelLoader::processElement(daeElement* element, bool& badElement)
 
 		LLMatrix4 matrix_transform;
 
-		for (int i = 0; i < 4; i++)
+		for (S32 i = 0; i < 4; i++)
 		{
-			for (int j = 0; j < 4; j++)
+			for (S32 j = 0; j < 4; j++)
 			{
 				matrix_transform.mMatrix[i][j] = dom_value[i + j*4];
 			}
@@ -2935,7 +3031,7 @@ void LLModelLoader::processElement(daeElement* element, bool& badElement)
 
 	//process children
 	daeTArray< daeSmartRef<daeElement> > children = element->getChildren();
-	int childCount = children.getCount();
+	S32 childCount = children.getCount();
 	for (S32 i = 0; i < childCount; i++)
 	{
 		processElement(children[i],badElement);
@@ -2951,7 +3047,7 @@ void LLModelLoader::processElement(daeElement* element, bool& badElement)
 std::map<std::string, LLImportMaterial> LLModelLoader::getMaterials(LLModel* model, domInstance_geometry* instance_geo)
 {
 	std::map<std::string, LLImportMaterial> materials;
-	for (int i = 0; i < model->mMaterialList.size(); i++)
+	for (S32 i = 0; i < model->mMaterialList.size(); i++)
 	{
 		LLImportMaterial import_material;
 
@@ -2963,7 +3059,7 @@ std::map<std::string, LLImportMaterial> LLModelLoader::getMaterials(LLModel* mod
 		if (technique)
 		{
 			daeTArray< daeSmartRef<domInstance_material> > inst_materials = technique->getChildrenByType<domInstance_material>();
-			for (int j = 0; j < inst_materials.getCount(); j++)
+			for (S32 j = 0; j < inst_materials.getCount(); j++)
 			{
 				std::string symbol(inst_materials[j]->getSymbol());
 
@@ -3275,7 +3371,7 @@ U32 LLModelPreview::calcResourceCost()
 			instance.mModel->mPhysics;
 
 			//update instance skin info for each lods pelvisZoffset 
-			for (int j = 0; j < LLModel::NUM_LODS; ++j)
+			for (S32 j = 0; j < LLModel::NUM_LODS; ++j)
 			{
 				if (instance.mLOD[j])
 				{
@@ -3359,8 +3455,8 @@ void LLModelPreview::rebuildUploadData()
 
 	F32 max_scale = 0.f;
 
-	//reorder materials to match mBaseModel
-	for (U32 i = 0; i < LLModel::NUM_LODS; i++)
+	// reorder materials to match mBaseModel
+	for (U32 i = 0; i < LLModel::NUM_LODS - 1; i++)
 	{
 		if (mBaseModel.size() == mModel[i].size())
 		{
@@ -3554,13 +3650,15 @@ void LLModelPreview::loadModel(std::string filename, S32 lod, bool force_disable
 		return;
 	}
 
+	bool init_decomp = mBaseModel.empty();
+
 	// This triggers if you bring up the file picker and then hit CANCEL.
 	// Just use the previous model (if any) and ignore that you brought up
 	// the file picker.
 
 	if (filename.empty())
 	{
-		if (mBaseModel.empty())
+		if (init_decomp)
 		{
 			// this is the initial file picking. Close the whole floater
 			// if we don't have a base model to show for high LOD.
@@ -3879,8 +3977,7 @@ void LLModelPreview::genLODs(S32 which_lod, U32 decimation, bool enforce_tri_lim
 	// Allow LoD from -1 to LLModel::LOD_PHYSICS
 	if (which_lod < -1 || which_lod > LLModel::NUM_LODS - 1)
 	{
-		llwarns << "Invalid level of detail: " << which_lod << llendl;
-		assert(which_lod >= -1 && which_lod < LLModel::NUM_LODS);
+		llerrs << "Invalid level of detail: " << which_lod << llendl;
 		return;
 	}
 
@@ -4488,14 +4585,9 @@ void LLModelPreview::updateStatusMessages()
 
 		}
 
-		//bool use_hull = fmp->childGetValue("physics_use_hull").asBoolean();
-
-		//fmp->childSetEnabled("physics_optimize", !use_hull);
-
-		bool enable = (phys_tris > 0 || phys_hulls > 0) && fmp->mCurRequest.empty();
-		//enable = enable && !use_hull && fmp->childGetValue("physics_optimize").asBoolean();
-
 		//enable/disable "analysis" UI
+		bool enable = (phys_tris > 0 || phys_hulls > 0) &&
+					  fmp->mCurRequest.empty() && !fmp->mLibIsHACD;
 		LLPanel* panel = fmp->getChild<LLPanel>("physics analysis");
 		LLView* child = panel->getFirstChild();
 		while (child)
@@ -4504,8 +4596,11 @@ void LLModelPreview::updateStatusMessages()
 			child = panel->findNextSibling(child);
 		}
 
-		enable = phys_hulls > 0 && fmp->mCurRequest.empty();
+		fmp->childSetEnabled("physics_explode_label", enable);
+		fmp->childSetEnabled("physics_explode", enable);
+
 		//enable/disable "simplification" UI
+		enable = phys_hulls > 0 && fmp->mCurRequest.empty() && !fmp->mLibIsHACD;
 		panel = fmp->getChild<LLPanel>("physics simplification");
 		child = panel->getFirstChild();
 		while (child)
@@ -4516,20 +4611,26 @@ void LLModelPreview::updateStatusMessages()
 
 		if (fmp->mCurRequest.empty())
 		{
-			fmp->childSetVisible("Simplify", true);
+			if (fmp->mLibIsHACD)
+			{
+				fmp->childDisable("Decompose");
+				fmp->childDisable("Simplify");
+			}
+			else
+			{
+				fmp->childSetVisible("Simplify", true);
+				fmp->childSetVisible("Decompose", true);
+				if (phys_hulls > 0)
+				{
+					fmp->childEnable("Simplify");
+				}
+				if (phys_tris || phys_hulls > 0)
+				{
+					fmp->childEnable("Decompose");
+				}
+			}
 			fmp->childSetVisible("simplify_cancel", false);
-			fmp->childSetVisible("Decompose", true);
 			fmp->childSetVisible("decompose_cancel", false);
-
-			if (phys_hulls > 0)
-			{
-				fmp->childEnable("Simplify");
-			}
-
-			if (phys_tris || phys_hulls > 0)
-			{
-				fmp->childEnable("Decompose");
-			}
 		}
 		else
 		{
@@ -5114,7 +5215,7 @@ BOOL LLModelPreview::render()
 		}
 
 		//make sure material lists all match
-		for (U32 i = 0; i < LLModel::NUM_LODS; i++)
+		for (U32 i = 0; i < LLModel::NUM_LODS - 1; i++)
 		{
 			if (mBaseModel.size() == mModel[i].size())
 			{
@@ -5125,6 +5226,7 @@ BOOL LLModelPreview::render()
 
 					if (!mModel[i][j]->matchMaterialOrder(mBaseModel[j], refFaceCnt, modelFaceCnt))
 					{
+						setLoadState(LLModelLoader::ERROR_MATERIALS);
 						mFMP->childDisable("calculate_btn");
 					}
 				}
@@ -5596,12 +5698,16 @@ void LLFloaterModelPreview::onBrowseLOD(void* user_data)
 }
 
 //static
-void LLFloaterModelPreview::onReset(void* user_data)
+void LLFloaterModelPreview::onReset(void* userdata)
 {
 	assert_main_thread();
 
-	LLFloaterModelPreview* fmp = (LLFloaterModelPreview*) user_data;
+	LLFloaterModelPreview* fmp = (LLFloaterModelPreview*) userdata;
 	fmp->childDisable("reset_btn");
+
+	LLComboBox* physics_lod = fmp->getChild<LLComboBox>("physics_lod_combo");
+	physics_lod->setCurrentByIndex(0);
+
 	LLModelPreview* mp = fmp->mModelPreview;
 	std::string filename = mp->mLODFile[3]; 
 
@@ -5614,11 +5720,11 @@ void LLFloaterModelPreview::onReset(void* user_data)
 }
 
 //static
-void LLFloaterModelPreview::onUpload(void* user_data)
+void LLFloaterModelPreview::onUpload(void* userdata)
 {
 	assert_main_thread();
 
-	LLFloaterModelPreview* mp = (LLFloaterModelPreview*) user_data;
+	LLFloaterModelPreview* mp = (LLFloaterModelPreview*) userdata;
 
 	mp->mUploadBtn->setEnabled(false);
 
@@ -5721,6 +5827,9 @@ void LLFloaterModelPreview::toggleCalculateButton(bool visible)
 
 	mUploadBtn->setVisible(!visible);
 	mUploadBtn->setEnabled(mHasUploadPerm && !mUploadModelUrl.empty());
+	LL_DEBUGS("MeshUpload") << "toggleCalculateButton() - mHasUploadPerm = "
+							<< mHasUploadPerm << " - mUploadModelUrl = "
+							<< mUploadModelUrl << LL_ENDL;
 
 	if (visible)
 	{
@@ -5741,6 +5850,16 @@ void LLFloaterModelPreview::onLoDSourceCommit(LLUICtrl* ctrl, void* userdata)
 	{
 		sInstance->mModelPreview->updateLodControls(lod);
 		sInstance->refresh();
+	}
+}
+
+//static
+void LLFloaterModelPreview::onClickValidateURL(void* userdata)
+{
+	LLFloaterModelPreview* self = (LLFloaterModelPreview*) userdata;
+	if (!self->mValidateURL.empty())
+	{
+		LLWeb::loadURLExternal(self->mValidateURL);
 	}
 }
 
@@ -5768,13 +5887,22 @@ void LLFloaterModelPreview::handleModelPhysicsFeeReceived()
 	const LLSD& result = mModelPhysicsFee;
 	mUploadModelUrl = result["url"].asString();
 
-	childSetTextArg("prim_weight", "[EQ]", llformat("%0.3f", result["resource_cost"].asReal()));
-	childSetTextArg("download_weight", "[ST]", llformat("%0.3f", result["model_streaming_cost"].asReal()));
-	childSetTextArg("server_weight", "[SIM]", llformat("%0.3f", result["simulation_cost"].asReal()));
-	childSetTextArg("physics_weight", "[PH]", llformat("%0.3f", result["physics_cost"].asReal()));
-	childSetTextArg("upload_fee", "[FEE]", llformat("%d", result["upload_price"].asInteger()));
+	mSentFeeRequest = false;
+	childSetTextArg("prim_weight", "[EQ]",
+					llformat("%0.3f", result["resource_cost"].asReal()));
+	childSetTextArg("download_weight", "[ST]",
+					llformat("%0.3f", result["model_streaming_cost"].asReal()));
+	childSetTextArg("server_weight", "[SIM]",
+					llformat("%0.3f", result["simulation_cost"].asReal()));
+	childSetTextArg("physics_weight", "[PH]",
+					llformat("%0.3f", result["physics_cost"].asReal()));
+	childSetTextArg("upload_fee", "[FEE]",
+					llformat("%d", result["upload_price"].asInteger()));
 	childSetVisible("upload_fee", true);
 	mUploadBtn->setEnabled(mHasUploadPerm && !mUploadModelUrl.empty());
+	LL_DEBUGS("MeshUpload") << "handleModelPhysicsFeeReceived() - mHasUploadPerm = "
+							<< mHasUploadPerm << " - mUploadModelUrl = "
+							<< mUploadModelUrl << LL_ENDL;
 }
 
 void LLFloaterModelPreview::setModelPhysicsFeeErrorStatus(U32 status, const std::string& reason)
@@ -5849,8 +5977,12 @@ void LLFloaterModelPreview::onPermissionsReceived(const LLSD& result)
 
 	//mUploadBtn->setEnabled(mHasUploadPerm);
 	mUploadBtn->setEnabled(mHasUploadPerm && !mUploadModelUrl.empty());
-	getChild<LLTextBox>("warning_title")->setVisible(!mHasUploadPerm);
-	getChild<LLTextBox>("warning_message")->setVisible(!mHasUploadPerm);
+	childSetVisible("warning_title", !mHasUploadPerm);
+	childSetVisible("warning_message", !mHasUploadPerm);
+	childSetVisible("validate_url", !mHasUploadPerm && !mValidateURL.empty());
+	LL_DEBUGS("MeshUpload") << "onPermissionsReceived() - mHasUploadPerm = "
+							<< mHasUploadPerm << " - mUploadModelUrl = "
+							<< mUploadModelUrl << LL_ENDL;
 }
 
 void LLFloaterModelPreview::setPermissonsErrorStatus(U32 status, const std::string& reason)

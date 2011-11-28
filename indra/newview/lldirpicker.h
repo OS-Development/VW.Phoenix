@@ -48,7 +48,9 @@
 #undef require
 
 #include <vector>
+
 #include "llstring.h"
+#include "llthread.h"
 
 #endif
 
@@ -65,7 +67,7 @@ public:
 	// calling this before main() is undefined
 	static LLDirPicker& instance( void ) { return sInstance; }
 
-	BOOL getDir(std::string* filename);
+	BOOL getDir(std::string* filename, bool blocking = true);
 	std::string getDirName();
 
 	// clear any lists of buffers or whatever, and make sure the dir
@@ -105,6 +107,72 @@ public:
 	// don't call these directly please.
 	LLDirPicker();
 	~LLDirPicker();
+};
+
+
+// Multi-threaded dir picker (runs system specific file picker in background
+// and calls "notify" from main thread)
+
+class LLDirPickerThread : public LLThread
+{
+public:
+	LLDirPickerThread() : LLThread("dir picker")
+	{
+	}
+
+	void getDir(std::string* suggestion);
+
+	virtual void run();
+
+	virtual void notify(const std::string& dirname) = 0;
+
+	static void initClass();
+	static void cleanupClass();
+	static void clearDead();
+
+	static void setBlocking(bool flag)	{ sBlocking = flag; }
+	static bool getBlocking()			{ return sBlocking; }
+	static bool isInUse()				{ return sIsInUse; }
+
+public:
+	static std::queue<LLDirPickerThread*> sDeadQ;
+	static LLMutex* sMutex;
+
+	std::string mDir; 
+	std::string* mSuggestDir; 
+
+private:
+	static bool sBlocking;
+	static bool sIsInUse;
+};
+
+class LLCallDirPicker : public LLDirPickerThread
+{
+public:
+	typedef void (*LLCallDirPickerCallback)(std::string& dirname,
+											void* user_data);
+
+	LLCallDirPicker(LLCallDirPickerCallback callback,
+					void *user_data = NULL)
+	:	LLDirPickerThread(),
+		mNotifyCallback(callback),
+		mCallbackUserData(user_data)
+
+	{
+	}
+
+	virtual void notify(const std::string& filedir)
+	{
+		if (mNotifyCallback)
+		{
+			mNotifyCallback(mDir, mCallbackUserData);
+		}
+	}
+
+private:
+	void (*mNotifyCallback)(std::string& dirname,
+							void* user_data);
+	void* mCallbackUserData;
 };
 
 #endif

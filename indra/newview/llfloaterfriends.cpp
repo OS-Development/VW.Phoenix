@@ -896,6 +896,14 @@ void LLPanelFriends::onClickExport(void* user_data)
 bool LLPanelFriends::merging;
 
 void LLPanelFriends::onClickImport(void* user_data)
+{
+	(new LLLoadFilePicker(LLFilePicker::FFLOAD_ALL, onClickImportCallback))->getFile();
+}
+
+void LLPanelFriends::onClickImportCallback(LLFilePicker::ELoadFilter type,
+						  std::string& filename,
+						  std::deque<std::string>& files,
+						  void*)
 //THIS CODE IS DESIGNED SO THAT EXP/IMP BETWEEN GRIDS WILL FAIL
 //because assuming someone having the same name on another grid is the same person is generally a bad idea
 //i might add the option to query the user as to intelligently detecting matching names on a alternative grid
@@ -904,8 +912,6 @@ void LLPanelFriends::onClickImport(void* user_data)
 	//LLPanelFriends* panelp = (LLPanelFriends*)user_data;
 	//is_agent_friend(
 
-	const std::string filename = upload_pick((void*)LLFilePicker::FFLOAD_ALL);
-		
 	if (filename.empty())
 		return;
 

@@ -71,7 +71,7 @@ LLDirPicker::~LLDirPicker()
 	// nothing
 }
 
-BOOL LLDirPicker::getDir(std::string* filename)
+BOOL LLDirPicker::getDir(std::string* filename, bool blocking)
 {
 	if( mLocked )
 	{
@@ -79,8 +79,11 @@ BOOL LLDirPicker::getDir(std::string* filename)
 	}
 	BOOL success = FALSE;
 
-	// Modal, so pause agent
-	send_agent_pause();
+	if (blocking)
+	{
+		// Modal, so pause agent
+		send_agent_pause();
+	}
 
 	BROWSEINFO bi;
 	memset(&bi, 0, sizeof(bi));
@@ -111,10 +114,12 @@ BOOL LLDirPicker::getDir(std::string* filename)
 
 	::OleUninitialize();
 
-	send_agent_resume();
-
-	// Account for the fact that the app has been stalled.
-	LLFrameTimer::updateFrameTime();
+	if (blocking)
+	{
+		send_agent_resume();
+		// Account for the fact that the app has been stalled.
+		LLFrameTimer::updateFrameTime();
+	}
 	return success;
 }
 
@@ -231,7 +236,7 @@ OSStatus	LLDirPicker::doNavChooseDialog()
 	return error;
 }
 
-BOOL LLDirPicker::getDir(std::string* filename)
+BOOL LLDirPicker::getDir(std::string* filename, bool blocking)
 {
 	if( mLocked ) return FALSE;
 	BOOL success = FALSE;
@@ -241,20 +246,29 @@ BOOL LLDirPicker::getDir(std::string* filename)
 	
 //	mNavOptions.saveFileName 
 
-	// Modal, so pause agent
-	send_agent_pause();
+	if (blocking)
+	{
+		// Modal, so pause agent
+		send_agent_pause();
+	}
+
 	{
 		error = doNavChooseDialog();
 	}
-	send_agent_resume();
+
+	if (blocking)
+	{
+		send_agent_resume();
+		// Account for the fact that the app has been stalled.
+		LLFrameTimer::updateFrameTime();
+	}
+
 	if (error == noErr)
 	{
 		if (mDir.length() >  0)
-			success = true;
+			success = TRUE;
 	}
 
-	// Account for the fact that the app has been stalled.
-	LLFrameTimer::updateFrameTime();
 	return success;
 }
 
@@ -291,23 +305,26 @@ void LLDirPicker::reset()
 		mFilePicker->reset();
 }
 
-BOOL LLDirPicker::getDir(std::string* filename)
+BOOL LLDirPicker::getDir(std::string* filename, bool blocking)
 {
+	BOOL result = FALSE;
+	gViewerWindow->mWindow->beforeDialog();
 	reset();
 	if (mFilePicker)
 	{
-		GtkWindow* picker = mFilePicker->buildFilePicker(false, true,
-								 "dirpicker");
+		GtkWindow* picker = mFilePicker->buildFilePicker(false, true, "dirpicker");
 
 		if (picker)
 		{		   
-		   gtk_window_set_title(GTK_WINDOW(picker), LLTrans::getString("choose_the_directory").c_str());
-		   gtk_widget_show_all(GTK_WIDGET(picker));
-		   gtk_main();
-		   return (!mFilePicker->getFirstFile().empty());
+			gtk_window_set_title(GTK_WINDOW(picker),
+								 LLTrans::getString("choose_the_directory").c_str());
+			gtk_widget_show_all(GTK_WIDGET(picker));
+			gtk_main();
+			result = !mFilePicker->getFirstFile().empty();
 		}
 	}
-	return FALSE;
+	gViewerWindow->mWindow->afterDialog();
+	return result;
 }
 
 std::string LLDirPicker::getDirName()
@@ -335,7 +352,7 @@ void LLDirPicker::reset()
 {
 }
 
-BOOL LLDirPicker::getDir(std::string* filename)
+BOOL LLDirPicker::getDir(std::string* filename, bool blocking)
 {
 	return FALSE;
 }
@@ -346,3 +363,95 @@ std::string LLDirPicker::getDirName()
 }
 
 #endif
+
+//============================================================================
+//
+// LLDirPickerThread
+//
+//============================================================================
+
+LLMutex* LLDirPickerThread::sMutex = NULL;
+std::queue<LLDirPickerThread*> LLDirPickerThread::sDeadQ;
+bool LLDirPickerThread::sBlocking = true;
+bool LLDirPickerThread::sIsInUse = false;
+
+void LLDirPickerThread::getDir(std::string* suggestion)
+{
+	mSuggestDir = suggestion;
+
+	if (sBlocking)
+	{
+		run();
+	}
+	else
+	{
+		start();
+	}
+}
+
+//virtual 
+void LLDirPickerThread::run()
+{
+	sIsInUse = true;
+
+	LLDirPicker picker;
+	BOOL result = FALSE;
+
+#if LL_GTK
+	if (!sBlocking)
+	{
+		gdk_threads_enter();
+	}
+#endif
+
+	result = picker.getDir(mSuggestDir, sBlocking);
+
+#if LL_GTK
+	if (!sBlocking)
+	{
+		gdk_threads_leave();
+	}
+#endif
+
+	if (result)
+	{
+		mDir = picker.getDirName();
+	}
+
+	sIsInUse = false;
+
+	{
+		LLMutexLock lock(sMutex);
+		sDeadQ.push(this);
+	}
+}
+
+//static
+void LLDirPickerThread::initClass()
+{
+	sMutex = new LLMutex();
+}
+
+//static
+void LLDirPickerThread::cleanupClass()
+{
+	clearDead();
+	delete sMutex;
+	sMutex = NULL;
+}
+
+//static
+void LLDirPickerThread::clearDead()
+{
+	if (!sDeadQ.empty())
+	{
+		LLMutexLock lock(sMutex);
+		while (!sDeadQ.empty())
+		{
+			LLDirPickerThread* thread = sDeadQ.front();
+			thread->notify(thread->mDir);
+			delete thread;
+			sDeadQ.pop();
+		}
+	}
+}

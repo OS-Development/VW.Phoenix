@@ -635,8 +635,10 @@ public:
 	void sendDropAttachment();
 	void sendLink();
 	void sendDelink();
-	//void sendHinge(U8 type);
-	//void sendDehinge();
+#ifdef SEND_HINGES
+	void sendHinge(U8 type);
+	void sendDehinge();
+#endif
 	void sendSelect();
 
 	static void registerObjectPropertiesFamilyRequest(const LLUUID& id);
@@ -706,7 +708,9 @@ private:
 	static void packPhysics(LLSelectNode* node, void *user_data);
 	static void packShape(LLSelectNode* node, void *user_data);
 	static void packOwnerHead(void *user_data);
+#ifdef SEND_HINGES
 	static void packHingeHead(void *user_data);
+#endif
 	static void packPermissionsHead(void* user_data);
 	static void packGodlikeHead(void* user_data);
 	static bool confirmDelete(const LLSD& notification, const LLSD& response, LLObjectSelectionHandle handle);

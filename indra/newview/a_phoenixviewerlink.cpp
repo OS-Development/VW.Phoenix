@@ -58,6 +58,7 @@ std::string PhoenixViewerLink::blacklist_version;
 LLSD PhoenixViewerLink::blocked_login_info = 0;
 LLSD PhoenixViewerLink::phoenix_tags = 0;
 BOOL PhoenixViewerLink::msDataDone = FALSE;
+std::set<LLUUID> PhoenixViewerLink::mSupportGroup;
 
 PhoenixViewerLink* PhoenixViewerLink::sInstance;
 
@@ -262,6 +263,17 @@ void PhoenixViewerLink::msdata(U32 status, std::string body)
 			phoenix_tags = data["phoenixTags"];
 			LLPrimitive::tagstring = PhoenixViewerLink::phoenix_tags[gSavedSettings.getString("PhoenixTagColor")].asString();
 		}
+		
+		if(data.has("SupportGroups"))
+		{
+			LLSD& support_groups = data["SupportGroups"];
+			mSupportGroup.clear();
+			for(LLSD::map_iterator itr = support_groups.beginMap(); itr != support_groups.endMap(); ++itr)
+			{
+				mSupportGroup.insert(LLUUID(itr->first));
+			}
+		}
+		
 		msDataDone = TRUE;
 	}
 
@@ -315,6 +327,10 @@ BOOL PhoenixViewerLink::allowed_login()
 	return (self->blocked_versions.find(versionid) == self->blocked_versions.end());
 }
 
+BOOL PhoenixViewerLink::isSupportGroup(LLUUID id)
+{
+	return (mSupportGroup.count(id));
+}
 
 std::string PhoenixViewerLink::processRequestForInfo(LLUUID requester, std::string message, std::string name, LLUUID sessionid)
 {
