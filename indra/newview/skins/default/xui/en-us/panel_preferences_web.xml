@@ -13,6 +13,9 @@
 			Use built-in web browser
 		</radio_item>
 	</radio_group>
+	<check_box bottom_delta="-25" left="12" follows="left|top" height="16"
+	     label="Open Marketplace links in Marketplace tab on search floater" mouse_opaque="true"
+	     name="PhoenixMarketPlaceTabURLdispatch" control_name="PhoenixMarketPlaceTabURLdispatch" width="256" />
 	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
 	     bottom_delta="-25" drop_shadow_visible="true" enabled="true"
 	     follows="left|top" font="SansSerifSmall" h_pad="0" halign="left"
