@@ -775,9 +775,9 @@
           <key>windows</key>
           <map>
             <key>md5sum</key>
-            <string>4f787437a5e063ccde6637dfb1ebc01d</string>
+            <string>2d9d264fff37ff7d9a7437afb1cbfb52</string>
             <key>url</key>
-            <uri>http://downloads.phoenixviewer.com/google_perftools-1.8-windows-20111005.tar.bz2</uri>
+            <uri>http://phoenixviewer.com/app/packages/google_perftools-1.8-ph-windows-20111203.tar.bz2</uri>
           </map>
         </map>
       </map>
