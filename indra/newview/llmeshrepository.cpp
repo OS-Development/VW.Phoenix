@@ -226,6 +226,7 @@ public:
 	LLMeshLODResponder(const LLVolumeParams& mesh_params, S32 lod, U32 offset, U32 requested_bytes)
 		: mMeshParams(mesh_params), mLOD(lod), mOffset(offset), mRequestedBytes(requested_bytes)
 	{
+		++LLMeshRepoThread::sActiveLODRequests;
 	}
 
 	virtual void completedRaw(U32 status, const std::string& reason,
@@ -244,6 +245,7 @@ public:
 	LLMeshSkinInfoResponder(const LLUUID& id, U32 offset, U32 size)
 		: mMeshID(id), mRequestedBytes(size), mOffset(offset)
 	{
+		++LLMeshRepoThread::sActiveLODRequests;
 	}
 
 	virtual void completedRaw(U32 status, const std::string& reason,
@@ -262,6 +264,7 @@ public:
 	LLMeshDecompositionResponder(const LLUUID& id, U32 offset, U32 size)
 		: mMeshID(id), mRequestedBytes(size), mOffset(offset)
 	{
+		++LLMeshRepoThread::sActiveLODRequests;
 	}
 
 	virtual void completedRaw(U32 status, const std::string& reason,
@@ -280,6 +283,7 @@ public:
 	LLMeshPhysicsShapeResponder(const LLUUID& id, U32 offset, U32 size)
 		: mMeshID(id), mRequestedBytes(size), mOffset(offset)
 	{
+		++LLMeshRepoThread::sActiveLODRequests;
 	}
 
 	virtual void completedRaw(U32 status, const std::string& reason,
@@ -714,7 +718,7 @@ bool LLMeshRepoThread::fetchMeshSkinInfo(const LLUUID& mesh_id)
 			std::string http_url = constructUrl(mesh_id);
 			if (!http_url.empty())
 			{
-				++sActiveLODRequests;
+				//++sActiveLODRequests;
 				LLMeshRepository::sHTTPRequestCount++;
 				mCurlRequest->getByteRange(constructUrl(mesh_id), headers, offset, size,
 										   new LLMeshSkinInfoResponder(mesh_id, offset, size));
@@ -787,7 +791,7 @@ bool LLMeshRepoThread::fetchMeshDecomposition(const LLUUID& mesh_id)
 			std::string http_url = constructUrl(mesh_id);
 			if (!http_url.empty())
 			{
-				++sActiveLODRequests;
+				//++sActiveLODRequests;
 				LLMeshRepository::sHTTPRequestCount++;
 				mCurlRequest->getByteRange(http_url, headers, offset, size,
 										   new LLMeshDecompositionResponder(mesh_id, offset, size));
@@ -860,7 +864,7 @@ bool LLMeshRepoThread::fetchMeshPhysicsShape(const LLUUID& mesh_id)
 			std::string http_url = constructUrl(mesh_id);
 			if (!http_url.empty())
 			{
-				++sActiveLODRequests;
+				//++sActiveLODRequests;
 				LLMeshRepository::sHTTPRequestCount++;
 				mCurlRequest->getByteRange(http_url, headers, offset, size,
 										   new LLMeshPhysicsShapeResponder(mesh_id, offset, size));
@@ -977,7 +981,7 @@ bool LLMeshRepoThread::fetchMeshLOD(const LLVolumeParams& mesh_params, S32 lod)
 			std::string http_url = constructUrl(mesh_id);
 			if (!http_url.empty())
 			{
-				++sActiveLODRequests;
+				//++sActiveLODRequests;
 				retval = true;
 				LLMeshRepository::sHTTPRequestCount++;
 				mCurlRequest->getByteRange(constructUrl(mesh_id), headers, offset, size,
@@ -1787,6 +1791,8 @@ void LLMeshSkinInfoResponder::completedRaw(U32 status, const std::string& reason
 										   const LLChannelDescriptors& channels,
 										   const LLIOPipe::buffer_ptr_t& buffer)
 {
+	LLMeshRepoThread::sActiveLODRequests--;
+
 	S32 data_size = buffer->countAfter(channels.in(), NULL);
 
 	if (status < 200 || status > 400)
@@ -1841,6 +1847,8 @@ void LLMeshDecompositionResponder::completedRaw(U32 status, const std::string& r
 												const LLChannelDescriptors& channels,
 												const LLIOPipe::buffer_ptr_t& buffer)
 {
+	LLMeshRepoThread::sActiveLODRequests--;
+
 	S32 data_size = buffer->countAfter(channels.in(), NULL);
 
 	if (status < 200 || status > 400)
@@ -1895,6 +1903,8 @@ void LLMeshPhysicsShapeResponder::completedRaw(U32 status, const std::string& re
 											   const LLChannelDescriptors& channels,
 											   const LLIOPipe::buffer_ptr_t& buffer)
 {
+	LLMeshRepoThread::sActiveLODRequests--;
+
 	S32 data_size = buffer->countAfter(channels.in(), NULL);
 
 	if (status < 200 || status > 400)
