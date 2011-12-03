@@ -32,8 +32,8 @@ set(debug_files
     libcollada14dom22-d.dll
     glod.dll
     libhunspell.dll
-    lgggrowl++.dll
-    lgggrowl.dll
+    growl++.dll
+    growl.dll
     libtcmalloc_minimal-debug.dll
     )
 
@@ -237,8 +237,8 @@ set(release_files
     libcollada14dom22.dll
     glod.dll
     libhunspell.dll
-    lgggrowl++.dll
-    lgggrowl.dll
+    growl++.dll
+    growl.dll
     libtcmalloc_minimal.dll
     )
     
