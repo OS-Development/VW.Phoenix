@@ -1083,9 +1083,9 @@
           <key>windows</key>
           <map>
             <key>md5sum</key>
-            <string>db32c928dfeaace1307e542795d3732b</string>
+            <string>88ef69383b5591aeb4d33e115df52421</string>
             <key>url</key>
-            <uri>http://downloads.phoenixviewer.com/hacd-win32-20111022.tar.bz2</uri>
+            <uri>http://phoenixviewer.com/app/packages/hacd-win32-20111204.tar.bz2</uri>
           </map>
           <key>darwin</key>
           <map>
