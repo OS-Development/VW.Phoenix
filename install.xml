@@ -207,9 +207,9 @@
           <key>windows</key>
           <map>
             <key>md5sum</key>
-            <string>d7ec44264427e37a36c1f67ff44112d9</string>
+            <string>5334e46f65edf330ee892a6aeab8cf24</string>
             <key>url</key>
-            <uri>http://downloads.phoenixviewer.com/growl-windows-20111203.tar.bz2</uri>
+            <uri>http://phoenixviewer.com/app/packages/growl-ph-windows-20111204.tar.bz2</uri>
           </map>
           <key>linux</key>
           <map>
@@ -775,9 +775,9 @@
           <key>windows</key>
           <map>
             <key>md5sum</key>
-            <string>2d9d264fff37ff7d9a7437afb1cbfb52</string>
+            <string>0fc535e4ea261031b4f1867e841e87cf</string>
             <key>url</key>
-            <uri>http://phoenixviewer.com/app/packages/google_perftools-1.8-ph-windows-20111203.tar.bz2</uri>
+            <uri>http://phoenixviewer.com/app/packages/google_perftools-1.8-ph-windows-20111204.tar.bz2</uri>
           </map>
         </map>
       </map>
