@@ -53,7 +53,6 @@ void GrowlNotifierWin::registerApplication(const std::string& application, const
 	growl = new Growl(GROWL_TCP,NULL,application.c_str(),(const char **const)arr,notificationTypes.size(),
 		std::string(gDirUtilp->getDefaultSkinDir()+gDirUtilp->getDirDelimiter()+
 		"textures"+gDirUtilp->getDirDelimiter()+"phoenixicon.ico").c_str());
-	growl->setProtocol(GROWL_UDP);
 
 	for(i = 0; i < (int)notificationTypes.size(); ++i) {
 		free(arr[i]);
