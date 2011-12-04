@@ -117,9 +117,6 @@ class LLFileEnableUploadModel : public view_listener_t
 		bool new_value = !LLFilePickerThread::isInUse() &&
 						 !LLDirPickerThread::isInUse() &&
 						 gMeshRepo.meshUploadEnabled() &&
-#if LL_WINDOWS
-						 gSavedSettings.getBOOL("MeshUploadEnable") &&
-#endif
 						 LLFloaterModelPreview::sInstance == NULL;
  		gMenuHolder->findControl(userdata["control"].asString())->setValue(new_value);
  		return true;
