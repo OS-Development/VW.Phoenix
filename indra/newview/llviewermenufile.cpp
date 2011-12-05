@@ -533,13 +533,16 @@ void snapshot_to_disk(LLFilePicker::ESaveFilter type,
 		LLPointer<LLImageFormatted> formatted;
 		switch (type)
 		{
+			case LLFloaterSnapshot::SNAPSHOT_FORMAT_JPEG:
 			case LLFilePicker::FFSAVE_JPEG:
 				formatted = new LLImageJPEG(gSavedSettings.getS32("SnapshotQuality"));
 				break;
 			case LLFloaterSnapshot::SNAPSHOT_FORMAT_PNG:
+			case LLFilePicker::FFSAVE_PNG:
 				formatted = new LLImagePNG;
 				break;
 			case LLFloaterSnapshot::SNAPSHOT_FORMAT_BMP: 
+			case LLFilePicker::FFSAVE_BMP:
 				formatted = new LLImageBMP;
 				break;
 			default: 
