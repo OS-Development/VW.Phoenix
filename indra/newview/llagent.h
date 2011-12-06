@@ -118,7 +118,6 @@ struct LLGroupData
 	BOOL mListInProfile;
 	S32 mContribution;
 	std::string mName;
-	std::string mActiveTitle;
 };
 
 inline bool operator==(const LLGroupData &a, const LLGroupData &b)
