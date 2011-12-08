@@ -249,7 +249,10 @@ void LLComboBox::onCommit()
 		mTextEntry->setTentative(FALSE);
 	}
 
-	setControlValue(getValue());
+	// This line makes the Communicate flyout button context menu require
+	//  two clicks to activate correctly. I'm not sure why it was added
+	//  in the first place. -- TS
+	//setControlValue(getValue());
 	LLUICtrl::onCommit();
 }
 
