@@ -182,7 +182,8 @@
 	     increment="0.05" initial_val="1" label="Opacity" left="148" max_val="1"
 	     min_val="0" mouse_opaque="true" name="bubble_chat_opacity" show_text="true"
 	     value="0.5" width="200" />
-
+         
+    <!-- Google translate changed their API, disabling the control for now.
 	<text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
 	     bottom="-410" drop_shadow_visible="true" enabled="true" follows="left|top"
 	     font="SansSerifSmall" h_pad="0" halign="left" height="10" left="12"
@@ -209,7 +210,7 @@
 			English
 		</combo_item>
 		
-		<!-- After "System Default" and "English", please keep the rest of these combo_items in alphabetical order by the first character in the string. -->
+		< !-- After "System Default" and "English", please keep the rest of these combo_items in alphabetical order by the first character in the string. -- >
 		
 		<combo_item type="string" length="1" enabled="true" name="Danish" value="da">
 			Dansk (Danish)
@@ -257,4 +258,5 @@
 			한국어 (Korean)
 		</combo_item>
 	</combo_box>
+    -->
 </panel>
