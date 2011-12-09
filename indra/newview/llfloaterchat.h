@@ -65,7 +65,8 @@ public:
 	virtual void onVisibilityChange(BOOL cur_visibility);
 	virtual void setMinimized(BOOL);
 	void updateConsoleVisibility();
-	void updateSettings();
+	// Disable translate chat permanently since Google killed it -- TS
+	//void updateSettings();
 
 	static void setHistoryCursorAndScrollToEnd();
 	
@@ -80,7 +81,8 @@ public:
 
 	static void onClickMute(void *data);
 	static void onClickToggleShowMute(LLUICtrl* caller, void *data);
-	static void onClickToggleTranslateChat(LLUICtrl* caller, void *data);
+	// Disable translate chat permanently since Google killed it -- TS
+	//static void onClickToggleTranslateChat(LLUICtrl* caller, void *data);
 	static void onClickToggleActiveSpeakers(void* userdata);
 	static void chatFromLogFile(LLLogChat::ELogLineType type,std::string line, void* userdata);
 	static void loadHistory();

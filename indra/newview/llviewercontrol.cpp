@@ -460,6 +460,8 @@ bool handleVoiceClientPrefsChanged(const LLSD& newvalue)
 	return true;
 }
 
+// Disable translate chat permanently since Google killed it -- TS
+#if 0
 bool handleTranslateChatPrefsChanged(const LLSD& newvalue)
 {
 	LLFloaterChat* floaterp = LLFloaterChat::getInstance();
@@ -471,6 +473,7 @@ bool handleTranslateChatPrefsChanged(const LLSD& newvalue)
 	}
 	return true;
 }
+#endif // disable translate chat
 
 static bool handlePhoenixBlockSpam(const LLSD& newvalue)
 {
@@ -654,7 +657,8 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("VoiceOutputAudioDevice")->getSignal()->connect(boost::bind(&handleVoiceClientPrefsChanged, _2));
 	gSavedSettings.getControl("AudioLevelMic")->getSignal()->connect(boost::bind(&handleVoiceClientPrefsChanged, _2));
 	gSavedSettings.getControl("LipSyncEnabled")->getSignal()->connect(boost::bind(&handleVoiceClientPrefsChanged, _2));	
-	gSavedSettings.getControl("TranslateChat")->getSignal()->connect(boost::bind(&handleTranslateChatPrefsChanged, _2));	
+	// Disable translate chat permanently since Google killed it -- TS
+	//gSavedSettings.getControl("TranslateChat")->getSignal()->connect(boost::bind(&handleTranslateChatPrefsChanged, _2));	
 	gSavedSettings.getControl("PhoenixBlockSpam")->getSignal()->connect(boost::bind(&handlePhoenixBlockSpam, _2));
 	gSavedSettings.getControl("CheesyBeacon")->getSignal()->connect(boost::bind(&handleCheesyBeaconChanged, _2));	
 	gSavedSettings.getControl("NonBlockingFilePicker")->getSignal()->connect(boost::bind(&handleNonBlockingFilePickerChanged, _2));	
