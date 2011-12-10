@@ -91,7 +91,7 @@ WLSkyDetail					1	48
 //
 list Mid
 RenderAnisotropic			1	0
-RenderAvatarCloth			1	0
+RenderAvatarCloth			1	1
 RenderAvatarLODFactor		1	0.5
 RenderAvatarVP				1	1
 RenderFarClip				1	96
@@ -116,7 +116,7 @@ WLSkyDetail					1	48
 //
 list High
 RenderAnisotropic			1	1
-RenderAvatarCloth			1	0
+RenderAvatarCloth			1	1
 RenderAvatarLODFactor		1	1.0
 RenderAvatarVP				1	1
 RenderFarClip				1	128
