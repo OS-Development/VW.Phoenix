@@ -10460,6 +10460,7 @@ llTargetRemove
 llTeleportAgentHome
 llToLower
 llToUpper
+llTransferLindenDollars
 llTriggerSound
 llTriggerSoundLimited
 llUnescapeURL
@@ -10518,6 +10519,7 @@ timer
 touch
 touch_end
 touch_start
+transaction_result
 http_request
 ACTIVE
 AGENT

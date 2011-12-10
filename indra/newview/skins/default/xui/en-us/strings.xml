@@ -1844,5 +1844,10 @@ list options: modifiers among:
   - KFM_DATA followed by KFM_ROTATION or KFM_TRANSLATION.
 Note that if KFM_COMMAND is provided in the options list, it must be the only option in the list, and cannot be specified in the same function call that sets the keyframes list.
   </string>
+  <string name="LSLTipText_llTransferLindenDollars" translate="false">
+key llTransferLindenDollars(key id, integer amount)
+Attempt to transfer amount of L$ from the owner of the object to 'id'. Requires PERMISSION_DEBIT.
+Returns a key used in a matching transaction_result() event for the success or failure of the transfer.
+</string>
 </strings>
 
