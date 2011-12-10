@@ -4632,11 +4632,11 @@ Terrain Detail: Sets the amount of detail you would like to see for the terrain 
    icon="alertmodal.tga"
    name="RiggedMeshUnavailable"
    type="alertmodal">
-WARNING: the "Hardware Skinning" setting in the "Graphics" preferences has been disabled while your graphic card can apparently do it.
+WARNING: the "Hardware Skinning" setting in the "Graphics" preferences is disabled, even though your graphics card appears to have that capability.
 
-Due to a shortcoming of the v2.6 renderer this viewer is currently using, disabling this setting will cause rigged meshes (worn mesh objects) to fail to render (they will be invisible).
+Due to a shortcoming of this viewer's mesh renderer, disabling this setting will cause most mesh clothing or avatars (known as rigged meshes) to fail to render. They will be invisible.
 
-Unless you got a darn good reason to disable this setting, you should really keep it enabled...
+Do not disable this setting unless you know exactly what you are doing.
     <usetemplate
      ignoretext="When hardware skinning is disabled on supported hardware"
      name="okignore"
