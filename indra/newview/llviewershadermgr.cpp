@@ -404,7 +404,7 @@ void LLViewerShaderMgr::setShaders()
 
 		if (LLFeatureManager::getInstance()->isFeatureAvailable("RenderDeferred") &&
 		    gSavedSettings.getBOOL("RenderDeferred") &&
-			gSavedSettings.getBOOL("RenderAvatarVP") &&
+			//gSavedSettings.getBOOL("RenderAvatarVP") &&
 			gSavedSettings.getBOOL("WindLightUseAtmosShaders"))
 		{
 			if (gSavedSettings.getS32("RenderShadowDetail") > 0)
@@ -427,7 +427,7 @@ void LLViewerShaderMgr::setShaders()
 			//gSavedSettings.setBOOL("RenderAvatarVP", TRUE);
 			
 			//make sure atmospheric shaders are enabled
-			//gSavedSettings.setBOOL("WindLightUseAtmosShaders", TRUE);
+			gSavedSettings.setBOOL("WindLightUseAtmosShaders", TRUE);
 		}
 
 		if (!(LLFeatureManager::getInstance()->isFeatureAvailable("WindLightUseAtmosShaders")
