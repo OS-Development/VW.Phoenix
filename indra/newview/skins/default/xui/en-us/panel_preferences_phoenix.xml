@@ -150,7 +150,6 @@
 			 left_delta="304" bottom_delta="0" width="160" height="16" follows="left|top">
 				seconds (0 = never fade out)
 			</text>
-        <text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false" bottom="-20" drop_shadow_visible="true" enabled="true" follows="left|top" font="SansSerifSmall" h_pad="0" halign="left" height="12" left="200" mouse_opaque="true" name="MiscText" v_pad="0" width="128">Miscellaneous</text>
         <view_border bevel_style="none" border_thickness="1" bottom="-120" follows="top|left" height="80" left="280" name="EmDivisorBridge" width="200"/>
         <check_box bottom_delta="60" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Enable LSL-Client Bridge" left_delta="0" mouse_opaque="true" name="PhoenixBuildBridge" radio_style="false" width="270" control_name="PhoenixBuildBridge"/>
         <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Radar uses bridge" left_delta="10" mouse_opaque="true" name="PhoenixUseBridgeRadar" radio_style="false" width="270" control_name="PhoenixUseBridgeRadar"/>
