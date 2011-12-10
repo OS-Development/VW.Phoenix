@@ -353,6 +353,13 @@ BOOL stop_gloderror()
 	return FALSE;
 }
 
+void model_error(std::string message)
+{
+	LLSD args;
+	args["MESSAGE"] = message;
+	LLNotifications::instance().add("GenericAlert", args);
+}
+
 LLMeshFilePicker::LLMeshFilePicker(LLModelPreview* mp, S32 lod)
 :	LLFilePickerThread(LLFilePicker::FFLOAD_COLLADA)
 {
@@ -1615,7 +1622,7 @@ bool LLModelLoader::doLoadModel()
 
 	if (!dom)
 	{
-		llinfos<<" Error with dae - traditionally indicates a corrupt file."<<llendl;
+		llwarns << " Error with dae - traditionally indicates a corrupt file." << llendl;
 		setLoadState(ERROR_PARSING);
 		return false;
 	}
@@ -1641,14 +1648,14 @@ bool LLModelLoader::doLoadModel()
 	daeDocument* doc = dae.getDoc(mFilename);
 	if (!doc)
 	{
-		llwarns << "can't find internal doc" << llendl;
+		llwarns << "Can't find internal doc" << llendl;
 		return false;
 	}
 
 	daeElement* root = doc->getDomRoot();
 	if (!root)
 	{
-		llwarns << "document has no root" << llendl;
+		llwarns << "Document has no root" << llendl;
 		return false;
 	}
 
@@ -1663,6 +1670,7 @@ bool LLModelLoader::doLoadModel()
 		result = mPreview->verifyController(pController);
 		if (!result)
 		{
+			llwarns << "Invalid controller" << llendl;
 			setLoadState(ERROR_PARSING);
 			return true;
 		}
@@ -2088,7 +2096,9 @@ bool LLModelLoader::doLoadModel()
 											{
 												if (pos.getCount() <= j+2)
 												{
-													llerrs << "Invalid position array size." << llendl;
+													llwarns << "Invalid position array size." << llendl;
+													setLoadState(ERROR_PARSING);
+													return false;
 												}
 
 												LLVector3 v(pos[j], pos[j + 1], pos[j+2]);
@@ -2223,7 +2233,7 @@ bool LLModelLoader::doLoadModel()
 
 	if (!scene)
 	{
-		llwarns << "document has no visual_scene" << llendl;
+		llwarns << "Document has no visual_scene" << llendl;
 		setLoadState(ERROR_PARSING);
 		return true;
 	}
@@ -2236,6 +2246,7 @@ bool LLModelLoader::doLoadModel()
 
 	if (badElement)
 	{
+		llwarns << "Bad element" << llendl;
 		setLoadState(ERROR_PARSING);
 	}
 
@@ -2816,7 +2827,7 @@ void LLModelLoader::processJointNode(domNode* pNode, JointTransformMap& jointTra
 {
 	if (pNode->getName() == NULL)
 	{
-		llwarns << "nameless node, can't process" << llendl;
+		llwarns << "Nameless node, can't process" << llendl;
 		return;
 	}
 
@@ -4237,7 +4248,19 @@ void LLModelPreview::genLODs(S32 which_lod, U32 decimation, bool enforce_tri_lim
 
 				if (!validate_face(target_model->getVolumeFace(names[i])))
 				{
-					llerrs << "Invalid face generated during LOD generation." << llendl;
+					std::string error = "Invalid face generated during LOD generation.";
+					if (mFMP)
+					{
+						model_error(error);
+						delete [] sizes;
+						delete [] names;
+						mFMP->close();
+						return;
+					}
+					else
+					{
+						llerrs << error << llendl;
+					}
 				}
 			}
 
@@ -4252,7 +4275,19 @@ void LLModelPreview::genLODs(S32 which_lod, U32 decimation, bool enforce_tri_lim
 
 			if (!validate_model(target_model))
 			{
-				llerrs << "Invalid model generated when creating LODs" << llendl;
+				std::string error = "Invalid model generated when creating LODs.";
+				if (mFMP)
+				{
+					model_error(error);
+					delete [] sizes;
+					delete [] names;
+					mFMP->close();
+					return;
+				}
+				else
+				{
+					llerrs << error << llendl;
+				}
 			}
 
 			delete [] sizes;
@@ -4284,17 +4319,6 @@ void LLModelPreview::genLODs(S32 which_lod, U32 decimation, bool enforce_tri_lim
 	}
 
 	mResourceCost = calcResourceCost();
-
-	/*if (which_lod == -1 && mScene[LLModel::LOD_PHYSICS].empty())
-	 {	//build physics scene
-	 mScene[LLModel::LOD_PHYSICS] = mScene[LLModel::LOD_LOW];
-	 mModel[LLModel::LOD_PHYSICS] = mModel[LLModel::LOD_LOW];
-
-	 for (U32 i = 1; i < mModel[LLModel::LOD_PHYSICS].size(); ++i)
-	 {
-	 mPhysicsQ.push(mModel[LLModel::LOD_PHYSICS][i]);
-	 }
-	 }*/
 }
 
 void LLModelPreview::updateStatusMessages()
