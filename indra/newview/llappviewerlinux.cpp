@@ -352,7 +352,7 @@ bool LLAppViewerLinux::init()
 	{
 		g_thread_init(NULL);
 #if LL_GTK
-		gdk_threads_init();
+		g_thread_init(0);
 #endif
 	}
 	
