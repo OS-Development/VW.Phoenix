@@ -7675,4 +7675,125 @@ Reset WL settings for &apos;[PARCEL_NAME]&apos; to region default?
      yestext="Yes"/>
   </notification>
 
+  <notification
+   icon="notify.tga"
+   name="PhoenixUpdateNotice"
+   label="An update for Phoenix is available"
+   type="alertmodal">
+An update for Phoenix is available: [VERSION_TITLE]
+
+[INFO]
+
+Download Page: [URL]
+(This check can be disabled from Preferences)
+   <form name="form">
+	<button
+	 index="0"
+	 name="Later"
+	 text="Later"/>
+	<button
+	 index="1"
+     name="Never"
+	 text="Never"/>
+    <button
+	 index="2"
+	 name="Update"
+	 text="Download Page"/>
+   </form>
+  </notification>
+
+  <notification
+   icon="notify.tga"
+   name="PhoenixUpdateNoticeImportant"
+   label="An update for Phoenix is available"
+   type="alertmodal">
+An important update for Phoenix is available: [VERSION_TITLE]
+
+[INFO]
+
+Download Page: [URL]
+(This check can be disabled from Preferences)
+   <form name="form">
+	<button
+	 index="0"
+	 name="Later"
+	 text="Later"/>
+    <button
+	 index="2"
+	 name="Update"
+	 text="Download Page"/>
+   </form>
+  </notification>
+
+  <notification
+   icon="notify.tga"
+   name="PhoenixUpdateNoticeTrival"
+   label="An update for Phoenix is available"
+   type="notify">
+An update for Phoenix is available: [VERSION_TITLE]
+
+[INFO]
+
+Download Page: [URL]
+(This check can be disabled from Preferences)
+   <form name="form">
+	<button
+	 index="0"
+	 name="Later"
+	 text="Later"/>
+	<button
+	 index="1"
+     name="Never"
+	 text="Never"/>
+    <button
+	 index="2"
+	 name="Update"
+	 text="Download Page"/>
+   </form>
+  </notification>
+
+    <notification
+   icon="notify.tga"
+   name="PhoenixPreloginNotice"
+   type="notify">
+Important Notice: [TITLE]
+
+[INFO]
+
+URL: [URL]
+(These notices can be disabled from Preferences)
+   <form name="form">
+	<button
+	 index="0"
+	 name="Dismiss"
+	 text="Dismiss"/>
+	<button
+	 index="1"
+     name="Open"
+	 text="Open Link"/>
+   </form>
+  </notification>
+
+    <notification
+   icon="notify.tga"
+   name="PhoenixPreloginNoticeModal"
+   type="alertmodal">
+Important Notice: [TITLE]
+
+[INFO]
+
+URL: [URL]
+(These notices can be disabled from Preferences)
+   <form name="form">
+	<button
+	 index="0"
+	 name="Dismiss"
+	 text="Dismiss"/>
+	<button
+	 index="1"
+     name="Open"
+	 text="Open Link"/>
+   </form>
+  </notification>
+
 </notifications>

@@ -7385,6 +7385,63 @@
 			<key>Value</key>
 			<integer>0</integer>
 		</map>
+		
+		<key>PhoenixAlertsUpdateCheckEnable</key>
+		<map>
+			<key>Comment</key>
+			<string>Enables checking for new versions on startup.</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>Boolean</string>
+			<key>Value</key>
+			<integer>1</integer>
+		</map>
+		<key>PhoenixAlertsUpdateCheckBetaEnable</key>
+		<map>
+			<key>Comment</key>
+			<string>Enables checking for beta versions as well.</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>Boolean</string>
+			<key>Value</key>
+			<integer>0</integer>
+		</map>
+		<key>PhoenixAlertsUpdateCheckLastShown</key>
+		<map>
+			<key>Comment</key>
+			<string>This is either the current build number or the number for the last one shown and was ignored.</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>S32</string>
+			<key>Value</key>
+			<integer>0</integer>
+		</map>
+		<key>PhoenixAlertsNoticesEnable</key>
+		<map>
+			<key>Comment</key>
+			<string>Enables showing phoenix project alerts at startup.</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>Boolean</string>
+			<key>Value</key>
+			<integer>1</integer>
+		</map>
+		<key>PhoenixAlertsNoticesLastShown</key>
+		<map>
+			<key>Comment</key>
+			<string>The notice ID number of the last shown startup alert notice.</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>S32</string>
+			<key>Value</key>
+			<integer>0</integer>
+		</map>
+		
 		<key>PhoenixAllowMUpose</key>
 		<map>
 			<key>Comment</key>

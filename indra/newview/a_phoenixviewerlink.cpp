@@ -53,6 +53,7 @@
 #include "floaterblacklist.h"
 #include "llsys.h"
 #include "llviewermedia.h"
+#include "llweb.h"
 
 std::string PhoenixViewerLink::blacklist_version;
 LLSD PhoenixViewerLink::blocked_login_info = 0;
@@ -191,6 +192,46 @@ void PhoenixViewerLink::updateClientTagsLocal()
 	}
 }
 
+
+bool callback_update_alert(const LLSD& notification, const LLSD& response)
+{
+	S32 option = LLNotification::getSelectedOption(notification, response);
+
+	 if (1 == option) // never
+	{
+		gSavedSettings.setS32("PhoenixAlertsUpdateCheckLastShown", notification["payload"]["BuildVersion"].asInteger());
+	}
+	else if (2 == option) // go to download page
+	{
+		// open the link in the external browser and prompt to exit
+		LLWeb::loadURLExternal(notification["payload"]["URL"].asString());
+		LLAppViewer::instance()->userQuit();
+	}
+	// notify later requires no actions
+
+	return false;
+}
+static LLNotificationFunctorRegistration callback_update_alert_reg("PhoenixUpdateNotice", callback_update_alert);
+static LLNotificationFunctorRegistration callback_update_alert_important_reg("PhoenixUpdateNoticeImportant", callback_update_alert);
+static LLNotificationFunctorRegistration callback_update_alert_trival_reg("PhoenixUpdateNoticeTrival", callback_update_alert);
+
+bool callback_notice(const LLSD& notification, const LLSD& response)
+{
+	S32 option = LLNotification::getSelectedOption(notification, response);
+
+	if (1 == option) // Open link
+	{
+		LLWeb::loadURL(notification["payload"]["URL"].asString());
+	}
+	
+    // any action dismisses the notice
+    gSavedSettings.setS32("PhoenixAlertsNoticesLastShown", notification["payload"]["NoticeNumber"].asInteger());
+
+	return false;
+}
+static LLNotificationFunctorRegistration callback_notice_reg("PhoenixPreloginNotice", callback_notice);
+static LLNotificationFunctorRegistration callback_notice_modal_reg("PhoenixPreloginNoticeModal", callback_notice);
+
 void PhoenixViewerLink::msdata(U32 status, std::string body)
 {
 	PhoenixViewerLink* self = getInstance();
@@ -271,6 +312,72 @@ void PhoenixViewerLink::msdata(U32 status, std::string body)
 			for(LLSD::map_iterator itr = support_groups.beginMap(); itr != support_groups.endMap(); ++itr)
 			{
 				mSupportGroup.insert(LLUUID(itr->first));
+			}
+		}
+		
+        // Quick and simple update notification system. Intended for infrequent use.
+		if (data.has("CurrentVersion") && data.has("Notices")
+		&& (gSavedSettings.getBOOL("PhoenixAlertsUpdateCheckEnable")
+		|| gSavedSettings.getBOOL("PhoenixAlertsNoticesEnable")))
+		{
+			LLSD& current_version = data["CurrentVersion"];
+			
+            //Only show for official channels only (Release and Beta)
+			std::string channel = std::string(LL_CHANNEL);
+			size_t found = channel.find("Beta");
+			if (current_version.has("BuildVersion") && (LL_CHANNEL == PHOENIX_RELEASE_CHANNEL || found != std::string::npos))
+			{
+				if (gSavedSettings.getBOOL("PhoenixAlertsUpdateCheckEnable")
+				&& current_version["BuildVersion"].asInteger() > LL_VERSION_BUILD
+				&& current_version["BuildVersion"].asInteger() > gSavedSettings.getS32("PhoenixAlertsUpdateCheckLastShown")
+                && (!current_version.has("Beta") || gSavedSettings.getBOOL("PhoenixAlertsUpdateCheckBetaEnable")))
+				{
+					LL_INFOS("UpdateCheck") << "Update available: " << current_version["Info"].asString() << " URL: " << current_version["URL"].asString() << LL_ENDL;
+					
+					LLSD args;
+					args["VERSION_TITLE"] = current_version["VersionTitle"].asString();
+					args["INFO"] = current_version["Info"].asString();
+					args["URL"] = current_version["URL"].asString();
+                    
+                    if (current_version.has("Important"))
+                    {
+                        LLNotifications::instance().add("PhoenixUpdateNoticeImportant", args, current_version);
+                    }
+                    else if (current_version.has("Trival"))
+                    {
+                        LLNotifications::instance().add("PhoenixUpdateNoticeTrival", args, current_version);
+                    }
+                    else
+                    {
+                        LLNotifications::instance().add("PhoenixUpdateNotice", args, current_version);
+                    }
+				}
+				else if (gSavedSettings.getBOOL("PhoenixAlertsNoticesEnable"))
+				{
+					LLSD& notices = data["Notices"];
+					for (LLSD::array_iterator itr = notices.beginArray(); itr != notices.endArray(); ++itr)
+					{
+						LLSD& content = (*itr);
+						if (content["NoticeNumber"].asInteger() > gSavedSettings.getS32("PhoenixAlertsNoticesLastShown")
+                        && (!content.has("MaxVersion") || content["MaxVersion"].asInteger() > LL_VERSION_BUILD)
+						&& (!content.has("MinimumVersion") || content["MinimumVersion"].asInteger() <= LL_VERSION_BUILD))
+						{
+                            LL_INFOS("PhoenixAlert") << content["NoticeNumber"].asString() << " Info: " << content["Info"].asString() << " URL: " << content["URL"].asString() << LL_ENDL;
+							LLSD args;
+							args["TITLE"] = content["Title"].asString();
+							args["INFO"] = content["Info"].asString();
+							args["URL"] = content["URL"].asString();
+                            if (content.has("Modal"))
+                            {
+                                LLNotifications::instance().add("PhoenixPreloginNoticeModal", args, content);
+                            }
+                            else
+                            {
+                                LLNotifications::instance().add("PhoenixPreloginNotice", args, content);
+                            }
+						}
+					}
+				}
 			}
 		}
 		
