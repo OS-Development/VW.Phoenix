@@ -210,8 +210,6 @@
 			English
 		</combo_item>
 		
-		< !-- After "System Default" and "English", please keep the rest of these combo_items in alphabetical order by the first character in the string. -- >
-		
 		<combo_item type="string" length="1" enabled="true" name="Danish" value="da">
 			Dansk (Danish)
 		</combo_item>
