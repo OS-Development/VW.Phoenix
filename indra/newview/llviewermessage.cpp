@@ -6621,7 +6621,8 @@ bool callback_script_dialog(const LLSD& notification, const LLSD& response)
 	return false;
 }
 static LLNotificationFunctorRegistration callback_script_dialog_reg_1("ScriptDialog", callback_script_dialog);
-static LLNotificationFunctorRegistration callback_script_dialog_reg_2("ScriptTextBox", callback_script_dialog);
+static LLNotificationFunctorRegistration callback_script_dialog_reg_2("ScriptDialogGroup", callback_script_dialog);
+static LLNotificationFunctorRegistration callback_script_dialog_reg_3("ScriptTextBox", callback_script_dialog);
 
 void process_script_dialog(LLMessageSystem* msg, void**)
 {
