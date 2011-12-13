@@ -10268,6 +10268,7 @@ llGetScale
 llGetScriptName
 llGetScriptState
 llGetSimulatorHostname
+llGetSPMaxMemory
 llGetStartParameter
 llGetStatus
 llGetSubString
@@ -10281,6 +10282,7 @@ llGetTimeOfDay
 llGetTimestamp
 llGetTorque
 llGetUnixTime
+llGetUsedMemory
 llGetUsername
 llGetVel
 llGetWallclock
@@ -10387,11 +10389,13 @@ llSameGroup
 llSay
 llScaleTexture
 llScriptDanger
+llScriptProfiler
 llSendRemoteData
 llSensor
 llSensorRemove
 llSensorRepeat
 llSetAlpha
+llSetAngularVelocity
 llSetBuoyancy
 llSetCameraAtOffset
 llSetCameraEyeOffset
@@ -10741,6 +10745,7 @@ PARCEL_FLAG_USE_LAND_PASS_LIST
 PARCEL_MEDIA_COMMAND_AGENT
 PARCEL_MEDIA_COMMAND_AUTO_ALIGN
 PARCEL_MEDIA_COMMAND_LOOP
+PARCEL_MEDIA_COMMAND_LOOP_SET
 PARCEL_MEDIA_COMMAND_PAUSE
 PARCEL_MEDIA_COMMAND_PLAY
 PARCEL_MEDIA_COMMAND_STOP

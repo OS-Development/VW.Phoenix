@@ -1853,5 +1853,25 @@ Returns a key used in a matching transaction_result() event for the success or f
 string llGetParcelMusicURL()
 Returns the music URL of the object's current parcel if the script owner also owns the parcel.
   </string>
+  <string name="LSLTipText_llScriptProfiler" translate="false">
+llScriptProfiler(integer flags)
+Enables or disables the scripts profiling state.
+Flags can be either of PROFILE_SCRIPT_NONE or PROFILE_SCRIPT_MEMORY.
+Applies to Mono-compiled scripts only.
+  </string>
+  <string name="LSLTipText_llGetSPMaxMemory" translate="false">
+integer llGetSPMaxMemory()
+Returns the integer of the most bytes used while llScriptProfiler() was last active.
+Only relevant for Mono-compiled scripts.
+  </string>
+  <string name="LSLTipText_llGetUsedMemory" translate="false">
+integer llGetUsedMemory()
+Returns the integer of the number of bytes of memory currently in use by the script.
+Only relevant for Mono-compiled scripts.
+  </string>
+  <string name="LSLTipText_llSetAngularVelocity" translate="false">
+llSetAngularVelocity(vector force, integer local)
+Applies rotational velocity to object.
+  </string>
 </strings>
 

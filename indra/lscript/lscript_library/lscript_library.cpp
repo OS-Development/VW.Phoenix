@@ -503,6 +503,12 @@ void LLScriptLibrary::init()
 
 	// Server new function 2011-12-13:
 	addFunction(10.f, 0.f, dummy_func, "llGetParcelMusicURL", "s", NULL);
+
+	// Missing script functions as of 2011-12-13
+	addFunction(10.f, 0.f, dummy_func, "llScriptProfiler", NULL, "i");
+	addFunction(10.f, 0.f, dummy_func, "llGetSPMaxMemory", "i", NULL);
+	addFunction(10.f, 0.f, dummy_func, "llGetUsedMemory", "i", NULL);
+	addFunction(10.f, 0.f, dummy_func, "llSetAngularVelocity", NULL, "vi");
 }
 
 LLScriptLibraryFunction::LLScriptLibraryFunction(F32 eu, F32 st, void (*exec_func)(LLScriptLibData *, LLScriptLibData *, const LLUUID &), const char *name, const char *ret_type, const char *args, BOOL god_only)
