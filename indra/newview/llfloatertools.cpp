@@ -547,10 +547,7 @@ void LLFloaterTools::refresh()
 	if (gMeshRepo.meshRezEnabled())
 	{
 		S32 link_cost = (S32)LLSelectMgr::getInstance()->getSelection()->getSelectedLinksetCost();
-		if (link_cost > prim_count)
-		{
-			prim_count_string += " (" + llformat("%d", link_cost) + ")";
-		}
+		prim_count_string += " (" + llformat("%d", link_cost) + ")";
 	}
 	childSetTextArg("prim_count", "[COUNT]", prim_count_string);
 
