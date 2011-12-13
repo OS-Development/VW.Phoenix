@@ -500,6 +500,9 @@ void LLScriptLibrary::init()
 
 	// Server RC Le Tigre v11.10.30.245889 new function:
 	addFunction(10.f, 0.f, dummy_func, "llTransferLindenDollars", "k", "ki");
+
+	// Server new function 2011-12-13:
+	addFunction(10.f, 0.f, dummy_func, "llGetParcelMusicURL", "s", NULL);
 }
 
 LLScriptLibraryFunction::LLScriptLibraryFunction(F32 eu, F32 st, void (*exec_func)(LLScriptLibData *, LLScriptLibData *, const LLUUID &), const char *name, const char *ret_type, const char *args, BOOL god_only)

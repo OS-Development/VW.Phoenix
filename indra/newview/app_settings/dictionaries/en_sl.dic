@@ -10248,6 +10248,7 @@ llGetOwnerKey
 llGetParcelDetails
 llGetParcelFlags
 llGetParcelMaxPrims
+llGetParcelMusicURL
 llGetParcelPrimCount
 llGetParcelPrimOwners
 llGetPermissions

@@ -1848,6 +1848,10 @@ Note that if KFM_COMMAND is provided in the options list, it must be the only op
 key llTransferLindenDollars(key id, integer amount)
 Attempt to transfer amount of L$ from the owner of the object to 'id'. Requires PERMISSION_DEBIT.
 Returns a key used in a matching transaction_result() event for the success or failure of the transfer.
-</string>
+  </string>
+  <string name="LSLTipText_llGetParcelMusicURL" translate="false">
+string llGetParcelMusicURL()
+Returns the music URL of the object's current parcel if the script owner also owns the parcel.
+  </string>
 </strings>
 
