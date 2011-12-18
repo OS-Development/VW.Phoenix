@@ -200,6 +200,7 @@ public:
 
 //		FTM_VFILE_WAIT,			// Disabled because it would be called from a thread in the mesh repository
 		FTM_FLEXIBLE_UPDATE,
+		FTM_OCCLUSION_WAIT,
 		FTM_OCCLUSION_READBACK,
 		FTM_BUILD_OCCLUSION,
 		FTM_PUSH_OCCLUSION_VERTS,
@@ -213,6 +214,11 @@ public:
 		FTM_REFRESH,
 		FTM_SORT,
 		FTM_PICK,
+		FTM_TEXTURE_CACHE,
+		FTM_DECODE,
+		FTM_FETCH,
+		FTM_VFS,
+		FTM_LFS,
 		
 		// Temp
 		FTM_TEMP1,

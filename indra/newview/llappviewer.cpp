@@ -1227,16 +1227,31 @@ bool LLAppViewer::mainLoop()
 				bool is_slow = (frameTimer.getElapsedTimeF64() > FRAME_SLOW_THRESHOLD) ;
 				S32 total_work_pending = 0;
 				S32 total_io_pending = 0;
+				F32 max_time = llmin(gFrameIntervalSeconds * 10.f, 1.f);
 				while(!is_slow)//do not unpause threads if the frame rates are very low.
 				{
 					S32 work_pending = 0;
 					S32 io_pending = 0;
- 					work_pending += LLAppViewer::getTextureCache()->update(1); // unpauses the texture cache thread
- 					work_pending += LLAppViewer::getImageDecodeThread()->update(1); // unpauses the image thread
- 					work_pending += LLAppViewer::getTextureFetch()->update(1); // unpauses the texture fetch thread
-
-					io_pending += LLVFSThread::updateClass(1);
-					io_pending += LLLFSThread::updateClass(1);
+					{
+						LLFastTimer t3(LLFastTimer::FTM_TEXTURE_CACHE);
+	 					work_pending = LLAppViewer::getTextureCache()->update(max_time); // unpauses the texture cache thread
+					}
+					{
+						LLFastTimer t3(LLFastTimer::FTM_DECODE);
+ 						work_pending += LLAppViewer::getImageDecodeThread()->update(max_time); // unpauses the image thread
+					}
+					{
+						LLFastTimer t3(LLFastTimer::FTM_FETCH);
+ 						work_pending += LLAppViewer::getTextureFetch()->update(max_time); // unpauses the texture fetch thread
+					}
+					{
+						LLFastTimer t3(LLFastTimer::FTM_VFS);
+						io_pending += LLVFSThread::updateClass(1);
+					}
+					{
+						LLFastTimer t3(LLFastTimer::FTM_LFS);
+						io_pending += LLLFSThread::updateClass(1);
+					}
 					if (io_pending > 1000)
 					{
 						ms_sleep(llmin(io_pending / 100, 100)); // give the fs some time to catch up
