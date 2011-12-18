@@ -124,14 +124,14 @@ void LLDrawable::destroy()
 		gPipeline.checkReferences(this);
 	}
 
-	if (isDead())
-	{
-		sNumZombieDrawables--;
-	}
-
 	if (LLSpatialGroup::sNoDelete)
 	{
 		llerrs << "Illegal deletion of LLDrawable!" << llendl;
+	}
+
+	if (isDead())
+	{
+		sNumZombieDrawables--;
 	}
 
 	std::for_each(mFaces.begin(), mFaces.end(), DeletePointer());

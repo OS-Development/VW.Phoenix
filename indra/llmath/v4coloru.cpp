@@ -126,13 +126,11 @@ BOOL LLColor4U::parseColor4U(const std::string& buf, LLColor4U* value)
 # define LL_X86_64 1
 #elif LL_GNUC && (defined(__amd64__) || defined(__x86_64__))
 # define LL_X86_64 1
-#else
-# define LL_X86_64 0
 #endif
 
 U32 LLColor4U::asRGBA() const
 {
-#if LL_X86_64
+#ifdef LL_X86_64
 	U32 rgba(0);
 
 	// Little endian: values are swapped in memory. The original code access
@@ -153,7 +151,7 @@ U32 LLColor4U::asRGBA() const
 
 void LLColor4U::fromRGBA(U32 rgba)
 {
-#if LL_X86_64
+#ifdef LL_X86_64
 	// Little endian: values are swapped in memory. The original code access
 	// the array like a U32, so we need to swap here
 	mV[0] = rgba & 0xFF;

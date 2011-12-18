@@ -937,8 +937,8 @@ U8* LLVertexBuffer::mapVertexBuffer(S32 type, S32 access)
 			//check the availability of memory
 			U32 avail_phy_mem, avail_vir_mem;
 			LLMemoryInfo::getAvailableMemoryKB(avail_phy_mem, avail_vir_mem);
-			llinfos << "Available physical mwmory(KB): " << avail_phy_mem << llendl; 
-			llinfos << "Available virtual memory(KB): " << avail_vir_mem << llendl;
+			llinfos << "Available physical memory: " << avail_phy_mem << "KB" << llendl; 
+			llinfos << "Available virtual memory: " << avail_vir_mem << "KB" << llendl;
 
 			if (!sDisableVBOMapping)
 			{

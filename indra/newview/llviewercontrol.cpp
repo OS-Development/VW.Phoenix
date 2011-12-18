@@ -95,6 +95,7 @@ std::string gCurrentVersion;
 extern BOOL gResizeScreenTexture;
 extern BOOL gDebugGL;
 extern BOOL gAuditTexture;
+extern bool gUpdateDrawDistance;
 ////////////////////////////////////////////////////////////////////////////
 // Listeners
 
@@ -106,9 +107,7 @@ static bool handleRenderAvatarMouselookChanged(const LLSD& newvalue)
 
 static bool handleRenderFarClipChanged(const LLSD& newvalue)
 {
-	F32 draw_distance = (F32) newvalue.asReal();
-	gAgent.mDrawDistance = draw_distance;
-	LLWorld::getInstance()->setLandFarClip(draw_distance);
+	gUpdateDrawDistance = true;	// updated in llviewerdisplay.cpp
 	return true;
 }
 

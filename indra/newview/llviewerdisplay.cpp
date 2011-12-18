@@ -97,7 +97,8 @@ BOOL		 gTeleportDisplay = FALSE;
 LLFrameTimer gTeleportDisplayTimer;
 LLFrameTimer gTeleportArrivalTimer;
 F32			 gSavedDrawDistance = 0.0f;
-const F32		RESTORE_GL_TIME = 5.f;	// Wait this long while reloading textures before we raise the curtain
+bool		 gUpdateDrawDistance = false;
+const F32	 RESTORE_GL_TIME = 5.f;	// Wait this long while reloading textures before we raise the curtain
 
 BOOL gForceRenderLandFence = FALSE;
 BOOL gDisplaySwapBuffers = FALSE;
@@ -510,6 +511,18 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 				gSavedSettings.setF32("SavedRenderFarClip", 0.0f);
 			}
 		}
+	}
+
+	// We do this here instead of inside of handleRenderFarClipChanged() in
+	// llviewercontrol.cpp to ensure this is not done during rendering, which
+	// would cause drawables to get destroyed while LLSpatialGroup::sNoDelete
+	// is true and would therefore cause a crash.
+	if (gUpdateDrawDistance)
+	{
+		gUpdateDrawDistance = false;
+		F32 draw_distance = gSavedSettings.getF32("RenderFarClip");
+		gAgent.mDrawDistance = draw_distance;
+		LLWorld::getInstance()->setLandFarClip(draw_distance);
 	}
 
 	//////////////////////////
