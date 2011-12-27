@@ -922,7 +922,7 @@ bool LLTextureFetchWorker::doWork(S32 param)
 			{
 				llwarns << "HTTP GET request failed for " << mID << llendl;
 				resetFormattedData();
-				++mHTTPFailCount;
+				mHTTPFailCount++;
 				return true; // failed
 			}
 			// fall through
@@ -940,15 +940,17 @@ bool LLTextureFetchWorker::doWork(S32 param)
 			S32 cur_size = mFormattedImage.notNull() ? mFormattedImage->getDataSize() : 0;
 			if (mRequestedSize < 0)
 			{
-				S32 max_attempts;
+				const S32 HTTP_MAX_RETRY_COUNT = 4;
+				S32 max_attempts = HTTP_MAX_RETRY_COUNT;
 				if (mGetStatus == HTTP_NOT_FOUND)
 				{
-					mHTTPFailCount = max_attempts = 1; // Don't retry
+					mHTTPFailCount++;
+					max_attempts = 1; // Don't retry
 					llwarns << "Texture missing from server (404): " << mUrl << llendl;
 
 					//roll back to try UDP
-					if(mCanUseNET)
-				{
+					if (mCanUseNET)
+					{
 						llinfos << "Falling back to UDP fetch for texture " << mID << llendl;
 						mState = INIT ;
 						mCanUseHTTP = false ;
@@ -965,21 +967,22 @@ bool LLTextureFetchWorker::doWork(S32 param)
 				}
 				else if (mGetStatus == HTTP_SERVICE_UNAVAILABLE)
 				{
-					// *TODO: Should probably introduce a timer here to delay future HTTP requsts
+					// *TODO: Should probably introduce a timer here to delay future HTTP requests
 					// for a short time (~1s) to ease server load? Ideally the server would queue
 					// requests instead of returning 503... we already limit the number pending.
-					++mHTTPFailCount;
-					max_attempts = mHTTPFailCount+1; // Keep retrying
-					LL_INFOS_ONCE("Texture") << "Texture server busy (503): " << mUrl << LL_ENDL;
+					mHTTPFailCount++;
+					llinfos << "Texture server busy (503): " << mUrl
+							<< " Attempt:" << mHTTPFailCount
+							<< "/" << max_attempts << llendl;
 				}
 				else
 					{
-					const S32 HTTP_MAX_RETRY_COUNT = 3;
-					max_attempts = HTTP_MAX_RETRY_COUNT + 1;
-					++mHTTPFailCount;
+					mHTTPFailCount++;
 					llinfos << "HTTP GET failed for: " << mUrl
-							<< " Status: " << mGetStatus << " Reason: '" << mGetReason << "'"
-							<< " Attempt:" << mHTTPFailCount+1 << "/" << max_attempts << llendl;
+							<< " Status: " << mGetStatus
+							<< " Reason: '" << mGetReason << "'"
+							<< " Attempt:" << mHTTPFailCount
+							<< "/" << max_attempts << llendl;
 				}
 
 				if (mHTTPFailCount >= max_attempts)

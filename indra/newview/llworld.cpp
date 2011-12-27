@@ -1317,7 +1317,7 @@ void process_enable_simulator(LLMessageSystem *msg, void **user_data)
 	U32 circuit_code = msg->getOurCircuitCode();
 	static U32 last_ip_u32 = 0;
 	static U32 last_circuit_code = 0;
-	if (ip_u32 != last_ip_u32 || circuit_code != circuit_code)
+	if (ip_u32 != last_ip_u32 || circuit_code != last_circuit_code)
 	{
 		last_ip_u32 = ip_u32;
 		last_circuit_code = circuit_code;
