@@ -1258,7 +1258,14 @@ public:
 	
 	void visit(const LLOctreeNode<LLDrawable>* branch)
 	{
-		gPipeline.markNotCulled((LLSpatialGroup*) branch->getListener(0), *mCamera);
+		if (branch)
+		{
+			gPipeline.markNotCulled((LLSpatialGroup*) branch->getListener(0), *mCamera);
+		}
+		else
+		{
+			llwarns << "LLOctreeMarkNotCulled::visit() called for a NULL branch" << llendl;
+		}
 	}
 };
 
