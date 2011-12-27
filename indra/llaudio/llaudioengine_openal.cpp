@@ -341,6 +341,12 @@ void LLAudioBufferOpenAL::cleanup()
 
 bool LLAudioBufferOpenAL::loadWAV(const std::string& filename)
 {
+	if (filename.empty())
+	{
+		// invalid filename, abort.
+		return false;
+	}
+
 	cleanup();
 	mALBuffer = alutCreateBufferFromFile(filename.c_str());
 	if(mALBuffer == AL_NONE)
@@ -352,6 +358,12 @@ bool LLAudioBufferOpenAL::loadWAV(const std::string& filename)
 				"LLAudioBufferOpenAL::loadWAV() Error loading "
 				<< filename
 				<< " " << alutGetErrorString(error) << llendl;
+			//
+			// If we EVER want to load wav files provided by end users, we need
+			// to rethink this!
+			//
+			// file is probably corrupt - remove it.
+			LLFile::remove(filename);
 		}
 		else
 		{
