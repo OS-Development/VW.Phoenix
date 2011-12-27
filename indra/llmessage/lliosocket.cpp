@@ -186,7 +186,7 @@ LLSocket::ptr_t LLSocket::create(EType type, U16 port)
 LLSocket::ptr_t LLSocket::create(apr_status_t& status, LLSocket::ptr_t& listen_socket)
 {
 	LLMemType m1(LLMemType::MTYPE_IO_TCP);
-	if (!listen_socket->getSocket())
+	if (!listen_socket || !listen_socket->getSocket())
 	{
 		status = APR_ENOSOCKET;
 		return LLSocket::ptr_t();
