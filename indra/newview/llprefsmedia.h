@@ -1,6 +1,6 @@
 /** 
- * @file llpanelaudioprefs.h
- * @brief Audio preference definitions
+ * @file llprefsmedia.h
+ * @brief Media preference definitions
  *
  * $LicenseInfo:firstyear=2001&license=viewergpl$
  * 
@@ -30,8 +30,8 @@
  * $/LicenseInfo$
  */
 
-#ifndef LL_LLPANELAUDIOPREFS_H
-#define LL_LLPANELAUDIOPREFS_H
+#ifndef LL_LLPREFSMEDIA_H
+#define LL_LLPREFSMEDIA_H
 
 #include "llpanel.h"
 
@@ -42,11 +42,11 @@ class LLCheckBoxCtrl;
 class LLTextBox;
 class LLRadioGroup;
 
-class LLPanelAudioPrefs : public LLPanel
+class LLPrefsMedia : public LLPanel
 {
 public:
-	LLPanelAudioPrefs();
-	virtual ~LLPanelAudioPrefs();
+	LLPrefsMedia();
+	virtual ~LLPrefsMedia();
 	
 	void apply() { refreshValues(); }
 	void cancel();	// Cancel the changed values.

@@ -1,6 +1,6 @@
 /** 
- * @file llpanelaudioprefs.cpp
- * @brief Audio preference implementation
+ * @file llprefsmedia.cpp
+ * @brief Media preference implementation
  *
  * $LicenseInfo:firstyear=2001&license=viewergpl$
  * 
@@ -33,7 +33,7 @@
 #include "llviewerprecompiledheaders.h"
 
 // file include
-#include "llpanelaudioprefs.h"
+#include "llprefsmedia.h"
 
 // linden library includes
 #include "llerror.h"
@@ -69,25 +69,25 @@
 //
 
 //static
-void* LLPanelAudioPrefs::createVolumePanel(void* data)
+void* LLPrefsMedia::createVolumePanel(void* data)
 {
 	LLPanelAudioVolume* panel = new LLPanelAudioVolume();
 	return panel;
 }
 
-LLPanelAudioPrefs::LLPanelAudioPrefs()
+LLPrefsMedia::LLPrefsMedia()
 {
 	mFactoryMap["Volume Panel"]	= LLCallbackMap(createVolumePanel, NULL);
 	
-	LLUICtrlFactory::getInstance()->buildPanel(this, "panel_preferences_audio.xml", &getFactoryMap());
+	LLUICtrlFactory::getInstance()->buildPanel(this, "panel_preferences_media.xml", &getFactoryMap());
 }
 
-LLPanelAudioPrefs::~LLPanelAudioPrefs()
+LLPrefsMedia::~LLPrefsMedia()
 {
 	// Children all cleaned up by default view destructor.
 }
 
-BOOL LLPanelAudioPrefs::postBuild()
+BOOL LLPrefsMedia::postBuild()
 {
 	
 	getChild<LLButton>("open_media_lists")->setClickedCallback(FloaterMediaLists::show, NULL);
@@ -97,7 +97,7 @@ BOOL LLPanelAudioPrefs::postBuild()
 	return TRUE;
 }
 
-void LLPanelAudioPrefs::refreshValues()
+void LLPrefsMedia::refreshValues()
 {
 	mPreviousVolume = gSavedSettings.getF32("AudioLevelMaster");
 	mPreviousSFX = gSavedSettings.getF32("AudioLevelSFX");
@@ -119,7 +119,7 @@ void LLPanelAudioPrefs::refreshValues()
 	mPreviousMuteWhenMinimized = gSavedSettings.getBOOL("MuteWhenMinimized");
 }
 
-void LLPanelAudioPrefs::cancel()
+void LLPrefsMedia::cancel()
 {
 	gSavedSettings.setF32("AudioLevelMaster", mPreviousVolume );
 	gSavedSettings.setF32("AudioLevelUI", mPreviousUI );
