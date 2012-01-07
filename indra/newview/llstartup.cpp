@@ -124,6 +124,7 @@
 #include "llhudmanager.h"
 #include "llimagebmp.h"
 #include "llinventorymodel.h"
+#include "llinventorymodelbackgroundfetch.h"
 #include "llinventoryview.h"
 #include "llkeyboard.h"
 #include "llloginhandler.h"			// gLoginHandler, SLURL support
@@ -1705,7 +1706,9 @@ bool idle_startup()
 				it = options[0].find("folder_id");
 				if(it != options[0].end())
 				{
-					gAgent.mInventoryRootID.set((*it).second);
+					LLUUID inv_root_folder_id;
+					inv_root_folder_id.set((*it).second);
+					gInventory.setRootFolderID(inv_root_folder_id);
 					//gInventory.mock(gAgent.getInventoryRootID());
 				}
 			}
@@ -1848,7 +1851,7 @@ bool idle_startup()
 			   && gAgentSessionID.notNull()
 			   && gMessageSystem->mOurCircuitCode
 			   && first_sim.isOk()
-			   && gAgent.mInventoryRootID.notNull())
+			   && gInventory.getRootFolderID().notNull())
 			{
 				LLStartUp::setStartupState( STATE_WORLD_INIT );
 			}
@@ -2316,7 +2319,9 @@ bool idle_startup()
 			it = options[0].find("folder_id");
 			if(it != options[0].end())
 			{
-				gInventoryLibraryRoot.set((*it).second);
+				LLUUID lib_root_folder_id;
+				lib_root_folder_id.set((*it).second);
+				gInventory.setLibraryRootFolderID(lib_root_folder_id);
 			}
 		}
  		options.clear();
@@ -2328,14 +2333,16 @@ bool idle_startup()
 			it = options[0].find("agent_id");
 			if(it != options[0].end())
 			{
-				gInventoryLibraryOwner.set((*it).second);
+				LLUUID lib_owner_id;
+				lib_owner_id.set((*it).second);
+				gInventory.setLibraryOwnerID(lib_owner_id);
 			}
 		}
  		options.clear();
  		if(LLUserAuth::getInstance()->getOptions("inventory-skel-lib", options)
-			&& gInventoryLibraryOwner.notNull())
+			&& gInventory.getLibraryOwnerID().notNull())
  		{
- 			if(!gInventory.loadSkeleton(options, gInventoryLibraryOwner))
+ 			if(!gInventory.loadSkeleton(options, gInventory.getLibraryOwnerID()))
  			{
  				LL_WARNS("AppInit") << "Problem loading inventory-skel-lib" << LL_ENDL;
  			}
@@ -2632,7 +2639,7 @@ bool idle_startup()
 		if (gSavedSettings.getBOOL("FetchInventoryOnLogin"))
 		{
 			// Fetch inventory in the background
-			gInventory.startBackgroundFetch();
+			LLInventoryModelBackgroundFetch::instance().start();
 		}
 
 		// HACK: Inform simulator of window size.
@@ -2697,7 +2704,7 @@ bool idle_startup()
 		}
 
         //DEV-17797.  get null folder.  Any items found here moved to Lost and Found
-        LLInventoryModel::findLostItems();
+        LLInventoryModelBackgroundFetch::instance().findLostItems();
 
 		LLStartUp::setStartupState( STATE_PRECACHE );
 		timeout.reset();

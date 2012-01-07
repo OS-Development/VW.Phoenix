@@ -2619,7 +2619,7 @@ void LLPanelObject::onCopyParams(void* user_data)
 
 		LLUUID image_id = sculpt_params->getSculptTexture();
 		BOOL allow_texture = FALSE;
-		if (gInventory.isObjectDescendentOf(image_id, gInventoryLibraryRoot)
+		if (gInventory.isObjectDescendentOf(image_id, gInventory.getLibraryRootFolderID())
 			|| image_id == LLUUID(gSavedSettings.getString( "DefaultObjectTexture" ))
 			|| image_id == LLUUID(gSavedSettings.getString( "UIImgWhiteUUID" ))
 			|| image_id == LLUUID(gSavedSettings.getString( "UIImgInvisibleUUID" ))

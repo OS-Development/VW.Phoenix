@@ -40,11 +40,12 @@
 
 #include "llagent.h"
 #include "llconsole.h"
-#include "llinventorymodel.h"
 #include "llimview.h"
 #include "llgesturemgr.h"
 
 #include "llinventorybridge.h"
+#include "llinventorymodel.h"
+#include "llinventorymodelbackgroundfetch.h"
 #include "llinventoryview.h"
 
 #include "llviewercontrol.h"
@@ -469,12 +470,14 @@ void LLViewerInventoryCategory::removeFromServer( void )
 	gAgent.sendReliableMessage();
 }
 
-bool LLViewerInventoryCategory::fetchDescendents()
+bool LLViewerInventoryCategory::fetch()
 {
-	if((VERSION_UNKNOWN == mVersion)
-	   && mDescendentsRequested.hasExpired())	//Expired check prevents multiple downloads.
+	static LLViewerRegion *last_region = NULL;
+
+	if (VERSION_UNKNOWN == mVersion && mDescendentsRequested.hasExpired())	//Expired check prevents multiple downloads.
 	{
-		LL_DEBUGS("InventoryFetch") << "Fetching category children: " << mName << ", UUID: " << mUUID << LL_ENDL;
+		LL_DEBUGS("InventoryFetch") << "Fetching category children: " << mName
+									<< ", UUID: " << mUUID << LL_ENDL;
 		const F32 FETCH_TIMER_EXPIRY = 10.0f;
 		mDescendentsRequested.reset();
 		mDescendentsRequested.setTimerExpirySec(FETCH_TIMER_EXPIRY);
@@ -484,29 +487,50 @@ bool LLViewerInventoryCategory::fetchDescendents()
 		// 2 = folders by date
 		// Need to mask off anything but the first bit.
 		// This comes from LLInventoryFilter from llfolderview.h
-		U32 sort_order = gSavedSettings.getU32("InventorySortOrder") & 0x1;
+		U32 sort_order = gSavedSettings.getU32(LLInventoryPanel::DEFAULT_SORT_ORDER) & 0x1;
 
-		std::string url = gAgent.getCapability("agent/inventory"); // OGPX : was WebFetchInventoryDescendents
-		if (url.empty()) //OGPX : agent/inventory Capability not found on agent domain.  See if the region has one.
+		std::string capability, url;
+		if (gSavedSettings.getBOOL("OpenGridProtocol"))
 		{
-			//llinfos << " agent/inventory not on AD, checking fallback to region " << llendl; //OGPX
-			if (gAgent.getRegion())
+			capability = "agent/inventory";
+			url = gAgent.getCapability(capability); // OGPX
+		}
+		LLViewerRegion* region = gAgent.getRegion();
+		if (url.empty())
+		{
+			if (region)
 			{
-				url = gAgent.getRegion()->getCapability("WebFetchInventoryDescendents");
+				capability = "FetchInventoryDescendents2";
+				url = region->getCapability(capability);
+				if (url.empty() && gSavedSettings.getBOOL("OpenGridProtocol"))
+				{
+					capability = "WebFetchInventoryDescendents";
+					url = region->getCapability(capability);
+				}
 			}
 			else
 			{
-				llwarns << "agent region is null" << llendl;
+				llwarns << "Agent region is null" << llendl;
 			}
 		}
 		if (!url.empty()) //Capability found.  Build up LLSD and use it.
 		{
-			LLInventoryModel::startBackgroundFetch(mUUID);			
+			if (region != last_region)	// Do not spam the log file.
+			{
+				llinfos << "Using capability \"" << capability
+						<< "\" for inventory fetch." << llendl;
+				last_region = region;
+			}
+			LLInventoryModelBackgroundFetch::instance().start(mUUID);			
 		}
 		else
-		{	//Deprecated, but if we don't have a capability, use the old system.
-			//Great, but we don't need to know about it, removed this info message.
-			//llinfos << "WebFetchInventoryDescendents or agent/inventory capability not found.  Using deprecated UDP message." << llendl;
+		{	// Deprecated, but if we don't have a capability, use the old system.
+			if (region != last_region)	// Do not spam the log file.
+			{
+				llinfos << "Inventory fetch capabilities not found. Using deprecated UDP message."
+						<< llendl;
+				last_region = region;
+			}
 			LLMessageSystem* msg = gMessageSystem;
 			msg->newMessage("FetchInventoryDescendents");
 			msg->nextBlock("AgentData");

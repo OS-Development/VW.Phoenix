@@ -996,7 +996,7 @@ bool RlvFolderLocks::getLockedFolders(const folderlock_source_t& lockSource, LLI
 			break;
 		case ST_ROOTFOLDER:
 			{
-				LLViewerInventoryCategory* pFolder = gInventory.getCategory(gAgent.getInventoryRootID());
+				LLViewerInventoryCategory* pFolder = gInventory.getCategory(gInventory.getRootFolderID());
 				if (pFolder)
 					lockFolders.push_back(pFolder);
 			}
@@ -1105,7 +1105,7 @@ bool RlvFolderLocks::isLockedFolder(const LLUUID& idFolder, ERlvLockMask eLockTy
 		refreshLockedLookups();
 
 	// Walk up the folder tree and check if anything has 'idFolder' locked
-	std::list<LLUUID> idsRlvObjRem, idsRlvObjAdd; const LLUUID& idFolderRoot = gAgent.getInventoryRootID(); LLUUID idFolderCur = idFolder;
+	std::list<LLUUID> idsRlvObjRem, idsRlvObjAdd; const LLUUID& idFolderRoot = gInventory.getRootFolderID(); LLUUID idFolderCur = idFolder;
 	while (idFolderRoot != idFolderCur)
 	{
 		// Iterate over any folder locks for 'idFolderCur'
@@ -1167,7 +1167,7 @@ void RlvFolderLocks::refreshLockedLookups() const
 	{
 		const folderlock_descr_t* pLockDescr = *itFolderLock;
 
-		LLInventoryModel::cat_array_t lockedFolders; const LLUUID& idFolderRoot = gAgent.getInventoryRootID();
+		LLInventoryModel::cat_array_t lockedFolders; const LLUUID& idFolderRoot = gInventory.getRootFolderID();
 		if (getLockedFolders(pLockDescr->lockSource, lockedFolders))
 		{
 			for (S32 idxFolder = 0, cntFolder = lockedFolders.count(); idxFolder < cntFolder; idxFolder++)

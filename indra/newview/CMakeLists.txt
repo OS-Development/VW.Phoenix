@@ -306,6 +306,7 @@ set(viewer_SOURCE_FILES
     llinventoryclipboard.cpp
     llinventoryicon.cpp
     llinventorymodel.cpp
+    llinventorymodelbackgroundfetch.cpp
     llinventoryview.cpp
     lljoystickbutton.cpp
     lllandmarklist.cpp
@@ -784,6 +785,7 @@ set(viewer_HEADER_FILES
     llinventoryclipboard.h
     llinventoryicon.h
     llinventorymodel.h
+    llinventorymodelbackgroundfetch.h
     llinventoryview.h
     lljoystickbutton.h
     lllandmarklist.h

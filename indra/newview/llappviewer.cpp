@@ -255,17 +255,14 @@ LLTimer gLogoutTimer;
 static const F32 LOGOUT_REQUEST_TIME = 6.f;  // this will be cut short by the LogoutReply msg.
 F32 gLogoutMaxTime = LOGOUT_REQUEST_TIME;
 
-LLUUID gInventoryLibraryOwner;
-LLUUID gInventoryLibraryRoot;
-
-BOOL				gDisconnected = FALSE;
+BOOL gDisconnected = FALSE;
 
 // Minimap scale in pixels per region
 
 // used to restore texture state after a mode switch
 LLFrameTimer	gRestoreGLTimer;
 BOOL			gRestoreGL = FALSE;
-BOOL				gUseWireframe = FALSE;
+BOOL			gUseWireframe = FALSE;
 
 // VFS globals - see llappviewer.h
 LLVFS* gStaticVFS = NULL;
@@ -1484,13 +1481,20 @@ bool LLAppViewer::cleanup()
 		llinfos << "Waiting for pending IO to finish: " << pending << llendflush;
 		ms_sleep(100);
 	}
-	llinfos << "Shutting down." << llendflush;
+
+	llinfos << "Shutting down Views" << llendflush;
 
 	// Destroy the UI
 	if (gViewerWindow)
 	{
 		gViewerWindow->shutdownViews();
 	}
+
+	llinfos << "Cleaning up Inventory" << llendflush;
+	
+	// Cleanup Inventory after the UI since it will delete any remaining observers
+	// (Deleted observers should have already removed themselves)
+	gInventory.cleanupInventory();
 
 	// Clean up selection managers after UI is destroyed, as UI may be observing them.
 	// Clean up before GL is shut down because we might be holding on to objects with texture references
@@ -3812,6 +3816,7 @@ void LLAppViewer::idle()
 		gEventNotifier.update();
 
 		gIdleCallbacks.callFunctions();
+		gInventory.idleNotifyObservers();
 	}
 
 	gViewerWindow->handlePerFrameHover();
@@ -4358,10 +4363,12 @@ void LLAppViewer::disconnectViewer()
 	if (!gNoRender)
 	{
 		// save inventory if appropriate
-		gInventory.cache(gAgent.getInventoryRootID(), gAgent.getID());
-		if(gInventoryLibraryRoot.notNull() && gInventoryLibraryOwner.notNull())
+		gInventory.cache(gInventory.getRootFolderID(), gAgent.getID());
+		if (gInventory.getLibraryRootFolderID().notNull() &&
+			gInventory.getLibraryOwnerID().notNull())
 		{
-			gInventory.cache(gInventoryLibraryRoot, gInventoryLibraryOwner);
+			gInventory.cache(gInventory.getLibraryRootFolderID(),
+							 gInventory.getLibraryOwnerID());
 		}
 	}
 

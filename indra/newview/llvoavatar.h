@@ -222,6 +222,7 @@ public:
 	virtual F32 getPixelArea() const;
 	virtual LLPolyMesh*	getHeadMesh();
 	virtual LLPolyMesh*	getUpperBodyMesh();
+	virtual LLPolyMesh* getMesh(S32 which);
 	virtual LLVector3d getPosGlobalFromAgent(const LLVector3 &position);
 	virtual LLVector3 getPosAgentFromGlobal(const LLVector3d &position);
 	virtual void updateVisualParams();

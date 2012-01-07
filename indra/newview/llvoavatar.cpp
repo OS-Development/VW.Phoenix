@@ -6801,6 +6801,7 @@ void LLVOAvatar::updateVisualParams()
 
 	dirtyMesh();
 	updateHeadOffset();
+	rebuildRiggedAttachments();
 }
 
 //-----------------------------------------------------------------------------
@@ -9878,6 +9879,11 @@ void LLVOAvatar::useBakedTexture( const LLUUID& id )
 	}
 
 	dirtyMesh();
+}
+
+LLPolyMesh* LLVOAvatar::getMesh(S32 which)
+{
+	return mMeshLOD[which]->mMeshParts[0]->getMesh();
 }
 
 // static

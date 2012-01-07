@@ -1228,7 +1228,7 @@ void LLPanelFace::onClickCopy(void* userdata)
 		LLSD face = objectp->getTE(i)->asLLSD();
 		LLUUID image_id = objectp->getTE(i)->getID();
 		BOOL allow_texture = FALSE;
-		if (gInventory.isObjectDescendentOf(face["imageid"], gInventoryLibraryRoot)
+		if (gInventory.isObjectDescendentOf(face["imageid"], gInventory.getLibraryRootFolderID())
 			|| image_id == LLUUID(gSavedSettings.getString( "DefaultObjectTexture" ))
 			|| image_id == LLUUID(gSavedSettings.getString( "UIImgWhiteUUID" ))
 			|| image_id == LLUUID(gSavedSettings.getString( "UIImgInvisibleUUID" ))

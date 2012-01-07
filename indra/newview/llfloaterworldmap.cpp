@@ -50,6 +50,7 @@
 #include "llviewercontrol.h"
 #include "lldraghandle.h"
 #include "llfirstuse.h"
+#include "llinventorymodelbackgroundfetch.h"
 #include "llfocusmgr.h"
 #include "lllandmarklist.h"
 #include "lllineeditor.h"
@@ -374,7 +375,7 @@ void LLFloaterWorldMap::show(void*, BOOL center_on_target)
 
 		// Start speculative download of landmarks
 		LLUUID landmark_folder_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_LANDMARK);
-		gInventory.startBackgroundFetch(landmark_folder_id);
+		LLInventoryModelBackgroundFetch::instance().start(landmark_folder_id);
 
 		gFloaterWorldMap->childSetFocus("location", TRUE);
 		gFocusMgr.triggerFocusFlash();
@@ -969,7 +970,7 @@ void LLFloaterWorldMap::buildLandmarkIDLists()
 	LLInventoryModel::cat_array_t cats;
 	LLInventoryModel::item_array_t items;
 	LLIsType is_landmark(LLAssetType::AT_LANDMARK);
-	gInventory.collectDescendentsIf(gAgent.getInventoryRootID(),
+	gInventory.collectDescendentsIf(gInventory.getRootFolderID(),
 									cats,
 									items,
 									LLInventoryModel::EXCLUDE_TRASH,

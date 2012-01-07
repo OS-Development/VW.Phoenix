@@ -57,6 +57,7 @@
 #include "llgesturemgr.h"
 #include "lliconctrl.h"
 #include "llinventorymodel.h"
+#include "llinventorymodelbackgroundfetch.h"
 #include "llinventoryclipboard.h"
 #include "lllineeditor.h"
 #include "llmenugl.h"
@@ -674,7 +675,7 @@ LLInventoryView::~LLInventoryView( void )
 
 void LLInventoryView::draw()
 {
- 	if (LLInventoryModel::isEverythingFetched())
+ 	if (LLInventoryModelBackgroundFetch::instance().isEverythingFetched())
 	{
 		LLLocale locale(LLLocale::USER_LOCALE);
 		std::ostringstream title;
@@ -849,7 +850,7 @@ void LLInventoryView::changed(U32 mask)
 {
 	std::ostringstream title;
 	title << "Inventory";
- 	if (LLInventoryModel::backgroundFetchActive())
+ 	if (LLInventoryModelBackgroundFetch::instance().backgroundFetchActive())
 	{
 		LLLocale locale(LLLocale::USER_LOCALE);
 		std::string item_count_string;
@@ -1006,7 +1007,7 @@ void LLInventoryView::toggleFindOptions()
 		addDependentFloater(mFinderHandle);
 
 		// start background fetch of folders
-		gInventory.startBackgroundFetch();
+		LLInventoryModelBackgroundFetch::instance().start();
 
 		mFloaterControls[std::string("Inventory.ShowFilters")]->setValue(TRUE);
 	}
@@ -1082,7 +1083,7 @@ void LLInventoryView::onSearchEdit(const std::string& search_string, void* user_
 		return;
 	}
 
-	gInventory.startBackgroundFetch();
+	LLInventoryModelBackgroundFetch::instance().start();
 
 	std::string filter_text = search_string;
 	std::string uppercase_search_string = filter_text;
@@ -1435,7 +1436,7 @@ void LLInventoryView::onFilterSelected(void* userdata, bool from_click)
 	if (filter->isActive())
 	{
 		// If our filter is active we may be the first thing requiring a fetch so we better start it here.
-		gInventory.startBackgroundFetch();
+		LLInventoryModelBackgroundFetch::instance().start();
 	}
 	self->setFilterTextFromFilter();
 	self->updateSortControls();
@@ -1960,7 +1961,8 @@ BOOL LLInventoryPanel::handleHover(S32 x, S32 y, MASK mask)
 	if(handled)
 	{
 		ECursorType cursor = getWindow()->getCursor();
-		if (LLInventoryModel::backgroundFetchActive() && cursor == UI_CURSOR_ARROW)
+		if (LLInventoryModelBackgroundFetch::instance().backgroundFetchActive()
+			&& cursor == UI_CURSOR_ARROW)
 		{
 			// replace arrow cursor with arrow and hourglass cursor
 			getWindow()->setCursor(UI_CURSOR_WORKING);

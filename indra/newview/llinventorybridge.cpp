@@ -62,6 +62,7 @@
 #include "lliconctrl.h"
 #include "llinventoryicon.h"
 #include "llinventorymodel.h"
+#include "llinventorymodelbackgroundfetch.h"
 #include "llinventoryclipboard.h"
 #include "lllineeditor.h"
 #include "llmenugl.h"
@@ -199,7 +200,7 @@ BOOL LLInvFVBridge::isItemRemovable()
 	{
 		return TRUE;
 	}
-	if (model->isObjectDescendentOf(mUUID, gAgent.getInventoryRootID()))
+	if (model->isObjectDescendentOf(mUUID, gInventory.getRootFolderID()))
 	{
 		return TRUE;
 	}
@@ -380,7 +381,7 @@ BOOL LLInvFVBridge::isClipboardPasteable() const
 		return FALSE;
 	}
 
-	BOOL is_agent_inventory = model->isObjectDescendentOf(mUUID, gAgent.getInventoryRootID());
+	BOOL is_agent_inventory = model->isObjectDescendentOf(mUUID, gInventory.getRootFolderID());
 	if (!LLInventoryClipboard::instance().hasContents() || !is_agent_inventory)
 	{
 		return FALSE;
@@ -641,7 +642,7 @@ BOOL LLInvFVBridge::startDrag(EDragAndDropType* type, LLUUID* id) const
 
 		if (*type == DAD_CATEGORY)
 		{
-			gInventory.startBackgroundFetch(obj->getUUID());
+			LLInventoryModelBackgroundFetch::instance().start(obj->getUUID());
 		}
 
 		rv = TRUE;
@@ -702,8 +703,8 @@ BOOL LLInvFVBridge::isAgentInventory() const
 {
 	LLInventoryModel* model = mInventoryPanel->getModel();
 	if(!model) return FALSE;
-	if(gAgent.getInventoryRootID() == mUUID) return TRUE;
-	return model->isObjectDescendentOf(mUUID, gAgent.getInventoryRootID());
+	if(gInventory.getRootFolderID() == mUUID) return TRUE;
+	return model->isObjectDescendentOf(mUUID, gInventory.getRootFolderID());
 }
 
 BOOL LLInvFVBridge::isItemPermissive() const
@@ -1360,8 +1361,7 @@ void LLFolderBridge::selectItem()
 BOOL LLFolderBridge::isItemRemovable()
 {
 	LLInventoryModel* model = mInventoryPanel->getModel();
-
-	if(!model->isObjectDescendentOf(mUUID, gAgent.getInventoryRootID()))
+	if (!model || !model->isObjectDescendentOf(mUUID, gInventory.getRootFolderID()))
 	{
 		return FALSE;
 	}
@@ -3878,7 +3878,7 @@ void LLObjectBridge::performAction(LLFolderView* folder, LLInventoryModel* model
 		LLUUID object_id = mUUID;
 		LLViewerInventoryItem* item;
 		item = (LLViewerInventoryItem*)gInventory.getItem(object_id);
-		if(item && gInventory.isObjectDescendentOf(object_id, gAgent.getInventoryRootID()))
+		if(item && gInventory.isObjectDescendentOf(object_id, gInventory.getRootFolderID()))
 		{
 			rez_attachment(item, NULL, replace);
 		}
@@ -3967,7 +3967,7 @@ void LLObjectBridge::openItem()
 	item = (LLViewerInventoryItem*)gInventory.getItem(object_id);
 	if (gSavedSettings.getBOOL("PhoenixDoubleClickWearInventoryObjects"))
 	{
-		if(item && gInventory.isObjectDescendentOf(object_id, gAgent.getInventoryRootID()))
+		if(item && gInventory.isObjectDescendentOf(object_id, gInventory.getRootFolderID()))
 		{
 			rez_attachment(item, NULL);
 		}
@@ -4495,7 +4495,7 @@ void LLOutfitObserver::done()
 		}
 		if (pid.isNull())
 		{
-			pid = gAgent.getInventoryRootID();
+			pid = gInventory.getRootFolderID();
 		}
 		
 		LLUUID cat_id = gInventory.createNewCategory(pid, LLFolderType::FT_NONE, name);
@@ -4594,7 +4594,7 @@ void wear_outfit_by_name(const std::string& name)
 	LLInventoryModel::cat_array_t cat_array;
 	LLInventoryModel::item_array_t item_array;
 	LLNameCategoryCollector has_name(name);
-	gInventory.collectDescendentsIf(gAgent.getInventoryRootID(),
+	gInventory.collectDescendentsIf(gInventory.getRootFolderID(),
 									cat_array,
 									item_array,
 									LLInventoryModel::EXCLUDE_TRASH,

@@ -3798,6 +3798,206 @@ void LLRiggedVolume::update(const LLMeshSkinInfo* skin, LLVOAvatar* avatar, cons
 	}
 }
 
+LLDeformedVolume* LLVOVolume::getDeformedVolume()
+{
+	if (!mDeformedVolume)
+	{
+		// doesn't exist yet - make it
+		mDeformedVolume = new LLDeformedVolume;
+	}
+
+	return mDeformedVolume;
+}
+
+LLDeformedVolume::deform_table_t& LLDeformedVolume::getDeformTable(LLVolume* source, LLVOAvatar* avatar, const LLMeshSkinInfo* skin, S32 face)
+{
+	LLDeformTableCacheIndex cache_index(source->getParams().getSculptID(), face, source->getVolumeFace(face).mNumVertices);
+
+	deform_cache_t::iterator i = mDeformCache.find(cache_index);
+
+	if (i != mDeformCache.end())
+	{
+		return i->second;
+	}
+
+	// doesn't exist in cache, must create
+
+	// tables are fairly small, we keep them around in case the user is switching between meshes for poorman's animation
+	U32 MAX_CACHE_SIZE = 20;  
+
+	if (mDeformCache.size() > MAX_CACHE_SIZE)
+	{
+		// delete element at random
+		U32 random = ll_rand(MAX_CACHE_SIZE-1);
+
+		deform_cache_t::iterator iterator = mDeformCache.begin();
+
+		for (int i = 0; i < random; i++)
+		{
+			iterator++;
+		}
+		
+		mDeformCache.erase(iterator);
+	}
+
+	deform_table_t& deform_table = mDeformCache[cache_index];
+
+	// table is a mapping from verts on the volume to verts on the avatar mesh.
+	// currently we take closest point - but may want to modify this is favor
+	// verts with similar skin weights and/or normals (so verts on the left leg
+	// don't move with the right leg by accident.)
+
+	const LLVolumeFace& source_face = source->getVolumeFace(face);
+
+	// build mapping
+	deform_table.resize(source_face.mNumVertices);
+
+	// maps volume space to object (avatar) space
+	LLMatrix4a bind_shape_matrix_a;
+	bind_shape_matrix_a.loadu(skin->mBindShapeMatrix);  
+	// skeleton scaling factor - lots of assumptions in this, but necessary for efficiency
+	F32 scale = powf(skin->mInvBindMatrix[0].determinant(), 1.0f / 3.0f);
+
+	// these are the meshes we follow
+	S32 MORPH_MESHES[] = { LLVOAvatarDefines::MESH_ID_HEAD,
+						   LLVOAvatarDefines::MESH_ID_UPPER_BODY,
+						   LLVOAvatarDefines::MESH_ID_LOWER_BODY };
+
+	// for each vertex in the volume, find the closest vertex on the avatar mesh(es)	
+	for (S32 i = 0; i < source_face.mNumVertices; i++)
+	{
+		LLVector4a source_position = source_face.mPositions[i];
+		LLVector4a source_position_transformed;
+		bind_shape_matrix_a.affineTransform(source_position, source_position_transformed);
+		source_position_transformed.mul(scale);
+
+		F32 closest_distance = 0.0f;
+		S32 closest_vertex = 0;
+		S32 closest_mesh = 0;
+
+		BOOL first_time = TRUE;
+
+		for (S32 k = 0; k < sizeof(MORPH_MESHES)/sizeof(S32); k++)
+		{
+			S32 mesh_id = MORPH_MESHES[k];
+
+			LLPolyMesh* avatar_mesh = avatar->getMesh(mesh_id);
+
+			const LLVector3* base_positions = avatar_mesh->getBaseCoords();
+
+			for (S32 j = 0; j < avatar_mesh->getNumVertices(); j++)
+			{
+				LLVector4a base_position;
+				base_position.load3(base_positions[j].mV);
+
+				LLVector4a delta;
+				delta.setSub(source_position_transformed, base_position);
+
+				F32 distance = delta.getLength3().getF32();
+				
+				if (first_time ||  // first time through loop is always closest
+					(distance < closest_distance))
+				{
+					closest_distance = distance;
+					closest_vertex = j;
+					closest_mesh = mesh_id;
+					first_time = FALSE;
+				}
+			}
+		}
+		// create entry for found vertex
+		deform_table[i].mVertex = closest_vertex;
+		deform_table[i].mMesh = (U8)closest_mesh;	
+	}
+
+	return deform_table;
+}
+
+void LLDeformedVolume::deform(LLVolume* source, LLVOAvatar* avatar, const LLMeshSkinInfo* skin, S32 face)
+{
+	LLFastTimer t(LLFastTimer::FTM_SKIN_RIGGED_DEFORM);
+
+	bool copy = false;
+	if (source->getNumVolumeFaces() != getNumVolumeFaces())
+	{ 
+		copy = true;
+	}
+
+	for (S32 i = 0; i < source->getNumVolumeFaces() && !copy; ++i)
+	{
+		const LLVolumeFace& src_face = source->getVolumeFace(i);
+		const LLVolumeFace& dst_face = getVolumeFace(i);
+		
+		if (src_face.mNumIndices != dst_face.mNumIndices ||
+			src_face.mNumVertices != dst_face.mNumVertices)
+		{
+			copy = true;
+		}
+	}
+
+	if (copy)
+	{
+		copyVolumeFaces(source);	
+	}
+
+	const LLVolumeFace& source_face = source->getVolumeFace(face);
+	const LLVolumeFace& destination_face = getVolumeFace(face);
+
+	// transforms volume space to avatar space
+	LLMatrix4a bind_shape_matrix_a;
+	bind_shape_matrix_a.loadu(skin->mBindShapeMatrix);
+
+	// transforms back again
+	LLMatrix4 bind_shape_matrix_inverse = skin->mBindShapeMatrix;
+	bind_shape_matrix_inverse.invert_real();
+	LLMatrix4a bind_shape_matrix_inverse_a;
+	bind_shape_matrix_inverse_a.loadu(bind_shape_matrix_inverse);
+
+	// skeleton scaling factor - lots of assumptions in this, but necessary for efficiency
+	F32 scale = powf(skin->mInvBindMatrix[0].determinant(), 1.0f / 3.0f);
+
+	// get the deform table
+	LLDeformTableCacheIndex cache_index(source->getParams().getSculptID(), face, source->getVolumeFace(face).mNumVertices);
+	deform_table_t& deform_table = getDeformTable(source, avatar, skin, face);
+
+	for (S32 i = 0; i < source_face.mNumVertices; i++)
+	{
+		U16 closest_vertex = deform_table[i].mVertex;
+		S32 closest_mesh = deform_table[i].mMesh;
+		
+		// find the current mesh
+		LLPolyMesh* avatar_mesh = avatar->getMesh(closest_mesh);
+		// and get positions for both original and morphed vertices
+		const LLVector3* base_positions = avatar_mesh->getBaseCoords();
+		const LLVector4* morph_positions = avatar_mesh->getCoords();
+
+		// find the movement of this vertex due to morphing
+		LLVector4a base_position;
+		base_position.load3(base_positions[closest_vertex].mV);
+		LLVector4a morph_position;
+		morph_position.load3(morph_positions[closest_vertex].mV);
+		LLVector4a morph_delta;
+		morph_delta.setSub(morph_position, base_position);
+
+		// source position mapped to avatar space
+		LLVector4a source_position = source_face.mPositions[i];
+		LLVector4a source_position_transformed;
+		bind_shape_matrix_a.affineTransform(source_position, source_position_transformed);
+		source_position_transformed.mul(scale);
+
+		// modify by movement delta
+		LLVector4a destination_position_transformed;
+		destination_position_transformed.setAdd(source_position_transformed, morph_delta);
+		
+		// map back to volume space
+		destination_position_transformed.mul(1.0f / scale);
+		LLVector4a destination_position;
+		bind_shape_matrix_inverse_a.affineTransform(destination_position_transformed, destination_position);
+		
+		destination_face.mPositions[i] = destination_position;
+	}
+}
+
 U32 LLVOVolume::getPartitionType() const
 {
 	if (isHUDAttachment())

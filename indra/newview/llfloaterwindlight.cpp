@@ -832,7 +832,7 @@ void LLFloaterWindLight::onSavePreset(LLUICtrl* ctrl, void* userData)
 		const LLUUID trash_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 		if(LLWLParamManager::instance()->mCurParams.mInventoryID.notNull() 
 			&& !gInventory.isObjectDescendentOf(LLWLParamManager::instance()->mCurParams.mInventoryID, trash_id)
-			&& gInventory.isObjectDescendentOf(LLWLParamManager::instance()->mCurParams.mInventoryID, gAgent.getInventoryRootID())
+			&& gInventory.isObjectDescendentOf(LLWLParamManager::instance()->mCurParams.mInventoryID, gInventory.getRootFolderID())
 		)
  		{
 			LLNotifications::instance().add("KittyWLSaveNotecardAlert", LLSD(), LLSD(), saveNotecardCallback);

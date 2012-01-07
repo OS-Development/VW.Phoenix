@@ -153,7 +153,7 @@ void LLFloaterOpenObject::moveToInventory(bool wear)
 	}
 	else
 	{
-		parent_category_id = gAgent.getInventoryRootID();
+		parent_category_id = gInventory.getRootFolderID();
 	}
 	LLUUID category_id = gInventory.createNewCategory(parent_category_id, 
 		LLFolderType::FT_NONE, 

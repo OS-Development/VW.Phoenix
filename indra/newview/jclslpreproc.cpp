@@ -77,7 +77,7 @@ LLUUID JCLSLPreprocessor::findInventoryByName(std::string name)
 	LLViewerInventoryCategory::cat_array_t cats;
 	LLViewerInventoryItem::item_array_t items;
 	ScriptMatches namematches(name);
-	gInventory.collectDescendentsIf(gAgent.getInventoryRootID(),cats,items,FALSE,namematches);
+	gInventory.collectDescendentsIf(gInventory.getRootFolderID(),cats,items,FALSE,namematches);
 
 	if (items.count())
 	{

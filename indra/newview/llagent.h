@@ -190,7 +190,7 @@ public:
 
 	// Set the home data
 	void			setRegion(LLViewerRegion *regionp);
-	LLViewerRegion	*getRegion() const;
+	LLViewerRegion*	getRegion() const;
 	const LLHost&	getRegionHost() const;
 	std::string		getSLURL() const;
 	
@@ -306,8 +306,6 @@ public:
 	LLUUID			getLastChatter() const { return mLastChatterID; }
 	bool			getAlwaysRun() const { return mbAlwaysRun; }
 	bool			getRunning() const { return mbRunning; }
-
-	const LLUUID&	getInventoryRootID() const 	{ return mInventoryRootID; }
 
 	void			buildFullname(std::string &name) const;
 	void			buildFullnameAndTitle(std::string &name) const;
@@ -777,8 +775,7 @@ public:
 	std::string		mGroupTitle; // honorific, like "Sir"
 	std::string		mGroupName;
 	LLUUID			mGroupID;
-	//LLUUID			mGroupInsigniaID;
-	LLUUID			mInventoryRootID;
+	//LLUUID		mGroupInsigniaID;
 	LLUUID			mMapID;
 	F64				mMapOriginX;	// Global x coord of mMapID's bottom left corner.
 	F64				mMapOriginY;	// Global y coord of mMapID's bottom left corner.

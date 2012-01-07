@@ -46,14 +46,15 @@
 #include "llinventory.h"
 
 #include "llcallbacklist.h"
-#include "llinventoryclipboard.h" // *TODO: remove this once hack below gone.
-#include "llinventoryview.h"// hacked in for the bonus context menu items.
+#include "llinventoryclipboard.h"	// *TODO: remove this once hack below gone.
+#include "llinventorymodelbackgroundfetch.h"
+#include "llinventoryview.h"		// hacked in for the bonus context menu items.
 #include "llkeyboard.h"
 #include "lllineeditor.h"
 #include "llmenugl.h"
 #include "llresmgr.h"
 #include "llpreview.h"
-#include "llscrollcontainer.h" // hack to allow scrolling
+#include "llscrollcontainer.h"		// hack to allow scrolling
 #include "lltooldraganddrop.h"
 #include "llui.h"
 #include "llviewertexturelist.h"
@@ -785,11 +786,11 @@ BOOL LLFolderViewItem::handleHover( S32 x, S32 y, MASK mask )
 
 				// *TODO: push this into listener and remove
 				// dependency on llagent
-				if(mListener && gInventory.isObjectDescendentOf(mListener->getUUID(), gAgent.getInventoryRootID()))
+				if (mListener && gInventory.isObjectDescendentOf(mListener->getUUID(), gInventory.getRootFolderID()))
 				{
 					src = LLToolDragAndDrop::SOURCE_AGENT;
 				}
-				else if (mListener && gInventory.isObjectDescendentOf(mListener->getUUID(), gInventoryLibraryRoot))
+				else if (mListener && gInventory.isObjectDescendentOf(mListener->getUUID(), gInventory.getLibraryRootFolderID()))
 				{
 					src = LLToolDragAndDrop::SOURCE_LIBRARY;
 				}
@@ -1362,7 +1363,7 @@ void LLFolderViewFolder::filter( LLInventoryFilter& filter)
 	// when applying a filter, matching folders get their contents downloaded first
 	if (filter.isNotDefault() && getFiltered(filter.getMinRequiredGeneration()) && (mListener && !gInventory.isCategoryComplete(mListener->getUUID())))
 	{
-		gInventory.startBackgroundFetch(mListener->getUUID());
+		LLInventoryModelBackgroundFetch::instance().start(mListener->getUUID());
 	}
 
 	// now query children
@@ -2794,10 +2795,10 @@ U32 LLFolderView::getSortOrder() const
 	return mSortOrder;
 }
 
-BOOL LLFolderView::addFolder( LLFolderViewFolder* folder)
+BOOL LLFolderView::addFolder(LLFolderViewFolder* folder)
 {
 	// enforce sort order of My Inventory followed by Library
-	if (folder->getListener()->getUUID() == gInventoryLibraryRoot)
+	if (folder->getListener()->getUUID() == gInventory.getLibraryRootFolderID())
 	{
 		mFolders.push_back(folder);
 	}
@@ -3209,7 +3210,7 @@ void LLFolderView::sanitizeSelection()
 		else
 		{
 			// nothing selected to start with, so pick "My Inventory" as best guess
-			new_selection = getItemByID(gAgent.getInventoryRootID());
+			new_selection = getItemByID(gInventory.getRootFolderID());
 		}
 
 		if (new_selection)
@@ -3324,7 +3325,8 @@ void LLFolderView::draw()
 	}
 	else
 	{
-		if (gInventory.backgroundFetchActive() || mCompletedFilterGeneration < mFilter.getMinRequiredGeneration())
+		if (LLInventoryModelBackgroundFetch::instance().backgroundFetchActive() ||
+			mCompletedFilterGeneration < mFilter.getMinRequiredGeneration())
 		{
 			mStatusText = std::string("Searching..."); // *TODO:translate
 			sFont->renderUTF8(mStatusText, 0, 2, 1, sSearchStatusColor, LLFontGL::LEFT, LLFontGL::TOP, LLFontGL::NORMAL, S32_MAX, S32_MAX, NULL, FALSE );
@@ -5186,7 +5188,8 @@ std::string LLInventoryFilter::getFilterText()
 		filtered_by_all_types = FALSE;
 	}
 
-	if (!gInventory.backgroundFetchActive() && filtered_by_type && !filtered_by_all_types)
+	if (!LLInventoryModelBackgroundFetch::instance().backgroundFetchActive() &&
+		filtered_by_type && !filtered_by_all_types)
 	{
 		mFilterText += " - ";
 		if (num_filter_types < 5)

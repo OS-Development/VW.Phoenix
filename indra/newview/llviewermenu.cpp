@@ -259,8 +259,6 @@ BOOL enable_object_build(void*);
 LLVOAvatar* find_avatar_from_object( LLViewerObject* object );
 LLVOAvatar* find_avatar_from_object( const LLUUID& object_id );
 
-void handle_test_load_url(void*);
-
 //
 // Evil hackish imported globals
 //
@@ -1012,6 +1010,12 @@ void init_client_menu(LLMenuGL* menu)
 										(void*) "MouseSmooth"));
 	menu->appendSeparator();
 
+	menu->append(new LLMenuItemCheckGL("HTTP Inventory Fetches",
+										&menu_toggle_control,
+										NULL,
+										&menu_check_control,
+										(void*) "UseHTTPInventory"));
+
 	menu->append(new LLMenuItemCheckGL( "Console Window", 
 										&menu_toggle_control,
 										NULL, 
@@ -1438,7 +1442,7 @@ void init_debug_rendering_menu(LLMenuGL* menu)
 	item = new LLMenuItemCheckGL("HTTP Get Textures", toggle_HTTPGetTextures, NULL, menu_check_control, (void*)"ImagePipelineUseHTTPFetch3");
 	menu->append(item);
 #endif
-	
+
 	item = new LLMenuItemCheckGL("Run Multiple Threads", menu_toggle_control, NULL, menu_check_control, (void*)"RunMultipleThreads");
 	menu->append(item);
 
@@ -4580,7 +4584,7 @@ void handle_take()
 			}
 
 			// check library
-			if(gInventory.isObjectDescendentOf(category_id, gInventoryLibraryRoot))
+			if (gInventory.isObjectDescendentOf(category_id, gInventory.getRootFolderID()))
 			{
 				category_id.setNull();
 			}
@@ -8613,14 +8617,6 @@ class LLToolsUseSelectionForGrid : public view_listener_t
 		return true;
 	}
 };
-
-void handle_test_load_url(void*)
-{
-	LLWeb::loadURL("");
-	LLWeb::loadURL("hacker://www.google.com/");
-	LLWeb::loadURL("http");
-	LLWeb::loadURL("http://www.google.com/");
-}
 
 //
 // LLViewerMenuHolderGL

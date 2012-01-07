@@ -59,6 +59,7 @@
 #include "llsdutil.h"
 #include "llstartup.h"
 #include "lltrans.h"
+#include "llviewercontrol.h"
 #include "llviewerobjectlist.h"
 #include "llviewerparceloverlay.h"
 #include "llvlmanager.h"
@@ -1433,6 +1434,13 @@ void LLViewerRegion::setSeedCapability(const std::string& url)
 	capabilityNames.append("FetchInventory");
 	capabilityNames.append("FetchLib");
 	capabilityNames.append("FetchLibDescendents");
+	if (gSavedSettings.getBOOL("UseHTTPInventory"))
+	{
+		capabilityNames.append("FetchLib2");
+		capabilityNames.append("FetchLibDescendents2");
+		capabilityNames.append("FetchInventory2");
+		capabilityNames.append("FetchInventoryDescendents2");
+	}
 	capabilityNames.append("GetMesh");
 	capabilityNames.append("GetObjectCost");
 	capabilityNames.append("GetObjectPhysicsData");
