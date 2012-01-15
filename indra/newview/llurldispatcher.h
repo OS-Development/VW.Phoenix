@@ -66,6 +66,15 @@ public:
 
 	static std::string buildSLURL(const std::string& regionname, S32 x, S32 y, S32 z);
 		//   builds: http://slurl.com/secondlife/RegionName/x/y/z/
+
+	static const std::string SL_HELP_PREFIX;
+	static const std::string SL_PREFIX;
+	static const std::string SECONDLIFE_PREFIX;
+	static const std::string SLURL_PREFIX;
+	static const std::string SLURL_ALT_PREFIX;
+	static const std::string SLMARKETPLACE_PREFIX;
+	static const std::string SLMARKETPLACE_ALT_PREFIX;
+	static const std::string APP_TOKEN;
 };
 
 #endif

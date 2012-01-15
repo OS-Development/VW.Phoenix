@@ -218,7 +218,7 @@ void LLCOFMgr::fetchCOF()
 
 		LLCOFFetcher* pFetcher = new LLCOFFetcher();
 		pFetcher->fetchDescendents(fetchFolders);
-		if (pFetcher->isEverythingComplete())
+		if (pFetcher->isFinished())
 			pFetcher->done();
 		else
 			gInventory.addObserver(pFetcher);

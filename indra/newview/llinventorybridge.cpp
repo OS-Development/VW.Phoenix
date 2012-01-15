@@ -1021,7 +1021,7 @@ void LLItemBridge::performAction(LLFolderView* folder, LLInventoryModel* model, 
 void LLItemBridge::selectItem()
 {
 	LLViewerInventoryItem* item = (LLViewerInventoryItem*)getItem();
-	if(item && !item->isComplete())
+	if(item && !item->isFinished())
 	{
 		item->fetchFromServer();
 	}
@@ -1866,7 +1866,7 @@ void LLRightClickInventoryFetchDescendentsObserver::done()
 	outfit->fetchItems(ids);
 	outfit->done();				//Not interested in waiting and this will be right 99% of the time.
 //Uncomment the following code for laggy Inventory UI.
-/*	if(outfit->isEverythingComplete())
+/*	if(outfit->isFinished())
 	{
 		// everything is already here - call done.
 		outfit->done();
@@ -1889,14 +1889,20 @@ void LLRightClickInventoryFetchDescendentsObserver::done()
 class LLInventoryCopyAndWearObserver : public LLInventoryObserver
 {
 public:
-	LLInventoryCopyAndWearObserver(const LLUUID& cat_id, int count) :mCatID(cat_id), mContentsCount(count), mFolderAdded(FALSE) {}
+	LLInventoryCopyAndWearObserver(const LLUUID& cat_id,
+								   int count,
+								   bool folder_added = false)
+	:	mCatID(cat_id),
+		mContentsCount(count),
+		mFolderAdded(folder_added)
+	{}
 	virtual ~LLInventoryCopyAndWearObserver() {}
 	virtual void changed(U32 mask);
 
 protected:
 	LLUUID mCatID;
 	int    mContentsCount;
-	BOOL   mFolderAdded;
+	bool   mFolderAdded;
 };
 
 
@@ -2388,7 +2394,7 @@ void LLFolderBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 		folders.push_back(category->getUUID());
 		fetch->fetchDescendents(folders);
 		inc_busy_count();
-		if (fetch->isEverythingComplete())
+		if (fetch->isFinished())
 		{
 			// everything is already here - call done.
 			fetch->done();
@@ -2608,13 +2614,16 @@ bool move_task_inventory_callback(const LLSD& notification, const LLSD& response
 
 	if(option == 0 && object)
 	{
-		if (cat_and_wear && cat_and_wear->mWear)
+		if (cat_and_wear && cat_and_wear->mWear) // && !cat_and_wear->mFolderResponded)
 		{
 			InventoryObjectList inventory_objects;
 			object->getInventoryContents(inventory_objects);
 			int contents_count = inventory_objects.size()-1; //subtract one for containing folder
 
-			LLInventoryCopyAndWearObserver* inventoryObserver = new LLInventoryCopyAndWearObserver(cat_and_wear->mCatID, contents_count);
+			LLInventoryCopyAndWearObserver* inventoryObserver;
+			inventoryObserver = new LLInventoryCopyAndWearObserver(cat_and_wear->mCatID,
+																   contents_count,
+																   cat_and_wear->mFolderResponded);
 			gInventory.addObserver(inventoryObserver);
 		}
 
@@ -2831,7 +2840,7 @@ BOOL LLFolderBridge::dragItemIntoFolder(LLInventoryItem* inv_item,
 	else if (LLToolDragAndDrop::SOURCE_LIBRARY == source)
 	{
 		LLViewerInventoryItem* item = (LLViewerInventoryItem*)inv_item;
-		if (item && item->isComplete())
+		if (item && item->isFinished())
 		{
 			accept = TRUE;
 			if (drop)
@@ -3882,7 +3891,7 @@ void LLObjectBridge::performAction(LLFolderView* folder, LLInventoryModel* model
 		{
 			rez_attachment(item, NULL, replace);
 		}
-		else if(item && item->isComplete())
+		else if(item && item->isFinished())
 		{
 			// must be in library. copy it to our inventory and put it on.
 			LLPointer<LLInventoryCallback> cb = new RezAttachmentCallback(0, replace);
@@ -3971,7 +3980,7 @@ void LLObjectBridge::openItem()
 		{
 			rez_attachment(item, NULL);
 		}
-		else if(item && item->isComplete())
+		else if(item && item->isFinished())
 		{
 			// must be in library. copy it to our inventory and put it on.
 			LLPointer<LLInventoryCallback> cb = new RezAttachmentCallback(0);
@@ -4511,6 +4520,8 @@ void LLOutfitObserver::done()
 									item->getUUID(), cat_id, std::string(), cb);
 			}
 		}
+		// BAP fixes a lag in display of created dir.
+		gInventory.notifyObservers();
 	}
 	else
 	{
@@ -4573,7 +4584,7 @@ void LLOutfitFetch::done()
 
 	// do the fetch
 	outfit->fetchItems(ids);
-	if(outfit->isEverythingComplete())
+	if(outfit->isFinished())
 	{
 		// everything is already here - call done.
 		outfit->done();
@@ -4648,7 +4659,7 @@ void wear_inventory_category(LLInventoryCategory* category, bool copy, bool appe
 	folders.push_back(category->getUUID());
 	outfit->fetchDescendents(folders);
 	inc_busy_count();
-	if(outfit->isEverythingComplete())
+	if(outfit->isFinished())
 	{
 		// everything is already here - call done.
 		outfit->done();
@@ -5185,7 +5196,7 @@ void LLWearableBridge::openItem()
 		// must be in the inventory library. copy it to our inventory
 		// and put it on right away.
 		LLViewerInventoryItem* item = getItem();
-		if(item && item->isComplete())
+		if(item && item->isFinished())
 		{
 			LLPointer<LLInventoryCallback> cb = new WearOnAvatarCallback();
 			copy_inventory_item(
@@ -5292,7 +5303,7 @@ BOOL LLWearableBridge::canWearOnAvatar(void* user_data)
 	if(!self->isAgentInventory())
 	{
 		LLViewerInventoryItem* item = (LLViewerInventoryItem*)self->getItem();
-		if(!item || !item->isComplete()) return FALSE;
+		if(!item || !item->isFinished()) return FALSE;
 	}
 	return (!gAgent.isWearingItem(self->mUUID));
 }

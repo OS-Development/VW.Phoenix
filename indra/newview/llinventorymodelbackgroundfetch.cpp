@@ -193,7 +193,7 @@ void LLInventoryModelBackgroundFetch::backgroundFetch()
 		// If we'll be using the capability, we'll be sending batches and the
 		// background thing isn't as important.
 		std::string url = gAgent.getRegion()->getCapability("FetchInventoryDescendents2");   
-		if (gSavedSettings.getBOOL("UseHTTPInventory") && !url.empty()) 
+		if (!url.empty()) 
 		{
 			bulkFetch(url);
 			return;
@@ -601,28 +601,20 @@ void LLInventoryModelBackgroundFetch::bulkFetch(std::string url)
 		}
 		if (body_lib["folders"].size())
 		{
-			std::string url_lib;
-			if (!gSavedSettings.getBOOL("OpenGridProtocol"))
+			std::string capability = "FetchLibDescendents2";
+			std::string url_lib = gAgent.getRegion()->getCapability(capability);
+			if (url_lib.empty())
 			{
-				url_lib = gAgent.getRegion()->getCapability("FetchLibDescendents2");
-				if (url_lib.empty())
-				{
-					url_lib = gAgent.getRegion()->getCapability("FetchLibDescendents");
-					LL_DEBUGS("InventoryFetch") << "Using capability FetchLibDescendents for fetch"
-												<< LL_ENDL;
-				}
-				else
-				{
-					LL_DEBUGS("InventoryFetch") << "Using capability FetchLibDescendents2 for fetch"
-												<< LL_ENDL;
-				}
+				capability = "FetchLibDescendents";
+				url_lib = gAgent.getRegion()->getCapability(capability);
 			}
-			else
+			if (url_lib.empty() && gSavedSettings.getBOOL("OpenGridProtocol"))
 			{
-				url_lib = gAgent.getCapability("agent/inventory_library");
-				LL_DEBUGS("InventoryFetch") << "Using capability agent/inventory_library for fetch"
-											<< LL_ENDL;
+				capability = "agent/inventory_library";
+				url_lib = gAgent.getCapability(capability);
 			}
+			LL_DEBUGS("InventoryFetch") << "Using capability " << capability
+										<< " for fetch" << LL_ENDL;
 
 			LLInventoryModelFetchDescendentsResponder *fetcher = new LLInventoryModelFetchDescendentsResponder(body_lib, recursive_cats);
 			LLHTTPClient::post(url_lib, body_lib, fetcher, 300.0);

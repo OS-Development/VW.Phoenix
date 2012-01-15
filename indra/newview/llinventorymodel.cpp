@@ -32,8 +32,6 @@
 
 #include "llviewerprecompiledheaders.h"
 
-#include <deque>
-
 #include "llinventorymodel.h"
 
 #include "lldir.h"
@@ -42,7 +40,6 @@
 #include "llagent.h"
 #include "llappviewer.h"
 #include "llcallbacklist.h"
-#include "llfloater.h"
 #include "llinventoryview.h"
 #include "llmutelist.h"
 #include "llpreview.h"
@@ -58,9 +55,6 @@
 // [RLVa:KB]
 #include "rlvhandler.h"
 // [/RLVa:KB]
-
-// RN: for some reason, using std::queue in the header file confuses the compiler which thinks it's an xmlrpc_queue
-static std::deque<LLUUID> sFetchQueue;
 
 // Increment this if the inventory contents change in a non-backwards-compatible way.
 // For viewers with link items support, former caches are incorrect.
@@ -388,13 +382,64 @@ LLUUID LLInventoryModel::findCategoryByName(std::string name)
 	return LLUUID::null;
 }
 
+class LLCreateInventoryCategoryResponder : public LLHTTPClient::Responder
+{
+public:
+	LLCreateInventoryCategoryResponder(LLInventoryModel* model, 
+									   void (*callback)(const LLSD&, void*),
+									   void* user_data)
+	:	mModel(model),
+		mCallback(callback), 
+		mData(user_data) 
+	{
+	}
+
+	virtual void error(U32 status, const std::string& reason)
+	{
+		llwarns << "CreateInventoryCategory failed. status = " << status
+				<< ", reason = \"" << reason << "\"" << llendl;
+	}
+
+	virtual void result(const LLSD& content)
+	{
+		// Server has created folder.
+
+		LLUUID category_id = content["folder_id"].asUUID();
+
+		// Add the category to the internal representation
+		LLPointer<LLViewerInventoryCategory> cat;
+		cat = new LLViewerInventoryCategory(category_id,
+											content["parent_id"].asUUID(),
+											(LLFolderType::EType)content["type"].asInteger(),
+											content["name"].asString(), 
+											gAgent.getID());
+		cat->setVersion(LLViewerInventoryCategory::VERSION_INITIAL);
+		cat->setDescendentCount(0);
+		LLInventoryModel::LLCategoryUpdate update(cat->getParentUUID(), 1);
+		mModel->accountForUpdate(update);
+		mModel->updateCategory(cat);
+
+		if (mCallback && mData)
+		{
+			mCallback(content, mData);
+		}
+	}
+
+private:
+	void (*mCallback)(const LLSD&, void*);
+	void* mData;
+	LLInventoryModel* mModel;
+};
+
 // Convenience function to create a new category. You could call
 // updateCategory() with a newly generated UUID category, but this
 // version will take care of details like what the name should be
 // based on preferred type. Returns the UUID of the new category.
 LLUUID LLInventoryModel::createNewCategory(const LLUUID& parent_id,
 										   LLFolderType::EType preferred_type,
-										   const std::string& pname)
+										   const std::string& pname,
+										   void (*callback)(const LLSD&, void*),
+										   void* user_data)
 {
 	LLUUID id;
 	if(!isInventoryUsable())
@@ -418,6 +463,37 @@ LLUUID LLInventoryModel::createNewCategory(const LLUUID& parent_id,
 	else
 	{
 		name.assign(LLViewerFolderType::lookupNewCategoryName(preferred_type));
+	}
+
+	if (callback && user_data)  // callback required for acked message.
+	{
+		LLViewerRegion* viewer_region = gAgent.getRegion();
+		std::string url;
+		if (viewer_region)
+		{
+			url = viewer_region->getCapability("CreateInventoryCategory");
+		}
+	
+		if (!url.empty())
+		{
+			LL_DEBUGS("Inventory") << "Using the CreateInventoryCategory capability."
+								   << LL_ENDL;
+			// Let's use the new capability.
+			LLSD request, body;
+			body["folder_id"] = id;
+			body["parent_id"] = parent_id;
+			body["type"] = (LLSD::Integer) preferred_type;
+			body["name"] = name;
+
+			request["message"] = "CreateInventoryCategory";
+			request["payload"] = body;
+
+			LLHTTPClient::post(url, body,
+							   new LLCreateInventoryCategoryResponder(this,
+																	  callback,
+																	  user_data));
+			return LLUUID::null;
+		}
 	}
 
 	// Add the category to the internal representation
@@ -1192,10 +1268,7 @@ void LLInventoryModel::addChangedMask(U32 mask, const LLUUID& referent)
 	}
 }
 
-//If we get back a normal response, handle it here
-// Note: this is the responder used in "fetchInventory" cap, 
-// this is not responder for "WebFetchInventoryDescendents" or "agent/inventory" cap
-
+// If we get back a normal response, handle it here
 void  LLInventoryModel::fetchInventoryResponder::result(const LLSD& content)
 {	
 	start_new_inventory_observer();
@@ -2616,7 +2689,7 @@ void LLInventoryModel::processBulkUpdateInventory(LLMessageSystem* msg, void**)
 		//		<< titem->getParentUUID() << llendl;
 		U32 callback_id;
 		msg->getU32Fast(_PREHASH_ItemData, _PREHASH_CallbackID, callback_id);
-		if(titem->getUUID().notNull())
+		if(titem->getUUID().notNull()) // && callback_id.notNull())
 		{
 			items.push_back(titem);
 			cblist.push_back(InventoryCallbackInfo(callback_id, titem->getUUID()));
@@ -3080,7 +3153,7 @@ void LLInventoryCompletionObserver::changed(U32 mask)
 				it = mIncomplete.erase(it);
 				continue;
 			}
-			if(item->isComplete())
+			if(item->isFinished())
 			{
 				mComplete.push_back(*it);
 				it = mIncomplete.erase(it);
@@ -3121,7 +3194,7 @@ void LLInventoryFetchObserver::changed(U32 mask)
 				it = mIncomplete.erase(it);
 				continue;
 			}
-			if(item->isComplete())
+			if(item->isFinished())
 			{
 				mComplete.push_back(*it);
 				it = mIncomplete.erase(it);
@@ -3138,7 +3211,7 @@ void LLInventoryFetchObserver::changed(U32 mask)
 	//llinfos << "LLInventoryFetchObserver::changed() mIncomplete size " << mIncomplete.size() << llendl;
 }
 
-bool LLInventoryFetchObserver::isEverythingComplete() const
+bool LLInventoryFetchObserver::isFinished() const
 {
 	return mIncomplete.empty();
 }
@@ -3147,9 +3220,19 @@ void fetch_items_from_llsd(const LLSD& items_llsd)
 {
 	if (!items_llsd.size()) return;
 	LLSD body;
-	body[0]["cap_name"] = "FetchInventory";
-	body[1]["cap_name"] = "FetchLib";
-	for (S32 i=0; i<items_llsd.size();i++)
+	std::string url = gAgent.getRegion()->getCapability("FetchInventory2");
+	if (url.empty())
+	{
+		body[0]["cap_name"] = "FetchInventory";
+		body[1]["cap_name"] = "FetchLib";
+	}
+	else
+	{
+		body[0]["cap_name"] = "FetchInventory2";
+		body[1]["cap_name"] = "FetchLib2";
+	}
+
+	for (S32 i = 0; i < items_llsd.size(); i++)
 	{
 		if (items_llsd[i]["owner_id"].asString() == gAgent.getID().asString())
 		{
@@ -3163,10 +3246,10 @@ void fetch_items_from_llsd(const LLSD& items_llsd)
 		}
 	}
 		
-	for (S32 i=0; i<body.size(); i++)
+	for (S32 i = 0; i < body.size(); i++)
 	{
 		if (0 >= body[i].size()) continue;
-		std::string url = gAgent.getRegion()->getCapability(body[i]["cap_name"].asString());
+		url = gAgent.getRegion()->getCapability(body[i]["cap_name"].asString());
 
 		if (!url.empty())
 		{
@@ -3177,7 +3260,7 @@ void fetch_items_from_llsd(const LLSD& items_llsd)
 
 		LLMessageSystem* msg = gMessageSystem;
 		BOOL start_new_message = TRUE;
-		for (S32 j=0; j<body[i]["items"].size(); j++)
+		for (S32 j = 0; j < body[i]["items"].size(); j++)
 		{
 			LLSD item_entry = body[i]["items"][j];
 			if(start_new_message)
@@ -3214,7 +3297,7 @@ void LLInventoryFetchObserver::fetchItems(
 		LLViewerInventoryItem* item = gInventory.getItem(*it);
 		if(item)
 		{
-			if(item->isComplete())
+			if(item->isFinished())
 			{
 				// It's complete, so put it on the complete container.
 				mComplete.push_back(*it);
@@ -3255,7 +3338,7 @@ void LLInventoryFetchDescendentsObserver::changed(U32 mask)
 			it = mIncompleteFolders.erase(it);
 			continue;
 		}
-		if(isComplete(cat))
+		if (isCategoryComplete(cat))
 		{
 			mCompleteFolders.push_back(*it);
 			it = mIncompleteFolders.erase(it);
@@ -3276,7 +3359,7 @@ void LLInventoryFetchDescendentsObserver::fetchDescendents(
 	{
 		LLViewerInventoryCategory* cat = gInventory.getCategory(*it);
 		if(!cat) continue;
-		if(!isComplete(cat))
+		if (!isCategoryComplete(cat))
 		{
 			cat->fetch();	// blindly fetch it without seeing if anything else is fetching it.
 			mIncompleteFolders.push_back(*it);	//Add to list of things being downloaded for this observer.
@@ -3288,12 +3371,12 @@ void LLInventoryFetchDescendentsObserver::fetchDescendents(
 	}
 }
 
-bool LLInventoryFetchDescendentsObserver::isEverythingComplete() const
+bool LLInventoryFetchDescendentsObserver::isFinished() const
 {
 	return mIncompleteFolders.empty();
 }
 
-bool LLInventoryFetchDescendentsObserver::isComplete(LLViewerInventoryCategory* cat)
+bool LLInventoryFetchDescendentsObserver::isCategoryComplete(LLViewerInventoryCategory* cat)
 {
 	S32 version = cat->getVersion();
 	S32 descendents = cat->getDescendentCount();
@@ -3335,7 +3418,7 @@ void LLInventoryFetchComboObserver::changed(U32 mask)
 				it = mIncompleteItems.erase(it);
 				continue;
 			}
-			if(item->isComplete())
+			if(item->isFinished())
 			{
 				mCompleteItems.push_back(*it);
 				it = mIncompleteItems.erase(it);
@@ -3406,7 +3489,7 @@ void LLInventoryFetchComboObserver::fetch(
 			lldebugs << "uanble to find item " << *iit << llendl;
 			continue;
 		}
-		if(item->isComplete())
+		if(item->isFinished())
 		{
 			// It's complete, so put it on the complete container.
 			mCompleteItems.push_back(*iit);
@@ -3476,16 +3559,7 @@ void LLInventoryAddedObserver::changed(U32 mask)
 	// the network, figure out which item was updated.
 	LLMessageSystem* msg = gMessageSystem;
 
-	std::string msg_name;
-	if (mMessageName.empty())
-	{
-		msg_name = msg->getMessageName();
-	}
-	else
-	{
-		msg_name = mMessageName;
-	}
-
+	std::string msg_name = msg->getMessageName();
 	if (msg_name.empty())
 	{
 		return;

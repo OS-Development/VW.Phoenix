@@ -33,15 +33,18 @@
 #ifndef LL_TOOLDRAGANDDROP_H
 #define LL_TOOLDRAGANDDROP_H
 
-#include "lltool.h"
-#include "llview.h"
-#include "lluuid.h"
 #include "stdenums.h"
+
 #include "llassetstorage.h"
 #include "lldarray.h"
+#include "lldictionary.h"
 #include "llpermissions.h"
-#include "llwindow.h"
+#include "lltool.h"
+#include "lluuid.h"
+#include "llview.h"
+
 #include "llviewerinventory.h"
+#include "llwindow.h"
 
 class LLToolDragAndDrop;
 class LLViewerRegion;
@@ -130,10 +133,6 @@ protected:
 	BOOL			mDrop;
 	S32				mCurItemIndex;
 	std::string		mToolTipMsg;
-
-	// array of pointers to functions that implement the logic to
-	// dragging and dropping into the simulator.
-	static dragOrDrop3dImpl sDragAndDrop3d[DAD_COUNT][DT_COUNT];
 
 protected:
 	// 3d drop functions. these call down into the static functions
@@ -278,6 +277,25 @@ public:
 									  EDragAndDropType cargo_type,
 									  void* cargo_data,
 									  EAcceptance* accept);
+
+	// Classes used for determining 3d drag and drop types.
+private:
+	struct DragAndDropEntry : public LLDictionaryEntry
+	{
+		DragAndDropEntry(dragOrDrop3dImpl f_none,
+						 dragOrDrop3dImpl f_self,
+						 dragOrDrop3dImpl f_avatar,
+						 dragOrDrop3dImpl f_object,
+						 dragOrDrop3dImpl f_land);
+		dragOrDrop3dImpl mFunctions[DT_COUNT];
+	};
+	class LLDragAndDropDictionary : public LLSingleton<LLDragAndDropDictionary>,
+									public LLDictionary<EDragAndDropType, DragAndDropEntry>
+	{
+	public:
+		LLDragAndDropDictionary();
+		dragOrDrop3dImpl get(EDragAndDropType dad_type, EDropTarget drop_target);
+	};
 };
 
 // utility functions

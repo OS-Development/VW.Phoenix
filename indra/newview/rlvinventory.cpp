@@ -118,7 +118,7 @@ void RlvInventory::fetchSharedInventory()
 	pFetcher->fetchDescendents(fetchFolders);
 	m_fFetchStarted = true;
 
-	if (pFetcher->isEverythingComplete())
+	if (pFetcher->isFinished())
 		pFetcher->done();
 	else
 		gInventory.addObserver(pFetcher);

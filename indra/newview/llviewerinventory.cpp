@@ -197,19 +197,30 @@ void LLViewerInventoryItem::updateServer(BOOL is_new) const
 
 void LLViewerInventoryItem::fetchFromServer(void) const
 {
-	if(!mIsComplete)
+	if (!mIsComplete)
 	{
-		std::string url; 
-
-		if( ALEXANDRIA_LINDEN_ID.getString() == mPermissions.getOwner().getString())
-			url = gAgent.getRegion()->getCapability("FetchLib");
-		else	
-			url = gAgent.getRegion()->getCapability("FetchInventory");
+		std::string url;
+		if (gAgent.getID() != mPermissions.getOwner())
+		{
+			url = gAgent.getRegion()->getCapability("FetchLib2");
+			if (url.empty())
+			{
+				url = gAgent.getRegion()->getCapability("FetchLib");
+			}
+		}
+		else
+		{
+			url = gAgent.getRegion()->getCapability("FetchInventory2");
+			if (url.empty())
+			{
+				url = gAgent.getRegion()->getCapability("FetchInventory");
+			}
+		}
 
 		if (!url.empty())
 		{
 			LLSD body;
-			body["agent_id"]	= gAgent.getID();
+			body["agent_id"]				= gAgent.getID();
 			body["items"][0]["owner_id"]	= mPermissions.getOwner();
 			body["items"][0]["item_id"]		= mUUID;
 

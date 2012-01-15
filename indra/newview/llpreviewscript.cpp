@@ -2603,7 +2603,7 @@ void LLLiveLSLEditor::saveIfNeeded()
 		return;
 	}
 
-	if(mItem.isNull() || !mItem->isComplete())
+	if(mItem.isNull() || !mItem->isFinished())
 	{
 		// $NOTE: While the error message may not be exactly correct,
 		// it's pretty close.

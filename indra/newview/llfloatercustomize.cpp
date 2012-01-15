@@ -596,7 +596,7 @@ void LLPanelEditWearable::setSubpart( ESubpart subpart )
 		if(item)
 		{
 			perm_mask = item->getPermissions().getMaskOwner();
-			is_complete = item->isComplete();
+			is_complete = item->isFinished();
 		}
 		setUIPermissions(perm_mask, is_complete);
 		BOOL editable = ((perm_mask & PERM_MODIFY) && is_complete) ? TRUE : FALSE;
@@ -954,7 +954,7 @@ void LLPanelEditWearable::draw()
 		const LLPermissions& perm = item->getPermissions();
 		is_modifiable = perm.allowModifyBy(gAgent.getID(), gAgent.getGroupID());
 		is_copyable = perm.allowCopyBy(gAgent.getID(), gAgent.getGroupID());
-		is_complete = item->isComplete();
+		is_complete = item->isFinished();
 	}
 
 	childSetEnabled("Save", is_modifiable && is_complete && has_wearable && is_dirty);
@@ -2642,7 +2642,7 @@ void LLFloaterCustomize::updateInventoryUI()
 		}
 		if(item)
 		{
-			is_complete = item->isComplete();
+			is_complete = item->isFinished();
 			if(!is_complete)
 			{
 				all_complete = FALSE;
@@ -2684,7 +2684,7 @@ void LLFloaterCustomize::updateScrollingPanelUI()
 		if(item)
 		{
 			U32 perm_mask = item->getPermissions().getMaskOwner();
-			BOOL is_complete = item->isComplete();
+			BOOL is_complete = item->isFinished();
 			updateScrollingPanelList((perm_mask & PERM_MODIFY) ? is_complete : FALSE);
 		}
 	}

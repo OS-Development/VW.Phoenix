@@ -4528,9 +4528,12 @@ void handle_take()
 		return;
 	}
 	
-	BOOL you_own_everything = TRUE;
-	BOOL locked_but_takeable_object = FALSE;
-	LLUUID category_id;
+	bool you_own_everything = true;
+	bool locked_but_takeable_object = false;
+	bool ambiguous_destination = false;
+	LLUUID category_id, new_cat_id;
+	LLUUID trash = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
+	LLUUID library = gInventory.getLibraryRootFolderID();
 	
 	for (LLObjectSelection::root_iterator iter = LLSelectMgr::getInstance()->getSelection()->root_begin();
 		 iter != LLSelectMgr::getInstance()->getSelection()->root_end(); iter++)
@@ -4541,69 +4544,45 @@ void handle_take()
 		{
 			if(!object->permYouOwner())
 			{
-				you_own_everything = FALSE;
+				you_own_everything = false;
 			}
 
 			if(!object->permMove())
 			{
-				locked_but_takeable_object = TRUE;
+				locked_but_takeable_object = true;
 			}
 		}
-		if(node->mFolderID.notNull())
+		new_cat_id = node->mFolderID;
+		// Check that the category exists and is not inside the trash
+		// neither inside the library...
+		if (!ambiguous_destination && new_cat_id.notNull() &&
+			gInventory.getCategory(new_cat_id) && new_cat_id != trash &&
+			!gInventory.isObjectDescendentOf(new_cat_id, trash) &&
+			!gInventory.isObjectDescendentOf(new_cat_id, library))
 		{
 			if(category_id.isNull())
 			{
-				category_id = node->mFolderID;
+				category_id = new_cat_id;
 			}
 			else if(category_id != node->mFolderID)
 			{
-				// we have found two potential destinations. break out
-				// now and send to the default location.
-				category_id.setNull();
-				break;
+				// We have found two potential destinations.
+				ambiguous_destination = true;
 			}
 		}
 	}
-	if(category_id.notNull())
+	if (ambiguous_destination || category_id.isNull())
 	{
-		// there is an unambiguous destination. See if this agent has
-		// such a location and it is not in the trash or library
-		if(!gInventory.getCategory(category_id))
-		{
-			// nope, set to NULL.
-			category_id.setNull();
-		}
-		if(category_id.notNull())
-		{
-		        // check trash
-			LLUUID trash;
-			trash = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
-			if(category_id == trash || gInventory.isObjectDescendentOf(category_id, trash))
-			{
-				category_id.setNull();
-			}
-
-			// check library
-			if (gInventory.isObjectDescendentOf(category_id, gInventory.getRootFolderID()))
-			{
-				category_id.setNull();
-			}
-
-		}
-	}
-	if(category_id.isNull())
-	{
+		// Use the default "Objects" category.
 		category_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_OBJECT);
 	}
+
 	LLSD payload;
 	payload["folder_id"] = category_id;
 
 	LLNotification::Params params("ConfirmObjectTakeLock");
-	params.payload(payload)
-		.functor(confirm_take);
-
-	if(locked_but_takeable_object ||
-	   !you_own_everything)
+	params.payload(payload).functor(confirm_take);
+	if (locked_but_takeable_object || !you_own_everything)
 	{
 		if(locked_but_takeable_object && you_own_everything)
 		{

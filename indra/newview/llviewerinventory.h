@@ -122,7 +122,7 @@ public:
 	bool importFileLocal(LLFILE* fp);
 
 	// new methods
-	BOOL isComplete() const { return mIsComplete; }
+	BOOL isFinished() const { return mIsComplete; }
 	void setComplete(BOOL complete) { mIsComplete = complete; }
 	//void updateAssetOnServer() const;
 // [RLVa:KB] - Checked: 2010-09-27 (RLVa-1.1.3a) | Added: RLVa-1.1.3a

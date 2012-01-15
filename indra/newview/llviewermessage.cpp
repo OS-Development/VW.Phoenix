@@ -968,7 +968,6 @@ void open_offer(const std::vector<LLUUID>& items, const std::string& from_name)
 		}
 
 		LLUUID lost_and_found_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_LOST_AND_FOUND);
-		//BOOL inventory_has_focus = gFocusMgr.childHasKeyboardFocus(view);
 		BOOL user_is_away = gAwayTimer.getStarted();
 
 		// don't select lost and found items if the user is active
@@ -979,6 +978,7 @@ void open_offer(const std::vector<LLUUID>& items, const std::string& from_name)
 
 		//Not sure about this check.  Could make it easy to miss incoming items.
 		//don't dick with highlight while the user is working
+		//BOOL inventory_has_focus = gFocusMgr.childHasKeyboardFocus(view);
 		//if(inventory_has_focus && !user_is_away)
 		//	break;
 		LL_DEBUGS("Messaging") << "Highlighting" << item->getUUID()  << LL_ENDL;
@@ -1272,7 +1272,7 @@ bool LLOfferInfo::inventory_offer_callback(const LLSD& notification, const LLSD&
 				LLInventoryFetchComboObserver::folder_ref_t folders;
 				folders.push_back(mObjectID);
 				pOffer->fetchDescendents(folders);
-				if (pOffer->isEverythingComplete())
+				if (pOffer->isFinished())
 					pOffer->done();
 				else
 					gInventory.addObserver(pOffer);
@@ -1284,7 +1284,7 @@ bool LLOfferInfo::inventory_offer_callback(const LLSD& notification, const LLSD&
 			items.push_back(mObjectID);
 			LLOpenAgentOffer* open_agent_offer = new LLOpenAgentOffer(from_string);
 			open_agent_offer->fetchItems(items);
-			if(catp || (itemp && itemp->isComplete()))
+			if(catp || (itemp && itemp->isFinished()))
 			{
 				open_agent_offer->done();
 			}
@@ -1324,7 +1324,7 @@ bool LLOfferInfo::inventory_offer_callback(const LLSD& notification, const LLSD&
 		items.push_back(mObjectID);
 		LLOpenAgentOffer* open_agent_offer = new LLOpenAgentOffer(from_string);
 		open_agent_offer->fetchItems(items);
-		if(catp || (itemp && itemp->isComplete()))
+		if(catp || (itemp && itemp->isFinished()))
 		{
 			open_agent_offer->done();
 		}
@@ -1384,7 +1384,7 @@ bool LLOfferInfo::inventory_offer_callback(const LLSD& notification, const LLSD&
 			LLDiscardAgentOffer* discard_agent_offer;
 			discard_agent_offer = new LLDiscardAgentOffer(mFolderID, mObjectID);
 			discard_agent_offer->fetch(folders, items);
-			if(catp || (itemp && itemp->isComplete()))
+			if(catp || (itemp && itemp->isFinished()))
 			{
 				discard_agent_offer->done();
 			}
@@ -3819,7 +3819,7 @@ BOOL LLPostTeleportNotifiers::tick()
 		{
 			LLFetchInWelcomeArea* fetcher = new LLFetchInWelcomeArea;
 			fetcher->fetchDescendents(folders);
-			if(fetcher->isEverythingComplete())
+			if(fetcher->isFinished())
 			{
 				fetcher->done();
 			}

@@ -717,7 +717,7 @@ void LLWearable::writeToAvatar( BOOL set_by_user )
 		if(item)
 		{
 			perm_mask = item->getPermissions().getMaskOwner();
-			is_complete = item->isComplete();
+			is_complete = item->isFinished();
 			if(!is_complete)
 			{
 				item->fetchFromServer();

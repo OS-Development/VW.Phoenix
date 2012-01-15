@@ -791,7 +791,7 @@ class LLAttachObject : public inventory_panel_listener_t
 		{
 			rez_attachment(item, attachmentp);
 		}
-		else if(item && item->isComplete())
+		else if(item && item->isFinished())
 		{
 			// must be in library. copy it to our inventory and put it on.
 			LLPointer<LLInventoryCallback> cb = new RezAttachmentCallback(attachmentp);

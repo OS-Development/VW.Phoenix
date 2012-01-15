@@ -1427,19 +1427,27 @@ void LLViewerRegion::setSeedCapability(const std::string& url)
 	LLSD capabilityNames = LLSD::emptyArray();
 	capabilityNames.append("ChatSessionRequest");
 	capabilityNames.append("CopyInventoryFromNotecard");
+	capabilityNames.append("CreateInventoryCategory");
 	capabilityNames.append("DispatchRegionInfo");
 	capabilityNames.append("EstateChangeInfo");
 	capabilityNames.append("EventQueueGet");
 	capabilityNames.append("EnvironmentSettings");
-	capabilityNames.append("FetchInventory");
-	capabilityNames.append("FetchLib");
-	capabilityNames.append("FetchLibDescendents");
 	if (gSavedSettings.getBOOL("UseHTTPInventory"))
 	{
-		capabilityNames.append("FetchLib2");
-		capabilityNames.append("FetchLibDescendents2");
+		// Legacy capabilities: deprecate ? May be still used by OpenSim...
+		capabilityNames.append("FetchInventory");
+		capabilityNames.append("FetchLib");
+		capabilityNames.append("FetchLibDescendents");
+		// OGPX : since this is asking the region leave the old naming in
+		// place, on agent domain it is now called agent/inventory. Both
+		// caps have the same LLSD returned.
+		capabilityNames.append("WebFetchInventoryDescendents");
+
+		// New SL capabilities
 		capabilityNames.append("FetchInventory2");
 		capabilityNames.append("FetchInventoryDescendents2");
+		capabilityNames.append("FetchLib2");
+		capabilityNames.append("FetchLibDescendents2");
 	}
 	capabilityNames.append("GetMesh");
 	capabilityNames.append("GetObjectCost");
@@ -1484,10 +1492,6 @@ void LLViewerRegion::setSeedCapability(const std::string& url)
 	capabilityNames.append("UploadBakedTexture");
 	capabilityNames.append("ViewerStartAuction");
 	capabilityNames.append("ViewerStats");
-	capabilityNames.append("WebFetchInventoryDescendents"); // OGPX : since this is asking the region
-															// leave the old naming in place, on agent domain
-															// it is now called agent/inventory. Both
-															// caps have the same LLSD returned.
 	// Please add new capabilities alphabetically to reduce
 	// merge conflicts.
 

@@ -71,7 +71,6 @@ public:
 	};
 	virtual ~LLInventoryObserver() {};
 	virtual void changed(U32 mask) = 0;
-	std::string mMessageName; // used by Agent Inventory Service only. [DEV-20328]
 };
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -380,7 +379,9 @@ public:
 	// name based on type, pass in a NULL to the 'name' parameter.
 	LLUUID createNewCategory(const LLUUID& parent_id,
 							 LLFolderType::EType preferred_type,
-							 const std::string& name);
+							 const std::string& name,
+							 void (*callback)(const LLSD&, void*) = NULL,
+							 void* user_data = NULL);
 
 	LLUUID findCategoryByName(std::string name);
 
@@ -798,7 +799,7 @@ public:
 
 	typedef std::vector<LLUUID> item_ref_t;
 
-	bool isEverythingComplete() const;
+	bool isFinished() const;
 	void fetchItems(const item_ref_t& ids);
 	virtual void done() = 0;
 
@@ -822,11 +823,11 @@ public:
 
 	typedef std::vector<LLUUID> folder_ref_t;
 	void fetchDescendents(const folder_ref_t& ids);
-	bool isEverythingComplete() const;
+	bool isFinished() const;
 	virtual void done() = 0;
 
 protected:
-	bool isComplete(LLViewerInventoryCategory* cat);
+	bool isCategoryComplete(LLViewerInventoryCategory* cat);
 	folder_ref_t mIncompleteFolders;
 	folder_ref_t mCompleteFolders;
 };
