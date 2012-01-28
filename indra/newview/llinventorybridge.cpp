@@ -870,7 +870,7 @@ LLInvFVBridge* LLInvFVBridge::createBridge(LLAssetType::EType asset_type,
 			warn = true;
 		}
 		new_listener = new LLWearableBridge(inventory, uuid, asset_type,
-											inv_type, (EWearableType)flags);
+											inv_type, (LLWearableType::EType)flags);
 		break;
 
 	case LLAssetType::AT_CATEGORY:
@@ -2494,86 +2494,86 @@ void LLFolderBridge::createNewCategory(void* user_data)
 
 void LLFolderBridge::createNewShirt(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_SHIRT);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_SHIRT);
 }
 
 void LLFolderBridge::createNewPants(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_PANTS);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_PANTS);
 }
 
 void LLFolderBridge::createNewShoes(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_SHOES);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_SHOES);
 }
 
 void LLFolderBridge::createNewSocks(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_SOCKS);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_SOCKS);
 }
 
 void LLFolderBridge::createNewJacket(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_JACKET);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_JACKET);
 }
 
 void LLFolderBridge::createNewSkirt(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_SKIRT);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_SKIRT);
 }
 
 void LLFolderBridge::createNewGloves(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_GLOVES);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_GLOVES);
 }
 
 void LLFolderBridge::createNewUndershirt(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_UNDERSHIRT);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_UNDERSHIRT);
 }
 
 void LLFolderBridge::createNewUnderpants(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_UNDERPANTS);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_UNDERPANTS);
 }
 
 void LLFolderBridge::createNewAlpha(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_ALPHA);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_ALPHA);
 }
 
 void LLFolderBridge::createNewTattoo(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_TATTOO);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_TATTOO);
 }
 
 void LLFolderBridge::createNewShape(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_SHAPE);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_SHAPE);
 }
 
 void LLFolderBridge::createNewSkin(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_SKIN);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_SKIN);
 }
 
 void LLFolderBridge::createNewHair(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_HAIR);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_HAIR);
 }
 
 void LLFolderBridge::createNewEyes(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_EYES);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_EYES);
 }
 
 void LLFolderBridge::createNewPhysics(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_PHYSICS);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_PHYSICS);
 }
 
 // static
-void LLFolderBridge::createWearable(LLFolderBridge* bridge, EWearableType type)
+void LLFolderBridge::createWearable(LLFolderBridge* bridge, LLWearableType::EType type)
 {
 	if(!bridge) return;
 	LLUUID parent_id = bridge->getUUID();
@@ -2583,7 +2583,7 @@ void LLFolderBridge::createWearable(LLFolderBridge* bridge, EWearableType type)
 // Separate function so can be called by global menu as well as right-click
 // menu.
 // static
-void LLFolderBridge::createWearable(LLUUID parent_id, EWearableType type)
+void LLFolderBridge::createWearable(LLUUID parent_id, LLWearableType::EType type)
 {
 	LLWearable* wearable = gWearableList.createNewWearable(type);
 	LLAssetType::EType asset_type = wearable->getAssetType();
@@ -4893,7 +4893,7 @@ void wear_inventory_category_on_avatar_step3(LLWearableHoldingPattern* holder, B
 
 	// For each wearable type, find the first instance in the category
 	// that we recursed through.
-	for( S32 i = 0; i < WT_COUNT; i++ )
+	for( S32 i = 0; i < LLWearableType::WT_COUNT; i++ )
 	{
 		for (LLWearableHoldingPattern::found_list_t::iterator iter = holder->mFoundList.begin();
 			 iter != holder->mFoundList.end(); ++iter)
@@ -4906,18 +4906,6 @@ void wear_inventory_category_on_avatar_step3(LLWearableHoldingPattern* holder, B
 				item = (LLViewerInventoryItem*)gInventory.getLinkedItem(data->mItemID);
 				if( item && (item->getAssetUUID() == wearable->getID()) )
 				{
-				//RN: after discussing with Brashears, I disabled this code
-				//Metadata should reside in the item, not the asset
-				//And this code does not handle failed asset uploads properly
-//					if(!wearable->isMatchedToInventoryItem(item ))
-//					{
-//						wearable = gWearableList.createWearableMatchedToInventoryItem( wearable, item );
-//						// Now that we have an asset that matches the
-//						// item, update the item to point to the new
-//						// asset.
-//						item->setAssetUUID(wearable->getID());
-//						item->updateAssetOnServer();
-//					}
 // [RLVa:KB] - Checked: 2010-09-28 (RLVa-1.1.3b) | Modified: RLVa-1.1.4a
 					if (!gRlvWearableLocks.canWear(item))
 					{
@@ -5360,21 +5348,6 @@ void LLWearableBridge::onWearOnAvatarArrived( LLWearable* wearable, void* userda
 		{
 			if(item->getAssetUUID() == wearable->getID())
 			{
-				//RN: after discussing with Brashears, I disabled this code
-				//Metadata should reside in the item, not the asset
-				//And this code does not handle failed asset uploads properly
-
-//				if(!wearable->isMatchedToInventoryItem(item))
-//				{
-//					LLWearable* new_wearable = gWearableList.createWearableMatchedToInventoryItem( wearable, item );
-//
-//					// Now that we have an asset that matches the
-//					// item, update the item to point to the new
-//					// asset.
-//					item->setAssetUUID(new_wearable->getID());
-//					item->updateAssetOnServer();
-//					wearable = new_wearable;
-//				}
 				gAgent.setWearable(item, wearable);
 				gInventory.notifyObservers();
 				//self->getFolderItem()->refreshFromRoot();
@@ -5464,10 +5437,12 @@ void LLWearableBridge::onRemoveFromAvatarArrived(LLWearable* wearable,
 	{
 		if (gAgent.isWearingItem(item_id))
 		{
-			EWearableType type = wearable->getType();
-	
-			if( !(type==WT_SHAPE || type==WT_SKIN || type==WT_HAIR || type==WT_EYES) ) //&&
-				//!((!gAgent.isTeen()) && ( type==WT_UNDERPANTS || type==WT_UNDERSHIRT )) )
+			LLWearableType::EType type = wearable->getType();
+
+			if (type != LLWearableType::WT_SHAPE && type != LLWearableType::WT_SKIN &&
+				type != LLWearableType::WT_HAIR && type != LLWearableType::WT_EYES)
+				// && (!gAgent.isTeen() || (type != LLWearableType::WT_UNDERPANTS &&
+				//						    type != LLWearableType::WT_UNDERSHIRT)))
 			{
 				gAgent.removeWearable( type );
 			}

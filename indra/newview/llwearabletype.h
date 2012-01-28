@@ -1,10 +1,10 @@
 /** 
- * @file llwearablelist.h
- * @brief LLWearableList class header file
+ * @file llwearabletype.h
+ * @brief LLWearableType class header file
  *
  * $LicenseInfo:firstyear=2002&license=viewergpl$
  * 
- * Copyright (c) 2002-2009, Linden Research, Inc.
+ * Copyright (c) 2010, Linden Research, Inc.
  * 
  * Second Life Viewer Source Code
  * The source code in this file ("Source Code") is provided by Linden Lab
@@ -30,44 +30,53 @@
  * $/LicenseInfo$
  */
 
-#ifndef LL_LLWEARABLELIST_H
-#define LL_LLWEARABLELIST_H
+#ifndef LL_LLWEARABLETYPE_H
+#define LL_LLWEARABLETYPE_H
 
-#include "llwearable.h"
-#include "lluuid.h"
-#include "llassetstorage.h"
+#include "llassettype.h"
+#include "lldictionary.h"
+#include "llinventoryicon.h"
+#include "llsingleton.h"
 
-class LLWearableList
+class LLWearableType
 {
-public:
-	LLWearableList()	{}
-	~LLWearableList();
+public: 
+	enum EType
+	{
+		WT_SHAPE	  = 0,
+		WT_SKIN		  = 1,
+		WT_HAIR		  = 2,
+		WT_EYES		  = 3,
+		WT_SHIRT	  = 4,
+		WT_PANTS	  = 5,
+		WT_SHOES	  = 6,
+		WT_SOCKS	  = 7,
+		WT_JACKET	  = 8,
+		WT_GLOVES	  = 9,
+		WT_UNDERSHIRT = 10,
+		WT_UNDERPANTS = 11,
+		WT_SKIRT	  = 12,
+		WT_ALPHA	  = 13,
+		WT_TATTOO	  = 14,
+		WT_PHYSICS	  = 15,
+		WT_COUNT	  = 16,
 
-	S32					getLength() { return mList.size(); }
+		WT_INVALID	  = 255,
+		WT_NONE		  = -1,
+	};
 
-	void		getAsset(const LLAssetID& assetID,
-						 const std::string& wearable_name,
-						 LLAssetType::EType asset_type,
-						 void(*asset_arrived_callback)(LLWearable*, void* userdata),
-						 void* userdata);
-
-	LLWearable*	createCopyFromAvatar(LLWearable* old_wearable,
-									 const std::string& new_name = std::string());
-	LLWearable*	createCopy(LLWearable* old_wearable);
-	LLWearable*	createNewWearable(LLWearableType::EType type);
-	
-	// Callback
-	static void	processGetAssetReply(const char* filename,
-									 const LLAssetID& assetID,
-									 void* user_data, S32 status,
-									 LLExtStat ext_status);
+	static const std::string& 			getTypeName(EType type);
+	static const std::string& 			getTypeDefaultNewName(EType type);
+	static const std::string& 			getTypeLabel(EType type);
+	static LLAssetType::EType 			getAssetType(EType type);
+	static EType 						typeNameToType(const std::string& type_name);
+	static LLInventoryIcon::EIconName 	getIconName(EType type);
+	static BOOL 						getDisableCameraSwitch(EType type);
+	static BOOL 						getAllowMultiwear(EType type);
 
 protected:
-	LLWearable* generateNewWearable(); // used for the create... functions
-private:
-	std::map< LLUUID, LLWearable* > mList;
+	LLWearableType() {}
+	~LLWearableType() {}
 };
 
-extern LLWearableList gWearableList;
-
-#endif  // LL_LLWEARABLELIST_H
+#endif  // LL_LLWEARABLETYPE_H

@@ -61,6 +61,7 @@
 #include "v4math.h"
 //#include "vmath.h"
 #include "stdenums.h"
+#include "llvoavatardefines.h"
 #include "llwearable.h"
 #include "llcharacter.h"
 #include "llinventory.h"
@@ -644,6 +645,8 @@ public:
 	void			requestEnterGodMode();
 	void			requestLeaveGodMode();
 
+	LLUUID			computeBakedTextureHash(LLVOAvatarDefines::EBakedTextureIndex baked_index,
+											BOOL generate_valid_hash = TRUE);
 	void			sendAgentSetAppearance();
 
 	void 			sendAgentDataUpdateRequest();
@@ -655,28 +658,28 @@ public:
 	//--------------------------------------------------------------------
 	// Wearables
 	//--------------------------------------------------------------------
-	void			setWearable( LLInventoryItem* new_item, LLWearable* wearable );
-	static bool		onSetWearableDialog( const LLSD& notification, const LLSD& response, LLWearable* wearable );
-	void			setWearableFinal( LLInventoryItem* new_item, LLWearable* new_wearable );
-	void			setWearableOutfit( 	const LLInventoryItem::item_array_t& items, const LLDynamicArray< LLWearable* >& wearables, BOOL remove );
+	void			setWearable(LLInventoryItem* new_item, LLWearable* wearable);
+	static bool		onSetWearableDialog(const LLSD& notification, const LLSD& response, LLWearable* wearable);
+	void			setWearableFinal(LLInventoryItem* new_item, LLWearable* new_wearable);
+	void			setWearableOutfit(	const LLInventoryItem::item_array_t& items, const LLDynamicArray< LLWearable* >& wearables, BOOL remove);
 	void			queryWearableCache();
 
-	BOOL			isWearableModifiable(EWearableType type);
-	BOOL			isWearableCopyable(EWearableType type);
-	BOOL			needsReplacement(EWearableType wearableType, S32 remove);
-	U32				getWearablePermMask(EWearableType type);
+	BOOL			isWearableModifiable(LLWearableType::EType type);
+	BOOL			isWearableCopyable(LLWearableType::EType type);
+	BOOL			needsReplacement(LLWearableType::EType wearableType, S32 remove);
+	U32				getWearablePermMask(LLWearableType::EType type);
 
-	LLInventoryItem* getWearableInventoryItem(EWearableType type);
+	LLInventoryItem* getWearableInventoryItem(LLWearableType::EType type);
 
-	LLWearable*		getWearable( EWearableType type ) { return (type < WT_COUNT) ? mWearableEntry[ type ].mWearable : NULL; }
-	BOOL			isWearingItem( const LLUUID& item_id );
-	LLWearable*		getWearableFromWearableItem( const LLUUID& item_id );
-	const LLUUID&	getWearableItem( EWearableType type ) { return (type < WT_COUNT) ? mWearableEntry[ type ].mItemID : LLUUID::null; }
+	LLWearable*		getWearable(LLWearableType::EType type) { return (type < LLWearableType::WT_COUNT) ? mWearableEntry[ type ].mWearable : NULL; }
+	BOOL			isWearingItem(const LLUUID& item_id);
+	LLWearable*		getWearableFromWearableItem(const LLUUID& item_id);
+	const LLUUID&	getWearableItem(LLWearableType::EType type) { return (type < LLWearableType::WT_COUNT) ? mWearableEntry[ type ].mItemID : LLUUID::null; }
 
-	static EWearableType getTEWearableType( S32 te );
-	static LLUUID	getDefaultTEImageID( S32 te );
-	
-	void			copyWearableToInventory( EWearableType type );
+	static LLWearableType::EType getTEWearableType(S32 te);
+	static LLUUID	getDefaultTEImageID(S32 te);
+
+	void			copyWearableToInventory(LLWearableType::EType type);
 
 	void			makeNewOutfit(
 						const std::string& new_folder_name,
@@ -685,9 +688,9 @@ public:
 						BOOL rename_clothing);
 	void			makeNewOutfitDone(S32 index);
 
-	void			removeWearable( EWearableType type );
-	static bool		onRemoveWearableDialog(const LLSD& notification, const LLSD& response );
-	void			removeWearableFinal( EWearableType type );
+	void			removeWearable(LLWearableType::EType type);
+	static bool		onRemoveWearableDialog(const LLSD& notification, const LLSD& response);
+	void			removeWearableFinal(LLWearableType::EType type);
 	
 	void			sendAgentWearablesUpdate();
 
@@ -706,14 +709,14 @@ public:
 		const LLUUID& item_id,
 		LLWearable* wearable);
 	
-	void			saveWearableAs( EWearableType type, const std::string& new_name, BOOL save_in_lost_and_found );
-	void			saveWearable( EWearableType type, BOOL send_update = TRUE );
+	void			saveWearableAs(LLWearableType::EType type, const std::string& new_name, BOOL save_in_lost_and_found);
+	void			saveWearable(LLWearableType::EType type, BOOL send_update = TRUE);
 	void			saveAllWearables();
 	
-	void			revertWearable( EWearableType type );
+	void			revertWearable(LLWearableType::EType type);
 	void			revertAllWearables();
 
-	void			setWearableName( const LLUUID& item_id, const std::string& new_name );
+	void			setWearableName(const LLUUID& item_id, const std::string& new_name);
 	void			createStandardWearables(BOOL female);
 	void			createStandardWearablesDone(S32 index);
 	void			createStandardWearablesAllDone();
@@ -759,7 +762,7 @@ protected:
 	// internal wearable functions
 	void			sendAgentWearablesRequest();
 	static void		onInitialWearableAssetArrived(LLWearable* wearable, void* userdata);
-	void			recoverMissingWearable(EWearableType type);
+	void			recoverMissingWearable(LLWearableType::EType type);
 	void			recoverMissingWearableDone();
 	void			addWearableToAgentInventory(LLPointer<LLInventoryCallback> cb,
 						LLWearable* wearable, const LLUUID& category_id = LLUUID::null,
@@ -987,7 +990,7 @@ private:
 		LLUUID		mItemID;	// ID of the inventory item in the agent's inventory.
 		LLWearable*	mWearable;
 	};
-	LLWearableEntry mWearableEntry[ WT_COUNT ];
+	LLWearableEntry mWearableEntry[LLWearableType::WT_COUNT];
 	U32				mAgentWearablesUpdateSerialNum;
 	BOOL			mWearablesLoaded;
 	S32				mTextureCacheQueryID;

@@ -50,7 +50,7 @@
 #include "llviewerobject.h"
 #include "llvoavatardefines.h"
 #include "llavatarname.h"
-#include "llwearable.h"
+#include "llwearabletype.h"
 
 #ifdef OLD_BREAST_PHYSICS
 #include "phoenixboobutils.h"
@@ -158,8 +158,17 @@ public:
 										  LLVector3* intersection = NULL,         // return the intersection point
 										  LLVector2* tex_coord = NULL,            // return the texture coordinates of the intersection point
 										  LLVector3* normal = NULL,               // return the surface normal at the intersection point
-										  LLVector3* bi_normal = NULL             // return the surface bi-normal at the intersection point
-		);
+										  LLVector3* bi_normal = NULL);            // return the surface bi-normal at the intersection point
+
+	LLViewerObject*	lineSegmentIntersectRiggedAttachments(const LLVector3& start,
+														  const LLVector3& end,
+														  S32 face = -1,                    // which face to check, -1 = ALL_SIDES
+														  BOOL pick_transparent = FALSE,
+														  S32* face_hit = NULL,             // which face was hit
+														  LLVector3* intersection = NULL,   // return the intersection point
+														  LLVector2* tex_coord = NULL,      // return the texture coordinates of the intersection point
+														  LLVector3* normal = NULL,         // return the surface normal at the intersection point
+														  LLVector3* bi_normal = NULL);     // return the surface bi-normal at the intersection point
 
 	/*virtual*/ void updateTextures();
 	// If setting a baked texture, need to request it from a non-local sim.
@@ -384,8 +393,8 @@ public:
 	static void		destroyGL();
 	static void		restoreGL();
 	static void		resetImpostors();
-	static enum EWearableType	getTEWearableType(LLVOAvatarDefines::ETextureIndex te );
-	static LLUUID			getDefaultTEImageID(LLVOAvatarDefines::ETextureIndex te );
+	static enum LLWearableType::EType getTEWearableType(LLVOAvatarDefines::ETextureIndex te);
+	static LLUUID	getDefaultTEImageID(LLVOAvatarDefines::ETextureIndex te);
 	static void		onChangeSelfInvisible(BOOL newvalue);
 	void			setInvisible(BOOL newvalue);
 	static LLColor4 getDummyColor();
@@ -400,8 +409,8 @@ public:
 	LLColor4		getClothesColor( LLVOAvatarDefines::ETextureIndex te );
 	BOOL			teToColorParams( LLVOAvatarDefines::ETextureIndex te, const char* param_name[3] );
 
-	BOOL			isWearingWearableType( EWearableType type );
-	void			wearableUpdated(EWearableType type, BOOL upload_result = TRUE);
+	BOOL			isWearingWearableType(LLWearableType::EType type);
+	void			wearableUpdated(LLWearableType::EType type, BOOL upload_result = TRUE);
 	//--------------------------------------------------------------------
 	// texture compositing
 	//--------------------------------------------------------------------
@@ -496,17 +505,6 @@ public:
 	typedef std::multimap<LLUUID, LLUUID> AnimationSourceMap;
 	typedef AnimationSourceMap::iterator AnimSourceIterator;
 	AnimationSourceMap mAnimationSources; // object ids that triggered anim ids
-
-	//--------------------------------------------------------------------
-	// Shadowing
-	//--------------------------------------------------------------------
-public:
-	void updateShadowFaces();
-	LLDrawable*		mShadow;
-private:
-	LLFace* mShadow0Facep;
-	LLFace* mShadow1Facep;
-	LLPointer<LLViewerFetchedTexture> mShadowImagep;
 
 	//--------------------------------------------------------------------
 	// Keeps track of foot step state for generating sounds

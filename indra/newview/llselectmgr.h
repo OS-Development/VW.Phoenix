@@ -311,7 +311,7 @@ public:
 	F32 getSelectedLinksetPhysicsCost();
 
 	F32 getSelectedObjectStreamingCost(S32* total_bytes = NULL, S32* visible_bytes = NULL);
-	U32 getSelectedObjectTriangleCount();
+	U32 getSelectedObjectTriangleCount(S32* vcount = NULL);
 
 	S32 getTECount();
 	S32 getRootObjectCount();

@@ -189,12 +189,12 @@ void RlvCommand::initLookupTable()
 // Checked: 2010-09-28 (RLVa-1.1.3a) | Added: RLVa-1.2.1c
 RlvCommandOptionGeneric::RlvCommandOptionGeneric(const std::string& strOption)
 {
-	EWearableType wtType(WT_INVALID); LLUUID idOption; ERlvAttachGroupType eAttachGroup(RLV_ATTACHGROUP_INVALID);
+	LLWearableType::EType wtType(LLWearableType::WT_INVALID); LLUUID idOption; ERlvAttachGroupType eAttachGroup(RLV_ATTACHGROUP_INVALID);
 	LLViewerJointAttachment* pAttachPt = NULL; LLViewerInventoryCategory* pFolder = NULL;
 
 	if (!(m_fEmpty = strOption.empty()))														// <option> could be an empty string
 	{
-		if ((wtType = LLWearable::typeNameToType(strOption)) != WT_INVALID)
+		if ((wtType = LLWearableType::typeNameToType(strOption)) != LLWearableType::WT_INVALID)
 			m_varOption = wtType;																// ... or specify a clothing layer
 		else if ((pAttachPt = RlvAttachPtLookup::getAttachPoint(strOption)) != NULL)
 			m_varOption = pAttachPt;															// ... or specify an attachment point
@@ -255,7 +255,7 @@ bool RlvCommandOptionGetPath::getItemIDs(const LLViewerJointAttachment* pAttachP
 }
 
 // Checked: 2010-11-30 (RLVa-1.3.0b) | Modified: RLVa-1.3.0b
-bool RlvCommandOptionGetPath::getItemIDs(EWearableType wtType, uuid_vec_t& idItems, bool fClear)
+bool RlvCommandOptionGetPath::getItemIDs(LLWearableType::EType wtType, uuid_vec_t& idItems, bool fClear)
 {
 	if (fClear)
 		idItems.clear();
@@ -622,7 +622,7 @@ bool RlvForceWear::isForceRemovable(const LLWearable* pWearable, bool fCheckComp
 }
 
 // Checked: 2010-03-19 (RLVa-1.1.3b) | Added: RLVa-1.2.0a
-bool RlvForceWear::isForceRemovable(EWearableType wtType, bool fCheckComposite /*=true*/, const LLUUID& idExcept /*=LLUUID::null*/)
+bool RlvForceWear::isForceRemovable(LLWearableType::EType wtType, bool fCheckComposite /*=true*/, const LLUUID& idExcept /*=LLUUID::null*/)
 {
 	// Wearable type can be removed by an RLV command if there's at least one currently worn wearable that can be removed
 	if (isForceRemovable(gAgent.getWearable(wtType), fCheckComposite, idExcept))
@@ -657,7 +657,7 @@ void RlvForceWear::forceRemove(const LLWearable* pWearable)
 }
 
 // Checked: 2010-03-19 (RLVa-1.1.3a) | Added: RLVa-1.2.0a
-void RlvForceWear::forceRemove(EWearableType wtType)
+void RlvForceWear::forceRemove(LLWearableType::EType wtType)
 {
 	forceRemove(gAgent.getWearable(wtType));
 }

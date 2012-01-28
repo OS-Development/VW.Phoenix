@@ -364,7 +364,6 @@ set(viewer_SOURCE_FILES
     llpanellandobjects.cpp
     llpanellandoptions.cpp
     llpanellogin.cpp
-    llpanelmorph.cpp
     llpanelmediahud.cpp
     llpanelmsgs.cpp
     llpanelnetwork.cpp
@@ -522,6 +521,7 @@ set(viewer_SOURCE_FILES
     llwaterparamset.cpp
     llwearable.cpp
     llwearablelist.cpp
+    llwearabletype.cpp
     llweb.cpp
     llmediactrl.cpp
     llwind.cpp
@@ -845,7 +845,6 @@ set(viewer_HEADER_FILES
     llpanellandoptions.h
     llpanelLCD.h
     llpanellogin.h
-    llpanelmorph.h
     llpanelmediahud.h
     llpanelmsgs.h
     llpanelnetwork.h
@@ -1009,6 +1008,7 @@ set(viewer_HEADER_FILES
     llwaterparamset.h
     llwearable.h
     llwearablelist.h
+    llwearabletype.h
     llweb.h
     llmediactrl.h
     llwind.h

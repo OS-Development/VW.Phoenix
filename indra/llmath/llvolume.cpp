@@ -4267,13 +4267,21 @@ S32 LLVolume::getNumTriangleIndices() const
 	return count;
 }
 
-S32 LLVolume::getNumTriangles() const
+S32 LLVolume::getNumTriangles(S32* vcount) const
 {
-	U32 triangle_count = 0;
+ 	U32 triangle_count = 0;
+	U32 vertex_count = 0;
 
 	for (S32 i = 0; i < getNumVolumeFaces(); ++i)
 	{
-		triangle_count += getVolumeFace(i).mNumIndices/3;
+		const LLVolumeFace& face = getVolumeFace(i);
+		triangle_count += face.mNumIndices / 3;
+		vertex_count += face.mNumVertices;
+	}
+
+	if (vcount)
+	{
+		*vcount = vertex_count;
 	}
 
 	return triangle_count;
@@ -4562,23 +4570,88 @@ S32 LLVolume::lineSegmentIntersect(const LLVector4a& start, const LLVector4a& en
 
         if (LLLineSegmentBoxIntersect(start, end, box_center, box_size))
 		{
-			if (bi_normal != NULL) // if the caller wants binormals, we may need to generate them
+			// if the caller wants binormals, we may need to generate them
+			if (bi_normal != NULL)
 			{
 				genBinormals(i);
 			}
 
-			if (!face.mOctree)
-			{
-				face.createOctree();
+			if (isUnique())
+			{	// don't bother with an octree for flexi volumes
+				U32 tri_count = face.mNumIndices / 3;
+
+				for (U32 j = 0; j < tri_count; ++j)
+				{
+					U16 idx0 = face.mIndices[j * 3];
+					U16 idx1 = face.mIndices[j * 3 + 1];
+					U16 idx2 = face.mIndices[j * 3 + 2];
+
+					const LLVector4a& v0 = face.mPositions[idx0];
+					const LLVector4a& v1 = face.mPositions[idx1];
+					const LLVector4a& v2 = face.mPositions[idx2];
+
+					F32 a,b,t;
+
+					if (LLTriangleRayIntersect(v0, v1, v2, start, dir, a, b, t))
+					{
+						if (t >= 0.f &&		// if hit is after start
+							t <= 1.f &&		// and before end
+							t < closest_t)	// and this hit is closer
+						{
+							closest_t = t;
+							hit_face = i;
+
+							if (intersection != NULL)
+							{
+								LLVector4a intersect = dir;
+								intersect.mul(closest_t);
+								intersect.add(start);
+								intersection->set(intersect.getF32ptr());
+							}
+
+							if (tex_coord != NULL)
+							{
+								LLVector2* tc = (LLVector2*) face.mTexCoords;
+								*tex_coord = (1.f - a - b) * tc[idx0] +
+											 a * tc[idx1] + b * tc[idx2];
+							}
+
+							if (normal != NULL)
+							{
+								LLVector4* norm = (LLVector4*) face.mNormals;
+
+								*normal = (1.f - a - b) * LLVector3(norm[idx0]) +
+										  a * LLVector3(norm[idx1]) +
+										  b * LLVector3(norm[idx2]);
+							}
+
+							if (bi_normal != NULL)
+							{
+								LLVector4* binormal = (LLVector4*) face.mBinormals;
+								*bi_normal = (1.f - a - b) * LLVector3(binormal[idx0]) +
+											 a * LLVector3(binormal[idx1]) +
+											 b * LLVector3(binormal[idx2]);
+							}
+						}
+					}
+				}
 			}
-
-			//LLVector4a* p = (LLVector4a*) face.mPositions;
-
-			LLOctreeTriangleRayIntersect intersect(start, dir, &face, &closest_t, intersection, tex_coord, normal, bi_normal);
-			intersect.traverse(face.mOctree);
-			if (intersect.mHitFace)
+			else
 			{
-				hit_face = i;
+				if (!face.mOctree)
+				{
+					face.createOctree();
+				}
+
+				LLOctreeTriangleRayIntersect intersect(start, dir, &face,
+													   &closest_t, intersection,
+													   tex_coord, normal,
+													   bi_normal);
+				intersect.traverse(face.mOctree);
+				if (intersect.mHitFace)
+				{
+					hit_face = i;
+				}
 			}
 		}
 	}

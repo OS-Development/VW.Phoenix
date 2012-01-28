@@ -360,13 +360,13 @@ bool LLViewerInventoryItem::isWearableType() const
 	return (getInventoryType() == LLInventoryType::IT_WEARABLE);
 }
 
-EWearableType LLViewerInventoryItem::getWearableType() const
+LLWearableType::EType LLViewerInventoryItem::getWearableType() const
 {
 	if (!isWearableType())
 	{
-		return WT_INVALID;
+		return LLWearableType::WT_INVALID;
 	}
-	return EWearableType(getFlags() & II_FLAGS_WEARABLES_MASK);
+	return LLWearableType::EType(getFlags() & II_FLAGS_WEARABLES_MASK);
 }
 // [/RLVa:KB]
 
@@ -807,7 +807,7 @@ void create_inventory_item(const LLUUID& agent_id, const LLUUID& session_id,
 						   const LLUUID& parent, const LLTransactionID& transaction_id,
 						   const std::string& name,
 						   const std::string& desc, LLAssetType::EType asset_type,
-						   LLInventoryType::EType inv_type, EWearableType wtype,
+						   LLInventoryType::EType inv_type, LLWearableType::EType wtype,
 						   U32 next_owner_perm,
 						   LLPointer<LLInventoryCallback> cb)
 {

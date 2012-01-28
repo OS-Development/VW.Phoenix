@@ -226,6 +226,26 @@
 	<!-- Legacy strings, almost never used -->
 	<string name="Fullbright">Fullbright (Legacy)</string>	<!-- used in the Build > materials dropdown-->
 
+	<!-- Wearable Types -->
+	<string name="shape">Shape</string>
+	<string name="skin">Skin</string>
+	<string name="hair">Hair</string>
+	<string name="eyes">Eyes</string>
+	<string name="shirt">Shirt</string>
+	<string name="pants">Pants</string>
+	<string name="shoes">Shoes</string>
+	<string name="socks">Socks</string>
+	<string name="jacket">Jacket</string>
+	<string name="gloves">Gloves</string>
+	<string name="undershirt">Undershirt</string>
+	<string name="underpants">Underpants</string>
+	<string name="skirt">Skirt</string>
+	<string name="alpha">Alpha</string>
+	<string name="tattoo">Tattoo</string>
+	<string name="physics">Physics</string>
+	<string name="invalid">invalid</string>
+	<string name="none">none</string>
+
 	<!-- LSL Usage Hover Tips -->
   <string name="LSLTipSleepTime">
 Sleeps script for [SLEEP_TIME] seconds.

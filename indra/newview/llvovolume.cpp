@@ -3217,13 +3217,13 @@ F32 LLVOVolume::getStreamingCost(S32* bytes, S32* visible_bytes, F32* unscaled_v
 	}	
 }
 
-U32 LLVOVolume::getTriangleCount()
+U32 LLVOVolume::getTriangleCount(S32* vcount) const
 {
 	U32 count = 0;
 	LLVolume* volume = getVolume();
 	if (volume)
 	{
-		count = volume->getNumTriangles();
+		count = volume->getNumTriangles(vcount);
 	}
 
 	return count;
@@ -3467,7 +3467,7 @@ BOOL LLVOVolume::lineSegmentIntersect(const LLVector3& start, const LLVector3& e
 
 	if (mDrawable->isState(LLDrawable::RIGGED))
 	{
-		if (gSavedSettings.getBOOL("BuildBtnState") && getAvatar()->isSelf())
+		if (gFloaterTools->getVisible() && getAvatar()->isSelf())
 		{
 			updateRiggedVolume();
 			genBBoxes(FALSE);
@@ -3615,8 +3615,8 @@ BOOL LLVOVolume::lineSegmentIntersect(const LLVector3& start, const LLVector3& e
 
 bool LLVOVolume::treatAsRigged()
 {
-	return gSavedSettings.getBOOL("BuildBtnState") &&
-		   isAttachment() && getAvatar() && getAvatar()->isSelf() &&
+	return gFloaterTools->getVisible() && isAttachment() &&
+		   getAvatar() && getAvatar()->isSelf() &&
 		   mDrawable.notNull() && mDrawable->isState(LLDrawable::RIGGED);
 }
 

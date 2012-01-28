@@ -37,7 +37,7 @@
 #include "lldictionary.h"
 #include "llinventory.h"
 #include "llui.h"
-#include "llwearable.h"
+#include "llwearabletype.h"
 
 struct IconEntry : public LLDictionaryEntry
 {
@@ -187,28 +187,6 @@ const std::string& LLInventoryIcon::getIconName(EIconName idx)
 
 LLInventoryIcon::EIconName LLInventoryIcon::assignWearableIcon(U32 misc_flag)
 {
-	const EWearableType wearable_type = (EWearableType)(LLInventoryItem::II_FLAGS_WEARABLES_MASK & misc_flag);
-	EIconName res;
-	// *TODO: change to use LLWearableType::getIconName() once it is implemented.
-	switch (wearable_type)
-	{
-		case WT_SHAPE:		res = ICONNAME_BODYPART_SHAPE;		break;
-		case WT_SKIN:		res = ICONNAME_BODYPART_SKIN;		break;
-		case WT_HAIR:		res = ICONNAME_BODYPART_HAIR;		break;
-		case WT_EYES:		res = ICONNAME_BODYPART_EYES;		break;
-		case WT_SHIRT:		res = ICONNAME_CLOTHING_SHIRT;		break;
-		case WT_PANTS:		res = ICONNAME_CLOTHING_PANTS;		break;
-		case WT_SHOES:		res = ICONNAME_CLOTHING_SHOES;		break;
-		case WT_SOCKS:		res = ICONNAME_CLOTHING_SOCKS;		break;
-		case WT_JACKET:		res = ICONNAME_CLOTHING_JACKET;		break;
-		case WT_GLOVES:		res = ICONNAME_CLOTHING_GLOVES;		break;
-		case WT_UNDERSHIRT:	res = ICONNAME_CLOTHING_UNDERSHIRT;	break;
-		case WT_UNDERPANTS:	res = ICONNAME_CLOTHING_UNDERPANTS;	break;
-		case WT_SKIRT:		res = ICONNAME_CLOTHING_SKIRT;		break;
-		case WT_ALPHA:		res = ICONNAME_CLOTHING_ALPHA;		break;
-		case WT_TATTOO:		res = ICONNAME_CLOTHING_TATTOO;		break;
-		case WT_PHYSICS:	res = ICONNAME_CLOTHING_PHYSICS;	break;
-		default:			res = ICONNAME_NONE;				break;
-	}
-	return res;
+	const LLWearableType::EType wearable_type = LLWearableType::EType(LLInventoryItem::II_FLAGS_WEARABLES_MASK & misc_flag);
+	return LLWearableType::getIconName(wearable_type);
 }
