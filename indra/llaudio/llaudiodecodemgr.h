@@ -39,6 +39,7 @@
 
 #include "llassettype.h"
 #include "llframetimer.h"
+#include <iterator> 
 
 class LLVFS;
 class LLVorbisDecodeState;

@@ -279,13 +279,13 @@ class WindowsManifest(ViewerManifest):
                 # These need to be installed as a SxS assembly, currently a 'private' assembly.
                 # See http://msdn.microsoft.com/en-us/library/ms235291(VS.80).aspx
                 if self.args['configuration'].lower() == 'debug':
-                    self.path("msvcr80d.dll")
-                    self.path("msvcp80d.dll")
-                    self.path("Microsoft.VC80.DebugCRT.manifest")
+                    self.path("msvcr100d.dll")
+                    self.path("msvcp100d.dll")
+                    self.path("Microsoft.VC100.DebugCRT.manifest")
                 else:
-                    self.path("msvcr80.dll")
-                    self.path("msvcp80.dll")
-                    self.path("Microsoft.VC80.CRT.manifest")
+                    self.path("msvcr100.dll")
+                    self.path("msvcp100.dll")
+                    self.path("Microsoft.VC100.CRT.manifest")
             except RuntimeError:
                 print "WARNING: not copying VC runtimes to staging area, this will fail if you make an installer from this staging"
 
