@@ -207,9 +207,9 @@
           <key>windows</key>
           <map>
             <key>md5sum</key>
-						<string>b017cc5f759eaeb862a8b94d43a39c04</string>
+						<string>33b4901c518e05d705262dd2a5287a2d</string>
 						<key>url</key>
-						<uri>http://downloads.phoenixviewer.com/lggemwingrowllibraries.tar.bz2</uri>
+						<uri>http://dl.dropbox.com/u/43361170/wingrowllibraries.tar.bz2</uri>
           </map>
           <key>linux</key>
           <map>
@@ -1083,9 +1083,9 @@
           <key>windows</key>
           <map>
             <key>md5sum</key>
-            <string>f44ec9cfe84b7482dcf6b053891bff31</string>
+            <string>7c26a71fc635f00759dec0a7bad054b6</string>
             <key>url</key>
-            <uri>file:///C:/Users/Bill/lindenhg/3p/3p-hacd-wip/3p_hacd-0.177-windows-20120208.tar.bz2</uri>
+            <uri>http://dl.dropbox.com/u/43361170/hacd_win32_20111019.tar.bz2</uri>
           </map>
           <key>darwin</key>
           <map>
