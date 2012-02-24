@@ -1471,62 +1471,15 @@ void LLPanelAvatar::setAvatar(LLViewerObject *avatarp)
 }
 */
 
-class JCProfileCallback : public JCBridgeCallback
-{
-public:
-	JCProfileCallback(LLUUID avvie)
-	{
-		avatar = avvie;
-	}
-
-	void fire(LLSD data)
-	{
-		//printchat("lol, \n"+std::string(LLSD::dumpXML(data)));
-		//LLPanelAvatar
-		for (std::list<LLPanelAvatar*>::iterator iter = LLPanelAvatar::sAllPanels.begin(); iter != LLPanelAvatar::sAllPanels.end(); ++iter)
-		{
-			LLPanelAvatar* panelp = *iter;
-			if (panelp->mAvatarID == avatar)
-			{
-				BOOL status = atoi(data[0].asString().c_str());
-
-				panelp->childSetVisible("online_yes", TRUE);
-				if(status)
-				{
-					panelp->childSetColor("online_yes",LLColor4::green);
-					panelp->childSetValue("online_yes","Currently Online");
-				}else
-				{
-					panelp->childSetColor("online_yes",LLColor4::red);
-					panelp->childSetValue("online_yes","Currently Offline");
-				}
-			}
-		}
-		//printchat("lol, \n"+std::string(LLSD::dumpXML(data)));
-	}
-
-private:
-	LLUUID avatar;
-};
-
-
 void LLPanelAvatar::setOnlineStatus(EOnlineStatus online_status)
 {
 	// Online status NO could be because they are hidden
-	// If they are a friend, we may know the truth!
-		// Online status NO could be because they are hidden
 	// If they are a friend, we may know the truth!
 	if (ONLINE_STATUS_YES != online_status)
 	{
 		if(mIsFriend && LLAvatarTracker::instance().isBuddyOnline(mAvatarID) )
 		{
 			online_status = ONLINE_STATUS_YES;
-		}else
-		{
-			mPanelSecondLife->childSetVisible("online_yes", FALSE);
-
-			if(gSavedSettings.getBOOL("PhoenixUseBridgeOnline"))
-				JCLSLBridge::instance().bridgetolsl("online_status|"+mAvatarID.asString(), new JCProfileCallback(mAvatarID));
 		}
 	}
 	if(online_status == ONLINE_STATUS_YES)
@@ -1534,6 +1487,12 @@ void LLPanelAvatar::setOnlineStatus(EOnlineStatus online_status)
 		mPanelSecondLife->childSetVisible("online_yes", TRUE);
 		mPanelSecondLife->childSetColor("online_yes",LLColor4::green);
 		mPanelSecondLife->childSetValue("online_yes","Currently Online");
+	}
+	else
+	{
+		mPanelSecondLife->childSetVisible("online_yes", TRUE);
+		mPanelSecondLife->childSetColor("online_yes",LLColor4::red);
+		mPanelSecondLife->childSetValue("online_yes","Currently Offline");
 	}
 
 	// Since setOnlineStatus gets called after setAvatarID
