@@ -278,7 +278,6 @@ private:
 
 class LLPanelAvatar : public LLPanel
 {
-	friend class JCProfileCallback;
 public:
 	LLPanelAvatar(const std::string& name, const LLRect &rect, BOOL allow_edit);
 	/*virtual*/ ~LLPanelAvatar();

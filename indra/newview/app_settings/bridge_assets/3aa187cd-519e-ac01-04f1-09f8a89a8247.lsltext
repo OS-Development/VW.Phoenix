@@ -109,19 +109,10 @@ receive(string data)
 	// The second token is the command itself.
 	string cmd = llList2String(instruction,1);
 
-	// This checks the online status of an avatar. We request the status
-	//  here; the result is returned to the viewer in the dataserver event
-	//  handler.
-	if (cmd == "online_status")
-	{
-		onlinereqs += [id, llRequestAgentData((key)llList2String(instruction,2), DATA_ONLINE)];
-		debug("receive: Processing online request");
-	}// End If
-
 	// This retrieves the position of requested object(s) or avatar(s).
 	//  The command can request more than one position by simply listing
 	//  them, and we will return them in the same order.
-	else if (cmd == "pos")
+	if (cmd == "pos")
 	{
 		// Build the reply, starting with the requested UUID.
 		list positions = [id];
@@ -278,23 +269,6 @@ default
 			llTakeControls(1024,TRUE,TRUE);
 		}
 	} //End run time permissions
-
-	// This event fires when the dataserver returns requested information.
-	//  For this script, the only information requested is online status
-	//  for avatars.
-	dataserver(key id, string data)
-	{
-		// Are we checking status for the avatar we just got?
-		integer i = llListFindList(onlinereqs,[id]);
-		if(i != -1)
-		{
-			// If so, tell the viewer the status.
-			debug("dataserver: Returning online status");
-			send((string)llList2Integer(onlinereqs,i-1)+"|"+data);
-			// Remove the avatar we just reported from the list.
-			onlinereqs = llDeleteSubList(onlinereqs,i-1,i);
-		}// End If
-	} //End dataserver
 
 	// This event fires when the timer has expired. For this script, that
 	//  happens during a teleport within the sim when the preference
