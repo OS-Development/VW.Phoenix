@@ -179,8 +179,7 @@ void LLAvatarListEntry::setPosition(LLVector3d position, bool this_sim, bool dra
 	}
 
 	//lgg if we already got a Z value from the bridge, dont over write it here
-	//KC - if CoarseLocationUpdate z of  1020 is the new 0
-	if ((position.mdV[VZ] == 0.0) || (position.mdV[VZ] >= 1020))
+	if(position.mdV[VZ] == 0.0)
 	{
 		mPosition.mdV[VX] = position.mdV[VX];
 		mPosition.mdV[VY] = position.mdV[VY];
@@ -1390,8 +1389,7 @@ void LLFloaterAvatarList::refreshAvatarList()
 		
 		LLVector3d delta = position - mypos;
 		distance = (F32)delta.magVec();
-		//KC - if CoarseLocationUpdate z of  1020 is the new 0
-		if ((position.mdV[VZ] == 0.0) || (position.mdV[VZ] >= 1020))
+		if(position.mdV[VZ] == 0.0)
 		{
 			flagForFedUpDistance = true;
 			distance = 9000;
