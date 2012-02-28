@@ -80,7 +80,7 @@ if (WINDOWS)
       /arch:SSE2
       )
      
-  if(MSVC80 OR MSVC90)
+  if(MSVC80 OR MSVC90 OR MSVC10)
     set(CMAKE_CXX_FLAGS_RELEASE
       "${CMAKE_CXX_FLAGS_RELEASE} -D_SECURE_STL=0 -D_HAS_ITERATOR_DEBUGGING=0"
       CACHE STRING "C++ compiler release options" FORCE)
@@ -88,7 +88,7 @@ if (WINDOWS)
     add_definitions(
       /Zc:wchar_t-
       )
-  endif (MSVC80 OR MSVC90)
+  endif (MSVC80 OR MSVC90 OR MSVC10)
   
   # Are we using the crummy Visual Studio KDU build workaround?
   if (NOT VS_DISABLE_FATAL_WARNINGS)
@@ -107,7 +107,16 @@ if (WINDOWS)
     elseif (MSVC90)
 	    set(MSVC_DIR 9.0)
 	    set(MSVC_SUFFIX 90)
+    elseif (MSVC10)
+	    set(MSVC_DIR 10.0)
+	    set(MSVC_SUFFIX 100)
     endif (MSVC71)
+
+if (MSVC10)
+    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /MANIFEST:NO")
+    SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /MANIFEST:NO")
+    SET(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /MANIFEST:NO")
+  endif(MSVC10)
     
 endif (WINDOWS)
 

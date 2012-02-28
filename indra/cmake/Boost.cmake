@@ -11,7 +11,7 @@ else (STANDALONE)
   set(Boost_INCLUDE_DIRS ${LIBS_PREBUILT_DIR}/include)
 
   if (WINDOWS)
-    set(BOOST_VERSION 1_43)
+    set(BOOST_VERSION 1_45)
     if (MSVC80)
       set(Boost_PROGRAM_OPTIONS_LIBRARY 
           optimized libboost_program_options-vc80-mt-${BOOST_VERSION}
@@ -25,13 +25,7 @@ else (STANDALONE)
       set(Boost_WAVE_LIBRARY 
           optimized libboost_wave-vc80-mt-${BOOST_VERSION}
           debug libboost_wave-vc80-mt-gd-${BOOST_VERSION})
-      set(Boost_SYSTEM_LIBRARY 
-          optimized libboost_system-vc80-mt-${BOOST_VERSION}
-          debug libboost_system-vc80-mt-gd-${BOOST_VERSION})
-      set(Boost_FILESYSTEM_LIBRARY 
-          optimized libboost_filesystem-vc80-mt-${BOOST_VERSION}
-          debug libboost_filesystem-vc80-mt-gd-${BOOST_VERSION})
-	  else (MSVC90)
+    elseif (MSVC90)
       set(Boost_PROGRAM_OPTIONS_LIBRARY 
           optimized libboost_program_options-vc90-mt-${BOOST_VERSION}
           debug libboost_program_options-vc90-mt-gd-${BOOST_VERSION})
@@ -44,18 +38,25 @@ else (STANDALONE)
       set(Boost_WAVE_LIBRARY 
           optimized libboost_wave-vc90-mt-${BOOST_VERSION}
           debug libboost_wave-vc90-mt-gd-${BOOST_VERSION})
-      set(Boost_SYSTEM_LIBRARY 
-          optimized libboost_system-vc90-mt-${BOOST_VERSION}
-          debug libboost_system-vc90-mt-gd-${BOOST_VERSION})
-      set(Boost_FILESYSTEM_LIBRARY 
-          optimized libboost_filesystem-vc90-mt-${BOOST_VERSION}
-          debug libboost_filesystem-vc90-mt-gd-${BOOST_VERSION})
+    elseif (MSVC10)
+      set(Boost_PROGRAM_OPTIONS_LIBRARY 
+          optimized libboost_program_options-vc100-mt-${BOOST_VERSION}
+          debug libboost_program_options-vc100-mt-gd-${BOOST_VERSION})
+      set(Boost_REGEX_LIBRARY
+          optimized libboost_regex-vc100-mt-${BOOST_VERSION}
+          debug libboost_regex-vc100-mt-gd-${BOOST_VERSION})
+      set(Boost_SIGNALS_LIBRARY 
+          optimized libboost_signals-vc100-mt-${BOOST_VERSION}
+          debug libboost_signals-vc100-mt-gd-${BOOST_VERSION})
+      set(Boost_WAVE_LIBRARY 
+          optimized libboost_wave-vc100-mt-${BOOST_VERSION}
+          debug libboost_wave-vc100-mt-gd-${BOOST_VERSION})
     endif (MSVC80)
   elseif (LINUX)
   	set(Boost_PROGRAM_OPTIONS_LIBRARY boost_program_options-mt)  	
   	set(Boost_REGEX_LIBRARY boost_regex-mt)
   	set(Boost_PYTHON_LIBRARY boost_python-mt)
-#  	set(Boost_SIGNALS_LIBRARY boost_signals-mt)
+  	set(Boost_SIGNALS_LIBRARY boost_signals-mt)
   	set(Boost_WAVE_LIBRARY boost_wave-mt)
   	set(Boost_SYSTEM_LIBRARY boost_system-mt)
   	set(Boost_FILESYSTEM_LIBRARY boost_filesystem-mt)
@@ -66,7 +67,7 @@ else (STANDALONE)
   	set(Boost_PROGRAM_OPTIONS_LIBRARY boost_program_options)  	
   	set(Boost_REGEX_LIBRARY boost_regex)
   	set(Boost_PYTHON_LIBRARY boost_python)
-#  	set(Boost_SIGNALS_LIBRARY boost_signals)
+  	set(Boost_SIGNALS_LIBRARY boost_signals)
   	set(Boost_WAVE_LIBRARY boost_wave)
   	set(Boost_SYSTEM_LIBRARY boost_system)
   	set(Boost_FILESYSTEM_LIBRARY boost_filesystem)
