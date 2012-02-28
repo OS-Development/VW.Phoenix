@@ -123,7 +123,7 @@ struct RlvCommandOptionGeneric : public RlvCommandOption
 	bool isSharedFolder() const			{ return (!isEmpty()) && (typeid(LLViewerInventoryCategory*) == m_varOption.type()); }
 	bool isString() const				{ return (!isEmpty()) && (typeid(std::string) == m_varOption.type()); }
 	bool isUUID() const					{ return (!isEmpty()) && (typeid(LLUUID) == m_varOption.type()); }
-	bool isWearableType() const			{ return (!isEmpty()) && (typeid(EWearableType) == m_varOption.type()); }
+	bool isWearableType() const			{ return (!isEmpty()) && (typeid(LLWearableType::EType) == m_varOption.type()); }
 
 	LLViewerJointAttachment*   getAttachmentPoint() const
 		{ return (isAttachmentPoint()) ? boost::get<LLViewerJointAttachment*>(m_varOption) : NULL; }
@@ -135,12 +135,12 @@ struct RlvCommandOptionGeneric : public RlvCommandOption
 		{ return (isString()) ? boost::get<std::string>(m_varOption) : LLStringUtil::null; }
 	const LLUUID&              getUUID() const
 		{ return (isUUID()) ? boost::get<LLUUID>(m_varOption) : LLUUID::null; }
-	EWearableType              getWearableType() const
-		{ return (isWearableType()) ? boost::get<EWearableType>(m_varOption) : WT_INVALID; }
+	LLWearableType::EType      getWearableType() const
+	{ return (isWearableType()) ? boost::get<LLWearableType::EType>(m_varOption) : LLWearableType::WT_INVALID; }
 
 protected:
 	bool m_fEmpty;
-	boost::variant<LLViewerJointAttachment*, ERlvAttachGroupType, LLViewerInventoryCategory*, std::string, LLUUID, EWearableType> m_varOption;
+	boost::variant<LLViewerJointAttachment*, ERlvAttachGroupType, LLViewerInventoryCategory*, std::string, LLUUID, LLWearableType::EType> m_varOption;
 };
 
 struct RlvCommandOptionGetPath : public RlvCommandOption
@@ -151,7 +151,7 @@ struct RlvCommandOptionGetPath : public RlvCommandOption
 	const uuid_vec_t& getItemIDs() const { return m_idItems; }
 
 	static bool getItemIDs(const LLViewerJointAttachment* pAttachPt, uuid_vec_t& idItems, bool fClear = true);
-	static bool getItemIDs(EWearableType wtType, uuid_vec_t& idItems, bool fClear = true);
+	static bool getItemIDs(LLWearableType::EType wtType, uuid_vec_t& idItems, bool fClear = true);
 
 protected:
 	uuid_vec_t m_idItems;
@@ -244,9 +244,9 @@ public:
 
 	// Wearables
 	static bool isForceRemovable(const LLWearable* pWearable, bool fCheckComposite = true, const LLUUID& idExcept = LLUUID::null);
-	static bool isForceRemovable(EWearableType wtType, bool fCheckComposite = true, const LLUUID& idExcept = LLUUID::null);
+	static bool isForceRemovable(LLWearableType::EType wtType, bool fCheckComposite = true, const LLUUID& idExcept = LLUUID::null);
 	void forceRemove(const LLWearable* pWearable);
-	void forceRemove(EWearableType wtType);
+	void forceRemove(LLWearableType::EType wtType);
 
 public:
 	void done();
@@ -289,8 +289,8 @@ protected:
 	}
 
 protected:
-	typedef std::pair<EWearableType, LLInventoryModel::item_array_t> addwearable_pair_t;
-	typedef std::map<EWearableType, LLInventoryModel::item_array_t> addwearables_map_t;
+	typedef std::pair<LLWearableType::EType, LLInventoryModel::item_array_t> addwearable_pair_t;
+	typedef std::map<LLWearableType::EType, LLInventoryModel::item_array_t> addwearables_map_t;
 	addwearables_map_t               m_addWearables;
 	typedef std::pair<S32, LLInventoryModel::item_array_t> addattachment_pair_t;
 	typedef std::map<S32, LLInventoryModel::item_array_t> addattachments_map_t;

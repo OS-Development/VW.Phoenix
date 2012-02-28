@@ -50,6 +50,7 @@
 #include "llviewerstats.h"
 #include "llviewerwindow.h"
 #include "llvoavatar.h"
+#include "llwearable.h"
 #include "llxmltree.h"
 #include "pipeline.h"
 #include "v4coloru.h"
@@ -69,17 +70,17 @@ S32 LLTexLayerSetBuffer::sGLByteCount = 0;
 LLBakedUploadData::LLBakedUploadData(LLVOAvatar* avatar,
 									 LLTexLayerSet* layerset, 
 									 LLTexLayerSetBuffer* layerset_buffer, 
-									 const LLUUID & id) : 
-	mAvatar(avatar),
+									 const LLUUID & id)
+:	mAvatar(avatar),
 	mTexLayerSet(layerset),
 	mLayerSetBuffer(layerset_buffer),
 	mID(id)
 { 
 	mStartTime = LLFrameTimer::getTotalTime();		// Record starting time
-	for( S32 i = 0; i < WT_COUNT; i++ )
+	for(S32 i = 0; i < LLWearableType::WT_COUNT; i++)
 	{
-		LLWearable* wearable = gAgent.getWearable( (EWearableType)i);
-		if( wearable )
+		LLWearable* wearable = gAgent.getWearable((LLWearableType::EType)i);
+		if(wearable)
 		{
 			mWearableAssets[i] = wearable->getID();
 		}
@@ -196,7 +197,7 @@ BOOL LLTexLayerSetBuffer::needsRender()
 	BOOL needs_update = (mNeedsUpdate || upload_now) && !avatar->mAppearanceAnimating;
 	if (needs_update)
 	{
-		BOOL invalid_skirt = avatar->getBakedTE(mTexLayerSet) == TEX_SKIRT_BAKED && !avatar->isWearingWearableType(WT_SKIRT);
+		BOOL invalid_skirt = avatar->getBakedTE(mTexLayerSet) == TEX_SKIRT_BAKED && !avatar->isWearingWearableType(LLWearableType::WT_SKIRT);
 		if (invalid_skirt)
 		{
 			// we were trying to create a skirt texture
@@ -2008,8 +2009,8 @@ BOOL LLTexLayerParamAlpha::getSkip()
 		}
 	}
 
-	EWearableType type = (EWearableType)getWearableType();
-	if( (type != WT_INVALID) && !avatar->isWearingWearableType( type ) )
+	LLWearableType::EType type = (LLWearableType::EType)getWearableType();
+	if((type != LLWearableType::WT_INVALID) && !avatar->isWearingWearableType(type))
 	{
 		return TRUE;
 	}

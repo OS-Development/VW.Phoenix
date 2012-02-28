@@ -46,6 +46,7 @@
 #include "llmeshrepository.h"
 #include "llsky.h"
 #include "llviewercamera.h"
+#include "llviewercontrol.h"
 #include "llviewerregion.h"
 #include "noise.h"
 #include "pipeline.h"
@@ -1271,7 +1272,9 @@ void LLDrawPoolAvatar::renderAvatars(LLVOAvatar* single_avatar, S32 pass)
 	}
 }
 
-void LLDrawPoolAvatar::updateRiggedFaceVertexBuffer(LLVOAvatar* avatar, LLFace* face, const LLMeshSkinInfo* skin, LLVolume* volume, const LLVolumeFace& vol_face)
+void LLDrawPoolAvatar::updateRiggedFaceVertexBuffer(LLVOAvatar* avatar, LLFace* face, 
+													const LLMeshSkinInfo* skin, LLVolume* volume, 
+													const LLVolumeFace& vol_face, LLVOVolume* vobj)
 {
 	LLVector4a* weight = vol_face.mWeights;
 	if (!weight)
@@ -1323,10 +1326,21 @@ void LLDrawPoolAvatar::updateRiggedFaceVertexBuffer(LLVOAvatar* avatar, LLFace* 
 						m.m[4], m.m[5], m.m[6],
 						m.m[8], m.m[9], m.m[10] };
 
-		LLMatrix3 mat_normal(mat3);				
+		LLMatrix3 mat_normal(mat3);
 
-		face->getGeometryVolume(*volume, face->getTEOffset(), mat_vert,
-								mat_normal, offset, true);
+		static LLCachedControl<bool> mesh_enable_deformer(gSavedSettings, "MeshEnableDeformer");
+		if (mesh_enable_deformer)
+		{
+			LLDeformedVolume* deformed_volume = vobj->getDeformedVolume();
+			deformed_volume->deform(volume, avatar, skin, face->getTEOffset());
+			face->getGeometryVolume(*deformed_volume, face->getTEOffset(), mat_vert,
+									mat_normal, offset, true);
+		}
+		else
+		{
+			face->getGeometryVolume(*volume, face->getTEOffset(), mat_vert,
+ 									mat_normal, offset, true);
+		}
 	}
 
 	if (sShaderLevel <= 0 && face->mLastSkinTime < avatar->getLastSkinTime())
@@ -1463,7 +1477,7 @@ void LLDrawPoolAvatar::renderRigged(LLVOAvatar* avatar, U32 type, bool glow)
 		stop_glerror();
 
 		const LLVolumeFace& vol_face = volume->getVolumeFace(te);
-		updateRiggedFaceVertexBuffer(avatar, face, skin, volume, vol_face);
+		updateRiggedFaceVertexBuffer(avatar, face, skin, volume, vol_face, vobj);
 
 		stop_glerror();
 

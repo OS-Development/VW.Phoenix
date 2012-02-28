@@ -48,6 +48,7 @@
 #include "llviewerobject.h"
 #include "llvoavatar.h"
 #include "llinventorymodel.h"
+#include "llinventorymodelbackgroundfetch.h"
 #include "lltooldraganddrop.h"
 #include "llmd5.h"
 #include "llstartup.h"
@@ -365,7 +366,7 @@ LLUUID JCLSLBridge::findCategoryByNameOrCreate(std::string name)
 	phoenix_category = gInventory.findCategoryByName(phoenix_category_name);
 	if(phoenix_category.isNull())
 	{
-		phoenix_category = gInventory.createNewCategory(gAgent.getInventoryRootID(), LLFolderType::FT_NONE, phoenix_category_name);
+		phoenix_category = gInventory.createNewCategory(gInventory.getRootFolderID(), LLFolderType::FT_NONE, phoenix_category_name);
 	}
 	return phoenix_category;
 }
@@ -382,7 +383,7 @@ const LLUUID& JCLSLBridge::findInventoryByName(const std::string& object_name, s
 		category = findCategoryByNameOrCreate(catname);
 	}else
 	{
-		category = gAgent.getInventoryRootID();
+		category = gInventory.getRootFolderID();
 	}
 
 	gInventory.collectDescendentsIf(category,cats,items,FALSE,objectnamematches);
@@ -658,7 +659,7 @@ void bridge_trash_check()
 		LLViewerInventoryCategory::cat_array_t cats;
 		LLViewerInventoryItem::item_array_t items;
 
-		gInventory.collectDescendentsIf(gAgent.getInventoryRootID(),cats,items,FALSE,prefixmatcher);
+		gInventory.collectDescendentsIf(gInventory.getRootFolderID(),cats,items,FALSE,prefixmatcher);
 
 		LLViewerInventoryItem::item_array_t delete_queue;
 
@@ -704,7 +705,7 @@ BOOL JCLSLBridge::tick()
 		}
 		
 		static BOOL first_full_load = TRUE;
-		if (first_full_load && gInventory.isEverythingFetched()) // when the inv is done fetching, check for old bridges
+		if (first_full_load && LLInventoryModelBackgroundFetch::instance().isEverythingFetched()) // when the inv is done fetching, check for old bridges
 		{
 			//cmdline_printchat("--first full inv load");
 			first_full_load = FALSE;

@@ -306,6 +306,7 @@ set(viewer_SOURCE_FILES
     llinventoryclipboard.cpp
     llinventoryicon.cpp
     llinventorymodel.cpp
+    llinventorymodelbackgroundfetch.cpp
     llinventoryview.cpp
     lljoystickbutton.cpp
     lllandmarklist.cpp
@@ -330,7 +331,6 @@ set(viewer_SOURCE_FILES
     llnetmap.cpp
     llnotify.cpp
     lloverlaybar.cpp
-    llpanelaudioprefs.cpp
     llpanelaudiovolume.cpp
     llpanelavatar.cpp
     llpanelclassified.cpp
@@ -364,7 +364,6 @@ set(viewer_SOURCE_FILES
     llpanellandobjects.cpp
     llpanellandoptions.cpp
     llpanellogin.cpp
-    llpanelmorph.cpp
     llpanelmediahud.cpp
     llpanelmsgs.cpp
     llpanelnetwork.cpp
@@ -384,6 +383,7 @@ set(viewer_SOURCE_FILES
     llpolymorph.cpp
     llprefschat.cpp
     llprefsim.cpp
+    llprefsmedia.cpp
     llprefsvoice.cpp
     llpreviewanim.cpp
     llpreview.cpp
@@ -521,6 +521,7 @@ set(viewer_SOURCE_FILES
     llwaterparamset.cpp
     llwearable.cpp
     llwearablelist.cpp
+    llwearabletype.cpp
     llweb.cpp
     llmediactrl.cpp
     llwind.cpp
@@ -784,6 +785,7 @@ set(viewer_HEADER_FILES
     llinventoryclipboard.h
     llinventoryicon.h
     llinventorymodel.h
+    llinventorymodelbackgroundfetch.h
     llinventoryview.h
     lljoystickbutton.h
     lllandmarklist.h
@@ -809,7 +811,6 @@ set(viewer_HEADER_FILES
     llnetmap.h
     llnotify.h
     lloverlaybar.h
-    llpanelaudioprefs.h
     llpanelaudiovolume.h
     llpanelavatar.h
     llpanelclassified.h
@@ -844,7 +845,6 @@ set(viewer_HEADER_FILES
     llpanellandoptions.h
     llpanelLCD.h
     llpanellogin.h
-    llpanelmorph.h
     llpanelmediahud.h
     llpanelmsgs.h
     llpanelnetwork.h
@@ -864,6 +864,7 @@ set(viewer_HEADER_FILES
     llpolymorph.h
     llprefschat.h
     llprefsim.h
+    llprefsmedia.h
     llprefsvoice.h
     llpreview.h
     llpreviewanim.h
@@ -1007,6 +1008,7 @@ set(viewer_HEADER_FILES
     llwaterparamset.h
     llwearable.h
     llwearablelist.h
+    llwearabletype.h
     llweb.h
     llmediactrl.h
     llwind.h

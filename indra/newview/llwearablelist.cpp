@@ -42,6 +42,7 @@
 #include "llviewerinventory.h"
 #include "llviewerstats.h"
 #include "llvoavatar.h"
+#include "llwearabletype.h"
 
 // Globals
 LLWearableList gWearableList; // Globally constructed; be careful that there's no dependency with gAgent.
@@ -125,7 +126,7 @@ void LLWearableList::processGetAssetReply( const char* filename, const LLAssetID
 			bool res = wearable->importFile( fp );
 			if (!res)
 			{
-				if (wearable->getType() == WT_COUNT)
+				if (wearable->getType() == LLWearableType::WT_COUNT)
 				{
 					isNewWearable = TRUE;
 				}
@@ -214,28 +215,10 @@ void LLWearableList::processGetAssetReply( const char* filename, const LLAssetID
 }
 
 
-// Creates a new wearable just like the old_wearable but with data copied over from item
-LLWearable* LLWearableList::createWearableMatchedToInventoryItem( LLWearable* old_wearable, LLViewerInventoryItem* item )
+LLWearable* LLWearableList::createCopyFromAvatar(LLWearable* old_wearable,
+												 const std::string& new_name)
 {
-	lldebugs << "LLWearableList::createWearableMatchedToInventoryItem()" << llendl;
-
-	LLWearable* wearable = generateNewWearable();
-	wearable->copyDataFrom( old_wearable );
-
-	wearable->setName( item->getName() );
-	wearable->setDescription( item->getDescription() );
-	wearable->setPermissions( item->getPermissions() );
-	wearable->setSaleInfo( item->getSaleInfo() );
-
-	// Send to the dataserver
-	wearable->saveNewAsset();
-
-	return wearable;
-}
-
-LLWearable* LLWearableList::createCopyFromAvatar( LLWearable* old_wearable, const std::string& new_name )
-{
-	lldebugs << "LLWearableList::createCopyFromAvatar()" << llendl;
+	LL_DEBUGS("Wearables") << "LLWearableList::createCopyFromAvatar()" << LL_ENDL;
 	
 	LLWearable* wearable = generateNewWearable();
 	wearable->copyDataFrom( old_wearable );
@@ -255,7 +238,7 @@ LLWearable* LLWearableList::createCopyFromAvatar( LLWearable* old_wearable, cons
 
 LLWearable* LLWearableList::createCopy( LLWearable* old_wearable )
 {
-	lldebugs << "LLWearableList::createCopy()" << llendl;
+	LL_DEBUGS("Wearables") << "LLWearableList::createCopy()" << LL_ENDL;
 
 	LLWearable *wearable = generateNewWearable();
 	wearable->copyDataFrom(old_wearable);
@@ -271,9 +254,9 @@ LLWearable* LLWearableList::createCopy( LLWearable* old_wearable )
 	return wearable;
 }
 
-LLWearable* LLWearableList::createNewWearable( EWearableType type )
+LLWearable* LLWearableList::createNewWearable(LLWearableType::EType type)
 {
-	lldebugs << "LLWearableList::createNewWearable()" << llendl;
+	LL_DEBUGS("Wearables") << "LLWearableList::createNewWearable()" << LL_ENDL;
 
 	LLWearable *wearable = generateNewWearable();
 	wearable->setType( type );

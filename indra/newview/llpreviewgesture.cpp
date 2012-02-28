@@ -63,6 +63,7 @@
 #include "llfloatergesture.h"			// for some label constants
 #include "llgesturemgr.h"
 #include "llinventorymodel.h"
+#include "llinventorymodelbackgroundfetch.h"
 #include "llviewerinventory.h"
 #include "llviewerobjectlist.h"
 #include "llviewerregion.h"
@@ -153,14 +154,14 @@ LLPreviewGesture* LLPreviewGesture::show(const std::string& title, const LLUUID&
 
 	// Start speculative download of sounds and animations
 	const LLUUID animation_folder_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_ANIMATION);
-	gInventory.startBackgroundFetch(animation_folder_id);
+	LLInventoryModelBackgroundFetch::instance().start(animation_folder_id);
 
 	const LLUUID sound_folder_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_SOUND);
-	gInventory.startBackgroundFetch(sound_folder_id);
+	LLInventoryModelBackgroundFetch::instance().start(sound_folder_id);
 
 	// this will call refresh when we have everything.
 	LLViewerInventoryItem* item = (LLViewerInventoryItem*)self->getItem();
-	if(item && !item->isComplete())
+	if(item && !item->isFinished())
 	{
 		LLInventoryGestureAvailable* observer;
 		observer = new LLInventoryGestureAvailable();
@@ -622,7 +623,7 @@ void LLPreviewGesture::addAnimations()
 													PERM_ITEM_UNRESTRICTED,
 													gAgent.getID(),
 													gAgent.getGroupID());
-	gInventory.collectDescendentsIf(gAgent.getInventoryRootID(),
+	gInventory.collectDescendentsIf(gInventory.getRootFolderID(),
 									cats,
 									items,
 									LLInventoryModel::EXCLUDE_TRASH,
@@ -667,7 +668,7 @@ void LLPreviewGesture::addSounds()
 													PERM_ITEM_UNRESTRICTED,
 													gAgent.getID(),
 													gAgent.getGroupID());
-	gInventory.collectDescendentsIf(gAgent.getInventoryRootID(),
+	gInventory.collectDescendentsIf(gInventory.getRootFolderID(),
 									cats,
 									items,
 									LLInventoryModel::EXCLUDE_TRASH,
@@ -709,7 +710,7 @@ void LLPreviewGesture::refresh()
 {
 	// If previewing or item is incomplete, all controls are disabled
 	LLViewerInventoryItem* item = (LLViewerInventoryItem*)getItem();
-	bool is_complete = (item && item->isComplete()) ? true : false;
+	bool is_complete = (item && item->isFinished()) ? true : false;
 	if (mPreviewGesture || !is_complete)
 	{
 		

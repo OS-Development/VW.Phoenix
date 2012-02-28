@@ -180,7 +180,8 @@ U8* LLImageBase::allocateData(S32 size)
 		mData = new U8[size];
 		if (!mData)
 		{
-			llwarns << "allocate image data: " << size << llendl;
+			llwarns << "Could not allocate image data for requested size: "
+					<< size << llendl;
 			size = 0 ;
 			mWidth = mHeight = 0 ;
 			mBadBufferAllocation = true ;

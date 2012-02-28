@@ -1,6 +1,6 @@
 /** 
- * @file llpanelmorph.h
- * @brief LLPanelMorph class definition
+ * @file llprefsmedia.h
+ * @brief Media preference definitions
  *
  * $LicenseInfo:firstyear=2001&license=viewergpl$
  * 
@@ -30,37 +30,54 @@
  * $/LicenseInfo$
  */
 
-/*
-#ifndef LL_LLPANELMORPH_H
-#define LL_LLPANELMORPH_H
+#ifndef LL_LLPREFSMEDIA_H
+#define LL_LLPREFSMEDIA_H
 
-
-#include "llfloater.h"
-#include "llpolymesh.h"
-#include "llradiogroup.h"
-#include "llquantize.h"
+#include "llpanel.h"
 
 class LLSpinCtrl;
+class LLSlider;
+class LLSliderCtrl;
+class LLCheckBoxCtrl;
+class LLTextBox;
+class LLRadioGroup;
 
-class LLPanelMorph : public LLPanel
+class LLPrefsMedia : public LLPanel
 {
 public:
-	LLPanelMorph(const std::string& name, const LLRect& rect);
-	~LLPanelMorph();
-	static void				onCommitSexChange( void *data);
-	static void 			onCommitMorphChange(LLUICtrl* ctrl, void* userdata);
-	void					updateSpinners(LLPolyMesh *mesh);
-	void					createSpinners(LLPolyMesh *mesh);
+	LLPrefsMedia();
+	virtual ~LLPrefsMedia();
 	
-protected:					
-	S32						mNumParamSpinners;
-	LLRadioGroup*			mSexRadioGroup;
-	LLSpinCtrl**			mParamSpinners;
-	LLRect					mRect;
-	LLPolyMesh*				mMesh;
+	void apply() { refreshValues(); }
+	void cancel();	// Cancel the changed values.
+
+	virtual BOOL postBuild();
+
+	static void* createVolumePanel(void* data);
+	
+private:
+	void refreshValues();
+
+	F32             mPreviousVolume;
+	F32             mPreviousMusicVolume;
+	F32             mPreviousMediaVolume;
+	F32             mPreviousSFX;
+	F32             mPreviousUI;
+	F32             mPreviousEnvironment;
+	F32             mPreviousDoppler;
+	F32             mPreviousDistance;
+	F32             mPreviousRolloff;
+
+	S32             mPreviousBitrate;
+
+	F32             mPreviousMoneyThreshold;
+	F32             mPreviousHealthThreshold;
+
+	BOOL			mPreviousStreamingMusic;
+	BOOL			mPreviousStreamingVideo;
+	BOOL            mPreviousMuteAudio;
+	BOOL            mPreviousMuteWhenMinimized;
+	BOOL			mPreviousMediaFilter;
 };
 
-extern LLPanelMorph *gPanelMorph;
-
 #endif
-*/

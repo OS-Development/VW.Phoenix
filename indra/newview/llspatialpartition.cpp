@@ -34,22 +34,28 @@
 
 #include "llspatialpartition.h"
 
-#include "llviewerwindow.h"
-#include "llviewerobjectlist.h"
-#include "llvovolume.h"
+#include "llimageworker.h"
+#include "lloctree.h"
+#include "llrender.h"
 #include "llvolume.h"
 #include "llvolumeoctree.h"
-#include "llface.h"
-#include "llviewercontrol.h"
-#include "llviewerregion.h"
+
+#include "llappviewer.h"
 #include "llcamera.h"
-#include "pipeline.h"
+#include "llface.h"
+#include "llfloatertools.h"
 #include "llmeshrepository.h"
-#include "llrender.h"
-#include "lloctree.h"
 #include "llphysicsshapebuilderutil.h"
+#include "lltexturecache.h"
+#include "lltexturefetch.h"
+#include "llviewercontrol.h"
+#include "llviewerobjectlist.h"
+#include "llviewerregion.h"
+#include "llviewerwindow.h"
 #include "llvoavatar.h"
 #include "llvolumemgr.h"
+#include "llvovolume.h"
+#include "pipeline.h"
 
 const F32 SG_OCCLUSION_FUDGE = 0.25f;
 #define SG_DISCARD_TOLERANCE 0.01f
@@ -1083,6 +1089,7 @@ LLSpatialGroup::LLSpatialGroup(OctreeNode* node, LLSpatialPartition* part) :
 	for (U32 i = 0; i < LLViewerCamera::NUM_CAMERAS; i++)
 	{
 		mOcclusionQuery[i] = 0;
+		mOcclusionIssued[i] = 0;
 		mOcclusionState[i] = parent ? SG_STATE_INHERIT_MASK & parent->mOcclusionState[i] : 0;
 		mVisible[i] = 0;
 	}
@@ -1420,7 +1427,24 @@ void LLSpatialGroup::checkOcclusion()
 			GLuint available = 0;
 			if (mOcclusionQuery[LLViewerCamera::sCurCameraID])
 			{
-				glGetQueryObjectuivARB(mOcclusionQuery[LLViewerCamera::sCurCameraID], GL_QUERY_RESULT_AVAILABLE_ARB, &available);
+				glGetQueryObjectuivARB(mOcclusionQuery[LLViewerCamera::sCurCameraID],
+									   GL_QUERY_RESULT_AVAILABLE_ARB, &available);
+				if (mOcclusionIssued[LLViewerCamera::sCurCameraID] < gFrameCount)
+				{	//query was issued last frame, wait until it's available
+					S32 max_loop = 1024;
+					LLFastTimer t2(LLFastTimer::FTM_OCCLUSION_WAIT);
+					while (!available && max_loop-- > 0)
+					{
+						// Do some useful work while we wait
+						F32 max_time = llmin(gFrameIntervalSeconds * 10.f, 1.f);
+						LLAppViewer::getTextureCache()->update(max_time); // unpauses the texture cache thread
+						LLAppViewer::getImageDecodeThread()->update(max_time); // unpauses the image thread
+						LLAppViewer::getTextureFetch()->update(max_time); // unpauses the texture fetch thread
+
+						glGetQueryObjectuivARB(mOcclusionQuery[LLViewerCamera::sCurCameraID],
+											   GL_QUERY_RESULT_AVAILABLE_ARB, &available);
+					}
+				}
 			}
 			else
 			{
@@ -1516,6 +1540,10 @@ void LLSpatialGroup::doOcclusion(LLCamera* camera)
 #endif
 					{
 						LLFastTimer t2(LLFastTimer::FTM_PUSH_OCCLUSION_VERTS);
+
+						// Store which frame this query was issued on
+						mOcclusionIssued[LLViewerCamera::sCurCameraID] = gFrameCount;
+
 						glBeginQueryARB(mode, mOcclusionQuery[LLViewerCamera::sCurCameraID]);
 
 						mOcclusionVerts->setBuffer(LLVertexBuffer::MAP_VERTEX);
@@ -4113,7 +4141,27 @@ public:
 			if (vobj)
 			{
 				LLVector3 intersection;
-				if (vobj->lineSegmentIntersect(mStart, mEnd, -1, mPickTransparent, mFaceHit, &intersection, mTexCoord, mNormal, mBinormal))
+				bool skip_check = false;
+				if (vobj->isAvatar())
+				{
+					LLVOAvatar* avatar = (LLVOAvatar*) vobj;
+					if (avatar->isSelf() && gFloaterTools->getVisible())
+					{
+						LLViewerObject* hit = avatar->lineSegmentIntersectRiggedAttachments(mStart, mEnd, -1, mPickTransparent, mFaceHit, &intersection, mTexCoord, mNormal, mBinormal);
+						if (hit)
+						{
+							mEnd = intersection;
+							if (mIntersection)
+							{
+								*mIntersection = intersection;
+							}
+							mHit = hit->mDrawable;
+							skip_check = true;
+						}
+					}
+				}
+				if (!skip_check &&
+					vobj->lineSegmentIntersect(mStart, mEnd, -1, mPickTransparent, mFaceHit, &intersection, mTexCoord, mNormal, mBinormal))
 				{
 					mEnd = intersection;  // shorten ray so we only find CLOSER hits
 					if (mIntersection)

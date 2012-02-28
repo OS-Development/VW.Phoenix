@@ -305,13 +305,13 @@ extern LLPumpIO* gServicePump;
 // currently in daylight savings time?
 extern BOOL gPacificDaylightTime;
 
-extern U64      gFrameTime;					// The timestamp of the most-recently-processed frame
-extern F32		gFrameTimeSeconds;			// Loses msec precision after ~4.5 hours...
-extern F32		gFrameIntervalSeconds;		// Elapsed time between current and previous gFrameTimeSeconds
-extern F32		gFPSClamped;				// Frames per second, smoothed, weighted toward last frame
-extern F32		gFrameDTClamped;
-extern U64		gStartTime;
-extern U32 		gFrameStalls;
+extern U64 gFrameTime;                 // The timestamp of the most-recently-processed frame
+extern F32 gFrameTimeSeconds;          // Loses msec precision after ~4.5 hours...
+extern F32 gFrameIntervalSeconds;      // Elapsed time between current and previous gFrameTimeSeconds
+extern F32 gFPSClamped;                // Frames per second, smoothed, weighted toward last frame
+extern F32 gFrameDTClamped;
+extern U64 gStartTime;
+extern U32 gFrameStalls;
 
 extern LLTimer gRenderStartTime;
 extern LLFrameTimer gForegroundTime;
@@ -322,21 +322,18 @@ extern LLTimer gLogoutTimer;
 extern F32 gSimLastTime; 
 extern F32 gSimFrames;
 
-extern LLUUID gInventoryLibraryOwner;
-extern LLUUID gInventoryLibraryRoot;
-
-extern BOOL		gDisconnected;
+extern BOOL gDisconnected;
 
 // Minimap scale in pixels per region
 
 extern LLFrameTimer	gRestoreGLTimer;
 extern BOOL			gRestoreGL;
-extern BOOL		gUseWireframe;
+extern BOOL			gUseWireframe;
 
 // VFS globals - gVFS is for general use
 // gStaticVFS is read-only and is shipped w/ the viewer
 // it has pre-cache data like the UI .TGAs
-extern LLVFS	*gStaticVFS;
+extern LLVFS* gStaticVFS;
 
 extern LLMemoryInfo gSysMemory;
 extern U64 gMemoryAllocated;

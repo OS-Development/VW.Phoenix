@@ -534,7 +534,7 @@ bool LLAudioEngine::updateBufferForData(LLAudioData *adp, const LLUUID &audio_uu
 	{
 		if (adp->hasDecodedData())
 		{
-			adp->load();
+			return adp->load();
 		}
 		else if (adp->hasLocalData())
 		{
@@ -1434,7 +1434,7 @@ void LLAudioSource::update()
 	{
 		if (getCurrentData())
 		{
-			// Hack - try and load the sound.  Will do this as a callback
+			// Hack - try and load the sound. Will do this as a callback
 			// on decode later.
 			if (getCurrentData()->load())
 			{

@@ -806,7 +806,7 @@ void RlvAttachmentLockWatchdog::onWearAttachment(const LLUUID& idItem, ERlvWearM
 RlvWearableLocks gRlvWearableLocks;
 
 // Checked: 2010-03-18 (RLVa-1.2.0c) | Added: RLVa-1.2.0a
-void RlvWearableLocks::addWearableTypeLock(EWearableType eType, const LLUUID& idRlvObj, ERlvLockMask eLock)
+void RlvWearableLocks::addWearableTypeLock(LLWearableType::EType eType, const LLUUID& idRlvObj, ERlvLockMask eLock)
 {
 /*
 	// Sanity check - make sure it's an object we know about
@@ -816,13 +816,13 @@ void RlvWearableLocks::addWearableTypeLock(EWearableType eType, const LLUUID& id
 
 	// NOTE: m_WearableTypeXXX can contain duplicate <eType, idRlvObj> pairs (ie @remoutfit:shirt=n,remoutfit=n from the same object)
 	if (eLock & RLV_LOCK_REMOVE)
-		m_WearableTypeRem.insert(std::pair<EWearableType, LLUUID>(eType, idRlvObj));
+		m_WearableTypeRem.insert(std::pair<LLWearableType::EType, LLUUID>(eType, idRlvObj));
 	if (eLock & RLV_LOCK_ADD)
-		m_WearableTypeAdd.insert(std::pair<EWearableType, LLUUID>(eType, idRlvObj));
+		m_WearableTypeAdd.insert(std::pair<LLWearableType::EType, LLUUID>(eType, idRlvObj));
 }
 
 // Checked: 2010-03-19 (RLVa-1.1.3b) | Added: RLVa-1.2.0a
-bool RlvWearableLocks::canRemove(EWearableType eType) const
+bool RlvWearableLocks::canRemove(LLWearableType::EType eType) const
 {
 	// NOTE: we return TRUE if the wearable type has at least one wearable that can be removed by the user
 	LLWearable* pWearable = gAgent.getWearable(eType);
@@ -832,7 +832,7 @@ bool RlvWearableLocks::canRemove(EWearableType eType) const
 }
 
 // Checked: 2010-03-19 (RLVa-1.1.3b) | Added: RLVa-1.2.0a
-bool RlvWearableLocks::hasLockedWearable(EWearableType eType) const
+bool RlvWearableLocks::hasLockedWearable(LLWearableType::EType eType) const
 {
 	// NOTE: we return TRUE if there is at least 1 non-removable wearable currently worn on this wearable type
 	LLWearable* pWearable = gAgent.getWearable(eType);
@@ -852,7 +852,7 @@ bool RlvWearableLocks::isLockedWearableExcept(const LLWearable* pWearable, const
 }
 
 // Checked: 2010-03-19 (RLVa-1.2.0a) | Added: RLVa-1.2.0a
-bool RlvWearableLocks::isLockedWearableTypeExcept(EWearableType eType, ERlvLockMask eLock, const LLUUID& idRlvObj) const
+bool RlvWearableLocks::isLockedWearableTypeExcept(LLWearableType::EType eType, ERlvLockMask eLock, const LLUUID& idRlvObj) const
 {
 	if (idRlvObj.isNull())
 		return isLockedWearableType(eType, eLock);
@@ -880,7 +880,7 @@ bool RlvWearableLocks::isLockedWearableTypeExcept(EWearableType eType, ERlvLockM
 }
 
 // Checked: 2010-03-18 (RLVa-1.2.0c) | Added: RLVa-1.2.0a
-void RlvWearableLocks::removeWearableTypeLock(EWearableType eType, const LLUUID& idRlvObj, ERlvLockMask eLock)
+void RlvWearableLocks::removeWearableTypeLock(LLWearableType::EType eType, const LLUUID& idRlvObj, ERlvLockMask eLock)
 {
 /*
 	// Sanity check - make sure it's an object we know about
@@ -996,7 +996,7 @@ bool RlvFolderLocks::getLockedFolders(const folderlock_source_t& lockSource, LLI
 			break;
 		case ST_ROOTFOLDER:
 			{
-				LLViewerInventoryCategory* pFolder = gInventory.getCategory(gAgent.getInventoryRootID());
+				LLViewerInventoryCategory* pFolder = gInventory.getCategory(gInventory.getRootFolderID());
 				if (pFolder)
 					lockFolders.push_back(pFolder);
 			}
@@ -1013,13 +1013,13 @@ bool RlvFolderLocks::getLockedFolders(const folderlock_source_t& lockSource, LLI
 		case ST_WEARABLETYPE:
 			{
 				RLV_ASSERT( ((ST_ATTACHMENTPOINT == lockSource.first) && (typeid(S32) == lockSource.second.type())) || 
-					        ((ST_WEARABLETYPE == lockSource.first) && (typeid(EWearableType) == lockSource.second.type())) );
+					        ((ST_WEARABLETYPE == lockSource.first) && (typeid(LLWearableType::EType) == lockSource.second.type())) );
 
 				uuid_vec_t idItems;
 				if (ST_ATTACHMENTPOINT == lockSource.first)
 					RlvCommandOptionGetPath::getItemIDs(RlvAttachPtLookup::getAttachPoint(boost::get<S32>(lockSource.second)), idItems);
 				else if (ST_WEARABLETYPE == lockSource.first)
-					RlvCommandOptionGetPath::getItemIDs(boost::get<EWearableType>(lockSource.second), idItems);
+					RlvCommandOptionGetPath::getItemIDs(boost::get<LLWearableType::EType>(lockSource.second), idItems);
 
 				LLInventoryModel::cat_array_t itemFolders;
 				if (RlvInventory::instance().getPath(idItems, itemFolders))
@@ -1105,7 +1105,7 @@ bool RlvFolderLocks::isLockedFolder(const LLUUID& idFolder, ERlvLockMask eLockTy
 		refreshLockedLookups();
 
 	// Walk up the folder tree and check if anything has 'idFolder' locked
-	std::list<LLUUID> idsRlvObjRem, idsRlvObjAdd; const LLUUID& idFolderRoot = gAgent.getInventoryRootID(); LLUUID idFolderCur = idFolder;
+	std::list<LLUUID> idsRlvObjRem, idsRlvObjAdd; const LLUUID& idFolderRoot = gInventory.getRootFolderID(); LLUUID idFolderCur = idFolder;
 	while (idFolderRoot != idFolderCur)
 	{
 		// Iterate over any folder locks for 'idFolderCur'
@@ -1167,7 +1167,7 @@ void RlvFolderLocks::refreshLockedLookups() const
 	{
 		const folderlock_descr_t* pLockDescr = *itFolderLock;
 
-		LLInventoryModel::cat_array_t lockedFolders; const LLUUID& idFolderRoot = gAgent.getInventoryRootID();
+		LLInventoryModel::cat_array_t lockedFolders; const LLUUID& idFolderRoot = gInventory.getRootFolderID();
 		if (getLockedFolders(pLockDescr->lockSource, lockedFolders))
 		{
 			for (S32 idxFolder = 0, cntFolder = lockedFolders.count(); idxFolder < cntFolder; idxFolder++)

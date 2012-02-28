@@ -1649,7 +1649,7 @@ void LLPreviewLSL::loadAsset()
 	const LLInventoryItem* item = gInventory.getItem(mItemUUID);
 	BOOL is_library = item
 		&& !gInventory.isObjectDescendentOf(mItemUUID,
-											gAgent.getInventoryRootID());
+											gInventory.getRootFolderID());
 	if(!item)
 	{
 		// do the more generic search.
@@ -2603,7 +2603,7 @@ void LLLiveLSLEditor::saveIfNeeded()
 		return;
 	}
 
-	if(mItem.isNull() || !mItem->isComplete())
+	if(mItem.isNull() || !mItem->isFinished())
 	{
 		// $NOTE: While the error message may not be exactly correct,
 		// it's pretty close.

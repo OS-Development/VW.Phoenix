@@ -306,8 +306,8 @@ public:
 	virtual BOOL isItemMovable();
 	virtual BOOL isUpToDate() const;
 
-	static void createWearable(LLFolderBridge* bridge, EWearableType type);
-	static void createWearable(LLUUID parent_folder_id, EWearableType type);
+	static void createWearable(LLFolderBridge* bridge, LLWearableType::EType type);
+	static void createWearable(LLUUID parent_folder_id, LLWearableType::EType type);
 
 	LLViewerInventoryCategory* getCategory() const;
 
@@ -617,17 +617,21 @@ public:
 	static void		onRemoveFromAvatarArrived( LLWearable* wearable, void* userdata );
 
 protected:
-	LLWearableBridge(LLInventoryPanel* inventory, const LLUUID& uuid, LLAssetType::EType asset_type, LLInventoryType::EType inv_type, EWearableType  wearable_type) :
-		LLItemBridge(inventory, uuid),
-		mAssetType( asset_type ),
+	LLWearableBridge(LLInventoryPanel* inventory,
+					 const LLUUID& uuid,
+					 LLAssetType::EType asset_type,
+					 LLInventoryType::EType inv_type,
+					 LLWearableType::EType  wearable_type)
+	:	LLItemBridge(inventory, uuid),
+		mAssetType(asset_type),
 		mInvType(inv_type),
 		mWearableType(wearable_type)
 		{}
 
 protected:
-	LLAssetType::EType mAssetType;
-	LLInventoryType::EType mInvType;
-	EWearableType  mWearableType;
+	LLAssetType::EType		mAssetType;
+	LLInventoryType::EType	mInvType;
+	LLWearableType::EType	mWearableType;
 };
 
 class LLLinkItemBridge : public LLItemBridge

@@ -35,7 +35,7 @@
 
 #include "llinventory.h"
 #include "llframetimer.h"
-#include "llwearable.h"
+#include "llwearabletype.h"
 
 class LLViewerInventoryCategory;
 
@@ -122,12 +122,12 @@ public:
 	bool importFileLocal(LLFILE* fp);
 
 	// new methods
-	BOOL isComplete() const { return mIsComplete; }
+	BOOL isFinished() const { return mIsComplete; }
 	void setComplete(BOOL complete) { mIsComplete = complete; }
 	//void updateAssetOnServer() const;
 // [RLVa:KB] - Checked: 2010-09-27 (RLVa-1.1.3a) | Added: RLVa-1.1.3a
 	virtual bool isWearableType() const;
-	virtual EWearableType getWearableType() const;
+	virtual LLWearableType::EType getWearableType() const;
 // [/RLVa:KB]
 
 	virtual void packMessage(LLMessageSystem* msg) const;
@@ -191,7 +191,7 @@ public:
 	void setVersion(S32 version) { mVersion = version; }
 
 	// Returns true if a fetch was issued.
-	bool fetchDescendents();
+	bool fetch();
 
 	// used to help make cacheing more robust - for example, if
 	// someone is getting 4 packets but logs out after 3. the viewer
@@ -272,13 +272,13 @@ public:
 extern LLInventoryCallbackManager gInventoryCallbacks;
 
 
-#define NOT_WEARABLE (EWearableType)0
+#define NOT_WEARABLE (LLWearableType::EType)0
 
 void create_inventory_item(const LLUUID& agent_id, const LLUUID& session_id,
 						   const LLUUID& parent, const LLTransactionID& transaction_id,
 						   const std::string& name,
 						   const std::string& desc, LLAssetType::EType asset_type,
-						   LLInventoryType::EType inv_type, EWearableType wtype,
+						   LLInventoryType::EType inv_type, LLWearableType::EType wtype,
 						   U32 next_owner_perm,
 						   LLPointer<LLInventoryCallback> cb);
 

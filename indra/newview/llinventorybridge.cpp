@@ -62,6 +62,7 @@
 #include "lliconctrl.h"
 #include "llinventoryicon.h"
 #include "llinventorymodel.h"
+#include "llinventorymodelbackgroundfetch.h"
 #include "llinventoryclipboard.h"
 #include "lllineeditor.h"
 #include "llmenugl.h"
@@ -199,7 +200,7 @@ BOOL LLInvFVBridge::isItemRemovable()
 	{
 		return TRUE;
 	}
-	if (model->isObjectDescendentOf(mUUID, gAgent.getInventoryRootID()))
+	if (model->isObjectDescendentOf(mUUID, gInventory.getRootFolderID()))
 	{
 		return TRUE;
 	}
@@ -380,7 +381,7 @@ BOOL LLInvFVBridge::isClipboardPasteable() const
 		return FALSE;
 	}
 
-	BOOL is_agent_inventory = model->isObjectDescendentOf(mUUID, gAgent.getInventoryRootID());
+	BOOL is_agent_inventory = model->isObjectDescendentOf(mUUID, gInventory.getRootFolderID());
 	if (!LLInventoryClipboard::instance().hasContents() || !is_agent_inventory)
 	{
 		return FALSE;
@@ -641,7 +642,7 @@ BOOL LLInvFVBridge::startDrag(EDragAndDropType* type, LLUUID* id) const
 
 		if (*type == DAD_CATEGORY)
 		{
-			gInventory.startBackgroundFetch(obj->getUUID());
+			LLInventoryModelBackgroundFetch::instance().start(obj->getUUID());
 		}
 
 		rv = TRUE;
@@ -702,8 +703,8 @@ BOOL LLInvFVBridge::isAgentInventory() const
 {
 	LLInventoryModel* model = mInventoryPanel->getModel();
 	if(!model) return FALSE;
-	if(gAgent.getInventoryRootID() == mUUID) return TRUE;
-	return model->isObjectDescendentOf(mUUID, gAgent.getInventoryRootID());
+	if(gInventory.getRootFolderID() == mUUID) return TRUE;
+	return model->isObjectDescendentOf(mUUID, gInventory.getRootFolderID());
 }
 
 BOOL LLInvFVBridge::isItemPermissive() const
@@ -869,7 +870,7 @@ LLInvFVBridge* LLInvFVBridge::createBridge(LLAssetType::EType asset_type,
 			warn = true;
 		}
 		new_listener = new LLWearableBridge(inventory, uuid, asset_type,
-											inv_type, (EWearableType)flags);
+											inv_type, (LLWearableType::EType)flags);
 		break;
 
 	case LLAssetType::AT_CATEGORY:
@@ -1020,7 +1021,7 @@ void LLItemBridge::performAction(LLFolderView* folder, LLInventoryModel* model, 
 void LLItemBridge::selectItem()
 {
 	LLViewerInventoryItem* item = (LLViewerInventoryItem*)getItem();
-	if(item && !item->isComplete())
+	if(item && !item->isFinished())
 	{
 		item->fetchFromServer();
 	}
@@ -1360,8 +1361,7 @@ void LLFolderBridge::selectItem()
 BOOL LLFolderBridge::isItemRemovable()
 {
 	LLInventoryModel* model = mInventoryPanel->getModel();
-
-	if(!model->isObjectDescendentOf(mUUID, gAgent.getInventoryRootID()))
+	if (!model || !model->isObjectDescendentOf(mUUID, gInventory.getRootFolderID()))
 	{
 		return FALSE;
 	}
@@ -1866,7 +1866,7 @@ void LLRightClickInventoryFetchDescendentsObserver::done()
 	outfit->fetchItems(ids);
 	outfit->done();				//Not interested in waiting and this will be right 99% of the time.
 //Uncomment the following code for laggy Inventory UI.
-/*	if(outfit->isEverythingComplete())
+/*	if(outfit->isFinished())
 	{
 		// everything is already here - call done.
 		outfit->done();
@@ -1889,14 +1889,20 @@ void LLRightClickInventoryFetchDescendentsObserver::done()
 class LLInventoryCopyAndWearObserver : public LLInventoryObserver
 {
 public:
-	LLInventoryCopyAndWearObserver(const LLUUID& cat_id, int count) :mCatID(cat_id), mContentsCount(count), mFolderAdded(FALSE) {}
+	LLInventoryCopyAndWearObserver(const LLUUID& cat_id,
+								   int count,
+								   bool folder_added = false)
+	:	mCatID(cat_id),
+		mContentsCount(count),
+		mFolderAdded(folder_added)
+	{}
 	virtual ~LLInventoryCopyAndWearObserver() {}
 	virtual void changed(U32 mask);
 
 protected:
 	LLUUID mCatID;
 	int    mContentsCount;
-	BOOL   mFolderAdded;
+	bool   mFolderAdded;
 };
 
 
@@ -2388,7 +2394,7 @@ void LLFolderBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 		folders.push_back(category->getUUID());
 		fetch->fetchDescendents(folders);
 		inc_busy_count();
-		if (fetch->isEverythingComplete())
+		if (fetch->isFinished())
 		{
 			// everything is already here - call done.
 			fetch->done();
@@ -2488,86 +2494,86 @@ void LLFolderBridge::createNewCategory(void* user_data)
 
 void LLFolderBridge::createNewShirt(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_SHIRT);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_SHIRT);
 }
 
 void LLFolderBridge::createNewPants(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_PANTS);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_PANTS);
 }
 
 void LLFolderBridge::createNewShoes(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_SHOES);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_SHOES);
 }
 
 void LLFolderBridge::createNewSocks(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_SOCKS);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_SOCKS);
 }
 
 void LLFolderBridge::createNewJacket(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_JACKET);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_JACKET);
 }
 
 void LLFolderBridge::createNewSkirt(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_SKIRT);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_SKIRT);
 }
 
 void LLFolderBridge::createNewGloves(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_GLOVES);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_GLOVES);
 }
 
 void LLFolderBridge::createNewUndershirt(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_UNDERSHIRT);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_UNDERSHIRT);
 }
 
 void LLFolderBridge::createNewUnderpants(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_UNDERPANTS);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_UNDERPANTS);
 }
 
 void LLFolderBridge::createNewAlpha(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_ALPHA);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_ALPHA);
 }
 
 void LLFolderBridge::createNewTattoo(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_TATTOO);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_TATTOO);
 }
 
 void LLFolderBridge::createNewShape(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_SHAPE);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_SHAPE);
 }
 
 void LLFolderBridge::createNewSkin(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_SKIN);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_SKIN);
 }
 
 void LLFolderBridge::createNewHair(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_HAIR);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_HAIR);
 }
 
 void LLFolderBridge::createNewEyes(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_EYES);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_EYES);
 }
 
 void LLFolderBridge::createNewPhysics(void* user_data)
 {
-	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_PHYSICS);
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, LLWearableType::WT_PHYSICS);
 }
 
 // static
-void LLFolderBridge::createWearable(LLFolderBridge* bridge, EWearableType type)
+void LLFolderBridge::createWearable(LLFolderBridge* bridge, LLWearableType::EType type)
 {
 	if(!bridge) return;
 	LLUUID parent_id = bridge->getUUID();
@@ -2577,7 +2583,7 @@ void LLFolderBridge::createWearable(LLFolderBridge* bridge, EWearableType type)
 // Separate function so can be called by global menu as well as right-click
 // menu.
 // static
-void LLFolderBridge::createWearable(LLUUID parent_id, EWearableType type)
+void LLFolderBridge::createWearable(LLUUID parent_id, LLWearableType::EType type)
 {
 	LLWearable* wearable = gWearableList.createNewWearable(type);
 	LLAssetType::EType asset_type = wearable->getAssetType();
@@ -2608,13 +2614,16 @@ bool move_task_inventory_callback(const LLSD& notification, const LLSD& response
 
 	if(option == 0 && object)
 	{
-		if (cat_and_wear && cat_and_wear->mWear)
+		if (cat_and_wear && cat_and_wear->mWear) // && !cat_and_wear->mFolderResponded)
 		{
 			InventoryObjectList inventory_objects;
 			object->getInventoryContents(inventory_objects);
 			int contents_count = inventory_objects.size()-1; //subtract one for containing folder
 
-			LLInventoryCopyAndWearObserver* inventoryObserver = new LLInventoryCopyAndWearObserver(cat_and_wear->mCatID, contents_count);
+			LLInventoryCopyAndWearObserver* inventoryObserver;
+			inventoryObserver = new LLInventoryCopyAndWearObserver(cat_and_wear->mCatID,
+																   contents_count,
+																   cat_and_wear->mFolderResponded);
 			gInventory.addObserver(inventoryObserver);
 		}
 
@@ -2831,7 +2840,7 @@ BOOL LLFolderBridge::dragItemIntoFolder(LLInventoryItem* inv_item,
 	else if (LLToolDragAndDrop::SOURCE_LIBRARY == source)
 	{
 		LLViewerInventoryItem* item = (LLViewerInventoryItem*)inv_item;
-		if (item && item->isComplete())
+		if (item && item->isFinished())
 		{
 			accept = TRUE;
 			if (drop)
@@ -3878,11 +3887,11 @@ void LLObjectBridge::performAction(LLFolderView* folder, LLInventoryModel* model
 		LLUUID object_id = mUUID;
 		LLViewerInventoryItem* item;
 		item = (LLViewerInventoryItem*)gInventory.getItem(object_id);
-		if(item && gInventory.isObjectDescendentOf(object_id, gAgent.getInventoryRootID()))
+		if(item && gInventory.isObjectDescendentOf(object_id, gInventory.getRootFolderID()))
 		{
 			rez_attachment(item, NULL, replace);
 		}
-		else if(item && item->isComplete())
+		else if(item && item->isFinished())
 		{
 			// must be in library. copy it to our inventory and put it on.
 			LLPointer<LLInventoryCallback> cb = new RezAttachmentCallback(0, replace);
@@ -3967,11 +3976,11 @@ void LLObjectBridge::openItem()
 	item = (LLViewerInventoryItem*)gInventory.getItem(object_id);
 	if (gSavedSettings.getBOOL("PhoenixDoubleClickWearInventoryObjects"))
 	{
-		if(item && gInventory.isObjectDescendentOf(object_id, gAgent.getInventoryRootID()))
+		if(item && gInventory.isObjectDescendentOf(object_id, gInventory.getRootFolderID()))
 		{
 			rez_attachment(item, NULL);
 		}
-		else if(item && item->isComplete())
+		else if(item && item->isFinished())
 		{
 			// must be in library. copy it to our inventory and put it on.
 			LLPointer<LLInventoryCallback> cb = new RezAttachmentCallback(0);
@@ -4495,7 +4504,7 @@ void LLOutfitObserver::done()
 		}
 		if (pid.isNull())
 		{
-			pid = gAgent.getInventoryRootID();
+			pid = gInventory.getRootFolderID();
 		}
 		
 		LLUUID cat_id = gInventory.createNewCategory(pid, LLFolderType::FT_NONE, name);
@@ -4511,6 +4520,8 @@ void LLOutfitObserver::done()
 									item->getUUID(), cat_id, std::string(), cb);
 			}
 		}
+		// BAP fixes a lag in display of created dir.
+		gInventory.notifyObservers();
 	}
 	else
 	{
@@ -4573,7 +4584,7 @@ void LLOutfitFetch::done()
 
 	// do the fetch
 	outfit->fetchItems(ids);
-	if(outfit->isEverythingComplete())
+	if(outfit->isFinished())
 	{
 		// everything is already here - call done.
 		outfit->done();
@@ -4594,7 +4605,7 @@ void wear_outfit_by_name(const std::string& name)
 	LLInventoryModel::cat_array_t cat_array;
 	LLInventoryModel::item_array_t item_array;
 	LLNameCategoryCollector has_name(name);
-	gInventory.collectDescendentsIf(gAgent.getInventoryRootID(),
+	gInventory.collectDescendentsIf(gInventory.getRootFolderID(),
 									cat_array,
 									item_array,
 									LLInventoryModel::EXCLUDE_TRASH,
@@ -4648,7 +4659,7 @@ void wear_inventory_category(LLInventoryCategory* category, bool copy, bool appe
 	folders.push_back(category->getUUID());
 	outfit->fetchDescendents(folders);
 	inc_busy_count();
-	if(outfit->isEverythingComplete())
+	if(outfit->isFinished())
 	{
 		// everything is already here - call done.
 		outfit->done();
@@ -4882,7 +4893,7 @@ void wear_inventory_category_on_avatar_step3(LLWearableHoldingPattern* holder, B
 
 	// For each wearable type, find the first instance in the category
 	// that we recursed through.
-	for( S32 i = 0; i < WT_COUNT; i++ )
+	for( S32 i = 0; i < LLWearableType::WT_COUNT; i++ )
 	{
 		for (LLWearableHoldingPattern::found_list_t::iterator iter = holder->mFoundList.begin();
 			 iter != holder->mFoundList.end(); ++iter)
@@ -4895,18 +4906,6 @@ void wear_inventory_category_on_avatar_step3(LLWearableHoldingPattern* holder, B
 				item = (LLViewerInventoryItem*)gInventory.getLinkedItem(data->mItemID);
 				if( item && (item->getAssetUUID() == wearable->getID()) )
 				{
-				//RN: after discussing with Brashears, I disabled this code
-				//Metadata should reside in the item, not the asset
-				//And this code does not handle failed asset uploads properly
-//					if(!wearable->isMatchedToInventoryItem(item ))
-//					{
-//						wearable = gWearableList.createWearableMatchedToInventoryItem( wearable, item );
-//						// Now that we have an asset that matches the
-//						// item, update the item to point to the new
-//						// asset.
-//						item->setAssetUUID(wearable->getID());
-//						item->updateAssetOnServer();
-//					}
 // [RLVa:KB] - Checked: 2010-09-28 (RLVa-1.1.3b) | Modified: RLVa-1.1.4a
 					if (!gRlvWearableLocks.canWear(item))
 					{
@@ -5185,7 +5184,7 @@ void LLWearableBridge::openItem()
 		// must be in the inventory library. copy it to our inventory
 		// and put it on right away.
 		LLViewerInventoryItem* item = getItem();
-		if(item && item->isComplete())
+		if(item && item->isFinished())
 		{
 			LLPointer<LLInventoryCallback> cb = new WearOnAvatarCallback();
 			copy_inventory_item(
@@ -5292,7 +5291,7 @@ BOOL LLWearableBridge::canWearOnAvatar(void* user_data)
 	if(!self->isAgentInventory())
 	{
 		LLViewerInventoryItem* item = (LLViewerInventoryItem*)self->getItem();
-		if(!item || !item->isComplete()) return FALSE;
+		if(!item || !item->isFinished()) return FALSE;
 	}
 	return (!gAgent.isWearingItem(self->mUUID));
 }
@@ -5349,21 +5348,6 @@ void LLWearableBridge::onWearOnAvatarArrived( LLWearable* wearable, void* userda
 		{
 			if(item->getAssetUUID() == wearable->getID())
 			{
-				//RN: after discussing with Brashears, I disabled this code
-				//Metadata should reside in the item, not the asset
-				//And this code does not handle failed asset uploads properly
-
-//				if(!wearable->isMatchedToInventoryItem(item))
-//				{
-//					LLWearable* new_wearable = gWearableList.createWearableMatchedToInventoryItem( wearable, item );
-//
-//					// Now that we have an asset that matches the
-//					// item, update the item to point to the new
-//					// asset.
-//					item->setAssetUUID(new_wearable->getID());
-//					item->updateAssetOnServer();
-//					wearable = new_wearable;
-//				}
 				gAgent.setWearable(item, wearable);
 				gInventory.notifyObservers();
 				//self->getFolderItem()->refreshFromRoot();
@@ -5453,10 +5437,12 @@ void LLWearableBridge::onRemoveFromAvatarArrived(LLWearable* wearable,
 	{
 		if (gAgent.isWearingItem(item_id))
 		{
-			EWearableType type = wearable->getType();
-	
-			if( !(type==WT_SHAPE || type==WT_SKIN || type==WT_HAIR || type==WT_EYES) ) //&&
-				//!((!gAgent.isTeen()) && ( type==WT_UNDERPANTS || type==WT_UNDERSHIRT )) )
+			LLWearableType::EType type = wearable->getType();
+
+			if (type != LLWearableType::WT_SHAPE && type != LLWearableType::WT_SKIN &&
+				type != LLWearableType::WT_HAIR && type != LLWearableType::WT_EYES)
+				// && (!gAgent.isTeen() || (type != LLWearableType::WT_UNDERPANTS &&
+				//						    type != LLWearableType::WT_UNDERSHIRT)))
 			{
 				gAgent.removeWearable( type );
 			}

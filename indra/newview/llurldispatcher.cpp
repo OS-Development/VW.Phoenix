@@ -50,15 +50,15 @@
 // library includes
 #include "llsd.h"
 
-const std::string SLURL_SL_HELP_PREFIX		= "secondlife://app.";
-const std::string SLURL_SL_PREFIX			= "sl://";
-const std::string SLURL_SECONDLIFE_PREFIX	= "secondlife://";
-const std::string SLURL_SLURL_PREFIX		= "http://slurl.com/secondlife/";
-const std::string SLURL_SLURL_ALT_PREFIX	= "http://maps.secondlife.com/secondlife/";
-const std::string SLURL_SLMARKETPLACE_PREFIX	= "https://marketplace.secondlife.com/";
-const std::string SLURL_SLMARKETPLACE_ALT_PREFIX	= "http://marketplace.secondlife.com/";
+const std::string LLURLDispatcher::SL_HELP_PREFIX		= "secondlife://app.";
+const std::string LLURLDispatcher::SL_PREFIX			= "sl://";
+const std::string LLURLDispatcher::SECONDLIFE_PREFIX	= "secondlife://";
+const std::string LLURLDispatcher::SLURL_PREFIX		= "http://slurl.com/secondlife/";
+const std::string LLURLDispatcher::SLURL_ALT_PREFIX	= "http://maps.secondlife.com/secondlife/";
+const std::string LLURLDispatcher::SLMARKETPLACE_PREFIX	= "https://marketplace.secondlife.com/";
+const std::string LLURLDispatcher::SLMARKETPLACE_ALT_PREFIX	= "http://marketplace.secondlife.com/";
 
-const std::string SLURL_APP_TOKEN = "app/";
+const std::string LLURLDispatcher::APP_TOKEN = "app/";
 
 class LLURLDispatcherImpl
 {
@@ -122,21 +122,21 @@ private:
 // static
 bool LLURLDispatcherImpl::isSLURL(const std::string& url)
 {
-	if (matchPrefix(url, SLURL_SL_HELP_PREFIX)) return true;
-	if (matchPrefix(url, SLURL_SL_PREFIX)) return true;
-	if (matchPrefix(url, SLURL_SECONDLIFE_PREFIX)) return true;
-	if (matchPrefix(url, SLURL_SLURL_PREFIX)) return true;
-	if (matchPrefix(url, SLURL_SLURL_ALT_PREFIX)) return true;
+	if (matchPrefix(url, LLURLDispatcher::SL_HELP_PREFIX)) return true;
+	if (matchPrefix(url, LLURLDispatcher::SL_PREFIX)) return true;
+	if (matchPrefix(url, LLURLDispatcher::SECONDLIFE_PREFIX)) return true;
+	if (matchPrefix(url, LLURLDispatcher::SLURL_PREFIX)) return true;
+	if (matchPrefix(url, LLURLDispatcher::SLURL_ALT_PREFIX)) return true;
 	return false;
 }
 
 // static
 bool LLURLDispatcherImpl::isSLURLCommand(const std::string& url)
 { 
-	if (matchPrefix(url, SLURL_SL_PREFIX + SLURL_APP_TOKEN)
-		|| matchPrefix(url, SLURL_SECONDLIFE_PREFIX + "/" + SLURL_APP_TOKEN)
-		|| matchPrefix(url, SLURL_SLURL_PREFIX + SLURL_APP_TOKEN)
-		|| matchPrefix(url, SLURL_SLURL_ALT_PREFIX + SLURL_APP_TOKEN))
+	if (matchPrefix(url, LLURLDispatcher::SL_PREFIX + LLURLDispatcher::APP_TOKEN)
+		|| matchPrefix(url, LLURLDispatcher::SECONDLIFE_PREFIX + "/" + LLURLDispatcher::APP_TOKEN)
+		|| matchPrefix(url, LLURLDispatcher::SLURL_PREFIX + LLURLDispatcher::APP_TOKEN)
+		|| matchPrefix(url, LLURLDispatcher::SLURL_ALT_PREFIX + LLURLDispatcher::APP_TOKEN))
 	{
 		return true;
 	}
@@ -145,8 +145,8 @@ bool LLURLDispatcherImpl::isSLURLCommand(const std::string& url)
 
 bool LLURLDispatcherImpl::isMarketPlaceURL(const std::string& url)
 {
-	if (matchPrefix(url, SLURL_SLMARKETPLACE_PREFIX)) return true;
-	if (matchPrefix(url, SLURL_SLMARKETPLACE_ALT_PREFIX)) return true;
+	if (matchPrefix(url, LLURLDispatcher::SLMARKETPLACE_PREFIX)) return true;
+	if (matchPrefix(url, LLURLDispatcher::SLMARKETPLACE_ALT_PREFIX)) return true;
 	return false;
 }
 
@@ -199,7 +199,7 @@ bool LLURLDispatcherImpl::dispatchRightClick(const std::string& url)
 bool LLURLDispatcherImpl::dispatchHelp(const std::string& url, bool right_mouse)
 {
 #if LL_LIBXUL_ENABLED
-	if (matchPrefix(url, SLURL_SL_HELP_PREFIX))
+	if (matchPrefix(url, LLURLDispatcher::SL_HELP_PREFIX))
 	{
 		gViewerHtmlHelp.show();
 		return true;
@@ -382,25 +382,25 @@ bool LLURLDispatcherImpl::matchPrefix(const std::string& url, const std::string&
 std::string LLURLDispatcherImpl::stripProtocol(const std::string& url)
 {
 	std::string stripped = url;
-	if (matchPrefix(stripped, SLURL_SL_HELP_PREFIX))
+	if (matchPrefix(stripped, LLURLDispatcher::SL_HELP_PREFIX))
 	{
-		stripped.erase(0, SLURL_SL_HELP_PREFIX.length());
+		stripped.erase(0, LLURLDispatcher::SL_HELP_PREFIX.length());
 	}
-	else if (matchPrefix(stripped, SLURL_SL_PREFIX))
+	else if (matchPrefix(stripped, LLURLDispatcher::SL_PREFIX))
 	{
-		stripped.erase(0, SLURL_SL_PREFIX.length());
+		stripped.erase(0, LLURLDispatcher::SL_PREFIX.length());
 	}
-	else if (matchPrefix(stripped, SLURL_SECONDLIFE_PREFIX))
+	else if (matchPrefix(stripped, LLURLDispatcher::SECONDLIFE_PREFIX))
 	{
-		stripped.erase(0, SLURL_SECONDLIFE_PREFIX.length());
+		stripped.erase(0, LLURLDispatcher::SECONDLIFE_PREFIX.length());
 	}
-	else if (matchPrefix(stripped, SLURL_SLURL_PREFIX))
+	else if (matchPrefix(stripped, LLURLDispatcher::SLURL_PREFIX))
 	{
-		stripped.erase(0, SLURL_SLURL_PREFIX.length());
+		stripped.erase(0, LLURLDispatcher::SLURL_PREFIX.length());
 	}
-	else if (matchPrefix(stripped, SLURL_SLURL_ALT_PREFIX))
+	else if (matchPrefix(stripped, LLURLDispatcher::SLURL_ALT_PREFIX))
 	{
-		stripped.erase(0, SLURL_SLURL_ALT_PREFIX.length());
+		stripped.erase(0, LLURLDispatcher::SLURL_ALT_PREFIX.length());
 	}
 	return stripped;
 }
@@ -427,7 +427,7 @@ public:
 		std::string region_name = LLURLSimString::unescapeRegionName(tokens[0]);
 
 		// build secondlife://De%20Haro/123/45/67 for use in callback
-		std::string url = SLURL_SECONDLIFE_PREFIX;
+		std::string url = LLURLDispatcher::SECONDLIFE_PREFIX;
 		for (int i = 0; i < tokens.size(); ++i)
 		{
 			url += tokens[i].asString() + "/";
@@ -495,7 +495,7 @@ bool LLURLDispatcher::dispatchFromTextEditor(const std::string& url)
 std::string LLURLDispatcher::buildSLURL(const std::string& regionname,
 										S32 x, S32 y, S32 z)
 {
-	std::string slurl = SLURL_SLURL_PREFIX + regionname + llformat("/%d/%d/%d",x,y,z); 
+	std::string slurl = LLURLDispatcher::SLURL_PREFIX + regionname + llformat("/%d/%d/%d",x,y,z); 
 	slurl = LLWeb::escapeURL( slurl );
 	return slurl;
 }

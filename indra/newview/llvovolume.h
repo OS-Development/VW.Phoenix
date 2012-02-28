@@ -74,6 +74,61 @@ public:
 	void update(const LLMeshSkinInfo* skin, LLVOAvatar* avatar, const LLVolume* src_volume);
 };
 
+class LLDeformedVolume : public LLVolume
+{
+public:
+	LLDeformedVolume()
+	:	LLVolume(LLVolumeParams(), 0.f)
+	{
+	}
+
+	// used as a key for the deform table cache
+	class LLDeformTableCacheIndex
+	{
+	public:
+		LLDeformTableCacheIndex(const LLUUID& id, S32 face, S32 vertex_count) :
+		mID(id), mFace(face), mVertexCount(vertex_count) {}
+
+		LLUUID mID;
+		S32 mFace;
+		S32 mVertexCount;
+
+		bool operator<(const LLDeformTableCacheIndex& lhs) const
+		{
+			if (mID < lhs.mID)
+				return TRUE;
+			if (mID > lhs.mID)
+				return FALSE;
+			if (mFace < lhs.mFace)
+				return TRUE;
+			if (mFace > lhs.mFace)
+				return FALSE;
+			if (mVertexCount < lhs.mVertexCount)
+				return TRUE;
+			
+			return FALSE;
+		}
+	};
+
+	// these are entries in the deformer table.
+	// they map vertices on the volume mesh to
+	// vertices on the avatar mesh(es).
+	struct LLDeformMap
+	{
+		U8 mMesh;
+		U16 mVertex;
+	};
+
+	typedef std::vector<struct LLDeformMap> deform_table_t;
+	typedef std::map<LLDeformTableCacheIndex, deform_table_t > deform_cache_t;
+	deform_cache_t mDeformCache;
+
+	void deform(LLVolume* source, LLVOAvatar* avatar, const LLMeshSkinInfo* skin, S32 face);
+
+private:
+	deform_table_t& getDeformTable(LLVolume* source, LLVOAvatar* avatar, const LLMeshSkinInfo* skin, S32 face);
+};
+
 // Base class for implementations of the volume - Primitive, Flexible Object, etc.
 class LLVolumeInterface
 {
@@ -146,7 +201,7 @@ public:
 				typedef std::map<LLUUID, S32> texture_cost_t;
 				U32 	getRenderCost(texture_cost_t& textures) const;
 	/*virtual*/	F32		getStreamingCost(S32* bytes = NULL, S32* visible_bytes = NULL, F32* unscaled_value = NULL) const;
-	/*virtual*/ U32		getTriangleCount();
+	/*virtual*/ U32		getTriangleCount(S32* vcount = NULL) const;
 	/*virtual*/ U32		getHighLODTriangleCount();
 	/*virtual*/	const LLMatrix4	getRenderMatrix() const;
 
@@ -334,6 +389,9 @@ public:
 	//clear out rigged volume and revert back to non-rigged state for picking/LOD/distance updates
 	void clearRiggedVolume();
 
+	// deformed volume (rigged attachments follow avatar morph shape changes
+	LLDeformedVolume* getDeformedVolume();
+
 protected:
 	S32	computeLODDetail(F32	distance, F32 radius);
 	BOOL calcLOD();
@@ -374,6 +432,7 @@ private:
 #endif
 
 	LLPointer<LLRiggedVolume> mRiggedVolume;
+	LLPointer<LLDeformedVolume> mDeformedVolume;
 
 	// statics
 public:

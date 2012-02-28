@@ -124,14 +124,14 @@ void LLDrawable::destroy()
 		gPipeline.checkReferences(this);
 	}
 
-	if (isDead())
-	{
-		sNumZombieDrawables--;
-	}
-
 	if (LLSpatialGroup::sNoDelete)
 	{
 		llerrs << "Illegal deletion of LLDrawable!" << llendl;
+	}
+
+	if (isDead())
+	{
+		sNumZombieDrawables--;
 	}
 
 	std::for_each(mFaces.begin(), mFaces.end(), DeletePointer());
@@ -1258,7 +1258,14 @@ public:
 	
 	void visit(const LLOctreeNode<LLDrawable>* branch)
 	{
-		gPipeline.markNotCulled((LLSpatialGroup*) branch->getListener(0), *mCamera);
+		if (branch)
+		{
+			gPipeline.markNotCulled((LLSpatialGroup*) branch->getListener(0), *mCamera);
+		}
+		else
+		{
+			llwarns << "LLOctreeMarkNotCulled::visit() called for a NULL branch" << llendl;
+		}
 	}
 };
 

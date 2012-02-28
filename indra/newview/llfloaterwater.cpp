@@ -639,7 +639,7 @@ void LLFloaterWater::onSavePreset(LLUICtrl* ctrl, void* userData)
 		const LLUUID trash_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 		if(LLWaterParamManager::instance()->mCurParams.mInventoryID.notNull() 
 			&& !gInventory.isObjectDescendentOf(LLWaterParamManager::instance()->mCurParams.mInventoryID, trash_id)
-			&& gInventory.isObjectDescendentOf(LLWaterParamManager::instance()->mCurParams.mInventoryID, gAgent.getInventoryRootID())
+			&& gInventory.isObjectDescendentOf(LLWaterParamManager::instance()->mCurParams.mInventoryID, gInventory.getRootFolderID())
 		)
 		{
 			LLNotifications::instance().add("KittyWLSaveNotecardAlert", LLSD(), LLSD(), saveNotecardCallback);

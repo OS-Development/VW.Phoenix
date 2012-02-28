@@ -118,7 +118,7 @@ void RlvInventory::fetchSharedInventory()
 	pFetcher->fetchDescendents(fetchFolders);
 	m_fFetchStarted = true;
 
-	if (pFetcher->isEverythingComplete())
+	if (pFetcher->isFinished())
 		pFetcher->done();
 	else
 		gInventory.addObserver(pFetcher);
@@ -170,9 +170,9 @@ void RlvInventory::fetchWornItems()
 	uuid_vec_t idItems;
 
 	// Fetch all currently worn clothing layers and body parts
-	for (int type = 0; type < WT_COUNT; type++)
+	for (int type = 0; type < LLWearableType::WT_COUNT; type++)
 	{
-		const LLUUID& idItem = gAgent.getWearableItem((EWearableType)type);
+		const LLUUID& idItem = gAgent.getWearableItem((LLWearableType::EType)type);
 		if (idItem.notNull())
 			idItems.push_back(idItem);
 	}
@@ -261,7 +261,7 @@ const LLUUID& RlvInventory::getSharedRootID() const
 	if ( (m_idRlvRoot.isNull()) && (gInventory.isInventoryUsable()) )
 	{
 		LLInventoryModel::cat_array_t* pFolders; LLInventoryModel::item_array_t* pItems;
-		gInventory.getDirectDescendentsOf(gAgent.getInventoryRootID(), pFolders, pItems);
+		gInventory.getDirectDescendentsOf(gInventory.getRootFolderID(), pFolders, pItems);
 		if (pFolders)
 		{
 			// NOTE: we might have multiple #RLV folders so we'll just go with the first one we come across
@@ -341,7 +341,7 @@ std::string RlvInventory::getSharedPath(const LLViewerInventoryCategory* pFolder
 		return std::string();
 
 	const LLUUID& idRLV  = pRlvRoot->getUUID();
-	const LLUUID& idRoot = gAgent.getInventoryRootID();
+	const LLUUID& idRoot = gInventory.getRootFolderID();
 	std::string strPath;
 
 	// Walk up the tree until we reach the top
@@ -652,7 +652,7 @@ RlvForceWear::EWearAction RlvWearableItemCollector::getWearAction(const LLUUID& 
 	while ((itCurFolder = m_WearActionMap.find(idCurFolder)) == m_WearActionMap.end())
 	{
 		const LLViewerInventoryCategory* pFolder = gInventory.getCategory(idCurFolder);
-		if ((!pFolder) || (gAgent.getInventoryRootID() == pFolder->getParentUUID()))
+		if ((!pFolder) || (gInventory.getRootFolderID() == pFolder->getParentUUID()))
 			break;
 		idCurFolder = pFolder->getParentUUID();
 	}

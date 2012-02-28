@@ -14,6 +14,7 @@
 #include "llvoavatar.h"
 #include "llanimationstates.h"
 #include "lluictrlfactory.h"
+#include "llinventorymodelbackgroundfetch.h"
 #include "llinventoryview.h"
 #include "llstartup.h"
 #include "llpreviewnotecard.h"
@@ -586,7 +587,7 @@ BOOL LLFloaterAO::init()
 					{
 						fullfetch = TRUE;
 						//no choice, can't move the AO till we find it, should only have to happen once
-						gInventory.startBackgroundFetch();
+						LLInventoryModelBackgroundFetch::instance().start();
 						return FALSE;
 					}
 				}

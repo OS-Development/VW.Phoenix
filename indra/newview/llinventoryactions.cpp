@@ -341,7 +341,7 @@ void do_create(LLInventoryModel *model, LLInventoryPanel *ptr, std::string type,
 		}
 		else
 		{
-			category = model->createNewCategory(gAgent.getInventoryRootID(),
+			category = model->createNewCategory(gInventory.getRootFolderID(),
 												LLFolderType::FT_NONE, LLStringUtil::null);
 		}
 		model->notifyObservers();
@@ -377,82 +377,82 @@ void do_create(LLInventoryModel *model, LLInventoryPanel *ptr, std::string type,
 	else if ("shirt" == type)
 	{
 		LLUUID parent_id = self ? self->getUUID() : gInventory.findCategoryUUIDForType(LLFolderType::FT_CLOTHING);
-		LLFolderBridge::createWearable(parent_id, WT_SHIRT);
+		LLFolderBridge::createWearable(parent_id, LLWearableType::WT_SHIRT);
 	}
 	else if ("pants" == type)
 	{
 		LLUUID parent_id = self ? self->getUUID() : gInventory.findCategoryUUIDForType(LLFolderType::FT_CLOTHING);
-		LLFolderBridge::createWearable(parent_id, WT_PANTS);
+		LLFolderBridge::createWearable(parent_id, LLWearableType::WT_PANTS);
 	}
 	else if ("shoes" == type)
 	{
 		LLUUID parent_id = self ? self->getUUID() : gInventory.findCategoryUUIDForType(LLFolderType::FT_CLOTHING);
-		LLFolderBridge::createWearable(parent_id, WT_SHOES);
+		LLFolderBridge::createWearable(parent_id, LLWearableType::WT_SHOES);
 	}
 	else if ("socks" == type)
 	{
 		LLUUID parent_id = self ? self->getUUID() : gInventory.findCategoryUUIDForType(LLFolderType::FT_CLOTHING);
-		LLFolderBridge::createWearable(parent_id, WT_SOCKS);
+		LLFolderBridge::createWearable(parent_id, LLWearableType::WT_SOCKS);
 	}
 	else if ("jacket" == type)
 	{
 		LLUUID parent_id = self ? self->getUUID() : gInventory.findCategoryUUIDForType(LLFolderType::FT_CLOTHING);
-		LLFolderBridge::createWearable(parent_id, WT_JACKET);
+		LLFolderBridge::createWearable(parent_id, LLWearableType::WT_JACKET);
 	}
 	else if ("skirt" == type)
 	{
 		LLUUID parent_id = self ? self->getUUID() : gInventory.findCategoryUUIDForType(LLFolderType::FT_CLOTHING);
-		LLFolderBridge::createWearable(parent_id, WT_SKIRT);
+		LLFolderBridge::createWearable(parent_id, LLWearableType::WT_SKIRT);
 	}
 	else if ("gloves" == type)
 	{
 		LLUUID parent_id = self ? self->getUUID() : gInventory.findCategoryUUIDForType(LLFolderType::FT_CLOTHING);
-		LLFolderBridge::createWearable(parent_id, WT_GLOVES);
+		LLFolderBridge::createWearable(parent_id, LLWearableType::WT_GLOVES);
 	}
 	else if ("undershirt" == type)
 	{
 		LLUUID parent_id = self ? self->getUUID() : gInventory.findCategoryUUIDForType(LLFolderType::FT_CLOTHING);
-		LLFolderBridge::createWearable(parent_id, WT_UNDERSHIRT);
+		LLFolderBridge::createWearable(parent_id, LLWearableType::WT_UNDERSHIRT);
 	}
 	else if ("underpants" == type)
 	{
 		LLUUID parent_id = self ? self->getUUID() : gInventory.findCategoryUUIDForType(LLFolderType::FT_CLOTHING);
-		LLFolderBridge::createWearable(parent_id, WT_UNDERPANTS);
+		LLFolderBridge::createWearable(parent_id, LLWearableType::WT_UNDERPANTS);
 	}
 	else if ("alpha" == type)
 	{
 		LLUUID parent_id = self ? self->getUUID() : gInventory.findCategoryUUIDForType(LLFolderType::FT_CLOTHING);
-		LLFolderBridge::createWearable(parent_id, WT_ALPHA);
+		LLFolderBridge::createWearable(parent_id, LLWearableType::WT_ALPHA);
 	}
 	else if ("tattoo" == type)
 	{
 		LLUUID parent_id = self ? self->getUUID() : gInventory.findCategoryUUIDForType(LLFolderType::FT_CLOTHING);
-		LLFolderBridge::createWearable(parent_id, WT_TATTOO);
+		LLFolderBridge::createWearable(parent_id, LLWearableType::WT_TATTOO);
 	}
 	else if ("physics" == type)
 	{
 		LLUUID parent_id = self ? self->getUUID() : gInventory.findCategoryUUIDForType(LLFolderType::FT_CLOTHING);
-		LLFolderBridge::createWearable(parent_id, WT_PHYSICS);
+		LLFolderBridge::createWearable(parent_id, LLWearableType::WT_PHYSICS);
 	}
 	else if ("shape" == type)
 	{
 		LLUUID parent_id = self ? self->getUUID() : gInventory.findCategoryUUIDForType(LLFolderType::FT_BODYPART);
-		LLFolderBridge::createWearable(parent_id, WT_SHAPE);
+		LLFolderBridge::createWearable(parent_id, LLWearableType::WT_SHAPE);
 	}
 	else if ("skin" == type)
 	{
 		LLUUID parent_id = self ? self->getUUID() : gInventory.findCategoryUUIDForType(LLFolderType::FT_BODYPART);
-		LLFolderBridge::createWearable(parent_id, WT_SKIN);
+		LLFolderBridge::createWearable(parent_id, LLWearableType::WT_SKIN);
 	}
 	else if ("hair" == type)
 	{
 		LLUUID parent_id = self ? self->getUUID() : gInventory.findCategoryUUIDForType(LLFolderType::FT_BODYPART);
-		LLFolderBridge::createWearable(parent_id, WT_HAIR);
+		LLFolderBridge::createWearable(parent_id, LLWearableType::WT_HAIR);
 	}
 	else if ("eyes" == type)
 	{
 		LLUUID parent_id = self ? self->getUUID() : gInventory.findCategoryUUIDForType(LLFolderType::FT_BODYPART);
-		LLFolderBridge::createWearable(parent_id, WT_EYES);
+		LLFolderBridge::createWearable(parent_id, LLWearableType::WT_EYES);
 	}
 
 	ptr->getRootFolder()->setNeedsAutoRename(TRUE);	
@@ -787,11 +787,11 @@ class LLAttachObject : public inventory_panel_listener_t
 		}
 		LLViewerInventoryItem* item = (LLViewerInventoryItem*)gInventory.getItem(id);
 
-		if(item && gInventory.isObjectDescendentOf(id, gAgent.getInventoryRootID()))
+		if (item && gInventory.isObjectDescendentOf(id, gInventory.getRootFolderID()))
 		{
 			rez_attachment(item, attachmentp);
 		}
-		else if(item && item->isComplete())
+		else if(item && item->isFinished())
 		{
 			// must be in library. copy it to our inventory and put it on.
 			LLPointer<LLInventoryCallback> cb = new RezAttachmentCallback(attachmentp);

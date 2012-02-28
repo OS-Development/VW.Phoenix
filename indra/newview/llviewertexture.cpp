@@ -2134,6 +2134,7 @@ void LLViewerFetchedTexture::unpauseLoadedCallbacks(const LLLoadedCallbackEntry:
 	if (!callback_list)
 	{
 		mPauseLoadedCallBacks = FALSE;
+		mLastCallBackActiveTime = sCurrentTime;
 		return;
 	}
 
@@ -2498,7 +2499,11 @@ bool LLViewerFetchedTexture::needsToSaveRawImage()
 
 void LLViewerFetchedTexture::destroyRawImage()
 {	
-	if (mAuxRawImage.notNull()) sAuxCount--;
+	if (mAuxRawImage.notNull())
+	{
+		sAuxCount--;
+		mAuxRawImage = NULL;
+	}
 
 	if (mRawImage.notNull()) 
 	{
@@ -2512,12 +2517,11 @@ void LLViewerFetchedTexture::destroyRawImage()
 			}		
 			setCachedRawImage();
 		}
-	}
+		mRawImage = NULL;
 
-	mRawImage = NULL;
-	mAuxRawImage = NULL;
-	mIsRawImageValid = FALSE;
-	mRawDiscardLevel = INVALID_DISCARD_LEVEL;
+		mIsRawImageValid = FALSE;
+		mRawDiscardLevel = INVALID_DISCARD_LEVEL;
+	}
 }
 
 //use the mCachedRawImage to (re)generate the gl texture.

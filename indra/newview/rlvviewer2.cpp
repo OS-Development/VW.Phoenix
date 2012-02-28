@@ -73,7 +73,7 @@ void LLInventoryFetchItemsObserver::changed(U32 mask)
 		{
 			const LLUUID& item_id = (*it);
 			LLViewerInventoryItem* item = gInventory.getItem(item_id);
-			if (item && item->isComplete())
+			if (item && item->isFinished())
 			{
 				mComplete.push_back(item_id);
 				it = mIncomplete.erase(it);
@@ -115,7 +115,7 @@ void LLInventoryFetchItemsObserver::startFetch()
 		LLViewerInventoryItem* item = gInventory.getItem(*it);
 		if (item)
 		{
-			if (item->isComplete())
+			if (item->isFinished())
 			{
 				// It's complete, so put it on the complete container.
 				mComplete.push_back(*it);

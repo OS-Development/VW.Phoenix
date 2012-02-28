@@ -255,17 +255,14 @@ LLTimer gLogoutTimer;
 static const F32 LOGOUT_REQUEST_TIME = 6.f;  // this will be cut short by the LogoutReply msg.
 F32 gLogoutMaxTime = LOGOUT_REQUEST_TIME;
 
-LLUUID gInventoryLibraryOwner;
-LLUUID gInventoryLibraryRoot;
-
-BOOL				gDisconnected = FALSE;
+BOOL gDisconnected = FALSE;
 
 // Minimap scale in pixels per region
 
 // used to restore texture state after a mode switch
 LLFrameTimer	gRestoreGLTimer;
 BOOL			gRestoreGL = FALSE;
-BOOL				gUseWireframe = FALSE;
+BOOL			gUseWireframe = FALSE;
 
 // VFS globals - see llappviewer.h
 LLVFS* gStaticVFS = NULL;
@@ -1227,16 +1224,31 @@ bool LLAppViewer::mainLoop()
 				bool is_slow = (frameTimer.getElapsedTimeF64() > FRAME_SLOW_THRESHOLD) ;
 				S32 total_work_pending = 0;
 				S32 total_io_pending = 0;
+				F32 max_time = llmin(gFrameIntervalSeconds * 10.f, 1.f);
 				while(!is_slow)//do not unpause threads if the frame rates are very low.
 				{
 					S32 work_pending = 0;
 					S32 io_pending = 0;
- 					work_pending += LLAppViewer::getTextureCache()->update(1); // unpauses the texture cache thread
- 					work_pending += LLAppViewer::getImageDecodeThread()->update(1); // unpauses the image thread
- 					work_pending += LLAppViewer::getTextureFetch()->update(1); // unpauses the texture fetch thread
-
-					io_pending += LLVFSThread::updateClass(1);
-					io_pending += LLLFSThread::updateClass(1);
+					{
+						LLFastTimer t3(LLFastTimer::FTM_TEXTURE_CACHE);
+	 					work_pending = LLAppViewer::getTextureCache()->update(max_time); // unpauses the texture cache thread
+					}
+					{
+						LLFastTimer t3(LLFastTimer::FTM_DECODE);
+ 						work_pending += LLAppViewer::getImageDecodeThread()->update(max_time); // unpauses the image thread
+					}
+					{
+						LLFastTimer t3(LLFastTimer::FTM_FETCH);
+ 						work_pending += LLAppViewer::getTextureFetch()->update(max_time); // unpauses the texture fetch thread
+					}
+					{
+						LLFastTimer t3(LLFastTimer::FTM_VFS);
+						io_pending += LLVFSThread::updateClass(1);
+					}
+					{
+						LLFastTimer t3(LLFastTimer::FTM_LFS);
+						io_pending += LLLFSThread::updateClass(1);
+					}
 					if (io_pending > 1000)
 					{
 						ms_sleep(llmin(io_pending / 100, 100)); // give the fs some time to catch up
@@ -1415,8 +1427,7 @@ bool LLAppViewer::cleanup()
 
 		// shut down the audio subsystem
 
-		bool want_longname = false;
-		if (gAudiop->getDriverName(want_longname) == "FMOD")
+		if (gAudiop->getDriverName(false) == "FMOD")
 		{
 			// This hack exists because fmod likes to occasionally
 			// crash or hang forever when shutting down, for no
@@ -1470,13 +1481,20 @@ bool LLAppViewer::cleanup()
 		llinfos << "Waiting for pending IO to finish: " << pending << llendflush;
 		ms_sleep(100);
 	}
-	llinfos << "Shutting down." << llendflush;
+
+	llinfos << "Shutting down Views" << llendflush;
 
 	// Destroy the UI
 	if (gViewerWindow)
 	{
 		gViewerWindow->shutdownViews();
 	}
+
+	llinfos << "Cleaning up Inventory" << llendflush;
+	
+	// Cleanup Inventory after the UI since it will delete any remaining observers
+	// (Deleted observers should have already removed themselves)
+	gInventory.cleanupInventory();
 
 	// Clean up selection managers after UI is destroyed, as UI may be observing them.
 	// Clean up before GL is shut down because we might be holding on to objects with texture references
@@ -3798,6 +3816,7 @@ void LLAppViewer::idle()
 		gEventNotifier.update();
 
 		gIdleCallbacks.callFunctions();
+		gInventory.idleNotifyObservers();
 	}
 
 	gViewerWindow->handlePerFrameHover();
@@ -4344,10 +4363,12 @@ void LLAppViewer::disconnectViewer()
 	if (!gNoRender)
 	{
 		// save inventory if appropriate
-		gInventory.cache(gAgent.getInventoryRootID(), gAgent.getID());
-		if(gInventoryLibraryRoot.notNull() && gInventoryLibraryOwner.notNull())
+		gInventory.cache(gInventory.getRootFolderID(), gAgent.getID());
+		if (gInventory.getLibraryRootFolderID().notNull() &&
+			gInventory.getLibraryOwnerID().notNull())
 		{
-			gInventory.cache(gInventoryLibraryRoot, gInventoryLibraryOwner);
+			gInventory.cache(gInventory.getLibraryRootFolderID(),
+							 gInventory.getLibraryOwnerID());
 		}
 	}
 

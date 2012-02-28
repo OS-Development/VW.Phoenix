@@ -54,7 +54,6 @@
 #include "llmutelist.h"
 #include "llpreviewnotecard.h"
 #include "llselectmgr.h"
-#include "lltooldraganddrop.h"
 #include "lltoolmgr.h"
 #include "lltrans.h"
 #include "llviewercontrol.h"
@@ -238,6 +237,9 @@ bool LLGiveable::operator()(LLInventoryCategory* cat, LLInventoryItem* item)
 	return allowed;
 }
 
+// Starts a fetch on folders and items.  This is really not used 
+// as an observer in the traditional sense; we're just using it to
+// request a fetch and we don't care about when/if the response arrives.
 class LLCategoryFireAndForget : public LLInventoryFetchComboObserver
 {
 public:
@@ -246,7 +248,7 @@ public:
 	virtual void done()
 	{
 		/* no-op: it's fire n forget right? */
-		lldebugs << "LLCategoryFireAndForget::done()" << llendl;
+		LL_DEBUGS("DragAndDrop") << "LLCategoryFireAndForget::done()" << LL_ENDL;
 	}
 };
 
@@ -292,6 +294,7 @@ void LLCategoryDropObserver::done()
 	delete this;
 }
 
+/* Doesn't seem to be used anymore.
 class LLCategoryDropDescendentsObserver : public LLInventoryFetchDescendentsObserver
 {
 public:
@@ -337,9 +340,9 @@ void LLCategoryDropDescendentsObserver::done()
 		std::back_insert_iterator<LLInventoryFetchObserver::item_ref_t> copier(ids);
 		std::copy(unique_ids.begin(), unique_ids.end(), copier);
 		LLCategoryDropObserver* dropper;
-		dropper = new LLCategoryDropObserver(mObjectID, mSource);
-		dropper->fetchItems(ids);
-		if(dropper->isEverythingComplete())
+		dropper = new LLCategoryDropObserver(ids, mObjectID, mSource);
+		dropper->startFetch();
+		if (dropper->isFinished())
 		{
 			dropper->done();
 		}
@@ -350,145 +353,54 @@ void LLCategoryDropDescendentsObserver::done()
 	}
 	delete this;
 }
+*/
 
-// This array is used to more easily control what happens when a 3d
-// drag and drop event occurs. Since there's an array of drop target
-// and cargo type, it's implemented as an array of pointers to member
-// functions which correctly carry out the actual drop.
-LLToolDragAndDrop::dragOrDrop3dImpl LLToolDragAndDrop::sDragAndDrop3d[DAD_COUNT][LLToolDragAndDrop::DT_COUNT] =
+LLToolDragAndDrop::DragAndDropEntry::DragAndDropEntry(dragOrDrop3dImpl f_none,
+													  dragOrDrop3dImpl f_self,
+													  dragOrDrop3dImpl f_avatar,
+													  dragOrDrop3dImpl f_object,
+													  dragOrDrop3dImpl f_land) :
+	LLDictionaryEntry("")
 {
-	//	Source: DAD_NONE
+	mFunctions[DT_NONE] = f_none;
+	mFunctions[DT_SELF] = f_self;
+	mFunctions[DT_AVATAR] = f_avatar;
+	mFunctions[DT_OBJECT] = f_object;
+	mFunctions[DT_LAND] = f_land;
+}
+
+LLToolDragAndDrop::dragOrDrop3dImpl LLToolDragAndDrop::LLDragAndDropDictionary::get(EDragAndDropType dad_type, LLToolDragAndDrop::EDropTarget drop_target)
+{
+	const DragAndDropEntry *entry = lookup(dad_type);
+	if (entry)
 	{
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_NONE
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_SELF
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_AVATAR
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_OBJECT
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_LAND
-	},
-	//	Source: DAD_TEXTURE
-	{
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_NONE
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_SELF
-		&LLToolDragAndDrop::dad3dGiveInventory, // Dest: DT_AVATAR
-		&LLToolDragAndDrop::dad3dTextureObject, // Dest: DT_OBJECT
-		&LLToolDragAndDrop::dad3dNULL,//dad3dAssetOnLand, // Dest: DT_LAND
-	},
-	//	Source: DAD_SOUND
-	{
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_NONE
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_SELF
-		&LLToolDragAndDrop::dad3dGiveInventory, // Dest: DT_AVATAR
-		&LLToolDragAndDrop::dad3dUpdateInventory, // Dest: DT_OBJECT
-		&LLToolDragAndDrop::dad3dNULL,//dad3dAssetOnLand, // Dest: DT_LAND
-	},
-	//	Source: DAD_CALLINGCARD
-	{
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_NONE
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_SELF
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_AVATAR
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_OBJECT
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_LAND
-	},
-	//	Source: DAD_LANDMARK
-	{
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_NONE
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_SELF
-		&LLToolDragAndDrop::dad3dGiveInventory, // Dest: DT_AVATAR
-		&LLToolDragAndDrop::dad3dUpdateInventory, // Dest: DT_OBJECT
-		&LLToolDragAndDrop::dad3dNULL,//dad3dAssetOnLand, // Dest: DT_LAND
-	},
-	//	Source: DAD_SCRIPT
-	{
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_NONE
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_SELF
-		&LLToolDragAndDrop::dad3dGiveInventory, // Dest: DT_AVATAR
-		&LLToolDragAndDrop::dad3dRezScript, // Dest: DT_OBJECT
-		&LLToolDragAndDrop::dad3dNULL,//dad3dAssetOnLand, // Dest: DT_LAND
-	},
-	//	Source: DAD_CLOTHING
-	{
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_NONE
-		&LLToolDragAndDrop::dad3dWearItem, // Dest: DT_SELF
-		&LLToolDragAndDrop::dad3dGiveInventory, // Dest: DT_AVATAR
-		&LLToolDragAndDrop::dad3dUpdateInventory, // Dest: DT_OBJECT
-		&LLToolDragAndDrop::dad3dNULL,//dad3dAssetOnLand, // Dest: DT_LAND
-	},
-	//	Source: DAD_OBJECT
-	{
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_NONE
-		&LLToolDragAndDrop::dad3dRezAttachmentFromInv, // Dest: DT_SELF
-		&LLToolDragAndDrop::dad3dGiveInventoryObject, // Dest: DT_AVATAR
-		&LLToolDragAndDrop::dad3dRezObjectOnObject, // Dest: DT_OBJECT
-		&LLToolDragAndDrop::dad3dRezObjectOnLand, // Dest: DT_LAND
-	},
-	//	Source: DAD_NOTECARD
-	{
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_NONE
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_SELF
-		&LLToolDragAndDrop::dad3dGiveInventory, // Dest: DT_AVATAR
-		&LLToolDragAndDrop::dad3dUpdateInventory, // Dest: DT_OBJECT
-		&LLToolDragAndDrop::dad3dNULL,//dad3dAssetOnLand, // Dest: DT_LAND
-	},
-	//	Source: DAD_CATEGORY
-	{
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_NONE
-		&LLToolDragAndDrop::dad3dWearCategory, // Dest: DT_SELF
-		&LLToolDragAndDrop::dad3dGiveInventoryCategory, // Dest: DT_AVATAR
-		&LLToolDragAndDrop::dad3dUpdateInventoryCategory, // Dest: DT_OBJECT
-		&LLToolDragAndDrop::dad3dNULL,//dad3dCategoryOnLand, // Dest: DT_LAND
-	},
-	//	Source: DAD_ROOT
-	{
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_NONE
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_SELF
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_AVATAR
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_OBJECT
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_LAND
-	},
-	//	Source: DAD_BODYPART
-	{
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_NONE
-		&LLToolDragAndDrop::dad3dWearItem, // Dest: DT_SELF
-		&LLToolDragAndDrop::dad3dGiveInventory, // Dest: DT_AVATAR
-		&LLToolDragAndDrop::dad3dUpdateInventory, // Dest: DT_OBJECT
-		&LLToolDragAndDrop::dad3dNULL,//dad3dAssetOnLand, // Dest: DT_LAND
-	},
-	//	Source: DAD_ANIMATION
+		return (entry->mFunctions[(U8)drop_target]);
+	}
+	return &LLToolDragAndDrop::dad3dNULL;
+}
+
+LLToolDragAndDrop::LLDragAndDropDictionary::LLDragAndDropDictionary()
+{
+ 	//       										 DT_NONE                         DT_SELF                                        DT_AVATAR                   					DT_OBJECT                       					DT_LAND
+	//      										|-------------------------------|----------------------------------------------|-----------------------------------------------|---------------------------------------------------|--------------------------------|
+	addEntry(DAD_NONE, 			new DragAndDropEntry(&LLToolDragAndDrop::dad3dNULL,	&LLToolDragAndDrop::dad3dNULL,					&LLToolDragAndDrop::dad3dNULL,					&LLToolDragAndDrop::dad3dNULL,						&LLToolDragAndDrop::dad3dNULL));
+	addEntry(DAD_TEXTURE, 		new DragAndDropEntry(&LLToolDragAndDrop::dad3dNULL,	&LLToolDragAndDrop::dad3dNULL,					&LLToolDragAndDrop::dad3dGiveInventory,			&LLToolDragAndDrop::dad3dTextureObject,				&LLToolDragAndDrop::dad3dNULL));
+	addEntry(DAD_SOUND, 		new DragAndDropEntry(&LLToolDragAndDrop::dad3dNULL,	&LLToolDragAndDrop::dad3dNULL,					&LLToolDragAndDrop::dad3dGiveInventory,			&LLToolDragAndDrop::dad3dUpdateInventory,			&LLToolDragAndDrop::dad3dNULL));
+	addEntry(DAD_CALLINGCARD, 	new DragAndDropEntry(&LLToolDragAndDrop::dad3dNULL,	&LLToolDragAndDrop::dad3dNULL,					&LLToolDragAndDrop::dad3dGiveInventory, 		&LLToolDragAndDrop::dad3dUpdateInventory, 			&LLToolDragAndDrop::dad3dNULL));
+	addEntry(DAD_LANDMARK, 		new DragAndDropEntry(&LLToolDragAndDrop::dad3dNULL, &LLToolDragAndDrop::dad3dNULL, 					&LLToolDragAndDrop::dad3dGiveInventory, 		&LLToolDragAndDrop::dad3dUpdateInventory, 			&LLToolDragAndDrop::dad3dNULL));
+	addEntry(DAD_SCRIPT, 		new DragAndDropEntry(&LLToolDragAndDrop::dad3dNULL, &LLToolDragAndDrop::dad3dNULL, 					&LLToolDragAndDrop::dad3dGiveInventory, 		&LLToolDragAndDrop::dad3dRezScript, 				&LLToolDragAndDrop::dad3dNULL));
+	addEntry(DAD_CLOTHING, 		new DragAndDropEntry(&LLToolDragAndDrop::dad3dNULL, &LLToolDragAndDrop::dad3dWearItem, 				&LLToolDragAndDrop::dad3dGiveInventory, 		&LLToolDragAndDrop::dad3dUpdateInventory, 			&LLToolDragAndDrop::dad3dNULL));
+	addEntry(DAD_OBJECT, 		new DragAndDropEntry(&LLToolDragAndDrop::dad3dNULL, &LLToolDragAndDrop::dad3dRezAttachmentFromInv,	&LLToolDragAndDrop::dad3dGiveInventoryObject,	&LLToolDragAndDrop::dad3dRezObjectOnObject, 		&LLToolDragAndDrop::dad3dRezObjectOnLand));
+	addEntry(DAD_NOTECARD, 		new DragAndDropEntry(&LLToolDragAndDrop::dad3dNULL, &LLToolDragAndDrop::dad3dNULL, 					&LLToolDragAndDrop::dad3dGiveInventory, 		&LLToolDragAndDrop::dad3dUpdateInventory, 			&LLToolDragAndDrop::dad3dNULL));
+	addEntry(DAD_CATEGORY, 		new DragAndDropEntry(&LLToolDragAndDrop::dad3dNULL, &LLToolDragAndDrop::dad3dWearCategory,			&LLToolDragAndDrop::dad3dGiveInventoryCategory,	&LLToolDragAndDrop::dad3dUpdateInventoryCategory,	&LLToolDragAndDrop::dad3dNULL));
+	addEntry(DAD_ROOT_CATEGORY, new DragAndDropEntry(&LLToolDragAndDrop::dad3dNULL,	&LLToolDragAndDrop::dad3dNULL,					&LLToolDragAndDrop::dad3dNULL,					&LLToolDragAndDrop::dad3dNULL,						&LLToolDragAndDrop::dad3dNULL));
+	addEntry(DAD_BODYPART, 		new DragAndDropEntry(&LLToolDragAndDrop::dad3dNULL,	&LLToolDragAndDrop::dad3dWearItem,				&LLToolDragAndDrop::dad3dGiveInventory,			&LLToolDragAndDrop::dad3dUpdateInventory,			&LLToolDragAndDrop::dad3dNULL));
+	addEntry(DAD_ANIMATION, 	new DragAndDropEntry(&LLToolDragAndDrop::dad3dNULL,	&LLToolDragAndDrop::dad3dNULL,					&LLToolDragAndDrop::dad3dGiveInventory,			&LLToolDragAndDrop::dad3dUpdateInventory,			&LLToolDragAndDrop::dad3dNULL));
+	addEntry(DAD_GESTURE, 		new DragAndDropEntry(&LLToolDragAndDrop::dad3dNULL,	&LLToolDragAndDrop::dad3dActivateGesture,		&LLToolDragAndDrop::dad3dGiveInventory,			&LLToolDragAndDrop::dad3dUpdateInventory,			&LLToolDragAndDrop::dad3dNULL));
+	addEntry(DAD_LINK, 			new DragAndDropEntry(&LLToolDragAndDrop::dad3dNULL,	&LLToolDragAndDrop::dad3dNULL,					&LLToolDragAndDrop::dad3dNULL,					&LLToolDragAndDrop::dad3dNULL,						&LLToolDragAndDrop::dad3dNULL));
+	addEntry(DAD_MESH, 			new DragAndDropEntry(&LLToolDragAndDrop::dad3dNULL,	&LLToolDragAndDrop::dad3dNULL,					&LLToolDragAndDrop::dad3dGiveInventory,			&LLToolDragAndDrop::dad3dMeshObject,				&LLToolDragAndDrop::dad3dNULL));
 	// TODO: animation on self could play it?  edit it?
-	{
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_NONE
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_SELF
-		&LLToolDragAndDrop::dad3dGiveInventory, // Dest: DT_AVATAR
-		&LLToolDragAndDrop::dad3dUpdateInventory, // Dest: DT_OBJECT
-		&LLToolDragAndDrop::dad3dNULL,//dad3dAssetOnLand, // Dest: DT_LAND
-	},
-	//	Source: DAD_GESTURE
 	// TODO: gesture on self could play it?  edit it?
-	{
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_NONE
-		&LLToolDragAndDrop::dad3dActivateGesture, // Dest: DT_SELF
-		&LLToolDragAndDrop::dad3dGiveInventory, // Dest: DT_AVATAR
-		&LLToolDragAndDrop::dad3dUpdateInventory, // Dest: DT_OBJECT
-		&LLToolDragAndDrop::dad3dNULL,//dad3dAssetOnLand, // Dest: DT_LAND
-	},
-	//	Source: DAD_LINK
-	// TODO: gesture on self could play it?  edit it?
-	{
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_NONE
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_SELF
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_AVATAR
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_OBJECT
-		&LLToolDragAndDrop::dad3dNULL,//dad3dAssetOnLand, // Dest: DT_LAND
-	},
-	//	Source: DAD_MESH
-	// TODO: gesture on self could play it?  edit it?
-	{
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_NONE
-		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_SELF
-		&LLToolDragAndDrop::dad3dGiveInventory, // Dest: DT_AVATAR
-		&LLToolDragAndDrop::dad3dMeshObject, // Dest: DT_OBJECT
-		&LLToolDragAndDrop::dad3dNULL,//dad3dAssetOnLand, // Dest: DT_LAND
-	},
 };
 
 LLToolDragAndDrop::LLToolDragAndDrop()
@@ -942,40 +854,41 @@ void LLToolDragAndDrop::dragOrDrop3D( S32 x, S32 y, MASK mask, BOOL drop, EAccep
 
 void LLToolDragAndDrop::pickCallback(const LLPickInfo& pick_info)
 {
+	LLToolDragAndDrop* self = LLToolDragAndDrop::getInstance();
 	EDropTarget target = DT_NONE;
 	S32	hit_face = -1;
 
 	LLViewerObject* hit_obj = pick_info.getObject();
 	LLSelectMgr::getInstance()->unhighlightAll();
+	bool highlight_object = false;
 
 	// Treat attachments as part of the avatar they are attached to.
 	if (hit_obj)
 	{
 		// don't allow drag and drop on grass, trees, etc.
-		if(pick_info.mPickType == LLPickInfo::PICK_FLORA)
+		if (pick_info.mPickType == LLPickInfo::PICK_FLORA)
 		{
-			LLToolDragAndDrop::getInstance()->mCursor = UI_CURSOR_NO;
-			gViewerWindow->getWindow()->setCursor( LLToolDragAndDrop::getInstance()->mCursor );
+			self->mCursor = UI_CURSOR_NO;
+			gViewerWindow->getWindow()->setCursor(self->mCursor);
 			return;
 		}
 
-		if(hit_obj->isAttachment() && !hit_obj->isHUDAttachment())
+		if (hit_obj->isAttachment() && !hit_obj->isHUDAttachment())
 		{
-			LLVOAvatar* avatar = LLVOAvatar::findAvatarFromAttachment( hit_obj );
-			if( !avatar )
+			LLVOAvatar* avatar = LLVOAvatar::findAvatarFromAttachment(hit_obj);
+			if (!avatar)
 			{
-				LLToolDragAndDrop::getInstance()->mLastAccept = ACCEPT_NO;
-				LLToolDragAndDrop::getInstance()->mCursor = UI_CURSOR_NO;
-				gViewerWindow->getWindow()->setCursor( LLToolDragAndDrop::getInstance()->mCursor );
+				self->mLastAccept = ACCEPT_NO;
+				self->mCursor = UI_CURSOR_NO;
+				gViewerWindow->getWindow()->setCursor(self->mCursor);
 				return;
 			}
-			
 			hit_obj = avatar;
 		}
 
-		if(hit_obj->isAvatar())
+		if (hit_obj->isAvatar())
 		{
-			if(((LLVOAvatar*) hit_obj)->isSelf())
+			if (((LLVOAvatar*) hit_obj)->isSelf())
 			{
 				target = DT_SELF;
 				hit_face = -1;
@@ -990,67 +903,75 @@ void LLToolDragAndDrop::pickCallback(const LLPickInfo& pick_info)
 		{
 			target = DT_OBJECT;
 			hit_face = pick_info.mObjectFace;
-			// if any item being dragged will be applied to the object under our cursor
-			// highlight that object
-			for (S32 i = 0; i < (S32)LLToolDragAndDrop::getInstance()->mCargoIDs.size(); i++)
-			{
-				if (LLToolDragAndDrop::getInstance()->mCargoTypes[i] != DAD_OBJECT || (pick_info.mKeyMask & MASK_CONTROL))
-				{
-					LLSelectMgr::getInstance()->highlightObjectAndFamily(hit_obj);
-					break;
-				}
-			}
+			highlight_object = true;
 		}
 	}
-	else if(pick_info.mPickType == LLPickInfo::PICK_LAND)
+	else if (pick_info.mPickType == LLPickInfo::PICK_LAND)
 	{
 		target = DT_LAND;
 		hit_face = -1;
 	}
 
-	LLToolDragAndDrop::getInstance()->mLastAccept = ACCEPT_YES_MULTI;
+	self->mLastAccept = ACCEPT_YES_MULTI;
 
-	for (LLToolDragAndDrop::getInstance()->mCurItemIndex = 0; LLToolDragAndDrop::getInstance()->mCurItemIndex < (S32)LLToolDragAndDrop::getInstance()->mCargoIDs.size(); 
-		LLToolDragAndDrop::getInstance()->mCurItemIndex++)
+	for (self->mCurItemIndex = 0;
+		 self->mCurItemIndex < (S32)self->mCargoIDs.size();
+		 self->mCurItemIndex++)
 	{
+		const S32 item_index = self->mCurItemIndex;
+		const EDragAndDropType dad_type = self->mCargoTypes[item_index];
 		// Call the right implementation function
-		LLToolDragAndDrop::getInstance()->mLastAccept = (EAcceptance)llmin(
-			(U32)LLToolDragAndDrop::getInstance()->mLastAccept,
-			(U32)callMemberFunction((*LLToolDragAndDrop::getInstance()), 
-				LLToolDragAndDrop::getInstance()->sDragAndDrop3d[LLToolDragAndDrop::getInstance()->mCargoTypes[LLToolDragAndDrop::getInstance()->mCurItemIndex]][target])
-				(hit_obj, hit_face, pick_info.mKeyMask, FALSE));
+		self->mLastAccept = (EAcceptance)llmin(
+			(U32)self->mLastAccept,
+			(U32)callMemberFunction(*self,
+									LLDragAndDropDictionary::instance().get(dad_type, target))
+										(hit_obj, hit_face, pick_info.mKeyMask, FALSE));
 	}
 
-	if (LLToolDragAndDrop::getInstance()->mDrop &&
-	    (U32)LLToolDragAndDrop::getInstance()->mLastAccept >= ACCEPT_YES_COPY_SINGLE)
+	if (self->mDrop && (U32)self->mLastAccept >= ACCEPT_YES_COPY_SINGLE)
 	{
 		// if target allows multi-drop or there is only one item being dropped, go ahead
-		if (LLToolDragAndDrop::getInstance()->mLastAccept >= ACCEPT_YES_COPY_MULTI ||
-		    LLToolDragAndDrop::getInstance()->mCargoIDs.size() == 1)
+		if (self->mLastAccept >= ACCEPT_YES_COPY_MULTI ||
+		    self->mCargoIDs.size() == 1)
 		{
 			// Target accepts multi, or cargo is a single-drop
-			for (LLToolDragAndDrop::getInstance()->mCurItemIndex = 0;
-			     LLToolDragAndDrop::getInstance()->mCurItemIndex < (S32)LLToolDragAndDrop::getInstance()->mCargoIDs.size(); 
-			     LLToolDragAndDrop::getInstance()->mCurItemIndex++)
+			for (self->mCurItemIndex = 0;
+			     self->mCurItemIndex < (S32)self->mCargoIDs.size(); 
+			     self->mCurItemIndex++)
 			{
+				const S32 item_index = self->mCurItemIndex;
+				const EDragAndDropType dad_type = self->mCargoTypes[item_index];
 				// Call the right implementation function
-				(U32)callMemberFunction((*LLToolDragAndDrop::getInstance()), 
-							LLToolDragAndDrop::getInstance()->sDragAndDrop3d[LLToolDragAndDrop::getInstance()->mCargoTypes[LLToolDragAndDrop::getInstance()->mCurItemIndex]][target])
-					(hit_obj, hit_face, pick_info.mKeyMask, TRUE);
+				(U32)callMemberFunction(*self, 
+										LLDragAndDropDictionary::instance().get(dad_type, target))
+											(hit_obj, hit_face, pick_info.mKeyMask, TRUE);
 			}
 		}
 		else
 		{
 			// Target does not accept multi, but cargo is multi
-			LLToolDragAndDrop::getInstance()->mLastAccept = ACCEPT_NO;
+			self->mLastAccept = ACCEPT_NO;
 		}
 	}
 
-	ECursorType cursor = LLToolDragAndDrop::getInstance()->acceptanceToCursor( LLToolDragAndDrop::getInstance()->mLastAccept );
-	gViewerWindow->getWindow()->setCursor( cursor );
+	if (highlight_object && self->mLastAccept > ACCEPT_NO_LOCKED)
+	{
+		// if any item being dragged will be applied to the object under our cursor
+		// highlight that object
+		for (S32 i = 0; i < (S32)self->mCargoIDs.size(); i++)
+		{
+			if (self->mCargoTypes[i] != DAD_OBJECT || (pick_info.mKeyMask & MASK_CONTROL))
+			{
+				LLSelectMgr::getInstance()->highlightObjectAndFamily(hit_obj);
+				break;
+			}
+		}
+	}
+	ECursorType cursor = self->acceptanceToCursor(self->mLastAccept);
+	gViewerWindow->getWindow()->setCursor(cursor);
 
-	LLToolDragAndDrop::getInstance()->mLastHitPos = pick_info.mPosGlobal;
-	LLToolDragAndDrop::getInstance()->mLastCameraPos = gAgent.getCameraPositionGlobal();
+	self->mLastHitPos = pick_info.mPosGlobal;
+	self->mLastCameraPos = gAgent.getCameraPositionGlobal();
 }
 
 // static
@@ -1248,11 +1169,11 @@ void LLToolDragAndDrop::dropScript(LLViewerObject* hit_obj,
 {
 	// *HACK: In order to resolve SL-22177, we need to block drags
 	// from notecards and objects onto other objects.
-	if((SOURCE_WORLD == LLToolDragAndDrop::getInstance()->mSource)
-	   || (SOURCE_NOTECARD == LLToolDragAndDrop::getInstance()->mSource))
+	if (LLToolDragAndDrop::getInstance()->mSource == SOURCE_WORLD ||
+		LLToolDragAndDrop::getInstance()->mSource == SOURCE_NOTECARD)
 	{
-		llwarns << "Call to LLToolDragAndDrop::dropScript() from world"
-			<< " or notecard." << llendl;
+		llwarns << "Call to LLToolDragAndDrop::dropScript() from world or notecard."
+				<< llendl;
 		return;
 	}
 	if(hit_obj && item)
@@ -1317,15 +1238,14 @@ void LLToolDragAndDrop::dropObject(LLViewerObject* raycast_target,
 	}
 // [/RLVa:KB]
 
-	//llinfos << "Rezzing object" << llendl;
+	LL_DEBUGS("DragAndDrop") << "Rezzing object" << LL_ENDL;
 	make_ui_sound("UISndObjectRezIn");
 	LLViewerInventoryItem* item;
 	LLViewerInventoryCategory* cat;
 	locateInventory(item, cat);
-	if(!item || !item->isComplete()) return;
-	
-	if (regionp
-		&& (regionp->getRegionFlags() & REGION_FLAGS_SANDBOX))
+	if (!item || !item->isFinished()) return;
+
+	if (regionp && (regionp->getRegionFlags() & REGION_FLAGS_SANDBOX))
 	{
 		LLFirstUse::useSandbox();
 	}
@@ -1425,7 +1345,7 @@ void LLToolDragAndDrop::dropObject(LLViewerObject* raycast_target,
 	pack_permissions_slam(msg, item->getFlags(), item->getPermissions());
 
 	LLUUID folder_id = item->getParentUUID();
-	if((SOURCE_LIBRARY == mSource) || (is_in_trash))
+	if (mSource == SOURCE_LIBRARY || is_in_trash)
 	{
 		// since it's coming from the library or trash, we want to not
 		// 'take' it back to the same place.
@@ -1433,6 +1353,8 @@ void LLToolDragAndDrop::dropObject(LLViewerObject* raycast_target,
 		// *TODO this code isn't working - the parent (FolderID) is still
 		// set when the object is "taken".  so code on the "take" side is
 		// checking for trash and library as well (llviewermenu.cpp)
+		LL_DEBUGS("DragAndDrop") << "Rezzed object parent set to a null UUID"
+								 << LL_ENDL;
 	}
 	if (mSource == SOURCE_NOTECARD)
 	{
@@ -1441,11 +1363,15 @@ void LLToolDragAndDrop::dropObject(LLViewerObject* raycast_target,
 		msg->addUUIDFast(_PREHASH_ObjectID, mObjectID);
 		msg->nextBlockFast(_PREHASH_InventoryData);
 		msg->addUUIDFast(_PREHASH_ItemID, item->getUUID());
+		LL_DEBUGS("DragAndDrop") << "Rezzed object parent set to a notecard"
+								 << LL_ENDL;
 	}
 	else
 	{
 		msg->nextBlockFast(_PREHASH_InventoryData);
 		item->packMessage(msg);
+		LL_DEBUGS("DragAndDrop") << "Rezzed object parent set to category: "
+								 << folder_id.asString() << LL_ENDL;
 	}
 	msg->sendReliable(regionp->getHost());
 	// back out the change. no actual internal changes take place.
@@ -1485,8 +1411,8 @@ void LLToolDragAndDrop::dropInventory(LLViewerObject* hit_obj,
 {
 	// *HACK: In order to resolve SL-22177, we need to block drags
 	// from notecards and objects onto other objects.
-	if((SOURCE_WORLD == LLToolDragAndDrop::getInstance()->mSource)
-	   || (SOURCE_NOTECARD == LLToolDragAndDrop::getInstance()->mSource))
+	if (LLToolDragAndDrop::getInstance()->mSource == SOURCE_WORLD ||
+		LLToolDragAndDrop::getInstance()->mSource == SOURCE_NOTECARD)
 	{
 		llwarns << "Call to LLToolDragAndDrop::dropInventory() from world"
 			<< " or notecard." << llendl;
@@ -1900,9 +1826,6 @@ BOOL LLToolDragAndDrop::isInventoryGiveAcceptable(LLInventoryItem* item)
 	BOOL acceptable = TRUE;
 	switch(item->getType())
 	{
-	case LLAssetType::AT_CALLINGCARD:
-		acceptable = FALSE;
-		break;
 	case LLAssetType::AT_OBJECT:
 		if(my_avatar->isWearingAttachment(item->getUUID()))
 		{
@@ -1973,7 +1896,7 @@ EAcceptance LLToolDragAndDrop::willObjectAcceptInventory(LLViewerObject* obj, LL
 	if(!item || !obj) return ACCEPT_NO;
 	// HACK: downcast
 	LLViewerInventoryItem* vitem = (LLViewerInventoryItem*)item;
-	if(!vitem->isComplete()) return ACCEPT_NO;
+	if (!vitem->isFinished()) return ACCEPT_NO;
 	if (vitem->getIsLinkType()) return ACCEPT_NO; // No giving away links
 
 	// deny attempts to drop from an object onto itself. This is to
@@ -2006,14 +1929,18 @@ EAcceptance LLToolDragAndDrop::willObjectAcceptInventory(LLViewerObject* obj, LL
 			worn = TRUE;
 		}
 		break;
+	case LLAssetType::AT_CALLINGCARD:
+		// Calling Cards in object are disabled for now
+		// because of incomplete LSL support. See STORM-1117.
+		return ACCEPT_NO;
 	default:
-			break;
+		break;
 	}
 	const LLPermissions& perm = item->getPermissions();
 	BOOL modify = (obj->permModify() || obj->flagAllowInventoryAdd());
 	BOOL transfer = FALSE;
-	if((obj->permYouOwner() && (perm.getOwner() == gAgent.getID()))
-	   || perm.allowOperationBy(PERM_TRANSFER, gAgent.getID()))
+	if ((obj->permYouOwner() && perm.getOwner() == gAgent.getID()) ||
+		perm.allowOperationBy(PERM_TRANSFER, gAgent.getID()))
 	{
 		transfer = TRUE;
 	}
@@ -2074,6 +2001,8 @@ bool LLToolDragAndDrop::handleGiveDragAndDrop(LLUUID dest_agent, LLUUID session_
 	case DAD_BODYPART:
 	case DAD_ANIMATION:
 	case DAD_GESTURE:
+	case DAD_CALLINGCARD:
+	case DAD_MESH:
 	{
 		LLViewerInventoryItem* inv_item = (LLViewerInventoryItem*)cargo_data;
 		if(gInventory.getItem(inv_item->getUUID())
@@ -2118,7 +2047,6 @@ bool LLToolDragAndDrop::handleGiveDragAndDrop(LLUUID dest_agent, LLUUID session_
 		}
 		break;
 	}
-	case DAD_CALLINGCARD:
 	default:
 		*accept = ACCEPT_NO;
 		break;
@@ -2136,14 +2064,15 @@ bool LLToolDragAndDrop::handleGiveDragAndDrop(LLUUID dest_agent, LLUUID session_
 EAcceptance LLToolDragAndDrop::dad3dNULL(
 	LLViewerObject*, S32, MASK, BOOL)
 {
-	lldebugs << "LLToolDragAndDrop::dad3dNULL()" << llendl;
+	LL_DEBUGS("DragAndDrop") << "LLToolDragAndDrop::dad3dNULL()" << LL_ENDL;
 	return ACCEPT_NO;
 }
 
 EAcceptance LLToolDragAndDrop::dad3dRezAttachmentFromInv(
 	LLViewerObject* obj, S32 face, MASK mask, BOOL drop)
 {
-	lldebugs << "LLToolDragAndDrop::dad3dRezAttachmentFromInv()" << llendl;
+	LL_DEBUGS("DragAndDrop") << "LLToolDragAndDrop::dad3dRezAttachmentFromInv()"
+							 << LL_ENDL;
 	// must be in the user's inventory
 	if(mSource != SOURCE_AGENT && mSource != SOURCE_LIBRARY)
 	{
@@ -2153,7 +2082,7 @@ EAcceptance LLToolDragAndDrop::dad3dRezAttachmentFromInv(
 	LLViewerInventoryItem* item;
 	LLViewerInventoryCategory* cat;
 	locateInventory(item, cat);
-	if(!item || !item->isComplete()) return ACCEPT_NO;
+	if(!item || !item->isFinished()) return ACCEPT_NO;
 
 	// must not be in the trash
 	const LLUUID trash_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
@@ -2224,11 +2153,12 @@ EAcceptance LLToolDragAndDrop::dad3dRezObjectOnLand(
 		return dad3dRezFromObjectOnLand(obj, face, mask, drop);
 	}
 
-	lldebugs << "LLToolDragAndDrop::dad3dRezObjectOnLand()" << llendl;
+	LL_DEBUGS("DragAndDrop") << "LLToolDragAndDrop::dad3dRezObjectOnLand()"
+							 << LL_ENDL;
 	LLViewerInventoryItem* item;
 	LLViewerInventoryCategory* cat;
 	locateInventory(item, cat);
-	if(!item || !item->isComplete()) return ACCEPT_NO;
+	if(!item || !item->isFinished()) return ACCEPT_NO;
 
 	LLVOAvatar* my_avatar = gAgent.getAvatarObject();
 	if( !my_avatar || my_avatar->isWearingAttachment( item->getUUID() ) )
@@ -2299,11 +2229,12 @@ EAcceptance LLToolDragAndDrop::dad3dRezObjectOnObject(
 		return dad3dRezFromObjectOnObject(obj, face, mask, drop);
 	}
 
-	lldebugs << "LLToolDragAndDrop::dad3dRezObjectOnObject()" << llendl;
+	LL_DEBUGS("DragAndDrop") << "LLToolDragAndDrop::dad3dRezObjectOnObject()"
+							 << LL_ENDL;
 	LLViewerInventoryItem* item;
 	LLViewerInventoryCategory* cat;
 	locateInventory(item, cat);
-	if(!item || !item->isComplete()) return ACCEPT_NO;
+	if(!item || !item->isFinished()) return ACCEPT_NO;
 	LLVOAvatar* my_avatar = gAgent.getAvatarObject();
 	if( !my_avatar || my_avatar->isWearingAttachment( item->getUUID() ) )
 	{
@@ -2371,11 +2302,12 @@ EAcceptance LLToolDragAndDrop::dad3dRezObjectOnObject(
 EAcceptance LLToolDragAndDrop::dad3dRezScript(
 	LLViewerObject* obj, S32 face, MASK mask, BOOL drop)
 {
-	lldebugs << "LLToolDragAndDrop::dad3dRezScript()" << llendl;
+	LL_DEBUGS("DragAndDrop") << "LLToolDragAndDrop::dad3dRezScript()"
+							 << LL_ENDL;
 
 	// *HACK: In order to resolve SL-22177, we need to block drags
 	// from notecards and objects onto other objects.
-	if((SOURCE_WORLD == mSource) || (SOURCE_NOTECARD == mSource))
+	if (SOURCE_WORLD == mSource || SOURCE_NOTECARD == mSource)
 	{
 		return ACCEPT_NO;
 	}
@@ -2383,9 +2315,9 @@ EAcceptance LLToolDragAndDrop::dad3dRezScript(
 	LLViewerInventoryItem* item;
 	LLViewerInventoryCategory* cat;
 	locateInventory(item, cat);
-	if(!item || !item->isComplete()) return ACCEPT_NO;
+	if (!item || !item->isFinished()) return ACCEPT_NO;
 	EAcceptance rv = willObjectAcceptInventory(obj, item);
-	if(drop && (ACCEPT_YES_SINGLE <= rv))
+	if (drop && ACCEPT_YES_SINGLE <= rv)
 	{
 		// rez in the script active by default, rez in inactive if the
 		// control key is being held down.
@@ -2410,7 +2342,8 @@ EAcceptance LLToolDragAndDrop::dad3dApplyToObject(LLViewerObject* obj, S32 face,
 												  MASK mask, BOOL drop,
 												  EDragAndDropType cargo_type)
 {
-	lldebugs << "LLToolDragAndDrop::dad3dApplyToObject()" << llendl;
+	LL_DEBUGS("DragAndDrop") << "LLToolDragAndDrop::dad3dApplyToObject()"
+							 << LL_ENDL;
 
 	// *HACK: In order to resolve SL-22177, we need to block drags
 	// from notecards and objects onto other objects.
@@ -2422,7 +2355,7 @@ EAcceptance LLToolDragAndDrop::dad3dApplyToObject(LLViewerObject* obj, S32 face,
 	LLViewerInventoryItem* item;
 	LLViewerInventoryCategory* cat;
 	locateInventory(item, cat);
-	if(!item || !item->isComplete()) return ACCEPT_NO;
+	if(!item || !item->isFinished()) return ACCEPT_NO;
 	EAcceptance rv = willObjectAcceptInventory(obj, item);
 	if((mask & MASK_CONTROL))
 	{
@@ -2442,7 +2375,7 @@ EAcceptance LLToolDragAndDrop::dad3dApplyToObject(LLViewerObject* obj, S32 face,
 		return ACCEPT_NO;
 	}
 
-	if(drop && (ACCEPT_YES_SINGLE <= rv))
+	if (drop && ACCEPT_YES_SINGLE <= rv)
 	{
 		if (cargo_type == DAD_TEXTURE)
 		{
@@ -2507,13 +2440,13 @@ EAcceptance LLToolDragAndDrop::dad3dTextureSelf(
 EAcceptance LLToolDragAndDrop::dad3dWearItem(
 	LLViewerObject* obj, S32 face, MASK mask, BOOL drop)
 {
-	lldebugs << "LLToolDragAndDrop::dad3dWearItem()" << llendl;
+	LL_DEBUGS("DragAndDrop") << "LLToolDragAndDrop::dad3dWearItem()" << LL_ENDL;
 	LLViewerInventoryItem* item;
 	LLViewerInventoryCategory* cat;
 	locateInventory(item, cat);
-	if(!item || !item->isComplete()) return ACCEPT_NO;
+	if (!item || !item->isFinished()) return ACCEPT_NO;
 
-	if(mSource == SOURCE_AGENT || mSource == SOURCE_LIBRARY)
+	if (mSource == SOURCE_AGENT || mSource == SOURCE_LIBRARY)
 	{
 		// it's in the agent inventory
 		const LLUUID trash_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
@@ -2569,11 +2502,12 @@ EAcceptance LLToolDragAndDrop::dad3dWearItem(
 EAcceptance LLToolDragAndDrop::dad3dActivateGesture(
 	LLViewerObject* obj, S32 face, MASK mask, BOOL drop)
 {
-	lldebugs << "LLToolDragAndDrop::dad3dActivateGesture()" << llendl;
+	LL_DEBUGS("DragAndDrop") << "LLToolDragAndDrop::dad3dActivateGesture()"
+							 << LL_ENDL;
 	LLViewerInventoryItem* item;
 	LLViewerInventoryCategory* cat;
 	locateInventory(item, cat);
-	if(!item || !item->isComplete()) return ACCEPT_NO;
+	if(!item || !item->isFinished()) return ACCEPT_NO;
 
 	if(mSource == SOURCE_AGENT || mSource == SOURCE_LIBRARY)
 	{
@@ -2618,7 +2552,8 @@ EAcceptance LLToolDragAndDrop::dad3dActivateGesture(
 EAcceptance LLToolDragAndDrop::dad3dWearCategory(
 	LLViewerObject* obj, S32 face, MASK mask, BOOL drop)
 {
-	lldebugs << "LLToolDragAndDrop::dad3dWearCategory()" << llendl;
+	LL_DEBUGS("DragAndDrop") << "LLToolDragAndDrop::dad3dWearCategory()"
+							 << LL_ENDL;
 	LLViewerInventoryItem* item;
 	LLViewerInventoryCategory* category;
 	locateInventory(item, category);
@@ -2669,11 +2604,12 @@ EAcceptance LLToolDragAndDrop::dad3dWearCategory(
 EAcceptance LLToolDragAndDrop::dad3dUpdateInventory(
 	LLViewerObject* obj, S32 face, MASK mask, BOOL drop)
 {
-	lldebugs << "LLToolDragAndDrop::dadUpdateInventory()" << llendl;
+	LL_DEBUGS("DragAndDrop") << "LLToolDragAndDrop::dadUpdateInventory()"
+							 << LL_ENDL;
 
 	// *HACK: In order to resolve SL-22177, we need to block drags
 	// from notecards and objects onto other objects.
-	if((SOURCE_WORLD == mSource) || (SOURCE_NOTECARD == mSource))
+	if (mSource == SOURCE_WORLD || mSource == SOURCE_NOTECARD)
 	{
 		return ACCEPT_NO;
 	}
@@ -2681,7 +2617,7 @@ EAcceptance LLToolDragAndDrop::dad3dUpdateInventory(
 	LLViewerInventoryItem* item;
 	LLViewerInventoryCategory* cat;
 	locateInventory(item, cat);
-	if(!item || !item->isComplete()) return ACCEPT_NO;
+	if(!item || !item->isFinished()) return ACCEPT_NO;
 	LLViewerObject* root_object = obj;
 	if (obj && obj->getParent())
 	{
@@ -2693,7 +2629,7 @@ EAcceptance LLToolDragAndDrop::dad3dUpdateInventory(
 	}
 
 	EAcceptance rv = willObjectAcceptInventory(root_object, item);
-	if(root_object && drop && (ACCEPT_YES_COPY_SINGLE <= rv))
+	if (root_object && drop && (ACCEPT_YES_COPY_SINGLE <= rv))
 	{
 		dropInventory(root_object, item, mSource, mSourceID);
 	}
@@ -2709,8 +2645,9 @@ BOOL LLToolDragAndDrop::dadUpdateInventory(LLViewerObject* obj, BOOL drop)
 EAcceptance LLToolDragAndDrop::dad3dUpdateInventoryCategory(
 	LLViewerObject* obj, S32 face, MASK mask, BOOL drop)
 {
-	lldebugs << "LLToolDragAndDrop::dad3dUpdateInventoryCategory()" << llendl;
-	if (NULL==obj)
+	LL_DEBUGS("DragAndDrop") << "LLToolDragAndDrop::dad3dUpdateInventoryCategory()"
+							 << LL_ENDL;
+	if (!obj)
 	{
 		llwarns << "obj is NULL; aborting func with ACCEPT_NO" << llendl;
 		return ACCEPT_NO;
@@ -2720,12 +2657,17 @@ EAcceptance LLToolDragAndDrop::dad3dUpdateInventoryCategory(
 	{
 		return ACCEPT_NO;
 	}
-	if(obj->isAttachment()) return ACCEPT_NO_LOCKED;
+	if (obj->isAttachment())
+	{
+		return ACCEPT_NO_LOCKED;
+	}
 	LLViewerInventoryItem* item;
 	LLViewerInventoryCategory* cat;
 	locateInventory(item, cat);
-	if(!cat) return ACCEPT_NO;
-	EAcceptance rv = ACCEPT_NO;
+	if (!cat) 
+	{
+		return ACCEPT_NO;
+	}
 
 	// find all the items in the category
 	LLDroppableItem droppable(!obj->permYouOwner());
@@ -2751,6 +2693,8 @@ EAcceptance LLToolDragAndDrop::dad3dUpdateInventoryCategory(
 		}
 	}
 
+	EAcceptance rv = ACCEPT_NO;
+
 	// Check for accept
 	S32 i;
 	S32 count = cats.count();
@@ -2759,8 +2703,8 @@ EAcceptance LLToolDragAndDrop::dad3dUpdateInventoryCategory(
 		rv = gInventory.isCategoryComplete(cats.get(i)->getUUID()) ? ACCEPT_YES_MULTI : ACCEPT_NO;
 		if(rv < ACCEPT_YES_SINGLE)
 		{
-			lldebugs << "Category " << cats.get(i)->getUUID()
-					 << "is not complete." << llendl;
+			LL_DEBUGS("DragAndDrop") << "Category " << cats.get(i)->getUUID()
+									 << "is not complete." << LL_ENDL;
 			break;
 		}
 	}
@@ -2769,18 +2713,26 @@ EAcceptance LLToolDragAndDrop::dad3dUpdateInventoryCategory(
 		count = items.count();
 		for(i = 0; i < count; ++i)
 		{
+			/*
+			// Pass the base objects, not the links.
+			if (item && item->getIsLinkType())
+			{
+				item = item->getLinkedItem();
+				(*item_iter) = item;
+			}
+			*/
 			rv = willObjectAcceptInventory(root_object, items.get(i));
 			if(rv < ACCEPT_YES_COPY_SINGLE)
 			{
-				lldebugs << "Object will not accept "
-						 << items.get(i)->getUUID() << llendl;
+				LL_DEBUGS("DragAndDrop") << "Object will not accept "
+										 << items.get(i)->getUUID() << LL_ENDL;
 				break;
 			}
 		}
 	}
 
-	// if every item is accepted, go ahead and send it on.
-	if(drop && (ACCEPT_YES_COPY_SINGLE <= rv))
+	// if every item is accepted, send it on.
+	if (drop && ACCEPT_YES_COPY_SINGLE <= rv)
 	{
 		S32 count = items.count();
 		LLInventoryFetchObserver::item_ref_t ids;
@@ -2792,7 +2744,7 @@ EAcceptance LLToolDragAndDrop::dad3dUpdateInventoryCategory(
 		LLCategoryDropObserver* dropper;
 		dropper = new LLCategoryDropObserver(obj->getID(), mSource);
 		dropper->fetchItems(ids);
-		if(dropper->isEverythingComplete())
+		if (dropper->isFinished())
 		{
 			dropper->done();
 		}
@@ -2814,7 +2766,8 @@ BOOL LLToolDragAndDrop::dadUpdateInventoryCategory(LLViewerObject* obj,
 EAcceptance LLToolDragAndDrop::dad3dGiveInventoryObject(
 	LLViewerObject* obj, S32 face, MASK mask, BOOL drop)
 {
-	lldebugs << "LLToolDragAndDrop::dad3dGiveInventoryObject()" << llendl;
+	LL_DEBUGS("DragAndDrop") << "LLToolDragAndDrop::dad3dGiveInventoryObject()"
+							 << LL_ENDL;
 
 	// item has to be in agent inventory.
 	if(mSource != SOURCE_AGENT) return ACCEPT_NO;
@@ -2823,8 +2776,8 @@ EAcceptance LLToolDragAndDrop::dad3dGiveInventoryObject(
 	LLViewerInventoryItem* item;
 	LLViewerInventoryCategory* cat;
 	locateInventory(item, cat);
-	if(!item || !item->isComplete()) return ACCEPT_NO;
-	if(!item->getPermissions().allowOperationBy(PERM_TRANSFER, gAgent.getID()))
+	if (!item || !item->isFinished()) return ACCEPT_NO;
+	if (!item->getPermissions().allowOperationBy(PERM_TRANSFER, gAgent.getID()))
 	{
 		// cannot give away no-transfer objects
 		return ACCEPT_NO;
@@ -2852,14 +2805,15 @@ EAcceptance LLToolDragAndDrop::dad3dGiveInventoryObject(
 EAcceptance LLToolDragAndDrop::dad3dGiveInventory(
 	LLViewerObject* obj, S32 face, MASK mask, BOOL drop)
 {
-	lldebugs << "LLToolDragAndDrop::dad3dGiveInventory()" << llendl;
+	LL_DEBUGS("DragAndDrop") << "LLToolDragAndDrop::dad3dGiveInventory()"
+							 << LL_ENDL;
 	// item has to be in agent inventory.
 	if(mSource != SOURCE_AGENT) return ACCEPT_NO;
 	LLViewerInventoryItem* item;
 	LLViewerInventoryCategory* cat;
 	locateInventory(item, cat);
-	if(!item || !item->isComplete()) return ACCEPT_NO;
-	if(!isInventoryGiveAcceptable(item))
+	if (!item || !item->isFinished()) return ACCEPT_NO;
+	if (!isInventoryGiveAcceptable(item))
 	{
 		return ACCEPT_NO;
 	}
@@ -2875,7 +2829,8 @@ EAcceptance LLToolDragAndDrop::dad3dGiveInventory(
 EAcceptance LLToolDragAndDrop::dad3dGiveInventoryCategory(
 	LLViewerObject* obj, S32 face, MASK mask, BOOL drop)
 {
-	lldebugs << "LLToolDragAndDrop::dad3dGiveInventoryCategory()" << llendl;
+	LL_DEBUGS("DragAndDrop") << "LLToolDragAndDrop::dad3dGiveInventoryCategory()"
+							 << LL_ENDL;
 	if(drop && obj)
 	{
 		LLViewerInventoryItem* item;
@@ -2893,11 +2848,12 @@ EAcceptance LLToolDragAndDrop::dad3dGiveInventoryCategory(
 EAcceptance LLToolDragAndDrop::dad3dRezFromObjectOnLand(
 	LLViewerObject* obj, S32 face, MASK mask, BOOL drop)
 {
-	lldebugs << "LLToolDragAndDrop::dad3dRezFromObjectOnLand()" << llendl;
-	LLViewerInventoryItem* item = NULL;
-	LLViewerInventoryCategory* cat = NULL;
+	LL_DEBUGS("DragAndDrop") << "LLToolDragAndDrop::dad3dRezFromObjectOnLand()"
+							 << LL_ENDL;
+	LLViewerInventoryItem* item;
+	LLViewerInventoryCategory* cat;
 	locateInventory(item, cat);
-	if(!item || !item->isComplete()) return ACCEPT_NO;
+	if(!item || !item->isFinished()) return ACCEPT_NO;
 
 	if(!gAgent.allowOperation(PERM_COPY, item->getPermissions())
 		|| !item->getPermissions().allowTransferTo(LLUUID::null))
@@ -2914,11 +2870,12 @@ EAcceptance LLToolDragAndDrop::dad3dRezFromObjectOnLand(
 EAcceptance LLToolDragAndDrop::dad3dRezFromObjectOnObject(
 	LLViewerObject* obj, S32 face, MASK mask, BOOL drop)
 {
-	lldebugs << "LLToolDragAndDrop::dad3dRezFromObjectOnObject()" << llendl;
+	LL_DEBUGS("DragAndDrop") << "LLToolDragAndDrop::dad3dRezFromObjectOnObject()"
+							 << LL_ENDL;
 	LLViewerInventoryItem* item;
 	LLViewerInventoryCategory* cat;
 	locateInventory(item, cat);
-	if(!item || !item->isComplete()) return ACCEPT_NO;
+	if(!item || !item->isFinished()) return ACCEPT_NO;
 	if((mask & MASK_CONTROL))
 	{
 		// *HACK: In order to resolve SL-22177, we need to block drags
@@ -2951,7 +2908,8 @@ EAcceptance LLToolDragAndDrop::dad3dCategoryOnLand(
 {
 	return ACCEPT_NO;
 	/*
-	lldebugs << "LLToolDragAndDrop::dad3dCategoryOnLand()" << llendl;
+	LL_DEBUGS("DragAndDrop") << "LLToolDragAndDrop::dad3dCategoryOnLand()"
+							 << LL_ENDL;
 	LLInventoryItem* item;
 	LLInventoryCategory* cat;
 	locateInventory(item, cat);
@@ -2989,7 +2947,8 @@ EAcceptance LLToolDragAndDrop::dad3dAssetOnLand(
 {
 	return ACCEPT_NO;
 	/*
-	lldebugs << "LLToolDragAndDrop::dad3dAssetOnLand()" << llendl;
+	LL_DEBUGS("DragAndDrop") << "LLToolDragAndDrop::dad3dAssetOnLand()"
+							 << LL_ENDL;
 	LLViewerInventoryCategory::cat_array_t cats;
 	LLViewerInventoryItem::item_array_t items;
 	LLViewerInventoryItem::item_array_t copyable_items;
@@ -3021,8 +2980,8 @@ LLInventoryObject* LLToolDragAndDrop::locateInventory(
 {
 	item = NULL;
 	cat = NULL;
-	if(mCargoIDs.empty()) return NULL;
-	if((mSource == SOURCE_AGENT) || (mSource == SOURCE_LIBRARY))
+	if (mCargoIDs.empty()) return NULL;
+	if (mSource == SOURCE_AGENT || mSource == SOURCE_LIBRARY)
 	{
 		// The object should be in user inventory.
 		item = (LLViewerInventoryItem*)gInventory.getItem(mCargoIDs[mCurItemIndex]);
@@ -3063,8 +3022,8 @@ LLInventoryObject* LLToolDragAndDrop::locateInventory(
 LLInventoryObject* LLToolDragAndDrop::locateMultipleInventory(LLViewerInventoryCategory::cat_array_t& cats,
 															  LLViewerInventoryItem::item_array_t& items)
 {
-	if(mCargoIDs.count() == 0) return NULL;
-	if((mSource == SOURCE_AGENT) || (mSource == SOURCE_LIBRARY))
+	if (mCargoIDs.count() == 0) return NULL;
+	if (mSource == SOURCE_AGENT || mSource == SOURCE_LIBRARY)
 	{
 		// The object should be in user inventory.
 		for (S32 i = 0; i < mCargoIDs.count(); i++)

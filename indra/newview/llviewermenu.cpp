@@ -259,8 +259,6 @@ BOOL enable_object_build(void*);
 LLVOAvatar* find_avatar_from_object( LLViewerObject* object );
 LLVOAvatar* find_avatar_from_object( const LLUUID& object_id );
 
-void handle_test_load_url(void*);
-
 //
 // Evil hackish imported globals
 //
@@ -1012,6 +1010,12 @@ void init_client_menu(LLMenuGL* menu)
 										(void*) "MouseSmooth"));
 	menu->appendSeparator();
 
+	menu->append(new LLMenuItemCheckGL("HTTP Inventory Fetches",
+										&menu_toggle_control,
+										NULL,
+										&menu_check_control,
+										(void*) "UseHTTPInventory"));
+
 	menu->append(new LLMenuItemCheckGL( "Console Window", 
 										&menu_toggle_control,
 										NULL, 
@@ -1438,7 +1442,7 @@ void init_debug_rendering_menu(LLMenuGL* menu)
 	item = new LLMenuItemCheckGL("HTTP Get Textures", toggle_HTTPGetTextures, NULL, menu_check_control, (void*)"ImagePipelineUseHTTPFetch3");
 	menu->append(item);
 #endif
-	
+
 	item = new LLMenuItemCheckGL("Run Multiple Threads", menu_toggle_control, NULL, menu_check_control, (void*)"RunMultipleThreads");
 	menu->append(item);
 
@@ -4524,9 +4528,12 @@ void handle_take()
 		return;
 	}
 	
-	BOOL you_own_everything = TRUE;
-	BOOL locked_but_takeable_object = FALSE;
-	LLUUID category_id;
+	bool you_own_everything = true;
+	bool locked_but_takeable_object = false;
+	bool ambiguous_destination = false;
+	LLUUID category_id, new_cat_id;
+	LLUUID trash = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
+	LLUUID library = gInventory.getLibraryRootFolderID();
 	
 	for (LLObjectSelection::root_iterator iter = LLSelectMgr::getInstance()->getSelection()->root_begin();
 		 iter != LLSelectMgr::getInstance()->getSelection()->root_end(); iter++)
@@ -4537,69 +4544,45 @@ void handle_take()
 		{
 			if(!object->permYouOwner())
 			{
-				you_own_everything = FALSE;
+				you_own_everything = false;
 			}
 
 			if(!object->permMove())
 			{
-				locked_but_takeable_object = TRUE;
+				locked_but_takeable_object = true;
 			}
 		}
-		if(node->mFolderID.notNull())
+		new_cat_id = node->mFolderID;
+		// Check that the category exists and is not inside the trash
+		// neither inside the library...
+		if (!ambiguous_destination && new_cat_id.notNull() &&
+			gInventory.getCategory(new_cat_id) && new_cat_id != trash &&
+			!gInventory.isObjectDescendentOf(new_cat_id, trash) &&
+			!gInventory.isObjectDescendentOf(new_cat_id, library))
 		{
 			if(category_id.isNull())
 			{
-				category_id = node->mFolderID;
+				category_id = new_cat_id;
 			}
 			else if(category_id != node->mFolderID)
 			{
-				// we have found two potential destinations. break out
-				// now and send to the default location.
-				category_id.setNull();
-				break;
+				// We have found two potential destinations.
+				ambiguous_destination = true;
 			}
 		}
 	}
-	if(category_id.notNull())
+	if (ambiguous_destination || category_id.isNull())
 	{
-		// there is an unambiguous destination. See if this agent has
-		// such a location and it is not in the trash or library
-		if(!gInventory.getCategory(category_id))
-		{
-			// nope, set to NULL.
-			category_id.setNull();
-		}
-		if(category_id.notNull())
-		{
-		        // check trash
-			LLUUID trash;
-			trash = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
-			if(category_id == trash || gInventory.isObjectDescendentOf(category_id, trash))
-			{
-				category_id.setNull();
-			}
-
-			// check library
-			if(gInventory.isObjectDescendentOf(category_id, gInventoryLibraryRoot))
-			{
-				category_id.setNull();
-			}
-
-		}
-	}
-	if(category_id.isNull())
-	{
+		// Use the default "Objects" category.
 		category_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_OBJECT);
 	}
+
 	LLSD payload;
 	payload["folder_id"] = category_id;
 
 	LLNotification::Params params("ConfirmObjectTakeLock");
-	params.payload(payload)
-		.functor(confirm_take);
-
-	if(locked_but_takeable_object ||
-	   !you_own_everything)
+	params.payload(payload).functor(confirm_take);
+	if (locked_but_takeable_object || !you_own_everything)
 	{
 		if(locked_but_takeable_object && you_own_everything)
 		{
@@ -8614,14 +8597,6 @@ class LLToolsUseSelectionForGrid : public view_listener_t
 	}
 };
 
-void handle_test_load_url(void*)
-{
-	LLWeb::loadURL("");
-	LLWeb::loadURL("hacker://www.google.com/");
-	LLWeb::loadURL("http");
-	LLWeb::loadURL("http://www.google.com/");
-}
-
 //
 // LLViewerMenuHolderGL
 //
@@ -8857,56 +8832,56 @@ class LLEditEnableTakeOff : public view_listener_t
 		bool new_value = false;
 		if (clothing == "shirt")
 		{
-			new_value = LLAgent::selfHasWearable((void *)WT_SHIRT);
+			new_value = LLAgent::selfHasWearable((void *)LLWearableType::WT_SHIRT);
 		}
 		if (clothing == "pants")
 		{
-			new_value = LLAgent::selfHasWearable((void *)WT_PANTS);
+			new_value = LLAgent::selfHasWearable((void *)LLWearableType::WT_PANTS);
 		}
 		if (clothing == "shoes")
 		{
-			new_value = LLAgent::selfHasWearable((void *)WT_SHOES);
+			new_value = LLAgent::selfHasWearable((void *)LLWearableType::WT_SHOES);
 		}
 		if (clothing == "socks")
 		{
-			new_value = LLAgent::selfHasWearable((void *)WT_SOCKS);
+			new_value = LLAgent::selfHasWearable((void *)LLWearableType::WT_SOCKS);
 		}
 		if (clothing == "jacket")
 		{
-			new_value = LLAgent::selfHasWearable((void *)WT_JACKET);
+			new_value = LLAgent::selfHasWearable((void *)LLWearableType::WT_JACKET);
 		}
 		if (clothing == "gloves")
 		{
-			new_value = LLAgent::selfHasWearable((void *)WT_GLOVES);
+			new_value = LLAgent::selfHasWearable((void *)LLWearableType::WT_GLOVES);
 		}
 		if (clothing == "undershirt")
 		{
-			new_value = LLAgent::selfHasWearable((void *)WT_UNDERSHIRT);
+			new_value = LLAgent::selfHasWearable((void *)LLWearableType::WT_UNDERSHIRT);
 		}
 		if (clothing == "underpants")
 		{
-			new_value = LLAgent::selfHasWearable((void *)WT_UNDERPANTS);
+			new_value = LLAgent::selfHasWearable((void *)LLWearableType::WT_UNDERPANTS);
 		}
 		if (clothing == "skirt")
 		{
-			new_value = LLAgent::selfHasWearable((void *)WT_SKIRT);
+			new_value = LLAgent::selfHasWearable((void *)LLWearableType::WT_SKIRT);
 		}
 		if (clothing == "alpha")
 		{
-			new_value = LLAgent::selfHasWearable((void *)WT_ALPHA);
+			new_value = LLAgent::selfHasWearable((void *)LLWearableType::WT_ALPHA);
 		}
 		if (clothing == "tattoo")
 		{
-			new_value = LLAgent::selfHasWearable((void *)WT_TATTOO);
+			new_value = LLAgent::selfHasWearable((void *)LLWearableType::WT_TATTOO);
 		}
 		if (clothing == "physics")
 		{
-			new_value = LLAgent::selfHasWearable((void *)WT_PHYSICS);
+			new_value = LLAgent::selfHasWearable((void *)LLWearableType::WT_PHYSICS);
 		}
 
 // [RLVa:KB] - Checked: 2009-07-07 (RLVa-1.1.3b) | Modified: RLVa-1.1.3b | OK
 		// Why aren't they using LLWearable::typeNameToType()? *confuzzled*
-		if ( (rlv_handler_t::isEnabled()) && (!gRlvWearableLocks.canRemove(LLWearable::typeNameToType(clothing))) )
+		if ( (rlv_handler_t::isEnabled()) && (!gRlvWearableLocks.canRemove(LLWearableType::typeNameToType(clothing))) )
 		{
 			new_value = false;
 		}
@@ -8924,51 +8899,51 @@ class LLEditTakeOff : public view_listener_t
 		std::string clothing = userdata.asString();
 		if (clothing == "shirt")
 		{
-			LLAgent::userRemoveWearable((void*)WT_SHIRT);
+			LLAgent::userRemoveWearable((void*)LLWearableType::WT_SHIRT);
 		}
 		else if (clothing == "pants")
 		{
-			LLAgent::userRemoveWearable((void*)WT_PANTS);
+			LLAgent::userRemoveWearable((void*)LLWearableType::WT_PANTS);
 		}
 		else if (clothing == "shoes")
 		{
-			LLAgent::userRemoveWearable((void*)WT_SHOES);
+			LLAgent::userRemoveWearable((void*)LLWearableType::WT_SHOES);
 		}
 		else if (clothing == "socks")
 		{
-			LLAgent::userRemoveWearable((void*)WT_SOCKS);
+			LLAgent::userRemoveWearable((void*)LLWearableType::WT_SOCKS);
 		}
 		else if (clothing == "jacket")
 		{
-			LLAgent::userRemoveWearable((void*)WT_JACKET);
+			LLAgent::userRemoveWearable((void*)LLWearableType::WT_JACKET);
 		}
 		else if (clothing == "gloves")
 		{
-			LLAgent::userRemoveWearable((void*)WT_GLOVES);
+			LLAgent::userRemoveWearable((void*)LLWearableType::WT_GLOVES);
 		}
 		else if (clothing == "undershirt")
 		{
-			LLAgent::userRemoveWearable((void*)WT_UNDERSHIRT);
+			LLAgent::userRemoveWearable((void*)LLWearableType::WT_UNDERSHIRT);
 		}
 		else if (clothing == "underpants")
 		{
-			LLAgent::userRemoveWearable((void*)WT_UNDERPANTS);
+			LLAgent::userRemoveWearable((void*)LLWearableType::WT_UNDERPANTS);
 		}
 		else if (clothing == "skirt")
 		{
-			LLAgent::userRemoveWearable((void*)WT_SKIRT);
+			LLAgent::userRemoveWearable((void*)LLWearableType::WT_SKIRT);
 		}
 		else if (clothing == "alpha")
 		{
-			LLAgent::userRemoveWearable((void*)WT_ALPHA);
+			LLAgent::userRemoveWearable((void*)LLWearableType::WT_ALPHA);
 		}
 		else if (clothing == "tattoo")
 		{
-			LLAgent::userRemoveWearable((void*)WT_TATTOO);
+			LLAgent::userRemoveWearable((void*)LLWearableType::WT_TATTOO);
 		}
 		else if (clothing == "physics")
 		{
-			LLAgent::userRemoveWearable((void*)WT_PHYSICS);
+			LLAgent::userRemoveWearable((void*)LLWearableType::WT_PHYSICS);
 		}
 		else if (clothing == "all")
 		{

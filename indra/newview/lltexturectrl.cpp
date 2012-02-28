@@ -45,6 +45,7 @@
 #include "llfolderview.h"
 #include "llinventory.h"
 #include "llinventorymodel.h"
+#include "llinventorymodelbackgroundfetch.h"
 #include "llinventoryview.h"
 #include "lllineeditor.h"
 #include "llui.h"
@@ -466,7 +467,7 @@ BOOL LLFloaterTexturePicker::handleKeyHere(KEY key, MASK mask)
 		{
 			if (!root_folder->getCurSelectedItem())
 			{
-				LLFolderViewItem* itemp = root_folder->getItemByID(gAgent.getInventoryRootID());
+				LLFolderViewItem* itemp = root_folder->getItemByID(gInventory.getRootFolderID());
 				if (itemp)
 				{
 					root_folder->setSelection(itemp, FALSE, FALSE);
@@ -1309,7 +1310,7 @@ public:
 	{
 		// We need to find textures in all folders, so get the main
 		// background download going.
-		gInventory.startBackgroundFetch();
+		LLInventoryModelBackgroundFetch::instance().start();
 		gInventory.removeObserver(this);
 		delete this;
 	}
@@ -1330,9 +1331,9 @@ BOOL LLTextureCtrl::handleMouseDown(S32 x, S32 y, MASK mask)
 		showPicker(FALSE);
 
 		//grab textures first...
-		gInventory.startBackgroundFetch(gInventory.findCategoryUUIDForType(LLFolderType::FT_TEXTURE));
+		LLInventoryModelBackgroundFetch::instance().start(gInventory.findCategoryUUIDForType(LLFolderType::FT_TEXTURE));
 		//...then start full inventory fetch.
-		gInventory.startBackgroundFetch();
+		LLInventoryModelBackgroundFetch::instance().start();
 	}
 	return handled;
 }

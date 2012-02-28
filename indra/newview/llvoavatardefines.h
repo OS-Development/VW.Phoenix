@@ -1,6 +1,6 @@
 /** 
- * @file llvoavatar.h
- * @brief Declaration of LLVOAvatar class which is a derivation fo
+ * @file llvoavatardefines.h
+ * @brief Declaration of LLVOAvatarDefines class
  * LLViewerObject
  *
  * $LicenseInfo:firstyear=2001&license=viewergpl$
@@ -37,6 +37,7 @@
 #include <vector>
 #include "llwearable.h"
 #include "llviewerjoint.h"
+#include "lldictionary.h"
 
 namespace LLVOAvatarDefines
 {
@@ -61,7 +62,7 @@ enum ETextureIndex
 	TEX_HEAD_BAKED,			// Pre-composited
 	TEX_UPPER_BAKED,		// Pre-composited
 	TEX_LOWER_BAKED,		// Pre-composited
-	TEX_EYES_BAKED,		// Pre-composited
+	TEX_EYES_BAKED,			// Pre-composited
 	TEX_LOWER_SOCKS,
 	TEX_UPPER_JACKET,
 	TEX_LOWER_JACKET,
@@ -70,7 +71,7 @@ enum ETextureIndex
 	TEX_LOWER_UNDERPANTS,
 	TEX_SKIRT,
 	TEX_SKIRT_BAKED,		// Pre-composited
-	TEX_HAIR_BAKED,     // Pre-composited
+	TEX_HAIR_BAKED,			// Pre-composited
 	TEX_LOWER_ALPHA,
 	TEX_UPPER_ALPHA,
 	TEX_HEAD_ALPHA,
@@ -82,8 +83,6 @@ enum ETextureIndex
 	TEX_NUM_INDICES
 };
 
-typedef std::vector<ETextureIndex> texture_vec_t;
-	
 enum EBakedTextureIndex
 {
 	BAKED_HEAD = 0,
@@ -94,7 +93,6 @@ enum EBakedTextureIndex
 	BAKED_HAIR,
 	BAKED_NUM_INDICES
 };
-typedef std::vector<EBakedTextureIndex> bakedtexture_vec_t;
 
 // Reference IDs for each mesh. Used as indices for vector of joints
 enum EMeshIndex
@@ -109,18 +107,14 @@ enum EMeshIndex
 	MESH_ID_SKIRT,
 	MESH_ID_NUM_INDICES
 };
+
+//--------------------------------------------------------------------
+// Vector Types
+//--------------------------------------------------------------------
+typedef std::vector<ETextureIndex> texture_vec_t;
+typedef std::vector<EBakedTextureIndex> bakedtexture_vec_t;
 typedef std::vector<EMeshIndex> mesh_vec_t;
-
-typedef std::vector<EWearableType> wearables_vec_t;
-
-//--------------------------------------------------------------------------------
-// Convenience Functions
-//--------------------------------------------------------------------------------
-
-// Convert from baked texture to associated texture; e.g. BAKED_HEAD -> TEX_HEAD_BAKED
-ETextureIndex getTextureIndex(EBakedTextureIndex t);
-
-
+typedef std::vector<LLWearableType::EType> wearables_vec_t;
 
 //------------------------------------------------------------------------
 // LLVOAvatarDictionary
@@ -132,84 +126,107 @@ ETextureIndex getTextureIndex(EBakedTextureIndex t);
 //------------------------------------------------------------------------
 class LLVOAvatarDictionary : public LLSingleton<LLVOAvatarDictionary>
 {
+	//--------------------------------------------------------------------
+	// Constructors and Destructors
+	//--------------------------------------------------------------------
 public:
 	LLVOAvatarDictionary();
 	virtual ~LLVOAvatarDictionary();
 	
-	struct TextureDictionaryEntry
+private:
+	void createAssociations();
+
+	//--------------------------------------------------------------------
+	// Local and baked textures
+	//--------------------------------------------------------------------
+public:
+	struct TextureEntry: public LLDictionaryEntry
 	{
-		TextureDictionaryEntry(const std::string &name, 
-							   bool is_local_texture, 
-							   EBakedTextureIndex baked_texture_index = BAKED_NUM_INDICES,
-							   const std::string &default_image_name = "",
-							   EWearableType wearable_type = WT_INVALID);
-		const std::string mName;
-		const std::string mDefaultImageName;
-		const EWearableType mWearableType;
+		TextureEntry(const std::string &name,  // this must match the xml name used by LLTexLayerInfo::parseXml
+					 bool is_local_texture, 
+					 EBakedTextureIndex baked_texture_index = BAKED_NUM_INDICES,
+					 const std::string &default_image_name = "",
+					 LLWearableType::EType wearable_type = LLWearableType::WT_INVALID);
+		const std::string			mDefaultImageName;
+		const LLWearableType::EType	mWearableType;
 		// It's either a local texture xor baked
-		BOOL mIsLocalTexture;
-		BOOL mIsBakedTexture;
+		BOOL						mIsLocalTexture;
+		BOOL						mIsBakedTexture;
 		// If it's a local texture, it may be used by a baked texture
-		BOOL mIsUsedByBakedTexture;
-		EBakedTextureIndex mBakedTextureIndex;
+		BOOL						mIsUsedByBakedTexture;
+		EBakedTextureIndex			mBakedTextureIndex;
 	};
 	
-	struct MeshDictionaryEntry
+	struct Textures : public LLDictionary<ETextureIndex, TextureEntry>
 	{
-		MeshDictionaryEntry(EBakedTextureIndex baked_index, 
-							const std::string &name, 
-							U8 level,
-							LLViewerJoint::PickName pick);
-		const std::string mName; // names of mesh types as they are used in avatar_lad.xml
-		// Levels of Detail for each mesh.  Must match levels of detail present in avatar_lad.xml
+		Textures();
+	} mTextures;
+	const TextureEntry*	getTexture(ETextureIndex index) const	{ return mTextures.lookup(index); }
+	const Textures&		getTextures() const						{ return mTextures; }
+
+	//--------------------------------------------------------------------
+	// Meshes
+	//--------------------------------------------------------------------
+public:
+	struct MeshEntry : public LLDictionaryEntry
+	{
+		MeshEntry(EBakedTextureIndex baked_index, 
+				  const std::string &name,  // names of mesh types as they are used in avatar_lad.xml
+				  U8 level,
+				  LLViewerJoint::PickName pick);
+		// Levels of Detail for each mesh. Must match levels of detail present in avatar_lad.xml
         // Otherwise meshes will be unable to be found, or levels of detail will be ignored
 		const U8 mLOD;
 		const EBakedTextureIndex mBakedID;
 		const LLViewerJoint::PickName mPickName;
 	};
 
-	struct BakedDictionaryEntry
+	struct Meshes : public LLDictionary<EMeshIndex, MeshEntry>
 	{
-		BakedDictionaryEntry(ETextureIndex tex_index, 
-							 const std::string &name, 
-							 U32 num_local_textures, ... );
+		Meshes();
+	} mMeshes;
+	const MeshEntry*	getMesh(EMeshIndex index) const	{ return mMeshes.lookup(index); }
+	const Meshes&		getMeshes() const				{ return mMeshes; }
+
+	//--------------------------------------------------------------------
+	// Baked Textures
+	//--------------------------------------------------------------------
+public:
+	struct BakedEntry : public LLDictionaryEntry
+	{
+		BakedEntry(ETextureIndex tex_index, 
+				   const std::string &name,  // unused, but necessary for templating.
+				   const std::string &hash_name,
+				   U32 num_local_textures, ... ); // # local textures, local texture list, # wearables, wearable list
+		// Local Textures
 		const ETextureIndex mTextureIndex;
-		const std::string mName;
-		texture_vec_t mLocalTextures;
+		texture_vec_t		mLocalTextures;
+		// Wearables
+		const LLUUID 		mWearablesHashID;
+		wearables_vec_t 	mWearables;
 	};
-	
-	struct WearableDictionaryEntry
+
+	struct BakedTextures: public LLDictionary<EBakedTextureIndex, BakedEntry>
 	{
-		WearableDictionaryEntry(const std::string &hash_name,
-								U32 num_wearables, ... );
-		const LLUUID mHashID;
-		wearables_vec_t mWearablesVec;
-	};
+		BakedTextures();
+	} mBakedTextures;
+	const BakedEntry*		getBakedTexture(EBakedTextureIndex index) const	{ return mBakedTextures.lookup(index); }
+	const BakedTextures&	getBakedTextures() const						{ return mBakedTextures; }
 
-	typedef std::map<EBakedTextureIndex, BakedDictionaryEntry*> baked_map_t;
-	typedef std::map<ETextureIndex, TextureDictionaryEntry*> texture_map_t;
-	typedef std::map<EMeshIndex, MeshDictionaryEntry*> mesh_map_t;
-	typedef std::map<EBakedTextureIndex, WearableDictionaryEntry*> wearable_map_t;
+	//--------------------------------------------------------------------
+	// Convenience Functions
+	//--------------------------------------------------------------------
+public:
+	// Convert from baked texture to associated texture; e.g. BAKED_HEAD -> TEX_HEAD_BAKED
+	static ETextureIndex bakedToLocalTextureIndex(EBakedTextureIndex t);
 
-	const MeshDictionaryEntry *getMesh(EMeshIndex index) const;
-	const BakedDictionaryEntry *getBakedTexture(EBakedTextureIndex index) const;
-	const TextureDictionaryEntry *getTexture(ETextureIndex index) const;
-	const WearableDictionaryEntry *getWearable(EBakedTextureIndex index) const;
+	// find a baked texture index based on its name
+	static EBakedTextureIndex findBakedByRegionName(std::string name);
 
-	const texture_map_t &getTextures() const { return mTextureMap; }
-	const baked_map_t &getBakedTextures() const { return mBakedTextureMap; }
-	const mesh_map_t &getMeshes() const { return mMeshMap; }
-	const wearable_map_t &getWearables() const { return mWearableMap; }
-	
-private:
-	void initData();
-	void createAssociations();
+	static const LLUUID getDefaultTextureImageID(ETextureIndex index);
 
-	texture_map_t mTextureMap;
-	baked_map_t mBakedTextureMap;
-	mesh_map_t mMeshMap;
-	wearable_map_t mWearableMap;
-
+	// Given a texture entry, determine which wearable type owns it.
+	static LLWearableType::EType getTEWearableType(ETextureIndex index);
 }; // End LLVOAvatarDictionary
 
 } // End namespace LLVOAvatarDefines
