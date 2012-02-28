@@ -138,7 +138,6 @@ tijdsstempel, #r voor SLURL van uw locatie, #i voor tijd inactief. (bijv. "5 min
         <view_border name="EmDivisorBridge" />
         <check_box label="LSL-Client Bridge inschakelen" name="PhoenixBuildBridge" />
         <check_box label="Radar gebruikt bridge" left_delta="10" name="PhoenixUseBridgeRadar" />
-        <check_box label="Echte online status in profielen" name="PhoenixUseBridgeOnline" />
         <check_box label="Gebruik llMoveToTarget TP" name="PhoenixUseBridgeMoveToTarget" />
       </panel>
 

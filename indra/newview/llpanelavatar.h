@@ -312,8 +312,6 @@ public:
 	void sendAvatarNotesUpdate();
 
 	void sendAvatarPicksRequest();
-	
-	void sendAvatarRatingsRequest();
 
 	void selectTab(S32 tabnum);
 	void selectTabByName(std::string tab_name);
@@ -389,17 +387,6 @@ private:
 	std::string					mLastNotes;
 	LLTabContainer*		mTab;
 	BOOL						mAllowEdit;
-};
-
-class LLPanelAvatarRatingsDownloader : public LLHTTPClient::Responder
-{
-public:
-	LLPanelAvatarRatingsDownloader(LLPanelAvatar *panel);
-	void error(U32 status, const std::string& reason);
-	void completedRaw(U32 status, const std::string& reason, const LLChannelDescriptors& channels, const LLIOPipe::buffer_ptr_t& buffer);
-	
-private:
-	LLPanelAvatar *mPanelAvatar;
 };
 
 // helper funcs

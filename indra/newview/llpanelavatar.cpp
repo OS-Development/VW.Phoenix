@@ -83,7 +83,6 @@
 #include "lluictrlfactory.h"
 #include "llpreviewtexture.h"
 
-#include "jc_lslviewerbridge.h"
 #include "a_phoenixviewerlink.h"
 
 #include "llfloatergroups.h"
@@ -1311,6 +1310,7 @@ void LLPanelAvatarPicks::onClickDelete(void* data)
 									boost::bind(&LLPanelAvatarPicks::callbackDelete, self, _1, _2));
 }
 
+
 // static
 bool LLPanelAvatarPicks::callbackDelete(const LLSD& notification, const LLSD& response)
 {
@@ -1464,8 +1464,6 @@ void LLPanelAvatar::setAvatar(LLViewerObject *avatarp)
 		name.assign("");
 	}
 
-
-
 	// If we have an avatar pointer, they must be online.
 	setAvatarID(avatarp->getID(), name, ONLINE_STATUS_YES);
 }
@@ -1475,24 +1473,18 @@ void LLPanelAvatar::setOnlineStatus(EOnlineStatus online_status)
 {
 	// Online status NO could be because they are hidden
 	// If they are a friend, we may know the truth!
-	if (ONLINE_STATUS_YES != online_status)
+	if ((ONLINE_STATUS_YES != online_status)
+		&& mIsFriend
+		&& (LLAvatarTracker::instance().isBuddyOnline( mAvatarID )))
 	{
-		if(mIsFriend && LLAvatarTracker::instance().isBuddyOnline(mAvatarID) )
-		{
-			online_status = ONLINE_STATUS_YES;
-		}
+		online_status = ONLINE_STATUS_YES;
 	}
+
+	mPanelSecondLife->childSetVisible("online_yes", (online_status == ONLINE_STATUS_YES));
+
 	if(online_status == ONLINE_STATUS_YES)
 	{
-		mPanelSecondLife->childSetVisible("online_yes", TRUE);
 		mPanelSecondLife->childSetColor("online_yes",LLColor4::green);
-		mPanelSecondLife->childSetValue("online_yes","Currently Online");
-	}
-	else
-	{
-		mPanelSecondLife->childSetVisible("online_yes", TRUE);
-		mPanelSecondLife->childSetColor("online_yes",LLColor4::red);
-		mPanelSecondLife->childSetValue("online_yes","Currently Offline");
 	}
 
 	// Since setOnlineStatus gets called after setAvatarID
@@ -1559,7 +1551,7 @@ void LLPanelAvatar::setAvatarID(const LLUUID &avatar_id, const std::string &name
 	mIsFriend = is_agent_friend(mAvatarID); 
 
 	// setOnlineStatus uses mIsFriend
-	if(mIsFriend)setOnlineStatus(online_status);
+	setOnlineStatus(online_status);
 	
 	BOOL own_avatar = (mAvatarID == gAgent.getID() );
 	BOOL avatar_is_friend = LLAvatarTracker::instance().getBuddyInfo(mAvatarID) != NULL;
@@ -1740,7 +1732,6 @@ void LLPanelAvatar::resetGroupList()
 	{
 		return;
 	}
-
 		
 	if (mPanelSecondLife)
 	{
@@ -1979,54 +1970,7 @@ void LLPanelAvatar::sendAvatarPropertiesRequest()
 	msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
 	msg->addUUIDFast(   _PREHASH_AvatarID, mAvatarID);
 	gAgent.sendReliableMessage();
-	
-	sendAvatarRatingsRequest();
 }
-
-// NOTE: This is here as a sort of load indicator if we decide to reimplement the long gone
-// Ratings feature. Should remove before release.
-// We hash the key to pacify paranoid people.
-// We also use POST so that the logs show nothing.
-// (if you think we're going to log every single profile view, even if we wanted to, you're insane.
-// 85k users * how many profiles a day?)
-
-// (Disabled now anyway)
-#if 0
-void LLPanelAvatar::sendAvatarRatingsRequest()
-{
-	LLMD5 hashed_key = LLMD5((unsigned char*)mAvatarID.asString().c_str());
-	// Have to take this slightly obtuse approach because LLHTTPClient::postRaw will delete the data when it's finished.
-	char *hex_cstr;
-	hex_cstr = new char[MD5HEX_STR_SIZE];
-	hashed_key.hex_digest(hex_cstr);
-	LLHTTPClient::postRaw("http://phoenixratings.appspot.com/profile", (U8*)hex_cstr, MD5HEX_STR_SIZE - 1, new LLPanelAvatarRatingsDownloader(this));
-	hex_cstr = NULL;
-}
-
-LLPanelAvatarRatingsDownloader::LLPanelAvatarRatingsDownloader(LLPanelAvatar *panel) : mPanelAvatar(panel)
-{
-	
-}
-
-void LLPanelAvatarRatingsDownloader::error(U32 status, const std::string &reason)
-{
-	LL_WARNS("NewRatings") << "Rating lookup failed (error " << status << "): " << reason << LL_ENDL;
-}
-
-void LLPanelAvatarRatingsDownloader::completedRaw(U32 status, const std::string& reason, const LLChannelDescriptors& channels, const LLIOPipe::buffer_ptr_t& buffer)
-{
-	LLBufferStream istr(channels, buffer.get());
-	LLSD stuff = LLSDSerialize::fromBinary(istr, LLSDSerialize::SIZE_UNLIMITED);
-	std::ostringstream pretty;
-	LLSDSerialize::toPrettyXML(stuff, pretty);
-	LL_INFOS("NewRatings") << "Got some ratings!\n\n" << pretty.str() << LL_ENDL;
-}
-#else
-void LLPanelAvatar::sendAvatarRatingsRequest() { }
-LLPanelAvatarRatingsDownloader::LLPanelAvatarRatingsDownloader(LLPanelAvatar *panel) { }
-void LLPanelAvatarRatingsDownloader::error(U32, const std::string&) { }
-void LLPanelAvatarRatingsDownloader::completedRaw(U32, const std::string&, const LLChannelDescriptors&, const LLIOPipe::buffer_ptr_t&) { }
-#endif
 
 void LLPanelAvatar::sendAvatarNotesUpdate()
 {
