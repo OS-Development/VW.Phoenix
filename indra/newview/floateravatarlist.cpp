@@ -179,7 +179,8 @@ void LLAvatarListEntry::setPosition(LLVector3d position, bool this_sim, bool dra
 	}
 
 	//lgg if we already got a Z value from the bridge, dont over write it here
-	if(position.mdV[VZ] == 0.0)
+    //KC - if CoarseLocationUpdate z of  1020 is the new 0
+    if (position.mdV[VZ] < 0.1 || position.mdV[VZ] == 1020.f)
 	{
 		mPosition.mdV[VX] = position.mdV[VX];
 		mPosition.mdV[VY] = position.mdV[VY];
