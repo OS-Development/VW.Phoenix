@@ -1518,7 +1518,7 @@ void LLFloaterIMPanel::checkPFVS()
 		childSetCommitCallback("prefixViewerToggle", onClickToggleViewerPrefix, this);
 		childSetVisible("prefixViewerToggle",TRUE);
 		childSetVisible("prefixViewerExtraText",TRUE);
-		prefixViewer->setValue(gSavedSettings.getBOOL("PhoenixSupportGroupchatPrefix"));
+		prefixViewer->setValue(gSavedSettings.getBOOL("PhoenixSupportGroupchatPrefix2"));
 	}
 }
 
@@ -2091,7 +2091,7 @@ void LLFloaterIMPanel::onClickToggleViewerPrefix(LLUICtrl* caller, void *data)  
 {
 	LLFloaterIMPanel* self = (LLFloaterIMPanel*)data;
 	BOOL prefixViewer = self->getChild<LLCheckBoxCtrl>("prefixViewerToggle")->getValue();
-	gSavedSettings.setBOOL("PhoenixSupportGroupchatPrefix",prefixViewer);
+	gSavedSettings.setBOOL("PhoenixSupportGroupchatPrefix2",prefixViewer);
 }
 
 // static
@@ -3086,7 +3086,7 @@ void LLFloaterIMPanel::sendMsg()
 			}
 			
 			// AO: PVFS Viewer Prefix
-			static LLCachedControl<bool> chat_prefix(gSavedSettings, "PhoenixSupportGroupchatPrefix");
+			static LLCachedControl<bool> chat_prefix(gSavedSettings, "PhoenixSupportGroupchatPrefix2");
 			if (mPFVS && chat_prefix)
 			{
 				std::string version("");
