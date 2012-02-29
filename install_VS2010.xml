@@ -349,28 +349,28 @@
           <key>windows</key>
           <map>
             <key>md5sum</key>
-						<string>f4c8d035de4b09e7a3401d22c10e0ca3</string>
-						<key>url</key>
-						<uri>https://github.com/downloads/NickyPerian/imprudence/apr_suite-1.4.2-windows-20110217Imp.tar.bz2</uri>
-					</map>
-				</map>
-			</map>
-			<key>ares</key>
-			<map>
-				<key>copyright</key>
-				<string>Copyright 1998 by the Massachusetts Institute of Technology.</string>
-				<key>description</key>
-				<string>Performs DNS requests and name resolves asynchronously. Used with libcurl to keep all HTTP operations async.</string>
-				<key>license</key>
-				<string>c-ares</string>
-				<key>packages</key>
-				<map>
-					<key>darwin</key>
-					<map>
-						<key>md5sum</key>
-						<string>d9ce3ace9235249b7edf6f564de83395</string>
-						<key>url</key>
-						<uri>http://s3.amazonaws.com/viewer-source-downloads/install_pkgs/ares-1.4.0-darwin-20080731b.tar.bz2</uri>
+            <string>f4c8d035de4b09e7a3401d22c10e0ca3</string>
+            <key>url</key>
+            <uri>https://github.com/downloads/NickyPerian/imprudence/apr_suite-1.4.2-windows-20110217Imp.tar.bz2</uri>
+          </map>
+        </map>
+      </map>
+      <key>ares</key>
+      <map>
+        <key>copyright</key>
+        <string>Copyright 1998 by the Massachusetts Institute of Technology.</string>
+        <key>description</key>
+        <string>Performs DNS requests and name resolves asynchronously. Used with libcurl to keep all HTTP operations async.</string>
+        <key>license</key>
+        <string>c-ares</string>
+        <key>packages</key>
+        <map>
+          <key>darwin</key>
+          <map>
+            <key>md5sum</key>
+            <string>cdb2f5c4a5a1f9ecd75bc1dbdd4db8e9</string>
+            <key>url</key>
+            <uri>http://s3.amazonaws.com/viewer-source-downloads/install_pkgs/ares-1.7.1-darwin-20100606.tar.bz2</uri>
           </map>
           <key>linux</key>
           <map>
@@ -1097,9 +1097,9 @@
           <key>linux</key>
           <map>
             <key>md5sum</key>
-            <string>e298a471b7beac15a6d31a8ac3b2bbc7</string>
+            <string>9e7d1ad5b756a3113e1fbeb906807722</string>
             <key>url</key>
-            <uri>file:///C:/Users/Bill/lindenhg/3p/3p-hacd-wip/3p_hacd-0.177-windows-20111204.tar.bz2</uri>
+            <uri>http://downloads.phoenixviewer.com/hacd-linux-20111022.tar.bz2</uri>
           </map>
         </map>
       </map>
