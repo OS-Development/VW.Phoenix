@@ -10210,7 +10210,7 @@
 			<key>Value</key>
 			<integer>0</integer>
 		</map>
-		<key>PhoenixSupportGroupchatPrefix</key>
+		<key>PhoenixSupportGroupchatPrefix2</key>
 		<map>
 			<key>Comment</key>
 			<string>Prefixes "PH" to your chat in the Phoenix-Firestorm Viewer Support group, to insure you receive answers specific to Phoenix.</string>
@@ -10219,7 +10219,7 @@
 			<key>Type</key>
 			<string>Boolean</string>
 			<key>Value</key>
-			<integer>1</integer>
+			<integer>0</integer>
 		</map>
 		<key>PhoenixTagColor</key>
 		<map>
