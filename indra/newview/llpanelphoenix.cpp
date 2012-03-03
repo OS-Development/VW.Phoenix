@@ -420,7 +420,7 @@ BOOL LLPanelPhoenix::postBuild()
 	}
 
     //HACK* Because apparently LLComboBox doesnt set the saved value initially, do it manually here -KC
-	getChild<LLComboBox>("PhoenixClientTagsVisibility")->setCurrentByIndex(gSavedSettings.getU32("PhoenixClientTagsVisibility"));
+	getChild<LLComboBox>("PhoenixClientTagsVisibility2")->setCurrentByIndex(gSavedSettings.getU32("PhoenixClientTagsVisibility2"));
 	getChild<LLComboBox>("PhoenixColorClienttags")->setCurrentByIndex(gSavedSettings.getU32("PhoenixColorClientTags"));
     
 	refresh();

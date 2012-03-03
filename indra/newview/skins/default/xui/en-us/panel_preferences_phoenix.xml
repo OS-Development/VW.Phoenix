@@ -293,10 +293,11 @@
 	  <!--Tags-->
 	  <panel border="true" bottom="-440" follows="left|top|right|bottom" height="440" label="Tags" left="1" mouse_opaque="true" name="Tags" width="517">
         <button bottom="-25" follows="left|top" font="SansSerifSmall" height="18" label="?" name="PhoenixHelp_TeleportLogin" tool_tip="Click here for help regarding the settings in this page." right="490" width="18"/>
-		<text bottom="-30" follows="left|top" font="SansSerifSmall" height="16" left="10" name="tag_text" width="300">Phoenix Tag Color</text>
+      <text bottom="-30" follows="left|top" font="SansSerifSmall" height="16" left="10" name="tag_text" width="512">Note: Do to changes Linden Lab has made, viewer tags will not work in Second Life.</text>
+      <text bottom_delta="-20" follows="left|top" font="SansSerifSmall" height="16" left="10" name="tag_text" width="300">Phoenix Tag Color</text>
         <combo_box name="TagCombo" bottom_delta="-20" left_delta="0" follows="left|top" height="18" width="180" max_chars="128" mouse_opaque="true" tool_tip="Client tag color." />
         <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Show your own color" left_delta="0" mouse_opaque="true" name="PhShowOwnClientColor-toggle" control_name="PhoenixShowOwnClientColor" radio_style="false" width="270" tool_tip="When checked, your Tag will be shown in the given color."/>
-        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Display Client Tags" left_delta="-0" mouse_opaque="true" name="DisplayTags_toggle" radio_style="false" width="270" control_name="PhoenixClientTagDisplay" tool_tip="Shows you what client people are using beside their names. (If their client is identifiable) "/>
+        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Display Client Tags" left_delta="-0" mouse_opaque="true" name="DisplayTags_toggle" radio_style="false" width="270" control_name="PhoenixClientTagDisplay2" tool_tip="Shows you what client people are using beside their names. (If their client is identifiable) "/>
 <!--
          <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Color Name Tags" left_delta="-0" mouse_opaque="true" name="ColorTags_toggle" radio_style="false" width="270" control_name="PhoenixChangeColorOnClient" tool_tip="Displays their tag in colors."/>
        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Make name Tags of the same client be the same color (one color per viewer)" left_delta="-0" mouse_opaque="true" name="ColorTagsClient_toggle" radio_style="false" width="270" control_name="PhoenixDontUseMultipleColorTags" tool_tip="Displays their tag in colors depending on client they are using."/>
@@ -321,8 +322,8 @@
          max_chars="135"
          width="220"
          allow_text_entry="false"
-         control_name="PhoenixClientTagsVisibility"
-         name="PhoenixClientTagsVisibility">
+         control_name="PhoenixClientTagsVisibility2"
+         name="PhoenixClientTagsVisibility2">
           <combo_item name="No Viewertags" value="0">No Viewertags</combo_item>
           <combo_item name="TPVD Viewer" value="1">TPVD Viewers (using a list)</combo_item>
           <combo_item name="All known Viewers" value="2">All known Viewers (using a list)</combo_item>

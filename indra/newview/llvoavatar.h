@@ -736,7 +736,7 @@ protected:
 	LLFrameTimer mRegionCrossingTimer;
 	S32		  mRegionCrossingCount;
 
-    // The values for this enumerations are aligned to PhoenixClientTagsVisibility
+    // The values for this enumerations are aligned to PhoenixClientTagsVisibility2
     enum  e_tagtype {
         TT_NONE = 0,
         TT_TPVD = 1,
