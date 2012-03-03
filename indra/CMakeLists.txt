@@ -160,6 +160,15 @@ if(NOT STANDALONE)
   # packages in the PREBUILT property of the 'prepare' target.
   get_property(PREBUILT_PACKAGES TARGET prepare PROPERTY PREBUILT)
 
+  # KC- Use different install.xml for msvc2010
+  if(WINDOWS AND MSVC10)
+    set(INSTALL_XML install_VS2010.xml)
+    message(STATUS "Using install_VS2010.xml")
+  else(WINDOWS AND MSVC10)
+    set(INSTALL_XML install.xml)
+    message(STATUS "Using install.xml")
+  endif(WINDOWS AND MSVC10)
+
   # Create a script to download the needed binaries.
   configure_file(${CMAKE_SOURCE_DIR}/cmake/DownloadPrebuilt.cmake.in
                  ${CMAKE_BINARY_DIR}/DownloadPrebuilt.cmake @ONLY)
