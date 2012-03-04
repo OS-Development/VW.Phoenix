@@ -3460,7 +3460,7 @@ void LLVOAvatar::resolveClientTag()
     // 1 = TPVD only
     // 2 = Any known
     // 3 = Any
-	static LLCachedControl<U32> sPhoenixClientTagsVisibility2(gSavedSettings, "PhoenixClientTagsVisibility2");
+	static LLCachedControl<U32> sPhoenixClientTagsVisibility(gSavedSettings, "PhoenixClientTagsVisibility");
 
     // Tag color visibility setting
     // 0 = Off
@@ -3634,7 +3634,7 @@ void LLVOAvatar::resolveClientTag()
     }
 
 	// If the tag is going to be visiable, force the name tag to rebuild
-	if (sPhoenixClientTagsVisibility2 >= mClientTagType)
+	if (sPhoenixClientTagsVisibility >= mClientTagType)
 	{
 		//WS: Clear mNameString to force a rebuild
 		mNameString.clear();
@@ -3796,14 +3796,14 @@ void LLVOAvatar::idleUpdateNameTagText(BOOL new_name)
 	bool is_cloud = getIsCloud();
 
 	static LLCachedControl<LLColor4U> sAvatarNameColor(gColors, "AvatarNameColor");
-	static LLCachedControl<bool> sPhoenixClientTagDisplay2(gSavedSettings, "PhoenixClientTagDisplay2");
-	static LLCachedControl<U32> sPhoenixClientTagsVisibility2(gSavedSettings, "PhoenixClientTagsVisibility2");
+	static LLCachedControl<bool> sPhoenixClientTagDisplay(gSavedSettings, "PhoenixClientTagDisplay");
+	static LLCachedControl<U32> sPhoenixClientTagsVisibility(gSavedSettings, "PhoenixClientTagsVisibility");
 	static LLCachedControl<U32> sPhoenixColorClientTags(gSavedSettings, "PhoenixColorClientTags");
 	static LLCachedControl<bool> sPhoenixShowOwnClientColor(gSavedSettings, "PhoenixShowOwnClientColor");
-	const bool should_show_client_tag = sPhoenixClientTagDisplay2
+	const bool should_show_client_tag = sPhoenixClientTagDisplay
                                          && !mClientTagName.empty()
                                          && (mClientTagType > 0)
-                                         && (sPhoenixClientTagsVisibility2 >= mClientTagType);
+                                         && (sPhoenixClientTagsVisibility >= mClientTagType);
 
 	LLColor4 name_tag_color = (LLColor4)sAvatarNameColor;
 
