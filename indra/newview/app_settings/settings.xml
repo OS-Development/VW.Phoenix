@@ -10254,7 +10254,7 @@
 			<key>Value</key>
 			<integer>1</integer>
 		</map>
-		<key>PhoenixTranslateReplace</key>
+		<key>PhoenixTranslateReplace2</key>
 		<map>
 			<key>Comment</key>
 			<string>Whether or not right click tranlate replaces the selected text or adds to it.</string>

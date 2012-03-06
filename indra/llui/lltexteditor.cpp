@@ -118,7 +118,7 @@ public :
 protected:
 	void handleResponse(const std::string &translation, const std::string &detectedLanguage)
 	{
-		BOOL rep = gSavedSettings.getBOOL("PhoenixTranslateReplace");
+		BOOL rep = gSavedSettings.getBOOL("PhoenixTranslateReplace2");
 		m_line->insertText((rep?"":" (") + translation +(rep?"":")"),rep);
 	}
 	void handleFailure()
