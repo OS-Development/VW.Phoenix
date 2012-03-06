@@ -114,7 +114,7 @@ LLPrefsChatImpl::LLPrefsChatImpl()
 	childSetValue("console_opacity", gSavedSettings.getF32("ConsoleBackgroundOpacity"));
 	childSetValue("bubble_chat_opacity", gSavedSettings.getF32("ChatBubbleOpacity"));
 	childSetValue("translate_language_combobox", 	gSavedSettings.getString("TranslateLanguage"));
-	childSetValue("translate_chat", 	gSavedSettings.getBOOL("TranslateChat"));
+	childSetValue("translate_chat", 	gSavedSettings.getBOOL("TranslateChat_Deprecated"));
 }
 
 void LLPrefsChatImpl::refreshValues()
@@ -145,7 +145,7 @@ void LLPrefsChatImpl::refreshValues()
 	static LLCachedControl<F32> sChatBubbleOpacity(gSavedSettings, "ChatBubbleOpacity");
 	mBubbleOpacity = sChatBubbleOpacity;
 	mTranslateLanguage = gSavedSettings.getString("TranslateLanguage");
-	mTranslateChat = gSavedSettings.getBOOL("TranslateChat");
+	mTranslateChat = gSavedSettings.getBOOL("TranslateChat_Deprecated");
 	mIMEncryptedChatColor = gSavedSettings.getColor4("PhoenixIMEncryptedChatColor");
 }
 
@@ -174,7 +174,7 @@ void LLPrefsChatImpl::cancel()
 	gSavedSettings.setF32("ConsoleBackgroundOpacity", mConsoleOpacity);
 	gSavedSettings.setF32("ChatBubbleOpacity", mBubbleOpacity);	
 	gSavedSettings.setString("TranslateLanguage", mTranslateLanguage);	
-	gSavedSettings.setBOOL("TranslateChat", mTranslateChat);
+	gSavedSettings.setBOOL("TranslateChat_Deprecated", mTranslateChat);
 	gSavedSettings.setColor4("PhoenixIMEncryptedChatColor", mIMEncryptedChatColor);
 }
 
@@ -210,7 +210,7 @@ void LLPrefsChatImpl::apply()
 	gSavedSettings.setF32("ChatBubbleOpacity", childGetValue("bubble_chat_opacity").asReal());
 
 	gSavedSettings.setString("TranslateLanguage", childGetValue("translate_language_combobox"));
-	gSavedSettings.setBOOL("TranslateChat", childGetValue("translate_chat"));
+	gSavedSettings.setBOOL("TranslateChat_Deprecated", childGetValue("translate_chat"));
 
 	refreshValues(); // member values become the official values and cancel becomes a no-op.
 }

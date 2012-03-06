@@ -3173,7 +3173,7 @@ void add_floater_chat(const LLChat &chat, const BOOL history)
 
 void check_translate_chat(const std::string &mesg, LLChat &chat, const BOOL history)
 {
-	const bool translate = LLUI::sConfigGroup->getBOOL("TranslateChat");
+	const bool translate = LLUI::sConfigGroup->getBOOL("TranslateChat_Deprecated");
 
 	if (translate && chat.mSourceType != CHAT_SOURCE_SYSTEM)
 	{

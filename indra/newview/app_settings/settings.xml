@@ -10254,10 +10254,10 @@
 			<key>Value</key>
 			<integer>1</integer>
 		</map>
-		<key>PhoenixTranslateReplace2</key>
+		<key>PhoenixTranslateReplace_Deprecated</key>
 		<map>
 			<key>Comment</key>
-			<string>Whether or not right click tranlate replaces the selected text or adds to it.</string>
+			<string>(Deprecated) Whether or not right click tranlate replaces the selected text or adds to it.</string>
 			<key>Persist</key>
 			<integer>1</integer>
 			<key>Type</key>
@@ -14692,10 +14692,10 @@
 			<key>Value</key>
 			<integer>1</integer>
 		</map>
-		<key>TranslateChat</key>
+		<key>TranslateChat_Deprecated</key>
 		<map>
 			<key>Comment</key>
-			<string>Translate incoming chat messages</string>
+			<string>(Deprecated) Translate incoming chat messages</string>
 			<key>Persist</key>
 			<integer>1</integer>
 			<key>Type</key>

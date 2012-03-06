@@ -657,7 +657,7 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("AudioLevelMic")->getSignal()->connect(boost::bind(&handleVoiceClientPrefsChanged, _2));
 	gSavedSettings.getControl("LipSyncEnabled")->getSignal()->connect(boost::bind(&handleVoiceClientPrefsChanged, _2));	
 	// Disable translate chat permanently since Google killed it -- TS
-	//gSavedSettings.getControl("TranslateChat")->getSignal()->connect(boost::bind(&handleTranslateChatPrefsChanged, _2));	
+	//gSavedSettings.getControl("TranslateChat_Deprecated")->getSignal()->connect(boost::bind(&handleTranslateChatPrefsChanged, _2));	
 	gSavedSettings.getControl("PhoenixBlockSpam")->getSignal()->connect(boost::bind(&handlePhoenixBlockSpam, _2));
 	gSavedSettings.getControl("CheesyBeacon")->getSignal()->connect(boost::bind(&handleCheesyBeaconChanged, _2));	
 	gSavedSettings.getControl("NonBlockingFilePicker")->getSignal()->connect(boost::bind(&handleNonBlockingFilePickerChanged, _2));	
