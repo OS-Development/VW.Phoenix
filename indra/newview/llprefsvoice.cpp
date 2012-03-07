@@ -42,6 +42,7 @@
 #include "llmodaldialog.h"
 #include "llviewercontrol.h"
 #include "lluictrlfactory.h"
+#include "llstartup.h"
 
 
 class LLVoiceSetKeyDialog : public LLModalDialog
@@ -185,7 +186,13 @@ void LLPrefsVoice::onCommitEnableVoiceChat(LLUICtrl* ctrl, void* user_data)
 	self->childSetEnabled("enable_lip_sync_check", enable);
 	self->childSetEnabled("set_voice_hotkey_button", enable);
 	self->childSetEnabled("set_voice_middlemouse_button", enable);
-	self->childSetEnabled("device_settings_btn", enable);
+
+    // PHOE-3836: Don't allow device settings unless voice is actually enabled, otherwise may cause crash (KC)
+    // PHOE-3494: Don't allow device settings before login, causes crash (KC)
+	bool voice_enable = !gSavedSettings.getBOOL("CmdLineDisableVoice")
+                        && gSavedSettings.getBOOL("EnableVoiceChat")
+                        && LLStartUp::getStartupState() == STATE_STARTED;
+	self->childSetEnabled("device_settings_btn", voice_enable);
 }
 
 //static

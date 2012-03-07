@@ -115,7 +115,7 @@ LLFloaterChat::LLFloaterChat(const LLSD& seed)
 	childSetCommitCallback("show mutes",onClickToggleShowMute,this); //show mutes
 	// Disable translate chat permanently since Google killed it -- TS
 	//childSetCommitCallback("translate chat",onClickToggleTranslateChat,this);
-	//childSetValue("translate chat", gSavedSettings.getBOOL("TranslateChat"));
+	//childSetValue("translate chat", gSavedSettings.getBOOL("TranslateChat_Deprecated"));
 	childSetVisible("Chat History Editor with mute",FALSE);
 	childSetEnabled("ChatChannel", gSavedSettings.getBOOL("PhoenixShowChatChannel"));
 	childSetAction("toggle_active_speakers_btn", onClickToggleActiveSpeakers, this);
@@ -398,7 +398,7 @@ void LLFloaterChat::onClickToggleShowMute(LLUICtrl* caller, void *data)
 
 // Disable translate chat permanently since Google killed it -- TS
 #if 0
-// Update the "TranslateChat" pref after "translate chat" checkbox is toggled in
+// Update the "TranslateChat_Deprecated" pref after "translate chat" checkbox is toggled in
 // the "Local Chat" floater.
 //static
 void LLFloaterChat::onClickToggleTranslateChat(LLUICtrl* caller, void *data)
@@ -406,15 +406,15 @@ void LLFloaterChat::onClickToggleTranslateChat(LLUICtrl* caller, void *data)
 	LLFloaterChat* floater = (LLFloaterChat*)data;
 
 	BOOL translate_chat = floater->getChild<LLCheckBoxCtrl>("translate chat")->get();
-	gSavedSettings.setBOOL("TranslateChat", translate_chat);
+	gSavedSettings.setBOOL("TranslateChat_Deprecated", translate_chat);
 }
 
-// Update the "translate chat" checkbox after the "TranslateChat" pref is set in
+// Update the "translate chat" checkbox after the "TranslateChat_Deprecated" pref is set in
 // some other place (e.g. prefs dialog).
 //static
 void LLFloaterChat::updateSettings()
 {
-	BOOL translate_chat = gSavedSettings.getBOOL("TranslateChat");
+	BOOL translate_chat = gSavedSettings.getBOOL("TranslateChat_Deprecated");
 	LLFloaterChat::getInstance(LLSD())->getChild<LLCheckBoxCtrl>("translate chat")->set(translate_chat);
 }
 #endif // disable translate chat

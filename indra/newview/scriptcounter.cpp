@@ -116,7 +116,11 @@ void ScriptCounter::checkCount(LLUUID targetID)
     resultStr+=" [";
     resultStr+=sstr.str();
     resultStr+="K]";
-    resultStr+=llformat(" [%.2f µSeconds]", scriptTime);
+    resultStr+=llformat(" [%.3f ms]", scriptTime/1000);
+    if (gSavedSettings.getBOOL("PhoenixScriptTimeMicroseconds"))
+    {
+        resultStr+=llformat(" [%.2f µSeconds]", scriptTime);
+    }
     cmdline_printchat(resultStr);
     init();
   }

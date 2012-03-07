@@ -109,7 +109,7 @@ public :
 protected:
 	void handleResponse(const std::string &translation, const std::string &detectedLanguage)
 	{
-		static LLCachedControl<bool> rep(gSavedSettings, "PhoenixTranslateReplace2");
+		static LLCachedControl<bool> rep(gSavedSettings, "PhoenixTranslateReplace_Deprecated");
 		if(rep)
 			m_line->deleteSelection();
 		m_line->insert((rep?"":" (") + translation + (rep?"":")"),m_line->getCursor());
