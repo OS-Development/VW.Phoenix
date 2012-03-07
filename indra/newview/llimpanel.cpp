@@ -3096,7 +3096,7 @@ void LLFloaterIMPanel::sendMsg()
 				      << LL_VERSION_PATCH;
 				version = stream.str();
 
-				if (utf8_text.find("/me ") == 0)
+                if (utf8_text.find("/me ") == 0 || utf8_text.find("/me'") == 0)
 				{
 					utf8_text.insert(4,("(PH " + version + ") "));
 				}
