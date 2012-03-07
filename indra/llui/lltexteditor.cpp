@@ -953,7 +953,9 @@ S32 LLTextEditor::getLineStart( S32 line ) const
 	S32 segoffset = mLineStartList[line].mOffset;
 	LLTextSegment* seg = mSegments[segidx];
 	S32 res = seg->getStart() + segoffset;
-	if (res > seg->getEnd()) llerrs << "wtf" << llendl;
+    //KC- instead of crashing, just clamp the value. (Might not be the right solution)
+	//if (res > seg->getEnd()) llerrs << "wtf" << llendl;
+    res = llclamp(res, 0, seg->getEnd());
 	return res;
 }
 
