@@ -9994,6 +9994,17 @@
 				<integer>51</integer>
 			</array>
 		</map>
+		<key>PhoenixScriptTimeMicroseconds</key>
+		<map>
+			<key>Comment</key>
+			<string>Show get obejct/avatar script time in microseconds.</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>Boolean</string>
+			<key>Value</key>
+			<integer>0</integer>
+		</map>
 		<key>PhoenixShowChatChannel</key>
 		<map>
 			<key>Comment</key>
