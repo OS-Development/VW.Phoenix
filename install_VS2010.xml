@@ -209,7 +209,7 @@
             <key>md5sum</key>
 						<string>f6711ce5745723060a97ce309f90a1cb</string>
 						<key>url</key>
-						<uri>http://dl.dropbox.com/u/43361170/wingrowllibraries.tar.bz2</uri>
+						<uri>http://phoenixviewer.com/app/2010packages/wingrowllibraries.tar.bz2</uri>
           </map>
           <key>linux</key>
           <map>
@@ -351,7 +351,7 @@
             <key>md5sum</key>
             <string>f4c8d035de4b09e7a3401d22c10e0ca3</string>
             <key>url</key>
-            <uri>https://github.com/downloads/NickyPerian/imprudence/apr_suite-1.4.2-windows-20110217Imp.tar.bz2</uri>
+            <uri>http://phoenixviewer.com/app/2010packages/apr_suite-1.4.2-windows-20110217Imp.tar.bz2</uri>
           </map>
         </map>
       </map>
@@ -466,7 +466,7 @@
             <key>md5sum</key>
 						<string>17f89b854959b4d728be832d9c8184e4</string>
 						<key>url</key>
-						<uri>https://github.com/downloads/NickyPerian/imprudence/boost_1_45_VC100_libs_inc_patch4073.tar.bz2</uri>
+						<uri>http://phoenixviewer.com/app/2010packages/boost_1_45_VC100_libs_inc_patch4073.tar.bz2</uri>
           </map>
         </map>
       </map>
@@ -662,7 +662,7 @@
             <key>md5sum</key>
 						<string>2d21dd5bb019f58a96b72acf6ee42ae2</string>
 						<key>url</key>
-						<uri>https://github.com/downloads/NickyPerian/imprudence/freeglut-2.6.0-windows-20110214Imp.tar.bz2</uri>
+						<uri>http://phoenixviewer.com/app/2010packages/freeglut-2.6.0-windows-20110214Imp.tar.bz2</uri>
           </map>
         </map>
       </map>
@@ -755,7 +755,7 @@
             <key>md5sum</key>
 						<string>e026920d08611c57ba625735f3c1989e</string>
 						<key>url</key>
-						<uri>https://github.com/downloads/NickyPerian/imprudence/glui-2.36-windows-20110214Imp.tar.bz2</uri>
+						<uri>http://phoenixviewer.com/app/2010packages/glui-2.36-windows-20110214Imp.tar.bz2</uri>
           </map>
         </map>
       </map>
@@ -945,7 +945,7 @@
             <key>md5sum</key>
 						<string>3ba7af1b2c04791cc39b4c23b853a488</string>
 						<key>url</key>
-						<uri>https://github.com/downloads/NickyPerian/imprudence/jsonlib_VC100_libs_inc.tar.bz2</uri>
+						<uri>http://phoenixviewer.com/app/2010packages/jsonlib_VC100_libs_inc.tar.bz2</uri>
           </map>
         </map>
       </map>
@@ -1085,7 +1085,7 @@
             <key>md5sum</key>
             <string>7c26a71fc635f00759dec0a7bad054b6</string>
             <key>url</key>
-            <uri>http://dl.dropbox.com/u/43361170/hacd_win32_20111019.tar.bz2</uri>
+            <uri>http://phoenixviewer.com/app/2010packages/hacd_win32_20111019.tar.bz2</uri>
           </map>
           <key>darwin</key>
           <map>
@@ -1128,7 +1128,7 @@
             <key>md5sum</key>
             <string>999b265a3af47eb13e9a380d042a1763</string>
             <key>url</key>
-            <uri>https://github.com/downloads/siana/SingularityViewer/llqtwebkit-4.7.1-windows-20110320.tar.bz2</uri>
+            <uri>http://phoenixviewer.com/app/2010packages/llqtwebkit-4.7.1-windows-20110320.tar.bz2</uri>
           </map>
         </map>
       </map>
