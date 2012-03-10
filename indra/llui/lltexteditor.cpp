@@ -5068,7 +5068,7 @@ BOOL LLTextEditor::findHTML(const std::string &line, S32 *begin, S32 *end, std::
 		// will match PHOE-1 as well as phoe-1
 		// match 1, "JIRA-#"
 		// match 2, is phoenix jira
-		const boost::regex key("[\\s?/\\\\<>.,'\"@()[\\]\\-]((?:(?:ECC|SH|SOCIAL|LEAP|DN|MISC|SNOW|LLSD|CTS|PYO|STORM|PLAT|ER|VWR|SVC|WEB|SEC|ARVD|OPEN|SCR)|(PHOE|FIRE|SPOT))-(?:[\\d]+))",
+		const boost::regex key("[\\s?/\\\\<>.,'\"@()[\\]\\-]((?:(?:ARVD|CHOP|CTS|DOC|DN|ECC|EXP|LEAP|LLSD|MAINT|MISC|OPEN|PATHBUG|PLAT|PYO|SCR|SEC|SH|SINV|SNOW|SOCIAL|STORM|SVC|VWR|WEB)|(FIRE|PHOE|SPOT))-(?:[\\d]+))",
 		boost::regex::perl|boost::regex::icase);
 		
 		boost::cmatch result;
