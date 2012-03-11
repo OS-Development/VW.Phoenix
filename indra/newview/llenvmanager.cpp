@@ -495,7 +495,10 @@ void LLEnvManagerNew::onRegionSettingsResponse(const LLSD& content)
 	if (KCWindlightInterface::instance().haveParcelOverride(new_settings))
 	{
 		// If using server settings, update managers.
-		if (getUseRegionSettings())
+//      	if (getUseRegionSettings())
+// [RLVa:KB] - Checked: 2011-08-29 (RLVa-1.4.1a) | Added: RLVa-1.4.1a
+		if ( (getUseRegionSettings()) && (LLWLParamManager::instance()->mAnimator.getIsRunning()) )
+// [/RLVa:KB]
 		{
 			updateManagersFromPrefs(mInterpNextChangeMessage);
 		}
