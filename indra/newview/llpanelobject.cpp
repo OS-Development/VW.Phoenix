@@ -133,6 +133,9 @@ LLVector3 LLPanelObject::mClipboardSize;
 LLVector3 LLPanelObject::mClipboardRot;
 
 LLVolumeParams LLPanelObject::mClipboardVolumeParams;
+BOOL LLPanelObject::hasPosClipboard = FALSE;
+BOOL LLPanelObject::hasSizeClipboard = FALSE;
+BOOL LLPanelObject::hasRotClipboard = FALSE;
 BOOL LLPanelObject::hasParamClipboard = FALSE;
 BOOL LLPanelObject::hasFlexiParam = FALSE;
 BOOL LLPanelObject::hasSculptParam = FALSE;
@@ -2455,6 +2458,7 @@ void LLPanelObject::onCopyPos(void* user_data)
 	mClipboardPos = LLVector3(self->mCtrlPosX->get(), self->mCtrlPosY->get(), self->mCtrlPosZ->get());
 	copy_vector_to_clipboard(mClipboardPos);
 	self->mBtnPastePos->setToolTip(llformat("Paste Position\n<%g, %g, %g>", mClipboardPos.mV[VX], mClipboardPos.mV[VY], mClipboardPos.mV[VZ]));
+	hasPosClipboard = TRUE;
 }
 
 void LLPanelObject::onCopySize(void* user_data)
@@ -2464,6 +2468,7 @@ void LLPanelObject::onCopySize(void* user_data)
 	mClipboardSize = LLVector3(self->mCtrlScaleX->get(), self->mCtrlScaleY->get(), self->mCtrlScaleZ->get());
 	copy_vector_to_clipboard(mClipboardSize);
 	self->mBtnPasteSize->setToolTip(llformat("Paste Size\n<%g, %g, %g>", mClipboardSize.mV[VX], mClipboardSize.mV[VY], mClipboardSize.mV[VZ]));
+	hasSizeClipboard = TRUE;
 }
 
 void LLPanelObject::onCopyRot(void* user_data)
@@ -2473,13 +2478,14 @@ void LLPanelObject::onCopyRot(void* user_data)
 	mClipboardRot = LLVector3(self->mCtrlRotX->get(), self->mCtrlRotY->get(), self->mCtrlRotZ->get());
 	copy_vector_to_clipboard(mClipboardRot);
 	self->mBtnPasteRot->setToolTip(llformat("Paste Rotation\n<%g, %g, %g>", mClipboardRot.mV[VX], mClipboardRot.mV[VY], mClipboardRot.mV[VZ]));
+	hasRotClipboard = TRUE;
 }
 
 void LLPanelObject::onPastePos(void* user_data)
 {
 	LLPanelObject* self = (LLPanelObject*) user_data;
 
-	if(mClipboardPos.isNull()) return;
+	if(!hasPosClipboard) return;
 
 	//clamp pos on non-attachments, just keep the prims on the sim
 	if (!self->mObject->isAttachment())
@@ -2504,7 +2510,7 @@ void LLPanelObject::onPasteSize(void* user_data)
 {
 	LLPanelObject* self = (LLPanelObject*) user_data;
 
-	if(mClipboardSize.isNull()) return;
+	if(!hasSizeClipboard) return;
 
 	mClipboardSize.mV[VX] = llclamp(mClipboardSize.mV[VX], MIN_PRIM_SCALE, gHippoLimits->getMaxPrimScale());
 	mClipboardSize.mV[VY] = llclamp(mClipboardSize.mV[VY], MIN_PRIM_SCALE, gHippoLimits->getMaxPrimScale());
@@ -2525,7 +2531,7 @@ void LLPanelObject::onPasteRot(void* user_data)
 {
 	LLPanelObject* self = (LLPanelObject*) user_data;
 
-	if(mClipboardRot.isNull()) return;
+	if(!hasRotClipboard) return;
 
 
 	self->mCtrlRotX->set( mClipboardRot.mV[VX] );

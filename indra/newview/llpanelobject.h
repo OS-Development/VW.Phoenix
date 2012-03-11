@@ -116,6 +116,9 @@ protected:
 	
 protected:
 
+	static BOOL hasPosClipboard;
+	static BOOL hasSizeClipboard;
+	static BOOL hasRotClipboard;
 	static LLVector3 mClipboardPos;
 	static LLVector3 mClipboardSize;
 	static LLVector3 mClipboardRot;
