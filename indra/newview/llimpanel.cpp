@@ -1116,7 +1116,8 @@ LLFloaterIMPanel::LLFloaterIMPanel(
 	mOtrSmpDialog(NULL),
     mOtrSmpProgress(NULL),
 	mFirstKeystrokeTimer(),
-	mLastKeystrokeTimer()
+	mLastKeystrokeTimer(),
+	mPFVS(FALSE)
 {
     // [Ansariel/Henri: Display name support]
     sFloaterIMPanels.insert(this);
@@ -1156,7 +1157,8 @@ LLFloaterIMPanel::LLFloaterIMPanel(
     mOtrSmpProgress(NULL),
 // [/$PLOTR$]
 	mFirstKeystrokeTimer(),
-	mLastKeystrokeTimer()
+	mLastKeystrokeTimer(),
+    mPFVS(FALSE)
 {
     // [Ansariel/Henri: Display name support]
     sFloaterIMPanels.insert(this);
@@ -1510,8 +1512,7 @@ void* LLFloaterIMPanel::createSpeakersPanel(void* data)
 void LLFloaterIMPanel::checkPFVS()
 // AO: PVFS custom viewer prefix support
 {
-	mPFVS = FALSE;
-	if (PhoenixViewerLink::isSupportGroup(mSessionUUID))
+	if (!mPFVS && PhoenixViewerLink::isSupportGroup(mSessionUUID))
 	{
 		mPFVS = TRUE;
 		LLCheckBoxCtrl* prefixViewer = getChild<LLCheckBoxCtrl>("prefixViewerToggle");
@@ -1519,6 +1520,17 @@ void LLFloaterIMPanel::checkPFVS()
 		childSetVisible("prefixViewerToggle",TRUE);
 		childSetVisible("prefixViewerExtraText",TRUE);
 		prefixViewer->setValue(gSavedSettings.getBOOL("PhoenixSupportGroupchatPrefix2"));
+        
+        // <FS:Zi> Viewer version popup
+        // check if the dialog was set to ignore
+        LLNotificationTemplatePtr templatep=LLNotifications::instance().getTemplate("FirstJoinSupportGroup");
+        if(templatep.get()->mForm->getIgnoreType() != LLNotificationForm::IGNORE_NO)
+        {
+            // if not, give the user a choice, whether to enable the version prefix or not
+            LLSD args;
+            LLNotifications::instance().add("FirstJoinSupportGroup",args,LLSD(),boost::bind(&LLFloaterIMPanel::enableViewerVersionCallback,this,_1,_2));
+        }
+        // </FS:Zi> Viewer version popup
 	}
 }
 
@@ -3710,3 +3722,19 @@ const bool LLFloaterIMPanel::IsModerator(const LLUUID& speaker_id)
 	}
 	return FALSE;
 }
+
+// <FS:Zi> Viewer version popup
+BOOL LLFloaterIMPanel::enableViewerVersionCallback(const LLSD& notification,const LLSD& response)
+{
+    S32 option=LLNotification::getSelectedOption(notification,response);
+
+    BOOL result=FALSE;
+    if(option==0)		// "yes"
+    {
+        result=TRUE;
+    }
+
+    gSavedSettings.setBOOL("PhoenixSupportGroupchatPrefix2",result);
+    return result;
+}
+// </FS:Zi>

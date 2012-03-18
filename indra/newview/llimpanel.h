@@ -366,6 +366,7 @@ public:
     void endSmpProgress();
     void endSmpDialog();
     void handleOtrTlvs(OtrlTLV *tlvs);
+    BOOL enableViewerVersionCallback(const LLSD& notification,const LLSD& response);		// <FS:Zi> Viewer version popup
 private:
     void startSmpDialog(LLUUID session_id, LLUUID other_id,
                         std::string my_fingerprint, std::string other_fingerprint);
