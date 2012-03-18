@@ -1521,16 +1521,22 @@ void LLFloaterIMPanel::checkPFVS()
 		childSetVisible("prefixViewerExtraText",TRUE);
 		prefixViewer->setValue(gSavedSettings.getBOOL("PhoenixSupportGroupchatPrefix2"));
         
-        // <FS:Zi> Viewer version popup
-        // check if the dialog was set to ignore
-        LLNotificationTemplatePtr templatep=LLNotifications::instance().getTemplate("FirstJoinSupportGroup");
-        if(templatep.get()->mForm->getIgnoreType() != LLNotificationForm::IGNORE_NO)
-        {
-            // if not, give the user a choice, whether to enable the version prefix or not
-            LLSD args;
-            LLNotifications::instance().add("FirstJoinSupportGroup",args,LLSD(),boost::bind(&LLFloaterIMPanel::enableViewerVersionCallback,this,_1,_2));
-        }
-        // </FS:Zi> Viewer version popup
+		// Don't popup the dialog if the user allready set prefix to true -- TW
+		if (gSavedSettings.getBOOL("PhoenixSupportGroupchatPrefix2"))
+		{
+			return;
+		}
+		
+		// <FS:Zi> Viewer version popup
+		// check if the dialog was set to ignore
+		LLNotificationTemplatePtr templatep=LLNotifications::instance().getTemplate("FirstJoinSupportGroup");
+		if(templatep.get()->mForm->getIgnoreType() != LLNotificationForm::IGNORE_NO)
+		{
+		    // if not, give the user a choice, whether to enable the version prefix or not
+		    LLSD args;
+		    LLNotifications::instance().add("FirstJoinSupportGroup",args,LLSD(),boost::bind(&LLFloaterIMPanel::enableViewerVersionCallback,this,_1,_2));
+		}
+		// </FS:Zi> Viewer version popup
 	}
 }
 
@@ -3735,6 +3741,11 @@ BOOL LLFloaterIMPanel::enableViewerVersionCallback(const LLSD& notification,cons
     }
 
     gSavedSettings.setBOOL("PhoenixSupportGroupchatPrefix2",result);
+
+    // update the checkbox -- TW
+    LLCheckBoxCtrl* prefixViewer = getChild<LLCheckBoxCtrl>("prefixViewerToggle");
+    prefixViewer->setValue(result);
+
     return result;
 }
 // </FS:Zi>
