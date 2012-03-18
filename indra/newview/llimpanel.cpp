@@ -1520,13 +1520,7 @@ void LLFloaterIMPanel::checkPFVS()
 		childSetVisible("prefixViewerToggle",TRUE);
 		childSetVisible("prefixViewerExtraText",TRUE);
 		prefixViewer->setValue(gSavedSettings.getBOOL("PhoenixSupportGroupchatPrefix2"));
-        
-		// Don't popup the dialog if the user allready set prefix to true -- TW
-		if (gSavedSettings.getBOOL("PhoenixSupportGroupchatPrefix2"))
-		{
-			return;
-		}
-		
+
 		// <FS:Zi> Viewer version popup
 		// check if the dialog was set to ignore
 		LLNotificationTemplatePtr templatep=LLNotifications::instance().getTemplate("FirstJoinSupportGroup");
