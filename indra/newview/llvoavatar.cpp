@@ -6782,7 +6782,9 @@ void LLVOAvatar::updateVisualParams()
 
 	dirtyMesh();
 	updateHeadOffset();
-	rebuildRiggedAttachments();
+	//PHOE-3925: rigged mesh jumps over and over...stopping this rebuild
+	//  avoids that problem. Found by Zi. -- TS
+	//rebuildRiggedAttachments();
 }
 
 //-----------------------------------------------------------------------------
