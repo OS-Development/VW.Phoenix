@@ -217,11 +217,25 @@ void lggContactSetsFloater::onCheckBoxChange(LLUICtrl* ctrl, void* userdata)
 }
 void lggContactSetsFloater::onPickAvatar(const std::vector<std::string>& names,
 								  const std::vector<LLUUID>& ids,
-								  void* )
+								  void* userData)
 {
 	if (names.empty()) return;
 	if (ids.empty()) return;
-	LGGContactSets::getInstance()->addNonFriendToList(ids[0]);
+	std::string group("");
+	if(userData!=NULL)
+	{
+		std::string *sp = static_cast<std::string*>(userData);
+		group=*sp;
+		delete sp;
+	}
+	for(int i =0;i<ids.size();i++)
+	{
+		LGGContactSets::getInstance()->addNonFriendToList(ids[i]);
+		if(group!="")
+		{
+			LGGContactSets::getInstance()->addFriendToGroup(ids[i],group);
+		}
+	}
 	sInstance->updateGroupsList();
 	LLFirstUse::usePhoenixFriendsNonFriend();
 }
@@ -878,6 +892,15 @@ void lggContactSetsFloater::drawRightClick()
 	top-=heightPer;
 	top-=heightPer;
 	remBackGround.setLeftTopAndSize(contextRect.mLeft,top,width,heightPer);
+	std::string addTitle("Add New Avatar");
+	std::string groupToSend("");
+	if(drawRemove)
+	{
+		addTitle=std::string("Add New Avatar to: "+currentGroup);
+		groupToSend=currentGroup;
+		gGL.color4fv(LGGContactSets::getInstance()->getGroupColor(currentGroup).mV);
+		gl_rect_2d(remBackGround);
+	}
 	if(remBackGround.pointInRect(mouse_x,mouse_y))
 	{
 		//draw hover effect
@@ -886,13 +909,14 @@ void lggContactSetsFloater::drawRightClick()
 		if(justClicked)
 		{
 			//add new av
-			LLFloaterAvatarPicker* picker = LLFloaterAvatarPicker::show(onPickAvatar, NULL, FALSE, TRUE);
+			void *groupSend = static_cast<void*>(new std::string(groupToSend));
+			LLFloaterAvatarPicker* picker = LLFloaterAvatarPicker::show(onPickAvatar, groupSend, TRUE, TRUE);
 			sInstance->addDependentFloater(picker);
 			
 		}
 	}
 	LLFontGL::getFontSansSerif()->renderUTF8(
-		"Add New Avatar"
+		addTitle
 		, 0,
 		contextRect.mLeft,
 		top-(heightPer/2)-2,
