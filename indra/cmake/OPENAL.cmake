@@ -2,11 +2,11 @@
 include(Linking)
 include(Prebuilt)
 
-if (LINUX)
+#if (LINUX)
   set(OPENAL ON CACHE BOOL "Enable OpenAL")
-else (LINUX)
-  set(OPENAL OFF CACHE BOOL "Enable OpenAL")
-endif (LINUX)
+#else (LINUX)
+#  set(OPENAL OFF CACHE BOOL "Enable OpenAL")
+#endif (LINUX)
 
 if (OPENAL)
   if (STANDALONE)

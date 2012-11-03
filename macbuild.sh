@@ -10,7 +10,7 @@ configure()
         echo "Configuring (for real)..."
         ./develop.py configure -G Xcode \
 	        -DCMAKE_OSX_ARCHITECTURES="$1" \
-	        -DOPENAL:BOOL=FALSE -DFMOD:BOOL=TRUE \
+	        -DOPENAL:BOOL=TRUE -DFMOD:BOOL=FALSE \
         	-DCMAKE_BUILD_TYPE=Release \
         	-DGCC_DISABLE_FATAL_WARNINGS:BOOL=TRUE \
 		2>&1 > /dev/null
