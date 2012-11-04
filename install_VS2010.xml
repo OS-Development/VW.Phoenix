@@ -266,9 +266,9 @@
           <key>linux</key>
           <map>
             <key>md5sum</key>
-            <string>aa5b145a5e8b111443e5f30cf6aaa95a</string>
+            <string>2ab29212a7f3acdaebf10059af816be0</string>
             <key>url</key>
-            <uri>http://sldev.free.fr/libraries/GL-linux-20080812.tar.bz2</uri>
+            <uri>http://s3.amazonaws.com/viewer-source-downloads/install_pkgs/GL-linux-20080812.tar.bz2</uri>
           </map>
           <key>linux64</key>
           <map>
@@ -280,9 +280,9 @@
           <key>windows</key>
           <map>
             <key>md5sum</key>
-            <string>30c77915bc707ca935b143e79075b4aa</string>
+            <string>91155239b02f576384603795d41eb971</string>
             <key>url</key>
-            <uri>http://sldev.free.fr/libraries/GL-windows-20090505.tar.bz2</uri>
+            <uri>http://s3.amazonaws.com/viewer-source-downloads/install_pkgs/GL-windows-20090505.tar.bz2</uri>
           </map>
         </map>
       </map>
@@ -618,21 +618,21 @@
             <key>md5sum</key>
             <string>69011586de5725de08c10611b1a0289a</string>
             <key>url</key>
-            <uri>http://www.fmod.org/files/fmod3/fmodapi375mac.zip</uri>
+            <uri>file:///fmodapi375mac.zip</uri>
           </map>
           <key>linux</key>
           <map>
             <key>md5sum</key>
             <string>4fbd42fb8187c37ea454cc66186a1dfa</string>
             <key>url</key>
-            <uri>http://www.fmod.org/files/fmod3/fmodapi375linux.tar.gz</uri>
+            <uri>file:///fmodapi375linux.tar.gz</uri>
           </map>
           <key>windows</key>
           <map>
             <key>md5sum</key>
             <string>4d28a685a92557c0dac06f9ab2567203</string>
             <key>url</key>
-            <uri>http://www.fmod.org/files/fmod3/fmodapi375win.zip</uri>
+            <uri>file:///fmodapi375win.zip</uri>
           </map>
         </map>
       </map>
